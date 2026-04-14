@@ -1,0 +1,701 @@
+<!--
+  Felis Studio — Cafe24 drop-in event page
+  All CSS classes and JS globals are namespaced with `mf-` / `MF_`
+  to avoid collisions with the existing Cafe24 theme.
+-->
+<div id="mf-root">
+  <style>
+    /* ---------- Reset scoped to mf-root ---------- */
+    #mf-root, #mf-root * { box-sizing: border-box; }
+    #mf-root {
+      background: #FAF7F2;
+      color: #2B2B2B;
+      font-family: 'Noto Sans KR', sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    #mf-root h1, #mf-root h2, #mf-root h3 {
+      font-family: 'Noto Serif KR', serif;
+      font-weight: 600;
+      color: #164A3E;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    #mf-root p { margin: 0; }
+    #mf-root button { font-family: inherit; cursor: pointer; border: none; }
+
+    /* ---------- Layout ---------- */
+    .mf-section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 72px 24px;
+    }
+    .mf-section + .mf-section { padding-top: 0; }
+
+    /* ---------- Section 1 · Hero ---------- */
+    .mf-hero { text-align: center; }
+    .mf-eyebrow {
+      display: inline-block;
+      padding: 6px 14px;
+      background: #164A3E;
+      color: #FAF7F2;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      border-radius: 999px;
+      margin-bottom: 28px;
+    }
+    .mf-hero h1 {
+      font-size: 32px;
+      line-height: 1.35;
+      margin-bottom: 28px;
+    }
+    .mf-hero-copy {
+      font-size: 15px;
+      color: #4B5A55;
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+    .mf-hero-copy span { display: block; margin-bottom: 8px; }
+    .mf-hero-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto;
+      color: #164A3E;
+      opacity: 0.85;
+    }
+
+    /* ---------- Section 2 · Upload ---------- */
+    .mf-upload-card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 32px 24px;
+      box-shadow: 0 12px 40px rgba(22, 74, 62, 0.08);
+    }
+    .mf-upload-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #164A3E;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .mf-upload-hint {
+      font-size: 13px;
+      color: #7A8681;
+      margin-bottom: 16px;
+    }
+    .mf-dropzone {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+      border: 1.5px dashed #C8D1CD;
+      border-radius: 14px;
+      background: #FAF7F2;
+      color: #4B5A55;
+      font-size: 14px;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      padding: 16px;
+      text-align: center;
+    }
+    .mf-dropzone:hover { border-color: #164A3E; background: #F1ECE2; }
+    .mf-dropzone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .mf-dropzone-plus {
+      font-size: 26px;
+      color: #164A3E;
+      margin-bottom: 6px;
+    }
+    .mf-thumbs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .mf-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #EDE7DB;
+    }
+    .mf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mf-thumb-remove {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      background: rgba(22, 74, 62, 0.9);
+      color: #FFF;
+      font-size: 14px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mf-upload-block + .mf-upload-block { margin-top: 28px; }
+
+    .mf-cta {
+      display: block;
+      width: 100%;
+      margin-top: 32px;
+      padding: 20px 24px;
+      background: #164A3E;
+      color: #FAF7F2;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-radius: 14px;
+      transition: transform 0.15s, background 0.2s, opacity 0.2s;
+    }
+    .mf-cta:hover:not(:disabled) { background: #0F3A31; }
+    .mf-cta:active:not(:disabled) { transform: scale(0.99); }
+    .mf-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---------- Section 3 · Loading / Result ---------- */
+    .mf-stage { display: none; }
+    .mf-stage.mf-show { display: block; }
+
+    .mf-stage-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (min-width: 720px) {
+      .mf-stage-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Polaroid */
+    .mf-polaroid-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .mf-polaroid {
+      background: #FFFFFF;
+      padding: 16px 16px 56px;
+      border-radius: 4px;
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.08),
+        0 20px 40px rgba(22, 74, 62, 0.18);
+      transform: rotate(-2deg);
+      animation: mf-drop 0.8s ease-out;
+      width: 100%;
+      max-width: 280px;
+    }
+    @keyframes mf-drop {
+      0% { opacity: 0; transform: translateY(-20px) rotate(-6deg); }
+      100% { opacity: 1; transform: translateY(0) rotate(-2deg); }
+    }
+    .mf-polaroid-photo {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #F5F5F5;
+      overflow: hidden;
+    }
+    .mf-polaroid-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: blur(16px) brightness(1.4);
+      opacity: 0;
+      transition: filter 3.5s ease-out, opacity 2.5s ease-out;
+    }
+    .mf-polaroid-photo.mf-developing img {
+      opacity: 1;
+    }
+    .mf-polaroid-photo.mf-done img {
+      filter: blur(0) brightness(1);
+      opacity: 1;
+    }
+    .mf-polaroid-photo::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: #FFFFFF;
+      opacity: 1;
+      transition: opacity 4s ease-out;
+      pointer-events: none;
+    }
+    .mf-polaroid-photo.mf-developing::after { opacity: 0.35; }
+    .mf-polaroid-photo.mf-done::after { opacity: 0; }
+
+    .mf-polaroid-label {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      color: #4B5A55;
+      text-align: center;
+    }
+    .mf-dots::after {
+      content: "";
+      display: inline-block;
+      width: 1ch;
+      animation: mf-dots 1.4s steps(4) infinite;
+    }
+    @keyframes mf-dots {
+      0%   { content: ""; }
+      25%  { content: "."; }
+      50%  { content: ".."; }
+      75%  { content: "..."; }
+      100% { content: ""; }
+    }
+
+    /* Ad area */
+    .mf-ads { display: flex; flex-direction: column; gap: 16px; }
+    .mf-ad {
+      background: #FFFFFF;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(22, 74, 62, 0.08);
+    }
+    .mf-ad-video {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+    .mf-ad-video iframe {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+    .mf-ad-btn {
+      display: block;
+      text-align: center;
+      padding: 14px 16px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    /* Result */
+    .mf-result { display: none; text-align: center; }
+    .mf-result.mf-show { display: block; }
+    .mf-result img {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(22, 74, 62, 0.18);
+      margin-bottom: 24px;
+    }
+    .mf-result-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .mf-btn-secondary {
+      padding: 14px 22px;
+      background: transparent;
+      color: #164A3E;
+      border: 1.5px solid #164A3E;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .mf-btn-secondary:hover { background: #164A3E; color: #FAF7F2; }
+
+    .mf-error {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #FDECEC;
+      color: #B03A3A;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .mf-error.mf-show { display: block; }
+
+    @media (max-width: 480px) {
+      .mf-section { padding: 48px 18px; }
+      .mf-hero h1 { font-size: 26px; }
+    }
+  </style>
+
+  <!-- ============ SECTION 1 · HERO ============ -->
+  <section class="mf-section mf-hero">
+    <span class="mf-eyebrow">5월 가족의 달 특별 이벤트</span>
+    <h1>펠리스 사진관에<br/>오신 것을 환영합니다</h1>
+
+    <svg class="mf-hero-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14 22 L20 14 L26 22 Z"/>
+      <path d="M38 22 L44 14 L50 22 Z"/>
+      <path d="M14 22 C10 30, 10 42, 20 48 C30 54, 34 54, 44 48 C54 42, 54 30, 50 22"/>
+      <circle cx="26" cy="34" r="1.5" fill="currentColor"/>
+      <circle cx="38" cy="34" r="1.5" fill="currentColor"/>
+      <path d="M30 40 Q32 43 34 40"/>
+    </svg>
+
+    <p class="mf-hero-copy">
+      <span>고양이는 영역 동물입니다. 낯선 공간은 우리 아이에게 큰 스트레스예요.</span>
+      <span>그래서 사진관에 함께 갈 수 없지만, 가족사진은 꼭 남기고 싶은 그 마음.</span>
+      <span>닥터펠리스가 그 마음을 이해하기에, 펠리스 사진관을 열었습니다.</span>
+      <span><strong>집에서, 지금 이 순간을 영원히 남기세요.</strong></span>
+    </p>
+  </section>
+
+  <!-- ============ SECTION 2 · UPLOAD ============ -->
+  <section class="mf-section" id="mf-upload-section">
+    <div class="mf-upload-card">
+      <div class="mf-upload-block">
+        <div class="mf-upload-title">1 · 우리 고양이 사진</div>
+        <div class="mf-upload-hint">정면이 잘 보이는 사진 1장을 올려주세요. (필수)</div>
+        <label class="mf-dropzone" id="mf-cat-zone">
+          <span class="mf-dropzone-plus">+</span>
+          <span id="mf-cat-zone-text">탭하여 고양이 사진 선택</span>
+          <input type="file" accept="image/*" id="mf-cat-input"/>
+        </label>
+        <div class="mf-thumbs" id="mf-cat-thumbs"></div>
+      </div>
+
+      <div class="mf-upload-block">
+        <div class="mf-upload-title">2 · 가족 사진</div>
+        <div class="mf-upload-hint">한 장에 여러 명이 함께 있어도 됩니다. 최대 5장까지.</div>
+        <label class="mf-dropzone" id="mf-people-zone">
+          <span class="mf-dropzone-plus">+</span>
+          <span id="mf-people-zone-text">탭하여 가족 사진 추가</span>
+          <input type="file" accept="image/*" multiple id="mf-people-input"/>
+        </label>
+        <div class="mf-thumbs" id="mf-people-thumbs"></div>
+      </div>
+
+      <button class="mf-cta" id="mf-shoot-btn" disabled>📷 사진 찍기</button>
+      <div class="mf-error" id="mf-error"></div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 · STAGE (loading + result) ============ -->
+  <section class="mf-section mf-stage" id="mf-stage">
+    <div class="mf-stage-grid" id="mf-loading-view">
+      <div class="mf-polaroid-wrap">
+        <div class="mf-polaroid">
+          <div class="mf-polaroid-photo" id="mf-polaroid-photo">
+            <img id="mf-polaroid-img" alt=""/>
+          </div>
+        </div>
+        <div class="mf-polaroid-label">인화 중<span class="mf-dots"></span></div>
+      </div>
+      <div class="mf-ads" id="mf-ads"></div>
+    </div>
+
+    <div class="mf-result" id="mf-result-view">
+      <h2 style="margin-bottom:24px;">가족사진이 완성되었어요</h2>
+      <img id="mf-result-img" alt="AI가 만든 가족사진"/>
+      <div class="mf-result-actions">
+        <a class="mf-btn-secondary" id="mf-download-btn" download="felis-studio.jpg">다운로드</a>
+        <button class="mf-btn-secondary" id="mf-retry-btn">다시 찍기</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // CONFIG — edit these values to swap creative
+  // ============================================================
+  const MF_WORKER_URL = "https://felis-studio-worker.drfelis.workers.dev/api/glamour";
+
+  const MF_AD_CONFIG = [
+    {
+      vimeoId: "VIMEO_ID_1",          // Vimeo video ID
+      buttonText: "자세히 보기",
+      buttonUrl: "https://drfelis.com/product/1",
+      buttonColor: "#164A3E"
+    },
+    // up to 3 entries — leave empty slots out to shrink the rail
+  ];
+
+  const MF_MAX_PEOPLE = 5;
+
+  // ============================================================
+  // STATE
+  // ============================================================
+  const mfState = {
+    catImage: null,        // { file, base64, dataUrl }
+    peopleImages: [],      // [{ file, base64, dataUrl }, ...]
+  };
+
+  // ============================================================
+  // UTILITIES
+  // ============================================================
+  function mfReadFile(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const dataUrl = r.result;
+        const base64 = String(dataUrl).split(',')[1] || '';
+        resolve({ file, dataUrl, base64 });
+      };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function mfEl(id) { return document.getElementById(id); }
+
+  function mfShowError(msg) {
+    const e = mfEl('mf-error');
+    e.textContent = msg;
+    e.classList.add('mf-show');
+  }
+  function mfClearError() {
+    mfEl('mf-error').classList.remove('mf-show');
+  }
+
+  function mfUpdateCTA() {
+    mfEl('mf-shoot-btn').disabled =
+      !mfState.catImage || mfState.peopleImages.length === 0;
+  }
+
+  // ============================================================
+  // RENDER THUMBS
+  // ============================================================
+  function mfRenderCatThumb() {
+    const wrap = mfEl('mf-cat-thumbs');
+    wrap.innerHTML = '';
+    if (!mfState.catImage) {
+      mfEl('mf-cat-zone-text').textContent = '탭하여 고양이 사진 선택';
+      return;
+    }
+    mfEl('mf-cat-zone-text').textContent = '다른 사진으로 교체';
+    const t = document.createElement('div');
+    t.className = 'mf-thumb';
+    t.innerHTML =
+      '<img src="' + mfState.catImage.dataUrl + '" alt=""/>' +
+      '<button class="mf-thumb-remove" type="button" aria-label="삭제">×</button>';
+    t.querySelector('.mf-thumb-remove').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      mfState.catImage = null;
+      mfRenderCatThumb();
+      mfUpdateCTA();
+    });
+    wrap.appendChild(t);
+  }
+
+  function mfRenderPeopleThumbs() {
+    const wrap = mfEl('mf-people-thumbs');
+    wrap.innerHTML = '';
+    mfEl('mf-people-zone-text').textContent =
+      mfState.peopleImages.length >= MF_MAX_PEOPLE
+        ? '최대 ' + MF_MAX_PEOPLE + '장까지 추가할 수 있습니다'
+        : '탭하여 가족 사진 추가 (' + mfState.peopleImages.length + '/' + MF_MAX_PEOPLE + ')';
+
+    mfState.peopleImages.forEach(function (img, idx) {
+      const t = document.createElement('div');
+      t.className = 'mf-thumb';
+      t.innerHTML =
+        '<img src="' + img.dataUrl + '" alt=""/>' +
+        '<button class="mf-thumb-remove" type="button" aria-label="삭제">×</button>';
+      t.querySelector('.mf-thumb-remove').addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        mfState.peopleImages.splice(idx, 1);
+        mfRenderPeopleThumbs();
+        mfUpdateCTA();
+      });
+      wrap.appendChild(t);
+    });
+  }
+
+  // ============================================================
+  // FILE INPUTS
+  // ============================================================
+  mfEl('mf-cat-input').addEventListener('change', async function (ev) {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    try {
+      mfState.catImage = await mfReadFile(file);
+      mfRenderCatThumb();
+      mfUpdateCTA();
+      mfClearError();
+    } catch (_) {
+      mfShowError('사진을 읽을 수 없습니다.');
+    } finally {
+      ev.target.value = '';
+    }
+  });
+
+  mfEl('mf-people-input').addEventListener('change', async function (ev) {
+    const files = Array.from(ev.target.files || []);
+    if (files.length === 0) return;
+    const room = MF_MAX_PEOPLE - mfState.peopleImages.length;
+    if (room <= 0) { ev.target.value = ''; return; }
+    const picked = files.slice(0, room);
+    try {
+      for (const f of picked) {
+        const data = await mfReadFile(f);
+        mfState.peopleImages.push(data);
+      }
+      mfRenderPeopleThumbs();
+      mfUpdateCTA();
+      mfClearError();
+    } catch (_) {
+      mfShowError('사진을 읽을 수 없습니다.');
+    } finally {
+      ev.target.value = '';
+    }
+  });
+
+  // ============================================================
+  // SHUTTER SOUND — pure Web Audio oscillator
+  // ============================================================
+  function mfPlayShutter() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const now = ctx.currentTime;
+
+      // Click burst: quick noise-like tone via high-freq square
+      const osc1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(1800, now);
+      osc1.frequency.exponentialRampToValueAtTime(300, now + 0.06);
+      g1.gain.setValueAtTime(0.0001, now);
+      g1.gain.exponentialRampToValueAtTime(0.3, now + 0.005);
+      g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+      osc1.connect(g1).connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.1);
+
+      // Low thud — mirror release
+      const osc2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(120, now + 0.08);
+      osc2.frequency.exponentialRampToValueAtTime(60, now + 0.15);
+      g2.gain.setValueAtTime(0.0001, now + 0.08);
+      g2.gain.exponentialRampToValueAtTime(0.25, now + 0.09);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc2.connect(g2).connect(ctx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.22);
+
+      setTimeout(function () { ctx.close && ctx.close(); }, 400);
+    } catch (_) { /* silent */ }
+  }
+
+  // ============================================================
+  // ADS RENDER
+  // ============================================================
+  function mfRenderAds() {
+    const host = mfEl('mf-ads');
+    host.innerHTML = '';
+    MF_AD_CONFIG.slice(0, 3).forEach(function (ad) {
+      if (!ad || !ad.vimeoId) return;
+      const card = document.createElement('div');
+      card.className = 'mf-ad';
+      const src = 'https://player.vimeo.com/video/' + encodeURIComponent(ad.vimeoId) +
+        '?autoplay=1&muted=1&loop=1&background=1';
+      card.innerHTML =
+        '<div class="mf-ad-video"><iframe src="' + src + '" allow="autoplay; fullscreen" allowfullscreen></iframe></div>' +
+        '<a class="mf-ad-btn" href="' + ad.buttonUrl + '" target="_blank" rel="noopener" style="background:' +
+        (ad.buttonColor || '#164A3E') + '">' + ad.buttonText + ' →</a>';
+      host.appendChild(card);
+    });
+  }
+
+  // ============================================================
+  // STAGE / LOADING
+  // ============================================================
+  function mfShowStage() {
+    mfEl('mf-stage').classList.add('mf-show');
+    mfEl('mf-loading-view').style.display = '';
+    mfEl('mf-result-view').classList.remove('mf-show');
+    mfRenderAds();
+    // Scroll the stage into view for mobile
+    setTimeout(function () {
+      mfEl('mf-stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  function mfStartDeveloping() {
+    const photo = mfEl('mf-polaroid-photo');
+    photo.classList.remove('mf-done');
+    photo.classList.remove('mf-developing');
+    // Kick off fade-in after a tick
+    requestAnimationFrame(function () {
+      setTimeout(function () { photo.classList.add('mf-developing'); }, 200);
+    });
+  }
+
+  function mfFinishDeveloping(imageUrl) {
+    const img = mfEl('mf-polaroid-img');
+    const photo = mfEl('mf-polaroid-photo');
+    img.src = imageUrl;
+    img.onload = function () {
+      photo.classList.add('mf-done');
+      setTimeout(function () { mfShowResult(imageUrl); }, 1200);
+    };
+  }
+
+  function mfShowResult(imageUrl) {
+    mfEl('mf-loading-view').style.display = 'none';
+    mfEl('mf-result-img').src = imageUrl;
+    mfEl('mf-download-btn').href = imageUrl;
+    mfEl('mf-result-view').classList.add('mf-show');
+    mfEl('mf-result-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  mfEl('mf-retry-btn').addEventListener('click', function () {
+    mfEl('mf-stage').classList.remove('mf-show');
+    mfEl('mf-upload-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
+  mfEl('mf-shoot-btn').addEventListener('click', async function () {
+    if (!mfState.catImage || mfState.peopleImages.length === 0) return;
+    mfClearError();
+    mfPlayShutter();
+    mfShowStage();
+    mfStartDeveloping();
+
+    const body = {
+      catImage: mfState.catImage.base64,
+      peopleImages: mfState.peopleImages.map(function (p) { return p.base64; }),
+      peopleCount: mfState.peopleImages.length,
+    };
+
+    try {
+      const res = await fetch(MF_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('서버 오류 (' + res.status + '): ' + txt.slice(0, 200));
+      }
+      const data = await res.json();
+      if (!data.imageUrl) throw new Error('이미지를 받지 못했습니다.');
+      mfFinishDeveloping(data.imageUrl);
+    } catch (err) {
+      mfEl('mf-stage').classList.remove('mf-show');
+      mfShowError(err.message || '사진 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      mfEl('mf-upload-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  // ============================================================
+  // FONTS — inject only if the theme hasn't already
+  // ============================================================
+  (function () {
+    if (!document.querySelector('link[href*="Noto+Serif+KR"]')) {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap';
+      document.head.appendChild(l);
+    }
+  })();
+})();
+</script>
