@@ -24,13 +24,16 @@
     #mf-root p { margin: 0; }
     #mf-root button { font-family: inherit; cursor: pointer; border: none; }
 
-    /* ---------- Layout ---------- */
+    /* ---------- Layout (mobile-first, 480px column) ---------- */
     .mf-section {
-      max-width: 720px;
+      max-width: 480px;
       margin: 0 auto;
-      padding: 72px 24px;
+      padding: 56px 20px;
     }
     .mf-section + .mf-section { padding-top: 0; }
+    @media (min-width: 600px) {
+      .mf-section { padding: 72px 24px; }
+    }
 
     /* ---------- Section 1 · Hero ---------- */
     .mf-hero { text-align: center; }
@@ -160,13 +163,10 @@
     .mf-stage.mf-show { display: block; }
 
     .mf-stage-grid {
-      display: grid;
-      grid-template-columns: 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 32px;
-      align-items: start;
-    }
-    @media (min-width: 720px) {
-      .mf-stage-grid { grid-template-columns: 1fr 1fr; }
+      align-items: stretch;
     }
 
     /* Polaroid */
@@ -274,40 +274,125 @@
       letter-spacing: 0.02em;
     }
 
-    /* Result */
-    .mf-result { display: none; text-align: center; }
-    .mf-result.mf-show { display: block; }
-    .mf-result img {
+    /* ---------- Section 4 · Done view ---------- */
+    .mf-done { display: none; text-align: center; }
+    .mf-done.mf-show { display: block; }
+    .mf-done h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .mf-done-sub {
+      font-size: 14px;
+      color: #4B5A55;
+      margin-bottom: 28px;
+    }
+    .mf-done-polaroid {
+      display: inline-block;
+      background: #FFFFFF;
+      padding: 14px 14px 24px;
+      border-radius: 4px;
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.08),
+        0 20px 50px rgba(22, 74, 62, 0.2);
       width: 100%;
-      max-width: 520px;
+      max-width: 320px;
+      margin-bottom: 28px;
+    }
+    .mf-done-photo {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #F1ECE2;
+      overflow: hidden;
+    }
+    .mf-done-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .mf-done-caption {
+      font-family: 'Nanum Pen Script', 'Noto Serif KR', cursive;
+      color: #2B3E38;
+      padding-top: 14px;
+      line-height: 1.15;
+    }
+    .mf-done-caption .mf-done-brand {
+      font-size: 18px;
+      letter-spacing: 0.01em;
+    }
+    .mf-done-caption .mf-done-date {
+      display: block;
+      font-size: 15px;
+      color: #6A7A74;
+      margin-top: 2px;
+    }
+
+    .mf-done-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    .mf-done-actions .mf-btn {
+      display: block;
+      width: 100%;
+      padding: 16px 18px;
       border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(22, 74, 62, 0.18);
-      margin-bottom: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-align: center;
+      text-decoration: none;
+      transition: transform 0.15s, background 0.2s, opacity 0.2s, color 0.2s;
     }
-    .mf-result-actions {
-      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    .mf-done-actions .mf-btn:active { transform: scale(0.99); }
+    .mf-btn-primary {
+      background: #164A3E;
+      color: #FAF7F2;
+      border: 1.5px solid #164A3E;
     }
+    .mf-btn-primary:hover { background: #0F3A31; }
     .mf-btn-secondary {
-      padding: 14px 22px;
       background: transparent;
       color: #164A3E;
       border: 1.5px solid #164A3E;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
     }
     .mf-btn-secondary:hover { background: #164A3E; color: #FAF7F2; }
-
-    .mf-error {
-      display: none;
-      margin-top: 16px;
-      padding: 12px 16px;
-      background: #FDECEC;
-      color: #B03A3A;
-      border-radius: 10px;
-      font-size: 14px;
+    .mf-btn-ghost {
+      background: transparent;
+      color: #6A7A74;
+      border: 1.5px solid #D7DCD9;
     }
-    .mf-error.mf-show { display: block; }
+    .mf-btn-ghost:hover { color: #164A3E; border-color: #164A3E; }
+
+    /* ---------- Toast ---------- */
+    .mf-toast-host {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+      width: calc(100% - 40px);
+      max-width: 440px;
+    }
+    .mf-toast {
+      background: rgba(22, 74, 62, 0.96);
+      color: #FAF7F2;
+      padding: 13px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(22, 74, 62, 0.25);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .mf-toast.mf-show { opacity: 1; transform: translateY(0); }
+    .mf-toast.mf-err { background: rgba(176, 58, 58, 0.96); }
 
     @media (max-width: 480px) {
       .mf-section { padding: 48px 18px; }
@@ -363,9 +448,11 @@
       </div>
 
       <button class="mf-cta" id="mf-shoot-btn" disabled>📷 사진 찍기</button>
-      <div class="mf-error" id="mf-error"></div>
     </div>
   </section>
+
+  <!-- toast host (fixed to viewport) -->
+  <div class="mf-toast-host" id="mf-toast-host" aria-live="polite"></div>
 
   <!-- ============ SECTION 3 · STAGE (loading + result) ============ -->
   <section class="mf-section mf-stage" id="mf-stage">
@@ -381,13 +468,27 @@
       <div class="mf-ads" id="mf-ads"></div>
     </div>
 
-    <div class="mf-result" id="mf-result-view">
-      <h2 style="margin-bottom:24px;">가족사진이 완성되었어요</h2>
-      <img id="mf-result-img" alt="AI가 만든 가족사진"/>
-      <div class="mf-result-actions">
-        <a class="mf-btn-secondary" id="mf-download-btn" download="felis-studio.jpg">다운로드</a>
-        <button class="mf-btn-secondary" id="mf-retry-btn">다시 찍기</button>
+  </section>
+
+  <!-- ============ SECTION 4 · DONE (completed polaroid + actions) ============ -->
+  <section class="mf-section mf-done" id="mf-done-view">
+    <h2>가족사진이 완성되었어요</h2>
+    <p class="mf-done-sub">집에서 함께한 이 순간을, 예쁘게 간직하세요.</p>
+
+    <div class="mf-done-polaroid" id="mf-done-polaroid">
+      <div class="mf-done-photo">
+        <img id="mf-done-img" alt="AI가 만든 가족사진" crossorigin="anonymous"/>
       </div>
+      <div class="mf-done-caption">
+        <span class="mf-done-brand">Dr.Felis 펠리스 사진관</span>
+        <span class="mf-done-date" id="mf-done-date"></span>
+      </div>
+    </div>
+
+    <div class="mf-done-actions">
+      <button class="mf-btn mf-btn-primary" id="mf-save-btn" type="button">저장하기</button>
+      <button class="mf-btn mf-btn-secondary" id="mf-share-btn" type="button">공유하기</button>
+      <button class="mf-btn mf-btn-ghost" id="mf-retry-btn" type="button">다시 찍기</button>
     </div>
   </section>
 </div>
@@ -397,9 +498,11 @@
   'use strict';
 
   // ============================================================
-  // CONFIG — edit these values to swap creative
+  // CONFIG — edit these values before deployment
   // ============================================================
-  const MF_WORKER_URL = "https://felis-studio-worker.drfelis.workers.dev/api/glamour";
+  // Cloudflare Worker endpoint. Change this one line when redeploying.
+  const MF_WORKER_URL = "https://your-worker.workers.dev";
+  const MF_GLAMOUR_PATH = "/api/glamour";
 
   const MF_AD_CONFIG = [
     {
@@ -424,28 +527,88 @@
   // ============================================================
   // UTILITIES
   // ============================================================
-  function mfReadFile(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => {
-        const dataUrl = r.result;
-        const base64 = String(dataUrl).split(',')[1] || '';
-        resolve({ file, dataUrl, base64 });
+  const MF_MAX_EDGE = 1024;
+  const MF_JPEG_QUALITY = 0.88;
+
+  // Typed error so the submit handler can show a category-specific toast.
+  function mfErr(kind, msg) {
+    const e = new Error(msg || kind);
+    e.mfKind = kind; // 'format' | 'network' | 'api'
+    return e;
+  }
+
+  // Read file -> <img> -> draw to canvas scaled to <= 1024px longest edge ->
+  // JPEG base64. Keeps request payload small so mobile uploads stay fast.
+  function mfLoadAndResize(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+        reject(mfErr('format', '이미지 파일만 업로드할 수 있습니다.'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = function () {
+        reject(mfErr('format', '파일을 읽을 수 없습니다.'));
       };
-      r.onerror = reject;
-      r.readAsDataURL(file);
+      reader.onload = function () {
+        const src = reader.result;
+        const img = new Image();
+        img.onload = function () {
+          try {
+            const longest = Math.max(img.naturalWidth, img.naturalHeight);
+            const scale = longest > MF_MAX_EDGE ? MF_MAX_EDGE / longest : 1;
+            const w = Math.round(img.naturalWidth * scale);
+            const h = Math.round(img.naturalHeight * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', MF_JPEG_QUALITY);
+            const base64 = dataUrl.split(',')[1] || '';
+            resolve({ file: file, dataUrl: dataUrl, base64: base64, width: w, height: h });
+          } catch (err) {
+            reject(mfErr('format', '이미지를 처리할 수 없습니다.'));
+          }
+        };
+        img.onerror = function () {
+          reject(mfErr('format', '지원하지 않는 이미지 형식입니다.'));
+        };
+        img.src = src;
+      };
+      reader.readAsDataURL(file);
     });
   }
 
   function mfEl(id) { return document.getElementById(id); }
 
-  function mfShowError(msg) {
-    const e = mfEl('mf-error');
-    e.textContent = msg;
-    e.classList.add('mf-show');
+  // ---------- Toast ----------
+  function mfToast(message, opts) {
+    const host = mfEl('mf-toast-host');
+    if (!host) return;
+    const t = document.createElement('div');
+    t.className = 'mf-toast' + ((opts && opts.variant === 'err') ? ' mf-err' : '');
+    t.textContent = message;
+    host.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('mf-show'); });
+    const ttl = (opts && opts.ttl) || 2600;
+    setTimeout(function () {
+      t.classList.remove('mf-show');
+      setTimeout(function () { t.remove(); }, 300);
+    }, ttl);
   }
-  function mfClearError() {
-    mfEl('mf-error').classList.remove('mf-show');
+
+  // Maps a typed error (mfKind) to the right Korean copy.
+  function mfToastForError(err) {
+    const kind = err && err.mfKind;
+    if (kind === 'format') {
+      mfToast(err.message || '이미지 파일만 업로드할 수 있습니다.', { variant: 'err' });
+    } else if (kind === 'network') {
+      mfToast('네트워크 연결을 확인해 주세요.', { variant: 'err' });
+    } else if (kind === 'api') {
+      mfToast('사진 생성에 실패했어요. 잠시 후 다시 시도해 주세요.', { variant: 'err' });
+    } else {
+      mfToast(err && err.message ? err.message : '알 수 없는 오류가 발생했습니다.', { variant: 'err' });
+    }
   }
 
   function mfUpdateCTA() {
@@ -511,12 +674,13 @@
     const file = ev.target.files && ev.target.files[0];
     if (!file) return;
     try {
-      mfState.catImage = await mfReadFile(file);
+      mfState.catImage = await mfLoadAndResize(file);
       mfRenderCatThumb();
       mfUpdateCTA();
-      mfClearError();
-    } catch (_) {
-      mfShowError('사진을 읽을 수 없습니다.');
+    } catch (err) {
+      mfToast(err.mfKind === 'format'
+        ? (err.message || '이미지 파일만 업로드할 수 있습니다.')
+        : '사진을 읽을 수 없습니다.');
     } finally {
       ev.target.value = '';
     }
@@ -528,19 +692,21 @@
     const room = MF_MAX_PEOPLE - mfState.peopleImages.length;
     if (room <= 0) { ev.target.value = ''; return; }
     const picked = files.slice(0, room);
-    try {
-      for (const f of picked) {
-        const data = await mfReadFile(f);
+    let formatErr = null;
+    for (const f of picked) {
+      try {
+        const data = await mfLoadAndResize(f);
         mfState.peopleImages.push(data);
+      } catch (err) {
+        if (err && err.mfKind === 'format') formatErr = err;
       }
-      mfRenderPeopleThumbs();
-      mfUpdateCTA();
-      mfClearError();
-    } catch (_) {
-      mfShowError('사진을 읽을 수 없습니다.');
-    } finally {
-      ev.target.value = '';
     }
+    mfRenderPeopleThumbs();
+    mfUpdateCTA();
+    if (formatErr) {
+      mfToast(formatErr.message || '일부 파일이 이미지 형식이 아닙니다.');
+    }
+    ev.target.value = '';
   });
 
   // ============================================================
@@ -609,7 +775,7 @@
   function mfShowStage() {
     mfEl('mf-stage').classList.add('mf-show');
     mfEl('mf-loading-view').style.display = '';
-    mfEl('mf-result-view').classList.remove('mf-show');
+    mfEl('mf-done-view').classList.remove('mf-show');
     mfRenderAds();
     // Scroll the stage into view for mobile
     setTimeout(function () {
@@ -627,35 +793,235 @@
     });
   }
 
+  // Current generated image URL (used by save/share).
+  let mfCurrentImageUrl = null;
+  let mfCurrentDateLabel = '';   // "YYYY.MM.DD"
+  let mfCurrentDateCompact = ''; // "YYYYMMDD"
+
+  function mfFormatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return { pretty: y + '.' + m + '.' + day, compact: '' + y + m + day };
+  }
+
   function mfFinishDeveloping(imageUrl) {
     const img = mfEl('mf-polaroid-img');
     const photo = mfEl('mf-polaroid-photo');
+    // Load cross-origin so the result can be drawn onto a <canvas> later.
+    img.crossOrigin = 'anonymous';
     img.src = imageUrl;
     img.onload = function () {
       photo.classList.add('mf-done');
-      setTimeout(function () { mfShowResult(imageUrl); }, 1200);
+      setTimeout(function () { mfShowDone(imageUrl); }, 1200);
+    };
+    img.onerror = function () {
+      mfEl('mf-stage').classList.remove('mf-show');
+      mfToastForError(mfErr('api', '이미지를 불러올 수 없어요.'));
     };
   }
 
-  function mfShowResult(imageUrl) {
-    mfEl('mf-loading-view').style.display = 'none';
-    mfEl('mf-result-img').src = imageUrl;
-    mfEl('mf-download-btn').href = imageUrl;
-    mfEl('mf-result-view').classList.add('mf-show');
-    mfEl('mf-result-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function mfShowDone(imageUrl) {
+    mfCurrentImageUrl = imageUrl;
+    const parts = mfFormatDate(new Date());
+    mfCurrentDateLabel = parts.pretty;
+    mfCurrentDateCompact = parts.compact;
+
+    mfEl('mf-done-date').textContent = mfCurrentDateLabel;
+    const doneImg = mfEl('mf-done-img');
+    doneImg.crossOrigin = 'anonymous';
+    doneImg.src = imageUrl;
+
+    mfEl('mf-stage').classList.remove('mf-show');
+    const done = mfEl('mf-done-view');
+    done.classList.add('mf-show');
+    setTimeout(function () {
+      done.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
-  mfEl('mf-retry-btn').addEventListener('click', function () {
+  // ============================================================
+  // SAVE — render polaroid frame + image + handwriting to canvas, export PNG
+  // ============================================================
+  function mfLoadImage(url) {
+    return new Promise(function (resolve, reject) {
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = function () { resolve(im); };
+      im.onerror = function () { reject(new Error('image load failed')); };
+      im.src = url;
+    });
+  }
+
+  async function mfRenderPolaroidCanvas() {
+    if (!mfCurrentImageUrl) throw new Error('no image');
+    const src = await mfLoadImage(mfCurrentImageUrl);
+
+    // Polaroid layout in canvas pixels.
+    const SIZE = 1080;                    // photo edge
+    const PAD = 56;                       // side padding
+    const TOP = 56;                       // top padding
+    const BOTTOM = 220;                   // bottom white area for handwriting
+    const W = SIZE + PAD * 2;
+    const H = SIZE + TOP + BOTTOM;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // White frame
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+
+    // Photo area (cover)
+    const ir = src.naturalWidth / src.naturalHeight;
+    let sx = 0, sy = 0, sw = src.naturalWidth, sh = src.naturalHeight;
+    if (ir > 1) {
+      sw = src.naturalHeight;
+      sx = (src.naturalWidth - sw) / 2;
+    } else if (ir < 1) {
+      sh = src.naturalWidth;
+      sy = (src.naturalHeight - sh) / 2;
+    }
+    ctx.drawImage(src, sx, sy, sw, sh, PAD, TOP, SIZE, SIZE);
+
+    // Handwriting caption
+    ctx.fillStyle = '#2B3E38';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const captionCenterX = W / 2;
+    const captionTop = TOP + SIZE;
+    ctx.font = "64px 'Nanum Pen Script', cursive";
+    ctx.fillText('Dr.Felis 펠리스 사진관', captionCenterX, captionTop + 78);
+
+    ctx.fillStyle = '#6A7A74';
+    ctx.font = "52px 'Nanum Pen Script', cursive";
+    ctx.fillText(mfCurrentDateLabel, captionCenterX, captionTop + 150);
+
+    return canvas;
+  }
+
+  async function mfSavePolaroid() {
+    try {
+      // Ensure the web font is ready before drawing, otherwise Canvas falls back.
+      if (document.fonts && document.fonts.load) {
+        try {
+          await document.fonts.load("64px 'Nanum Pen Script'");
+        } catch (_) { /* ignore */ }
+      }
+      const canvas = await mfRenderPolaroidCanvas();
+      const filename = 'felis-studio-' + mfCurrentDateCompact + '.png';
+
+      if (canvas.toBlob) {
+        canvas.toBlob(function (blob) {
+          if (!blob) {
+            mfToast('저장에 실패했어요.', { variant: 'err' });
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+          mfToast('사진이 저장되었습니다');
+        }, 'image/png');
+      } else {
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        mfToast('사진이 저장되었습니다');
+      }
+    } catch (err) {
+      mfToast('저장에 실패했어요. 잠시 후 다시 시도해 주세요.', { variant: 'err' });
+    }
+  }
+
+  // ============================================================
+  // SHARE — navigator.share() first, clipboard fallback
+  // ============================================================
+  async function mfSharePolaroid() {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: '펠리스 사진관',
+      text: '닥터펠리스 펠리스 사진관에서 우리 가족사진을 만들어봤어요.',
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        // User cancelled — stay silent.
+        if (err && err.name === 'AbortError') return;
+        // Fall through to clipboard fallback on other failures.
+      }
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      mfToast('링크가 복사되었습니다');
+    } catch (_err) {
+      mfToast('공유에 실패했어요.', { variant: 'err' });
+    }
+  }
+
+  // ============================================================
+  // RETRY — reset all state and scroll to upload section
+  // ============================================================
+  function mfResetToUpload() {
+    mfState.catImage = null;
+    mfState.peopleImages = [];
+    mfCurrentImageUrl = null;
+    mfCurrentDateLabel = '';
+    mfCurrentDateCompact = '';
+
+    mfRenderCatThumb();
+    mfRenderPeopleThumbs();
+    mfUpdateCTA();
+
+    mfEl('mf-done-view').classList.remove('mf-show');
     mfEl('mf-stage').classList.remove('mf-show');
+
+    const photo = mfEl('mf-polaroid-photo');
+    photo.classList.remove('mf-developing');
+    photo.classList.remove('mf-done');
+    const pimg = mfEl('mf-polaroid-img');
+    pimg.removeAttribute('src');
+    const dimg = mfEl('mf-done-img');
+    dimg.removeAttribute('src');
+
     mfEl('mf-upload-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  }
+
+  mfEl('mf-save-btn').addEventListener('click', mfSavePolaroid);
+  mfEl('mf-share-btn').addEventListener('click', mfSharePolaroid);
+  mfEl('mf-retry-btn').addEventListener('click', mfResetToUpload);
 
   // ============================================================
   // SUBMIT
   // ============================================================
   mfEl('mf-shoot-btn').addEventListener('click', async function () {
     if (!mfState.catImage || mfState.peopleImages.length === 0) return;
-    mfClearError();
     mfPlayShutter();
     mfShowStage();
     mfStartDeveloping();
@@ -666,22 +1032,31 @@
       peopleCount: mfState.peopleImages.length,
     };
 
+    let res;
     try {
-      const res = await fetch(MF_WORKER_URL, {
+      res = await fetch(MF_WORKER_URL.replace(/\/$/, '') + MF_GLAMOUR_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+    } catch (_netErr) {
+      // fetch rejects -> TypeError -> offline / DNS / CORS / etc.
+      mfEl('mf-stage').classList.remove('mf-show');
+      mfToastForError(mfErr('network'));
+      mfEl('mf-upload-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    try {
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error('서버 오류 (' + res.status + '): ' + txt.slice(0, 200));
+        throw mfErr('api', '서버 오류 (' + res.status + ')');
       }
       const data = await res.json();
-      if (!data.imageUrl) throw new Error('이미지를 받지 못했습니다.');
+      if (!data || !data.imageUrl) throw mfErr('api', '이미지를 받지 못했습니다.');
       mfFinishDeveloping(data.imageUrl);
     } catch (err) {
       mfEl('mf-stage').classList.remove('mf-show');
-      mfShowError(err.message || '사진 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      mfToastForError(err.mfKind ? err : mfErr('api'));
       mfEl('mf-upload-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
@@ -693,7 +1068,7 @@
     if (!document.querySelector('link[href*="Noto+Serif+KR"]')) {
       const l = document.createElement('link');
       l.rel = 'stylesheet';
-      l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap';
+      l.href = 'https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap';
       document.head.appendChild(l);
     }
   })();
