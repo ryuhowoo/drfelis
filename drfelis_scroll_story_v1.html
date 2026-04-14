@@ -1,0 +1,1353 @@
+<!--@layout(/layout/basic/layout.html)-->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet">
+
+<style>
+:root {
+  /* Primary */
+  --df-orange-900: #FF4D00;
+  --df-orange-800: #FF621F;
+  --df-orange-700: #FF783D;
+  --df-orange-600: #FF8D5C;
+  --df-orange-300: #FFCDB8;
+  --df-orange-100: #FFF8F5;
+  /* Black scale */
+  --df-black-900: #050505;
+  --df-black-800: #1D1D1D;
+  --df-black-700: #353535;
+  --df-black-600: #4D4D4D;
+  --df-black-400: #7D7D7D;
+  --df-black-200: #ADADAD;
+  --df-black-100: #C5C5C5;
+  /* Beige */
+  --df-beige-100: #FBF7F4;
+  --df-beige-200: #F3E7DC;
+  --df-beige-300: #ECDBCA;
+  /* Text */
+  --df-text-primary: #242424;
+  --df-text-inverse: #F5F5F5;
+  --df-text-muted: #7D7D7D;
+  /* Semantic */
+  --df-blue: #1754E6;
+  --df-bg-dark: #0A0A0A;
+  --df-bg-light: #FBF7F4;
+  /* Typography */
+  --df-font-ko: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  --df-font-num: 'Iskra', 'Asta Sans', sans-serif;
+  /* Spacing */
+  --df-section-v: 120px;
+  --df-section-v-mo: 80px;
+  --df-max-w: 1280px;
+  /* Motion */
+  --df-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --df-duration-base: 0.7s;
+}
+
+/* ============================================
+ * Common Layout (scoped under #df-story)
+ * ============================================ */
+#df-story {
+  font-family: var(--df-font-ko);
+  color: var(--df-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+#df-story *,
+#df-story *::before,
+#df-story *::after {
+  box-sizing: border-box;
+}
+
+#df-story .df-section {
+  padding: var(--df-section-v) 0;
+  position: relative;
+}
+#df-story .df-section--dark { background: var(--df-bg-dark); }
+#df-story .df-section--light { background: var(--df-bg-light); }
+#df-story .df-section--tall { padding: calc(var(--df-section-v) * 1.5) 0; }
+
+#df-story .df-container {
+  max-width: var(--df-max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+#df-story .df-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--df-orange-900);
+  margin: 0 0 16px;
+}
+#df-story .df-eyebrow--dark { color: var(--df-orange-900); }
+
+#df-story .df-section-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--df-text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 60px;
+}
+#df-story .df-section-title--light { color: var(--df-text-inverse); }
+#df-story .df-section-title em {
+  color: var(--df-orange-900);
+  font-style: normal;
+}
+
+/* Buttons */
+#df-story .df-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: 100px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.25s var(--df-ease-out);
+  cursor: pointer;
+  border: 2px solid transparent;
+  font-family: var(--df-font-ko);
+}
+#df-story .df-btn--primary {
+  background: var(--df-orange-900);
+  color: #ffffff;
+}
+#df-story .df-btn--primary:hover {
+  background: var(--df-orange-800);
+  transform: translateY(-2px);
+}
+#df-story .df-btn--secondary {
+  background: var(--df-text-primary);
+  color: #ffffff;
+}
+#df-story .df-btn--secondary:hover {
+  background: var(--df-black-700);
+}
+#df-story .df-btn--ghost {
+  background: transparent;
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.3);
+}
+#df-story .df-btn--ghost:hover {
+  border-color: #ffffff;
+}
+#df-story .df-btn--large {
+  padding: 18px 40px;
+  font-size: 1.0625rem;
+}
+
+/* Scroll reveal base */
+#df-story .df-scroll-reveal {
+  opacity: 0;
+  transform: translateY(48px);
+  transition:
+    opacity 0.7s var(--df-ease-out),
+    transform 0.7s var(--df-ease-out);
+}
+#df-story .df-scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+ * Section A: Hero
+ * ============================================ */
+#df-story #df-hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+}
+
+#df-story .df-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+#df-story .df-hero__bg-img {
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  display: block;
+  will-change: transform;
+}
+
+#df-story .df-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10,10,10,0.3) 0%,
+    rgba(10,10,10,0.7) 60%,
+    rgba(10,10,10,0.95) 100%
+  );
+}
+
+#df-story .df-hero__content {
+  position: relative;
+  z-index: 2;
+  max-width: var(--df-max-w);
+  width: 100%;
+  padding: 0 40px;
+  text-align: center;
+}
+
+#df-story .df-hero__label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--df-orange-900);
+  margin: 0 0 24px;
+}
+
+#df-story .df-hero__headline {
+  font-family: var(--df-font-ko);
+  font-size: clamp(2.8rem, 6vw, 6rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--df-text-inverse);
+  letter-spacing: -0.02em;
+  margin: 0 0 32px;
+}
+
+#df-story .df-word {
+  display: inline-block;
+  margin: 0 4px;
+}
+
+#df-story .df-word--accent {
+  color: var(--df-orange-900);
+}
+
+#df-story .df-hero__sub {
+  font-size: clamp(1rem, 1.3vw, 1.1875rem);
+  line-height: 1.75;
+  color: var(--df-black-100);
+  margin: 0 0 40px;
+}
+
+#df-story .df-scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#df-story .df-scroll-hint__line {
+  display: block;
+  width: 1px;
+  height: 60px;
+  background: var(--df-orange-900);
+  animation: dfScrollDown 1.6s ease-in-out infinite;
+}
+
+#df-story .df-scroll-hint__text {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--df-orange-900);
+}
+
+@keyframes dfScrollDown {
+  0%   { transform: scaleY(0); transform-origin: top; }
+  50%  { transform: scaleY(1); transform-origin: top; }
+  51%  { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* ============================================
+ * Section B: Scroll-Pinned Story
+ * ============================================ */
+#df-story #df-pin-story {
+  padding: var(--df-section-v) 0;
+  overflow: hidden;
+}
+
+#df-story .df-pin-story__inner {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 60px;
+  align-items: start;
+  max-width: var(--df-max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  min-height: 560px;
+}
+
+#df-story .df-pin-story__left {
+  padding-top: 40px;
+}
+
+#df-story .df-pin-story__eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--df-orange-900);
+  margin: 0 0 20px;
+}
+
+#df-story .df-pin-story__title {
+  font-size: clamp(1.75rem, 3.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--df-text-inverse);
+  letter-spacing: -0.02em;
+  margin: 0 0 48px;
+}
+
+#df-story .df-pin-story__title em {
+  color: var(--df-orange-900);
+  font-style: normal;
+}
+
+#df-story .df-pin-story__steps {
+  display: flex;
+  flex-direction: column;
+}
+
+#df-story .df-step {
+  display: flex;
+  gap: 20px;
+  padding: 24px 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.25;
+  transition: opacity 0.4s var(--df-ease-out);
+}
+
+#df-story .df-step:last-child {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+#df-story .df-step.is-active {
+  opacity: 1;
+}
+
+#df-story .df-step__num {
+  font-family: var(--df-font-num);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--df-orange-900);
+  min-width: 32px;
+  padding-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+#df-story .df-step__body {
+  flex: 1;
+}
+
+#df-story .df-step__label {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--df-text-inverse);
+  display: block;
+  margin-bottom: 6px;
+}
+
+#df-story .df-step__desc {
+  font-size: 0.9375rem;
+  color: var(--df-black-200);
+  line-height: 1.65;
+  margin: 0;
+}
+
+#df-story .df-pin-story__right {
+  position: relative;
+  height: 560px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--df-black-800);
+}
+
+#df-story .df-pin-visual {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.5s var(--df-ease-out);
+}
+
+#df-story .df-pin-visual.is-active {
+  opacity: 1;
+}
+
+#df-story .df-pin-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ============================================
+ * Section C: Video Grid
+ * ============================================ */
+#df-story #df-video-grid {
+  background: linear-gradient(
+    to bottom,
+    var(--df-bg-dark) 0%,
+    var(--df-bg-dark) 80%,
+    var(--df-bg-light) 100%
+  );
+}
+
+#df-story .df-video-grid__header {
+  margin-bottom: 60px;
+}
+
+#df-story .df-video-grid__layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  grid-template-rows: 280px 280px;
+  gap: 12px;
+}
+
+#df-story .df-video-cell {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--df-black-800);
+}
+
+#df-story .df-video-cell--large {
+  grid-row: 1 / 3;
+  grid-column: 1 / 2;
+}
+
+#df-story .df-video-cell video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#df-story .df-video-cell__label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%);
+  color: #ffffff;
+  pointer-events: none;
+}
+
+#df-story .df-video-cell__label span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--df-orange-600);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+#df-story .df-video-cell__label strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* ============================================
+ * Section D: Care Line-up
+ * ============================================ */
+#df-story #df-care-lineup {
+  scroll-margin-top: 80px;
+}
+
+#df-story .df-care__header {
+  margin-bottom: 60px;
+  text-align: center;
+}
+
+#df-story .df-care__header .df-eyebrow {
+  display: inline-block;
+}
+
+#df-story .df-care__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+#df-story .df-care-card {
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: box-shadow 0.35s var(--df-ease-out), transform 0.35s var(--df-ease-out);
+}
+
+#df-story .df-care-card:hover {
+  box-shadow: 0 24px 48px -20px rgba(0,0,0,0.18);
+  transform: translateY(-4px);
+}
+
+#df-story .df-care-card__img-wrap {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--df-beige-200);
+}
+
+#df-story .df-care-card__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s var(--df-ease-out);
+}
+
+#df-story .df-care-card:hover .df-care-card__img-wrap img {
+  transform: scale(1.04);
+}
+
+#df-story .df-care-card__body {
+  padding: 28px 28px 32px;
+}
+
+#df-story .df-care-card__tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+#df-story .df-care-card__tag--gut       { background: #E8F5E9; color: #2E7D32; }
+#df-story .df-care-card__tag--immune    { background: #E3F2FD; color: #1565C0; }
+#df-story .df-care-card__tag--pocatchew {
+  background: var(--df-orange-100);
+  color: var(--df-orange-900);
+}
+
+#df-story .df-care-card__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--df-text-primary);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+#df-story .df-care-card__desc {
+  font-size: 0.9375rem;
+  color: var(--df-text-muted);
+  line-height: 1.65;
+  margin: 0 0 24px;
+}
+
+/* ============================================
+ * Section E: Social Proof (Marquee)
+ * ============================================ */
+#df-story #df-social-proof {
+  background: var(--df-black-900);
+  overflow: hidden;
+}
+
+#df-story .df-social__header {
+  margin-bottom: 60px;
+  text-align: center;
+}
+
+#df-story .df-social__header .df-eyebrow {
+  display: inline-block;
+}
+
+#df-story .df-stat-note {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--df-orange-600);
+  background: rgba(255,77,0,0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#df-story .df-marquee {
+  overflow: hidden;
+  padding: 12px 0;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+          mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+#df-story .df-marquee__track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  will-change: transform;
+}
+
+#df-story .df-marquee--left .df-marquee__track {
+  animation: dfMarqueeLeft 40s linear infinite;
+}
+
+#df-story .df-marquee--right .df-marquee__track {
+  animation: dfMarqueeRight 40s linear infinite;
+}
+
+@keyframes dfMarqueeLeft {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes dfMarqueeRight {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+#df-story .df-review-card {
+  min-width: 300px;
+  max-width: 340px;
+  background: var(--df-black-800);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 24px 28px;
+  flex-shrink: 0;
+}
+
+#df-story .df-review-card__stars {
+  color: var(--df-orange-900);
+  font-size: 0.875rem;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+#df-story .df-review-card__text {
+  font-size: 0.9375rem;
+  color: var(--df-black-100);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+
+#df-story .df-review-card__author {
+  font-size: 0.8125rem;
+  color: var(--df-black-400);
+  display: block;
+}
+
+/* ============================================
+ * Section F: Final CTA
+ * ============================================ */
+#df-story #df-final-cta {
+  background: var(--df-black-900);
+  text-align: center;
+}
+
+#df-story .df-final-cta__inner {
+  max-width: 880px;
+}
+
+#df-story .df-final-cta__headline {
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  font-weight: 700;
+  color: var(--df-text-inverse);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+}
+
+#df-story .df-text--orange {
+  color: var(--df-orange-900);
+  font-style: normal;
+}
+
+#df-story .df-final-cta__sub {
+  font-size: 1.0625rem;
+  color: var(--df-black-100);
+  line-height: 1.7;
+  margin: 0;
+}
+
+#df-story .df-final-cta__btns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+#df-story .df-trust-badges {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  margin-top: 48px;
+  font-size: 0.875rem;
+  color: var(--df-black-200);
+}
+
+#df-story .df-trust-badges span {
+  font-weight: 500;
+}
+
+/* ============================================
+ * Responsive
+ * ============================================ */
+@media (max-width: 1024px) {
+  #df-story .df-pin-story__inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  #df-story .df-video-grid__layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+  #df-story .df-video-cell--large {
+    grid-column: 1 / 3;
+    grid-row: auto;
+    height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --df-section-v: var(--df-section-v-mo);
+  }
+  #df-story .df-container { padding: 0 20px; }
+  #df-story .df-hero__content { padding: 0 20px; }
+  #df-story .df-pin-story__inner {
+    grid-template-columns: 1fr;
+  }
+  #df-story .df-pin-story__right {
+    display: none;
+  }
+  #df-story .df-step { opacity: 1 !important; }
+  #df-story .df-care__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  #df-story .df-video-grid__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 8px;
+  }
+  #df-story .df-video-cell--large { grid-column: auto; }
+  #df-story .df-trust-badges {
+    flex-direction: column;
+    gap: 12px;
+  }
+  #df-story .df-final-cta__btns {
+    flex-direction: column;
+  }
+  #df-story .df-btn--large { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #df-story .df-marquee__track { animation: none !important; }
+  #df-story .df-scroll-hint__line { animation: none; }
+  #df-story .df-scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+</style>
+
+<div id="df-story">
+
+  <!-- ============================================
+       Section A: Hero
+       ============================================ -->
+  <section id="df-hero" class="df-section df-section--dark">
+    <div class="df-hero__bg">
+      <img src="https://placehold.co/1440x900/050505/FF4D00?text=HERO+IMAGE"
+           alt="" aria-hidden="true" class="df-hero__bg-img">
+      <div class="df-hero__overlay"></div>
+    </div>
+
+    <div class="df-hero__content">
+      <p class="df-hero__label df-reveal-fade">고양이 건강의 새로운 기준</p>
+
+      <h1 class="df-hero__headline">
+        <span class="df-word">고양이의</span>
+        <span class="df-word">장 건강,</span>
+        <br>
+        <span class="df-word df-word--accent">처음부터</span>
+        <span class="df-word">다시</span>
+        <span class="df-word">설계했습니다.</span>
+      </h1>
+
+      <p class="df-hero__sub df-reveal-fade">
+        과학적으로 배합된 고양이 전용 프로바이오틱스.<br>
+        닥터펠리스가 만든 장 케어의 시작.
+      </p>
+
+      <a href="#df-care-lineup" class="df-btn df-btn--primary df-reveal-fade">
+        제품 알아보기
+      </a>
+    </div>
+
+    <div class="df-scroll-hint" aria-hidden="true">
+      <span class="df-scroll-hint__line"></span>
+      <span class="df-scroll-hint__text">scroll</span>
+    </div>
+  </section>
+
+  <!-- ============================================
+       Section B: Scroll-Pinned Story
+       ============================================ -->
+  <section id="df-pin-story" class="df-section df-section--dark">
+    <div class="df-pin-story__inner">
+
+      <div class="df-pin-story__left">
+        <p class="df-pin-story__eyebrow">작동 원리</p>
+        <h2 class="df-pin-story__title">
+          장 속에서<br>
+          <em>정확히 어떤 일이</em><br>
+          일어나고 있을까요
+        </h2>
+
+        <div class="df-pin-story__steps">
+          <div class="df-step" data-step="0">
+            <span class="df-step__num">01</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">섭취</strong>
+              <p class="df-step__desc">포캣츄와 함께 섭취하면 기호성이 높아져 거부감 없이 먹습니다.</p>
+            </div>
+          </div>
+          <div class="df-step" data-step="1">
+            <span class="df-step__num">02</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">위산 통과</strong>
+              <p class="df-step__desc">이중 코팅 기술로 강한 위산 환경에서도 유익균이 살아남습니다.</p>
+            </div>
+          </div>
+          <div class="df-step" data-step="2">
+            <span class="df-step__num">03</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">장 도달</strong>
+              <p class="df-step__desc">소장·대장에 도달한 유익균이 정착 환경을 만들기 시작합니다.</p>
+            </div>
+          </div>
+          <div class="df-step" data-step="3">
+            <span class="df-step__num">04</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">마이크로바이옴 형성</strong>
+              <p class="df-step__desc">유익균이 증식하며 유해균을 억제하고 장내 균형을 회복합니다.</p>
+            </div>
+          </div>
+          <div class="df-step" data-step="4">
+            <span class="df-step__num">05</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">장벽 강화</strong>
+              <p class="df-step__desc">장 점막 세포를 보호하여 독소와 알레르기 물질의 침투를 막습니다.</p>
+            </div>
+          </div>
+          <div class="df-step" data-step="5">
+            <span class="df-step__num">06</span>
+            <div class="df-step__body">
+              <strong class="df-step__label">전신 면역 향상</strong>
+              <p class="df-step__desc">건강한 장은 면역 세포의 70%를 조절합니다. 몸 전체가 달라집니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="df-pin-story__right">
+        <div class="df-pin-visual" data-visual="0">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+01+%E2%80%93+%EC%84%AD%EC%B7%A8" alt="프로바이오틱스 섭취">
+        </div>
+        <div class="df-pin-visual" data-visual="1">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+02+%E2%80%93+%EC%9C%84%EC%82%B0+%ED%86%B5%EA%B3%BC" alt="위산 통과">
+        </div>
+        <div class="df-pin-visual" data-visual="2">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+03+%E2%80%93+%EC%9E%A5+%EB%8F%84%EB%8B%AC" alt="장 도달">
+        </div>
+        <div class="df-pin-visual" data-visual="3">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+04+%E2%80%93+%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%EB%B0%94%EC%9D%B4%EC%98%B4" alt="마이크로바이옴">
+        </div>
+        <div class="df-pin-visual" data-visual="4">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+05+%E2%80%93+%EC%9E%A5%EB%B2%BD+%EA%B0%95%ED%99%94" alt="장벽 강화">
+        </div>
+        <div class="df-pin-visual" data-visual="5">
+          <img src="https://placehold.co/1200x900/050505/FF4D00?text=STEP+06+%E2%80%93+%EB%A9%B4%EC%97%AD+%ED%96%A5%EC%83%81" alt="면역 향상">
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================
+       Section C: Video Grid
+       ============================================ -->
+  <section id="df-video-grid" class="df-section df-section--dark">
+    <div class="df-container">
+      <div class="df-video-grid__header">
+        <p class="df-eyebrow">Real Moments</p>
+        <h2 class="df-section-title df-section-title--light">
+          달라지는 순간들
+        </h2>
+      </div>
+
+      <div class="df-video-grid__layout">
+        <!-- 대형 메인 비디오 -->
+        <div class="df-video-cell df-video-cell--large">
+          <video
+            data-autoplay
+            muted loop playsinline
+            poster="https://placehold.co/1200x675/1a1a1a/ffffff?text=VIDEO+1">
+            <!-- TODO: 비디오 URL 교체 -->
+            <source src="" type="video/mp4">
+          </video>
+          <div class="df-video-cell__label">
+            <span>장 건강 케어</span>
+            <strong>프로바이오틱스 시작 후 4주</strong>
+          </div>
+        </div>
+
+        <!-- 소형 보조 비디오 -->
+        <div class="df-video-cell df-video-cell--small">
+          <video
+            data-autoplay
+            muted loop playsinline
+            poster="https://placehold.co/600x400/1a1a1a/ffffff?text=VIDEO+2">
+            <source src="" type="video/mp4">
+          </video>
+          <div class="df-video-cell__label">
+            <span>포캣츄</span>
+            <strong>먹는 즐거움</strong>
+          </div>
+        </div>
+
+        <div class="df-video-cell df-video-cell--small">
+          <video
+            data-autoplay
+            muted loop playsinline
+            poster="https://placehold.co/600x400/1a1a1a/ffffff?text=VIDEO+3">
+            <source src="" type="video/mp4">
+          </video>
+          <div class="df-video-cell__label">
+            <span>면역케어</span>
+            <strong>활발해진 일상</strong>
+          </div>
+        </div>
+
+        <div class="df-video-cell df-video-cell--small">
+          <video
+            data-autoplay
+            muted loop playsinline
+            poster="https://placehold.co/600x400/1a1a1a/ffffff?text=VIDEO+4">
+            <source src="" type="video/mp4">
+          </video>
+          <div class="df-video-cell__label">
+            <span>헤어볼케어</span>
+            <strong>털 관리의 변화</strong>
+          </div>
+        </div>
+
+        <div class="df-video-cell df-video-cell--small">
+          <video
+            data-autoplay
+            muted loop playsinline
+            poster="https://placehold.co/600x400/1a1a1a/ffffff?text=VIDEO+5">
+            <source src="" type="video/mp4">
+          </video>
+          <div class="df-video-cell__label">
+            <span>반려인 후기</span>
+            <strong>"3주 만에 달라졌어요"</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       Section D: Care Line-up
+       ============================================ -->
+  <section id="df-care-lineup" class="df-section df-section--light">
+    <div class="df-container">
+      <div class="df-care__header">
+        <p class="df-eyebrow df-eyebrow--dark">케어 라인업</p>
+        <h2 class="df-section-title">
+          고양이의 건강을<br>
+          <em>카테고리별로 설계합니다</em>
+        </h2>
+      </div>
+
+      <div class="df-care__grid">
+        <!-- 장케어 -->
+        <div class="df-care-card df-scroll-reveal" data-delay="0">
+          <div class="df-care-card__img-wrap">
+            <img src="https://placehold.co/800x600/FBF7F4/050505?text=%EC%9E%A5%EC%BC%80%EC%96%B4"
+                 alt="장케어 프로바이오틱스">
+          </div>
+          <div class="df-care-card__body">
+            <span class="df-care-card__tag df-care-card__tag--gut">장케어</span>
+            <h3 class="df-care-card__name">닥터펠리스 프로바이오틱스</h3>
+            <p class="df-care-card__desc">
+              고양이 전용 6종 복합 유산균.<br>
+              소화부터 장벽 강화까지.
+            </p>
+            <a href="#" class="df-btn df-btn--secondary">자세히 보기</a>
+          </div>
+        </div>
+
+        <!-- 면역케어 -->
+        <div class="df-care-card df-scroll-reveal" data-delay="100">
+          <div class="df-care-card__img-wrap">
+            <img src="https://placehold.co/800x600/FBF7F4/050505?text=%EB%A9%B4%EC%97%AD%EC%BC%80%EC%96%B4"
+                 alt="면역력 케어">
+          </div>
+          <div class="df-care-card__body">
+            <span class="df-care-card__tag df-care-card__tag--immune">면역케어</span>
+            <h3 class="df-care-card__name">면역력 영양케어</h3>
+            <p class="df-care-card__desc">
+              면역 세포를 깨우는<br>
+              고농축 영양 포뮬러.
+            </p>
+            <a href="#" class="df-btn df-btn--secondary">자세히 보기</a>
+          </div>
+        </div>
+
+        <!-- 포캣츄 -->
+        <div class="df-care-card df-scroll-reveal" data-delay="200">
+          <div class="df-care-card__img-wrap">
+            <img src="https://placehold.co/800x600/FBF7F4/050505?text=%ED%8F%AC%EC%BA%A3%EC%B8%84"
+                 alt="포캣츄 액상간식">
+          </div>
+          <div class="df-care-card__body">
+            <span class="df-care-card__tag df-care-card__tag--pocatchew">포캣츄</span>
+            <h3 class="df-care-card__name">포캣츄 액상 트릿</h3>
+            <p class="df-care-card__desc">
+              영양제 섭취를 돕는<br>
+              고기호성 액상 간식.
+            </p>
+            <a href="#" class="df-btn df-btn--secondary">자세히 보기</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       Section E: Social Proof (Marquee)
+       ============================================ -->
+  <section id="df-social-proof" class="df-section df-section--dark">
+    <div class="df-social__header df-container">
+      <p class="df-eyebrow">고양이 집사들의 이야기</p>
+      <h2 class="df-section-title df-section-title--light">
+        87%의 반려인이<br>3주 안에 변화를 느꼈습니다.
+        <span class="df-stat-note">⚠️ TODO: 실측치로 교체</span>
+      </h2>
+    </div>
+
+    <!-- 마퀴 Row 1: 왼쪽으로 -->
+    <div class="df-marquee df-marquee--left" aria-hidden="true">
+      <div class="df-marquee__track">
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"변비가 심했는데 2주 만에 변 상태가 정말 좋아졌어요. 이제 매일 잘 먹어요."</p>
+          <span class="df-review-card__author">코코 집사님 · 장케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"포캣츄랑 같이 주니까 영양제를 완전 잘 먹어요. 전에는 뱉었는데."</p>
+          <span class="df-review-card__author">루이 집사님 · 포캣츄 콤보</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"털이 눈에 띄게 줄었고 토하는 횟수가 절반 이하로 줄었습니다."</p>
+          <span class="df-review-card__author">밀키 집사님 · 헤어볼케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"묽은 변이 계속 걱정이었는데 3주 꾸준히 먹였더니 완전히 잡혔어요."</p>
+          <span class="df-review-card__author">보리 집사님 · 장케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"수의사 선생님도 장 상태가 많이 좋아졌다고 하셨어요. 계속 쓸게요."</p>
+          <span class="df-review-card__author">나비 집사님 · 프로바이오틱스</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★☆</div>
+          <p class="df-review-card__text">"입맛이 까다로운 고양이인데 포캣츄는 정말 잘 먹어요. 기호성 최고."</p>
+          <span class="df-review-card__author">몽이 집사님 · 포캣츄</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 마퀴 Row 2: 오른쪽으로 -->
+    <div class="df-marquee df-marquee--right" aria-hidden="true">
+      <div class="df-marquee__track">
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"면역력이 약해서 자꾸 아팠는데 4개월째 먹이고 있는데 한 번도 안 아팠어요."</p>
+          <span class="df-review-card__author">솜이 집사님 · 면역케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"가스 차는 게 심했는데 이제는 냄새도 많이 줄었고 배가 편해보여요."</p>
+          <span class="df-review-card__author">초코 집사님 · 장케어 3개월</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"구독으로 쓰고 있는데 정기배송 할인이 있어서 부담이 없어요."</p>
+          <span class="df-review-card__author">하루 집사님 · 정기구독</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"수술 후 회복 중인 고양이한테 주고 있어요. 식욕이 많이 살아났어요."</p>
+          <span class="df-review-card__author">별이 집사님 · 영양케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"처음엔 반신반의했는데 한 달 지나서 확실히 다르더라고요. 추천합니다."</p>
+          <span class="df-review-card__author">구름 집사님 · 장케어</span>
+        </div>
+        <div class="df-review-card">
+          <div class="df-review-card__stars">★★★★★</div>
+          <p class="df-review-card__text">"사료를 바꾸지 않고 이것만 추가했을 뿐인데 변 냄새가 확 줄었어요."</p>
+          <span class="df-review-card__author">땅콩 집사님 · 프로바이오틱스</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================
+       Section F: Final CTA
+       ============================================ -->
+  <section id="df-final-cta" class="df-section df-section--dark df-section--tall">
+    <div class="df-container df-final-cta__inner">
+      <p class="df-eyebrow">지금 시작하기</p>
+      <h2 class="df-final-cta__headline">
+        고양이의 장 건강.<br>
+        오늘부터 <em class="df-text--orange">닥터펠리스</em>와 함께.
+      </h2>
+      <p class="df-final-cta__sub">
+        첫 구매 20% 할인 · 무료 샘플 증정 · 정기구독 추가 혜택
+      </p>
+      <div class="df-final-cta__btns">
+        <!-- TODO: 구매 페이지 URL 교체 -->
+        <a href="#" class="df-btn df-btn--primary df-btn--large">
+          첫 구매 시작하기
+        </a>
+        <!-- TODO: 제품 목록 URL 교체 -->
+        <a href="#" class="df-btn df-btn--ghost df-btn--large">
+          제품 전체 보기
+        </a>
+      </div>
+      <div class="df-trust-badges">
+        <span>✓ 수의사 추천</span>
+        <span>✓ HACCP 인증</span>
+        <span>✓ 30일 환불 보장</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/bundled/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* --------------------------------------------
+   * 0. Cafe24 #container padding-top 주입 차단
+   * -------------------------------------------- */
+  var container = document.getElementById('container');
+  if (container) {
+    var containerObserver = new MutationObserver(function () {
+      if (container.style.paddingTop && container.style.paddingTop !== '0px') {
+        container.style.paddingTop = '0';
+      }
+    });
+    containerObserver.observe(container, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+    container.style.paddingTop = '0';
+  }
+
+  /* --------------------------------------------
+   * 1. Guard: 라이브러리 로드 확인
+   * -------------------------------------------- */
+  if (typeof window.Lenis === 'undefined' ||
+      typeof window.gsap === 'undefined' ||
+      typeof window.ScrollTrigger === 'undefined') {
+    console.warn('[df-story] Required libraries missing (Lenis / GSAP / ScrollTrigger).');
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* --------------------------------------------
+   * 2. Lenis 스무스 스크롤 + GSAP 연동
+   * -------------------------------------------- */
+  var lenis = new Lenis({
+    duration: 1.2,
+    easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+    smoothWheel: true
+  });
+
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+  gsap.ticker.lagSmoothing(0);
+
+  /* --------------------------------------------
+   * 3. Hero 진입 애니메이션
+   * -------------------------------------------- */
+  gsap.from('#df-story .df-word', {
+    opacity: 0,
+    y: 40,
+    duration: 0.8,
+    stagger: 0.12,
+    ease: 'power3.out',
+    delay: 0.3
+  });
+
+  gsap.from('#df-story .df-reveal-fade', {
+    opacity: 0,
+    y: 20,
+    duration: 0.8,
+    stagger: 0.15,
+    ease: 'power3.out',
+    delay: 1.0
+  });
+
+  gsap.to('#df-story .df-hero__bg-img', {
+    yPercent: 20,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '#df-hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: 1
+    }
+  });
+
+  /* --------------------------------------------
+   * 4. GNB 색상 전환 (Cafe24 #header 대상)
+   * -------------------------------------------- */
+  ScrollTrigger.create({
+    trigger: '#df-hero',
+    start: 'bottom top',
+    onEnter: function () {
+      var h = document.querySelector('#header');
+      if (h) h.style.cssText =
+        'background:#050505 !important;transition:background 0.4s ease;';
+    },
+    onLeaveBack: function () {
+      var h = document.querySelector('#header');
+      if (h) h.style.cssText =
+        'background:transparent !important;transition:background 0.4s ease;';
+    }
+  });
+
+  /* --------------------------------------------
+   * Section B: Scroll-Pinned Story (desktop only)
+   * -------------------------------------------- */
+  var isMobile = window.innerWidth < 768;
+  var pinStoryEl = document.getElementById('df-pin-story');
+  if (pinStoryEl && !isMobile) {
+    var steps = gsap.utils.toArray('#df-story .df-step');
+    var visuals = gsap.utils.toArray('#df-story .df-pin-visual');
+    var STEP_COUNT = steps.length;
+
+    if (STEP_COUNT > 0) {
+      steps[0].classList.add('is-active');
+      visuals[0].classList.add('is-active');
+
+      ScrollTrigger.create({
+        trigger: '#df-pin-story',
+        start: 'top top',
+        end: '+=' + (STEP_COUNT * 400),
+        pin: true,
+        pinSpacing: true,
+        onUpdate: function (self) {
+          var idx = Math.min(
+            Math.floor(self.progress * STEP_COUNT),
+            STEP_COUNT - 1
+          );
+          steps.forEach(function (s, i) {
+            s.classList.toggle('is-active', i === idx);
+          });
+          visuals.forEach(function (v, i) {
+            v.classList.toggle('is-active', i === idx);
+          });
+        }
+      });
+    }
+  }
+
+  /* --------------------------------------------
+   * 5. 비디오 IntersectionObserver 자동재생
+   * -------------------------------------------- */
+  var autoVideos = document.querySelectorAll('#df-story video[data-autoplay]');
+  if (autoVideos.length) {
+    var vObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          var p = e.target.play();
+          if (p && typeof p.catch === 'function') p.catch(function () {});
+        } else {
+          e.target.pause();
+        }
+      });
+    }, { threshold: 0.3 });
+    autoVideos.forEach(function (v) { vObserver.observe(v); });
+  }
+
+  /* --------------------------------------------
+   * 6. 스크롤 리빌 (delay 지원)
+   * -------------------------------------------- */
+  var reveals = document.querySelectorAll('#df-story .df-scroll-reveal');
+  if (reveals.length) {
+    var rObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var delay = Number(e.target.getAttribute('data-delay')) || 0;
+        setTimeout(function () { e.target.classList.add('is-visible'); }, delay);
+        rObserver.unobserve(e.target);
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach(function (el) { rObserver.observe(el); });
+  }
+
+  /* --------------------------------------------
+   * 7. 마퀴 seamless loop (트랙 복제)
+   * -------------------------------------------- */
+  document.querySelectorAll('#df-story .df-marquee__track').forEach(function (track) {
+    track.parentElement.appendChild(track.cloneNode(true));
+  });
+
+  /* --------------------------------------------
+   * 8. 최초 레이아웃 안정화 후 ScrollTrigger 재계산
+   * -------------------------------------------- */
+  setTimeout(function () {
+    ScrollTrigger.refresh();
+  }, 300);
+
+})();
+</script>
