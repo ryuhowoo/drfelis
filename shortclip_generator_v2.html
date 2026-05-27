@@ -32,6 +32,9 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .ta{background:linear-gradient(150deg,#e8ddc8,#c9b48a)}
 .tb{background:linear-gradient(150deg,#111,#252010)}
 .tc{background:linear-gradient(150deg,#3a2fd8,#7b3fc8)}
+.td{background:linear-gradient(150deg,#FCE7E9,#DDE8F0)}
+.te{background:linear-gradient(150deg,#FFFFFF,#EEEEEE)}
+.tf{background:linear-gradient(150deg,#F2EDDE,#D9CCAE)}
 .tcheck{position:absolute;top:3px;right:3px;width:14px;height:14px;background:var(--primary);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;color:#fff}
 .type-btn.active .tcheck{display:flex}
 .tlabel{font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
@@ -139,19 +142,13 @@ canvas#cv{display:block;width:328px;height:583px}
 .timing-lbl{font-size:10px;color:var(--muted);width:28px;flex-shrink:0}
 .timing-slider{flex:1;accent-color:var(--primary);height:4px;cursor:pointer}
 .timing-val{font-size:10px;color:var(--muted);width:24px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
-#sz_overlay{position:absolute;inset:0;pointer-events:none;z-index:50;display:none}
-.sz-danger{position:absolute;background:rgba(255,50,50,.22);border:1px solid rgba(255,80,80,.45)}
-.sz-cta{position:absolute;background:rgba(255,145,0,.18);border:1px dashed rgba(255,160,0,.6)}
-.sz-safe{position:absolute;border:1.5px dashed rgba(101,173,198,.85)}
-.sz-lbl{position:absolute;font-size:7px;font-weight:700;letter-spacing:.04em;padding:1px 4px;border-radius:2px;white-space:nowrap;line-height:1.5}
-.sz-lbl.d{background:rgba(210,35,35,.8);color:#fff}
-.sz-lbl.o{background:rgba(190,105,0,.8);color:#fff}
-.sz-lbl.g{background:rgba(61,123,145,.95);color:#fff}
-.sz-tabs{display:flex;gap:4px;margin-bottom:7px}
-.sz-tab{flex:1;padding:4px 2px;border:1px solid var(--border2);border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
-.sz-tab.active{background:var(--surface3);border-color:var(--border2);color:var(--text)}
-.sz-toggle{width:100%;padding:6px;border:1px solid var(--border2);border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
-.sz-toggle.on{border-color:var(--primary);color:var(--primary);background:rgba(101,173,198,.10)}
+.recent-strip{display:flex;gap:5px;margin-top:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.recent-strip::-webkit-scrollbar{height:4px}
+.recent-strip::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.recent-thumb{width:40px;height:40px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2);padding:0;overflow:hidden;flex-shrink:0;transition:.15s;display:block;position:relative}
+.recent-thumb:hover{border-color:var(--primary);transform:translateY(-1px)}
+.recent-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.recent-label{font-size:9px;color:var(--muted2);margin-top:6px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .audio-slot{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px}
 .audio-slot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
 .audio-slot-title{font-size:11px;font-weight:700;color:var(--text);flex-shrink:0}
@@ -186,6 +183,9 @@ canvas#cv{display:block;width:328px;height:583px}
 <div class="type-btn active" onclick='setType("A",this)'><div class="tbi ta"><div class="tlabel">A</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("B",this)'><div class="tbi tb"><div class="tlabel">B</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("C",this)'><div class="tbi tc"><div class="tlabel">C</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("D",this)'><div class="tbi td"><div class="tlabel" style="color:#7A5970">D</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("E",this)'><div class="tbi te"><div class="tlabel" style="color:#222">E</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("F",this)'><div class="tbi tf"><div class="tlabel" style="color:#5A4A2A">F</div></div><div class="tcheck">✓</div></div>
 </div>
 <div id="type_name" style="text-align:center;font-size:10px;color:var(--muted);margin-top:7px">A · 웜 라이프스타일</div>
 </div>
@@ -249,6 +249,8 @@ canvas#cv{display:block;width:328px;height:583px}
 <input type="file" accept="image/*" onchange='loadImg("logo",event)'>
 <button class="clr" onclick='clearImg("logo",event)'>✕</button>
 </div>
+<div class="recent-label" id="logo_recent_label" style="display:none">최근 사용</div>
+<div class="recent-strip" id="logo_recent"></div>
 </div>
 <div class="sec">
 <div class="sl">메인 이미지</div>
@@ -261,6 +263,8 @@ canvas#cv{display:block;width:328px;height:583px}
 <input type="file" accept="image/*" onchange='loadImg("main",event)'>
 <button class="clr" onclick='clearImg("main",event)'>✕</button>
 </div>
+<div class="recent-label" id="main_recent_label" style="display:none">최근 사용</div>
+<div class="recent-strip" id="main_recent"></div>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
 <span style="font-size:10px;color:var(--muted);flex-shrink:0">크기</span>
 <input type="range" id="main_scale" min="-20" max="20" value="0" style="flex:1;accent-color:var(--primary);height:4px;cursor:pointer" oninput='document.getElementById("main_scale_val").textContent=(0<this.value?"+":"")+this.value+"%",render()'>
@@ -322,7 +326,6 @@ canvas#cv{display:block;width:328px;height:583px}
 <div class="center">
 <div class="cf" style="position:relative">
 <canvas id="cv" width="504" height="896"></canvas>
-<div id="sz_overlay"></div>
 <div id="rec_overlay">
 <div class="rec-spinner"></div>
 <div class="rec-text" id="rec_text">영상 생성 중... (0%)</div>
@@ -337,20 +340,6 @@ canvas#cv{display:block;width:328px;height:583px}
 </div>
 <div class="right">
 <div class="ph">히스토리</div>
-<div class="sec" style="padding:10px 17px">
-<div class="sl" style="margin-bottom:7px">세이프존 가이드</div>
-<div class="sz-tabs">
-<button class="sz-tab active" id="sz_tiktok" onclick='setSzPlatform("tiktok",this)'>TikTok</button>
-<button class="sz-tab" id="sz_reels" onclick='setSzPlatform("reels",this)'>Reels</button>
-<button class="sz-tab" id="sz_shorts" onclick='setSzPlatform("shorts",this)'>Shorts</button>
-</div>
-<button class="sz-toggle" id="sz_btn" onclick="toggleSafezone()">⬜ 세이프존 OFF</button>
-<div style="display:flex;gap:10px;margin-top:6px;font-size:9px;color:var(--muted)">
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,50,50,.45);border:1px solid rgba(255,80,80,.6)"></span>UI 위험</span>
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,145,0,.35);border:1px dashed rgba(255,160,0,.7)"></span>CTA</span>
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;border:1.5px dashed rgba(101,173,198,.85)"></span>안전구간</span>
-</div>
-</div>
 <div class="sec">
 <div class="sl">저장 히스토리</div>
 <div class="hist-grid" id="hist_grid"><div class="hist-loading">Firebase 연결 중...</div></div>
@@ -377,6 +366,13 @@ canvas#cv{display:block;width:328px;height:583px}
 <button class="ttab" onclick='setMotion("bounce",this)'>바운스</button>
 <button class="ttab" onclick='setMotion("glow",this)'>글로우</button>
 <button class="ttab" onclick='setMotion("radar",this)'>레이더</button>
+<button class="ttab" onclick='setMotion("kenburns",this)'>켄번스</button>
+<button class="ttab" onclick='setMotion("breathe",this)'>브리드</button>
+<button class="ttab" onclick='setMotion("tilt",this)'>틸트</button>
+<button class="ttab" onclick='setMotion("flash",this)'>플래시</button>
+<button class="ttab" onclick='setMotion("ripple",this)'>리플</button>
+<button class="ttab" onclick='setMotion("dust",this)'>더스트</button>
+<button class="ttab" onclick='setMotion("swipe",this)'>스와이프</button>
 </div>
 <div class="sl" style="margin-top:14px;margin-bottom:7px">영상 길이</div>
 <div class="dur-tabs">
@@ -422,8 +418,6 @@ let _badgeDragging = false;
 let _badgeDragStartX = 0;
 let _badgeDragStartY = 0;
 let _lastBadgePos = { x: 0, y: 0, r: 54 };
-let _szOn = false;
-let _szPlatform = 'tiktok';
 let _durationSec = 10;
 let _timing = { logo: 0.0, copy: 0.08, coupon: 0.20 };
 let _layerAlpha = { logo: 1.0, copy: 1.0, coupon: 1.0 };
@@ -444,64 +438,14 @@ let _audio = {
   bgmVol: 0.6
 };
 
-const TYPE_NAMES = {A:'A · 웜 라이프스타일',B:'B · 다크 프리미엄',C:'C · 비비드 일렉트릭'};
-const TYPE_IND   = {A:'Type A · Warm',B:'Type B · Dark',C:'Type C · Vivid'};
-
-const SZ_DATA = {
-  tiktok: { bottomPct:0.165, rightPct:0.10, ctaW:60,  ctaH:200, name:'TikTok' },
-  reels:  { bottomPct:0.150, rightPct:0.08, ctaW:55,  ctaH:175, name:'Reels'  },
-  shorts: { bottomPct:0.200, rightPct:0.06, ctaW:50,  ctaH:160, name:'Shorts' },
+const TYPE_NAMES = {
+  A:'A · 웜 라이프스타일', B:'B · 다크 프리미엄', C:'C · 비비드 일렉트릭',
+  D:'D · 소프트 파스텔',   E:'E · 미니멀 클린',   F:'F · 매거진 에디토리얼'
 };
-
-function setSzPlatform(p, btn){
-  _szPlatform = p;
-  document.querySelectorAll('.sz-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if(_szOn) renderSafezone();
-}
-function toggleSafezone(){
-  _szOn = !_szOn;
-  const btn = document.getElementById('sz_btn');
-  btn.textContent = _szOn ? '🟩 세이프존 ON' : '⬜ 세이프존 OFF';
-  btn.classList.toggle('on', _szOn);
-  document.getElementById('sz_overlay').style.display = _szOn ? 'block' : 'none';
-  if(_szOn) renderSafezone();
-}
-function hideSafezone(){ document.getElementById('sz_overlay').style.display = 'none'; }
-function showSafezone(){ if(_szOn) document.getElementById('sz_overlay').style.display = 'block'; }
-
-// FIX: 실제 캔버스 표시 크기 동적 측정 (이전 v1: 252×448 하드코딩 → 어긋남)
-function renderSafezone(){
-  const overlay = document.getElementById('sz_overlay');
-  const rect = CV.getBoundingClientRect();
-  const CW = Math.round(rect.width);
-  const CH = Math.round(rect.height);
-  if(CW === 0 || CH === 0) return;
-  const d = SZ_DATA[_szPlatform];
-  const botH  = Math.round(CH * d.bottomPct);
-  const rgtW  = Math.round(CW * d.rightPct);
-  const safeW = CW - rgtW;
-  const safeH = CH - botH;
-  // CTA 박스도 캔버스 크기에 비례 (원래 252px 기준이었음)
-  const SCALE = CW / 252;
-  const ctaWpx = Math.round(d.ctaW * SCALE);
-  const ctaHpx = Math.min(Math.round(d.ctaH * SCALE), safeH);
-  overlay.innerHTML = `
-    <div class="sz-danger" style="left:0;bottom:0;width:${CW}px;height:${botH}px">
-      <span class="sz-lbl d" style="top:4px;left:50%;transform:translateX(-50%)">UI · 하단 ${Math.round(d.bottomPct*100)}%</span>
-    </div>
-    <div class="sz-danger" style="right:0;top:0;width:${rgtW}px;height:${safeH}px">
-      <span class="sz-lbl d" style="top:3px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl">UI</span>
-    </div>
-    <div class="sz-cta" style="left:0;bottom:${botH}px;width:${ctaWpx}px;height:${ctaHpx}px">
-      <span class="sz-lbl o" style="bottom:3px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl">CTA</span>
-    </div>
-    <div class="sz-safe" style="left:0;top:0;width:${safeW}px;height:${safeH}px">
-      <span class="sz-lbl g" style="top:3px;left:4px">${d.name} 안전</span>
-    </div>
-  `;
-}
-window.addEventListener('resize', ()=>{ if(_szOn) renderSafezone(); });
+const TYPE_IND   = {
+  A:'Type A · Warm',       B:'Type B · Dark',     C:'Type C · Vivid',
+  D:'Type D · Pastel',     E:'Type E · Minimal',  F:'Type F · Editorial'
+};
 
 function switchLeftTab(tabId, btn) {
   document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
@@ -557,7 +501,10 @@ function setType(t,btn){
   const D={
     A:{s:'solid',c:'#FBF7F3',g1:'#ede3cf',g2:'#c9b48a',ctext:'#3a2a10',pCol:'#7a5a2a'},
     B:{s:'solid',c:'#0d0d0d',g1:'#111',g2:'#252010',ctext:'#ffffff',pCol:'#8a8a8a'},
-    C:{s:'grad',c:'#4233d4',g1:'#3a2fd8',g2:'#7b3fc8',ctext:'#ffffff',pCol:'#d0d0d0'}
+    C:{s:'grad',c:'#4233d4',g1:'#3a2fd8',g2:'#7b3fc8',ctext:'#ffffff',pCol:'#d0d0d0'},
+    D:{s:'grad',c:'#FCE7E9',g1:'#FCE7E9',g2:'#DDE8F0',ctext:'#5A4360',pCol:'#8A7A95'},
+    E:{s:'solid',c:'#FFFFFF',g1:'#FFFFFF',g2:'#EEEEEE',ctext:'#1A1A1A',pCol:'#666666'},
+    F:{s:'solid',c:'#F2EDDE',g1:'#F2EDDE',g2:'#D9CCAE',ctext:'#3A2D1A',pCol:'#7A6A50'}
   };
   const d=D[t];
   ['c_solid','ct_solid'].forEach(id=>document.getElementById(id).value=d.c);
@@ -623,12 +570,72 @@ function loadImg(k,e){
   const r=new FileReader();
   r.onload=ev=>{
     const img=new Image();
-    img.onload=()=>{if(k==='logo'){_logo=img;_logoSrc=ev.target.result;}else{_main=img;_mainSrc=ev.target.result;}render();};
+    img.onload=()=>{if(k==='logo'){_logo=img;_logoSrc=ev.target.result;}else{_main=img;_mainSrc=ev.target.result;}render();renderRecentImages();};
     img.src=ev.target.result;
     document.getElementById(k+'_img').src=ev.target.result;
     document.getElementById(k+'_img').style.display='block';
     document.getElementById(k+'_hint').style.display='none';
   };r.readAsDataURL(f);
+}
+
+// ── RECENT IMAGES LIBRARY (히스토리에서 추출) ──
+let _recentImagesByField = { logo: [], main: [] };
+const RECENT_IMG_LIMIT = 8;
+
+function getRecentImages(field){
+  const key = field === 'logo' ? 'logoSrc' : 'mainSrc';
+  const seen = new Set();
+  const out = [];
+  // 현재 세션 값을 가장 위에 (있다면)
+  const current = field === 'logo' ? _logoSrc : _mainSrc;
+  if(current){ seen.add(current); }
+  for(const h of _history){
+    const src = h && h[key];
+    if(src && !seen.has(src)){
+      seen.add(src);
+      out.push(src);
+      if(out.length >= RECENT_IMG_LIMIT) break;
+    }
+  }
+  return out;
+}
+
+function applyRecentImage(field, idx){
+  const src = _recentImagesByField[field][idx];
+  if(!src) return;
+  const img = new Image();
+  img.onload = () => {
+    if(field === 'logo'){ _logo = img; _logoSrc = src; }
+    else { _main = img; _mainSrc = src; }
+    render();
+    renderRecentImages();  // 방금 적용된 이미지가 "현재" 자리로 이동하여 목록에서 빠짐
+  };
+  img.onerror = () => toast('이미지를 불러올 수 없습니다');
+  img.src = src;
+  const imgEl = document.getElementById(field + '_img');
+  imgEl.src = src;
+  imgEl.style.display = 'block';
+  document.getElementById(field + '_hint').style.display = 'none';
+}
+
+function renderRecentImages(){
+  ['logo','main'].forEach(field => {
+    const container = document.getElementById(field + '_recent');
+    const label = document.getElementById(field + '_recent_label');
+    if(!container || !label) return;
+    _recentImagesByField[field] = getRecentImages(field);
+    const arr = _recentImagesByField[field];
+    if(!arr.length){
+      container.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+    label.style.display = 'block';
+    container.style.display = 'flex';
+    container.innerHTML = arr.map((src, i) =>
+      `<button class="recent-thumb" type="button" title="클릭해서 사용" onclick="applyRecentImage('${field}',${i})"><img src="${src}" alt=""></button>`
+    ).join('');
+  });
 }
 function clearImg(k,e){
   e.stopPropagation();
@@ -636,6 +643,7 @@ function clearImg(k,e){
   document.getElementById(k+'_img').style.display='none';
   document.getElementById(k+'_hint').style.display='flex';
   render();
+  renderRecentImages();
 }
 
 // ── AUDIO LOAD/CLEAR (BGM only) ──
@@ -808,12 +816,20 @@ function render(p=0) {
   _bounceActive = p > 0 && _motions.includes('bounce');
   _layerAlpha = calcLayerAlphas(p);
   CTX.clearRect(0,0,W,H);
-  if(_type==='A') renderA(p);
+  if(_type==='A')      renderA(p);
   else if(_type==='B') renderB(p);
-  else renderC(p);
+  else if(_type==='C') renderC(p);
+  else if(_type==='D') renderD(p);
+  else if(_type==='E') renderE(p);
+  else if(_type==='F') renderF(p);
+  else                 renderA(p);
   if(p > 0 && _motions.includes('particle'))   drawConfetti(p);
   if(p > 0 && _motions.includes('aurora'))     drawAurora(p);
   if(p > 0 && _motions.includes('bokeh'))      drawBokeh(p);
+  if(p > 0 && _motions.includes('dust'))       drawDust(p);
+  if(p > 0 && _motions.includes('ripple'))     drawRipple(p);
+  if(p > 0 && _motions.includes('swipe'))      drawSwipe(p);
+  if(p > 0 && _motions.includes('flash'))      drawFlash(p);
   if(p > 0 && _motions.includes('glitch'))     drawGlitch(p);
   if(p > 0 && _motions.includes('shine'))      drawShine(p);
   if(p > 0 && _motions.includes('glow'))       drawGlow(p);
@@ -824,27 +840,31 @@ function drawMainImgFit(zoneTop, zoneBottom, p){
   if(!_main) return;
   const zoneW = W-60, zoneH = zoneBottom - zoneTop;
   if(zoneH <= 0) return;
-  let s = Math.min(zoneW/_main.width, zoneH/_main.height) * 0.75 * getMainScale();
-  let m_dw = _main.width*s, m_dh = _main.height*s;
-  let m_dx = (W-m_dw)/2, m_dy = zoneTop+(zoneH-m_dh)/2;
+  const baseS = Math.min(zoneW/_main.width, zoneH/_main.height) * 0.75 * getMainScale();
+  let extraScale = 1, panX = 0, panY = 0, rotation = 0;
   if(p > 0) {
-    if(_motions.includes('zoom')) {
-      s = s * (1 + 0.15 * Math.min(p/0.5, 1));
-      m_dw = _main.width*s; m_dh = _main.height*s;
-      m_dx = (W-m_dw)/2; m_dy = zoneTop+(zoneH-m_dh)/2;
+    if(_motions.includes('zoom'))     extraScale *= (1 + 0.15 * Math.min(p/0.5, 1));
+    if(_motions.includes('kenburns')){
+      extraScale *= (1 + 0.18 * p);
+      panX += Math.sin(p * Math.PI) * 22;
+      panY += Math.cos(p * Math.PI * 0.7) * 10;
     }
-    if(_motions.includes('float')) {
-      m_dy += Math.sin(p * Math.PI * 4) * 10;
-    }
-    if(_motions.includes('wave')) {
-      m_dx += Math.sin(p * Math.PI * 6) * 8;
-      m_dy += Math.cos(p * Math.PI * 4) * 6;
-    }
-    if(_bounceActive) {
-      m_dy += getBounceOffset(p, 0);
-    }
+    if(_motions.includes('breathe'))  extraScale *= (1 + 0.022 * Math.sin(p * Math.PI * 4));
+    if(_motions.includes('float'))    panY += Math.sin(p * Math.PI * 4) * 10;
+    if(_motions.includes('wave'))   { panX += Math.sin(p * Math.PI * 6) * 8;
+                                      panY += Math.cos(p * Math.PI * 4) * 6; }
+    if(_motions.includes('tilt'))     rotation = Math.sin(p * Math.PI * 3) * 0.04;
+    if(_bounceActive)                 panY += getBounceOffset(p, 0);
   }
-  CTX.save(); CTX.globalAlpha=0.96;
+  const s = baseS * extraScale;
+  const m_dw = _main.width * s, m_dh = _main.height * s;
+  const m_dx = (W - m_dw)/2 + panX;
+  const m_dy = zoneTop + (zoneH - m_dh)/2 + panY;
+  CTX.save(); CTX.globalAlpha = 0.96;
+  if(rotation !== 0){
+    const cx = m_dx + m_dw/2, cy = m_dy + m_dh/2;
+    CTX.translate(cx, cy); CTX.rotate(rotation); CTX.translate(-cx, -cy);
+  }
   CTX.drawImage(_main, m_dx, m_dy, m_dw, m_dh);
   CTX.restore();
   return {dx:m_dx, dy:m_dy, dw:m_dw, dh:m_dh};
@@ -1039,6 +1059,238 @@ function renderC(p=0){
     const extraTextY = _couponShow ? afterCoupons + 24 : H * 0.93;
     CTX.fillStyle=gc('ct_extra')||'rgba(255,255,255,0.7)';
     CTX.font=F(15,400); CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,extraTextY);
+  }
+}
+
+/* ══════════════════════════════════════
+   TYPE D — Soft Pastel
+   · 파스텔 그라데이션 + 둥근 캡슐 카피
+   · 쿠폰은 통상 스타일 유지
+══════════════════════════════════════ */
+function renderD(p=0){
+  applyBg();
+
+  // 부드러운 하단 비네트
+  const vign = CTX.createLinearGradient(0,H*0.55,0,H);
+  vign.addColorStop(0,'rgba(255,255,255,0)');
+  vign.addColorStop(1,'rgba(255,255,255,0.35)');
+  CTX.fillStyle=vign; CTX.fillRect(0,H*0.55,W,H*0.45);
+
+  const logoBottom = drawLogo();
+  let textBottom = logoBottom;
+
+  if(on('row_copy')){
+    const copyText = getTypedText(v('f_copy'),p);
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.font=F(20,500);
+    const tw = CTX.measureText(copyText).width;
+    const pillW = tw + 36, pillH = 32;
+    const px = (W-pillW)/2, py = logoBottom + 14;
+    CTX.fillStyle='rgba(255,255,255,0.7)';
+    rr(px, py, pillW, pillH, pillH/2); CTX.fill();
+    CTX.fillStyle=gc('ct_copy'); CTX.textAlign='center';
+    CTX.fillText(copyText, W/2, py + pillH*0.68);
+    CTX.restore();
+    textBottom = py + pillH + 4;
+  }
+  if(on('row_period')){
+    const py = textBottom + 20;
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period'); CTX.font=F(15,400); CTX.textAlign='center';
+    CTX.fillText(v('f_ds')+' ~ '+v('f_de'),W/2,py);
+    CTX.restore();
+    textBottom = py+6;
+  }
+
+  const margin = 18;
+  const preferredCouponY = H*0.79;
+  const couponStartY = _couponShow ? safeCouponStartY(preferredCouponY) : H*0.79;
+  let afterCoupons;
+  if(_couponShow){
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    afterCoupons = drawCoupons(couponStartY, p);
+    CTX.restore();
+  } else { afterCoupons = couponStartY; }
+
+  drawMainImgFit(textBottom + margin, couponStartY - margin, p);
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    const extraTextY = _couponShow ? afterCoupons + 24 : H * 0.93;
+    CTX.fillStyle=gc('ct_extra')||'#8A7A95'; CTX.font=F(15,400); CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,extraTextY);
+  }
+}
+
+/* ══════════════════════════════════════
+   TYPE E — Minimal Clean
+   · 화이트 위 거대 할인율 + 미니멀 타이포
+   · 쿠폰은 얇은 라인 카드 1개로 단순화
+══════════════════════════════════════ */
+function renderE(p=0){
+  applyBg();
+
+  // 상단 로고 (작게, 중앙)
+  let logoBottom = H*0.07;
+  if(_logo){
+    const maxW=W*0.45, maxH=58;
+    const s=Math.min(maxW/_logo.width,maxH/_logo.height);
+    const lw=_logo.width*s, lh=_logo.height*s;
+    CTX.save();CTX.globalAlpha=0.95*_layerAlpha.logo;
+    CTX.drawImage(_logo,(W-lw)/2,logoBottom,lw,lh);
+    CTX.restore();
+    logoBottom += lh;
+  }
+
+  // 상단 우측 기간 (작은 캐피털)
+  if(on('row_period')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period'); CTX.font=F(11,500); CTX.textAlign='right';
+    CTX.fillText((v('f_ds')+' — '+v('f_de')).toUpperCase(), W-32, H*0.07+14);
+    CTX.restore();
+  }
+
+  // 메인 이미지 — 캔버스 중앙(상부 60%)
+  const imgZoneTop = logoBottom + 24;
+  const imgZoneBottom = H*0.62;
+  drawMainImgFit(imgZoneTop, imgZoneBottom, p);
+
+  // 거대 할인율 (첫 쿠폰 기준)
+  const firstDisc = _coupons.find(c=>c.disc);
+  if(firstDisc && _couponShow){
+    const baseY = H*0.78;
+    const numStr=String(parseInt(firstDisc.disc)||0);
+    const ns=130, ps=Math.round(ns*0.55);
+    CTX.save();CTX.textBaseline='alphabetic';CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.font=F(ns,900); const nw=CTX.measureText(numStr).width;
+    CTX.font=F(ps,900); const pw=CTX.measureText('%').width;
+    const totW = nw+pw+4;
+    const startX=(W-totW)/2;
+    CTX.fillStyle=gc('ct_copy')||'#1A1A1A';
+    CTX.font=F(ns,900);CTX.textAlign='left';
+    CTX.fillText(numStr,startX,baseY);
+    CTX.font=F(ps,900);CTX.fillText('%',startX+nw+4,baseY);
+    CTX.restore();
+
+    // 작은 카피 (할인율 아래)
+    if(on('row_copy')){
+      CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+      CTX.fillStyle=gc('ct_period')||'#555'; CTX.font=F(14,400); CTX.textAlign='center';
+      CTX.fillText(getTypedText(v('f_copy'),p), W/2, baseY+22);
+      CTX.restore();
+    }
+  }
+
+  // 단일 쿠폰 카드 (얇은 라인)
+  if(_couponShow && firstDisc){
+    const cw = W*0.65, ch = 44;
+    const cx = (W-cw)/2, cy = H*0.86 + getBounceOffset(p,0.12);
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.strokeStyle=gc('ct_copy')||'#1A1A1A'; CTX.lineWidth=1.2;
+    rr(cx,cy,cw,ch,ch/2); CTX.stroke();
+    CTX.fillStyle=gc('ct_copy')||'#1A1A1A'; CTX.font=F(13,700); CTX.textAlign='center';
+    CTX.fillText('쿠폰 받기', W/2, cy + ch*0.65);
+    CTX.restore();
+  }
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    CTX.fillStyle=gc('ct_extra')||'#888'; CTX.font=F(11,400); CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,H*0.95);
+  }
+}
+
+/* ══════════════════════════════════════
+   TYPE F — Magazine Editorial
+   · 페이퍼 톤 + 좌우 비대칭 + 회전 스탬프
+══════════════════════════════════════ */
+function renderF(p=0){
+  applyBg();
+
+  // 좌측 상단 라벨 + 우측 상단 기간 (헤어라인)
+  CTX.save();CTX.strokeStyle='rgba(58,45,26,0.25)';CTX.lineWidth=0.7;
+  CTX.beginPath();CTX.moveTo(28, H*0.13);CTX.lineTo(W-28, H*0.13);CTX.stroke();
+  CTX.restore();
+
+  // 작은 캡션 (브랜드)
+  CTX.save();CTX.globalAlpha=_layerAlpha.logo;
+  CTX.fillStyle=gc('ct_copy')||'#3A2D1A';
+  CTX.font=F(9,700); CTX.textAlign='left';
+  CTX.fillText('EDITORIAL · ISSUE', 28, H*0.08);
+  CTX.restore();
+
+  // 로고 (좌측 상단)
+  if(_logo){
+    const maxW=W*0.42, maxH=42;
+    const s=Math.min(maxW/_logo.width,maxH/_logo.height);
+    const lw=_logo.width*s, lh=_logo.height*s;
+    CTX.save();CTX.globalAlpha=0.95*_layerAlpha.logo;
+    CTX.drawImage(_logo,28,H*0.09,lw,lh);
+    CTX.restore();
+  }
+
+  // 기간 (우측 상단)
+  if(on('row_period')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period');CTX.font=F(12,500);CTX.textAlign='right';
+    CTX.fillText(v('f_ds')+' / '+v('f_de'),W-28,H*0.08);
+    CTX.restore();
+  }
+
+  // 메인 이미지 — 약간 우측 오프셋
+  const imgZoneTop = H*0.18;
+  const imgZoneBottom = H*0.66;
+  const imgResult = drawMainImgFit(imgZoneTop, imgZoneBottom, p);
+
+  // 회전된 할인 스탬프 (우측 하단)
+  const firstDisc=_coupons.find(c=>c.disc);
+  if(firstDisc && _couponShow){
+    const cx = W*0.78, cy = imgZoneBottom - 30 + getBounceOffset(p, 0.08);
+    const r = 52;
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.translate(cx, cy);CTX.rotate(-0.18);
+    // 이중 원 테두리
+    CTX.strokeStyle=gc('ct_copy')||'#3A2D1A';CTX.lineWidth=1.4;
+    CTX.beginPath();CTX.arc(0,0,r,0,Math.PI*2);CTX.stroke();
+    CTX.beginPath();CTX.arc(0,0,r-4,0,Math.PI*2);CTX.stroke();
+    // 숫자
+    CTX.fillStyle=gc('ct_copy')||'#3A2D1A';
+    CTX.font=F(34,900);CTX.textAlign='center';CTX.textBaseline='middle';
+    CTX.fillText(String(parseInt(firstDisc.disc)||0)+'%', 0, -4);
+    CTX.font=F(9,700);
+    CTX.fillText('SALE', 0, 18);
+    CTX.restore();
+  }
+
+  // 좌측 카피 블록 (하단)
+  if(on('row_copy')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_copy');
+    CTX.font=F(22,700);CTX.textAlign='left';
+    const copyText = getTypedText(v('f_copy'), p);
+    CTX.fillText(copyText, 28, H*0.74);
+    CTX.restore();
+  }
+
+  // 하단 헤어라인
+  CTX.save();CTX.strokeStyle='rgba(58,45,26,0.25)';CTX.lineWidth=0.7;
+  CTX.beginPath();CTX.moveTo(28, H*0.78);CTX.lineTo(W-28, H*0.78);CTX.stroke();
+  CTX.restore();
+
+  // 쿠폰 (하단)
+  let afterCoupons;
+  const couponStartY = _couponShow ? safeCouponStartY(H*0.82) : H*0.82;
+  if(_couponShow){
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    afterCoupons = drawCoupons(couponStartY, p);
+    CTX.restore();
+  } else { afterCoupons = couponStartY; }
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    const extraTextY = _couponShow ? afterCoupons + 22 : H * 0.93;
+    CTX.fillStyle=gc('ct_extra');CTX.font=F(13,400);CTX.textAlign='center';
     CTX.fillText(extraTxt,W/2,extraTextY);
   }
 }
@@ -1300,6 +1552,93 @@ function drawRadar(p){
   CTX.restore();
 }
 
+/* ── FLASH ── 짧은 화이트 플래시 (시작 + 중간 키 모먼트) */
+function drawFlash(p){
+  let alpha = 0;
+  if(p < 0.07) alpha = (1 - p/0.07) * 0.85;                   // 오프닝 플래시
+  if(p > 0.49 && p < 0.53){
+    alpha = Math.max(alpha, (1 - Math.abs(p - 0.51)/0.02) * 0.45);  // 미드 임팩트
+  }
+  if(alpha <= 0) return;
+  CTX.save();
+  CTX.fillStyle = `rgba(255,255,255,${alpha})`;
+  CTX.fillRect(0, 0, W, H);
+  CTX.restore();
+}
+
+/* ── RIPPLE ── 중앙에서 퍼지는 동심원 (3겹 스태거) */
+function drawRipple(p){
+  const cx = W/2, cy = H * 0.45;
+  const ringCount = 3;
+  const maxR = Math.min(W, H) * 0.55;
+  CTX.save();
+  CTX.lineWidth = 1.8;
+  for(let i = 0; i < ringCount; i++){
+    const phase = ((p * 1.4) + i / ringCount) % 1;
+    const r = phase * maxR;
+    const alpha = (1 - phase) * 0.45;
+    CTX.strokeStyle = `rgba(101,173,198,${alpha})`;  // 틸 톤
+    CTX.beginPath();
+    CTX.arc(cx, cy, r, 0, Math.PI * 2);
+    CTX.stroke();
+  }
+  CTX.restore();
+}
+
+/* ── DUST ── 상승하는 먼지/포자 입자 (분위기용) */
+let _dustParticles = [];
+function initDust(){
+  _dustParticles = [];
+  for(let i = 0; i < 28; i++){
+    _dustParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vy: -(Math.random() * 0.5 + 0.25),
+      vx: (Math.random() - 0.5) * 0.35,
+      size: Math.random() * 2.2 + 0.8,
+      alpha: Math.random() * 0.35 + 0.18,
+      drift: Math.random() * Math.PI * 2
+    });
+  }
+}
+function drawDust(p){
+  CTX.save();
+  _dustParticles.forEach(d => {
+    d.drift += 0.02;
+    d.x += d.vx + Math.sin(d.drift) * 0.15;
+    d.y += d.vy;
+    if(d.y < -10){ d.y = H + 10; d.x = Math.random() * W; }
+    CTX.fillStyle = `rgba(246,244,238,${d.alpha})`;  // 크림 톤
+    CTX.beginPath();
+    CTX.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    CTX.fill();
+  });
+  CTX.restore();
+}
+
+/* ── SWIPE ── 대각선 글로스 스와이프 (전체 영상에 1회) */
+function drawSwipe(p){
+  const beamW = W * 0.35;
+  const totalDist = W + beamW * 2;
+  const x = -beamW + totalDist * p;
+  CTX.save();
+  CTX.globalCompositeOperation = 'screen';
+  const grd = CTX.createLinearGradient(x, 0, x + beamW, H);
+  grd.addColorStop(0,   'rgba(255,255,255,0)');
+  grd.addColorStop(0.5, 'rgba(255,255,255,0.18)');
+  grd.addColorStop(1,   'rgba(255,255,255,0)');
+  CTX.fillStyle = grd;
+  // 비스듬한 평행사변형
+  CTX.beginPath();
+  CTX.moveTo(x, 0);
+  CTX.lineTo(x + beamW, 0);
+  CTX.lineTo(x + beamW + 120, H);
+  CTX.lineTo(x + 120, H);
+  CTX.closePath();
+  CTX.fill();
+  CTX.restore();
+}
+
 function closePreview(){
   document.getElementById('preview_modal').style.display='none';
   const vid = document.getElementById('preview_video');
@@ -1335,7 +1674,6 @@ async function downloadVideo(){
 async function startVideoExport(){
   if(_isRecording) return;
   if(!_main) { alert('메인 이미지를 먼저 등록해주세요!'); return; }
-  hideSafezone();
   _isRecording = true;
   document.getElementById('rec_overlay').style.display = 'flex';
   document.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -1418,7 +1756,6 @@ async function startVideoExport(){
     _isRecording = false;
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
-    showSafezone();
     teardownAudio();
     if(msg) alert(msg);
   };
@@ -1447,7 +1784,6 @@ async function startVideoExport(){
     render();
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
-    showSafezone();
     document.getElementById('preview_modal').style.display = 'flex';
     const vid = document.getElementById('preview_video');
     vid.src = url;
@@ -1456,6 +1792,7 @@ async function startVideoExport(){
 
   initConfetti();
   initBokeh();
+  initDust();
   const startTime = performance.now();
   const durationMs = durationSec * 1000;
 
@@ -1509,7 +1846,6 @@ function hexA(hex,a){
 }
 
 async function saveAndExport(){
-  hideSafezone();
   render();
   const thumb=CV.toDataURL('image/jpeg',0.7);
   const s=captureSettings();
@@ -1531,7 +1867,6 @@ async function saveAndExport(){
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  showSafezone();
   toast('PNG 저장 완료! (1080×1920) ☁ Firebase 동기화 중...');
 }
 
@@ -1558,7 +1893,7 @@ function captureSettings(){
 
 function applySettings(s,logoSrc,mainSrc){
   _type=s.type;
-  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C'][i]===s.type);});
+  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C','D','E','F'][i]===s.type);});
   document.getElementById('type_name').textContent=TYPE_NAMES[s.type];
   document.getElementById('type_indicator').textContent=TYPE_IND[s.type];
   const sv=(id,val)=>{const e=document.getElementById(id);if(e&&val!=null)e.value=val;};
@@ -1627,7 +1962,11 @@ function applySettings(s,logoSrc,mainSrc){
 
 function renderHistory(){
   const grid=document.getElementById('hist_grid');
-  if(!_history.length){grid.innerHTML='<div class="hist-empty">저장된 이미지가 없습니다</div>';return;}
+  if(!_history.length){
+    grid.innerHTML='<div class="hist-empty">저장된 이미지가 없습니다</div>';
+    renderRecentImages();
+    return;
+  }
   grid.innerHTML='';
   _history.forEach((h,i)=>{
     const wrap=document.createElement('div');wrap.className='ht';wrap.title='클릭 시 세팅 복원';
@@ -1643,6 +1982,7 @@ function renderHistory(){
     wrap.onclick=()=>applySettings(h.s,h.logoSrc||null,h.mainSrc||null);
     grid.appendChild(wrap);
   });
+  renderRecentImages();
 }
 
 const PRESET_MAX = 10;
