@@ -7,15 +7,20 @@
 <style>
 @font-face{font-family:'Asta Sans';src:local('Asta Sans'),local('AstaSans');font-weight:400 900}
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--surface3:#252530;--border:#28282f;--border2:#333340;--text:#eeeef2;--muted:#777;--muted2:#555;--primary:#FF4D00}
+:root{--bg:#F6F4EE;--surface:#FFFFFF;--surface2:#FAF8F2;--surface3:#EFEBDD;--border:#E5DECB;--border2:#CFC6AC;--text:#2A2520;--muted:#7D7568;--muted2:#A39A88;--primary:#65ADC6;--secondary:#FB9E45;--accent:#C6243A;--accent-soft:#BADADD;--shadow:0 1px 3px rgba(42,37,32,.06),0 1px 2px rgba(42,37,32,.04)}
 body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;overflow-x:hidden}
 .topbar{position:fixed;top:0;left:0;right:0;height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:200}
 .topbar-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}
+#brand_mark:not([src]),#brand_mark[src=""]{display:none!important}
 .v-badge{font-size:10px;background:var(--surface3);color:var(--muted);padding:2px 7px;border-radius:4px}
 .top-actions{display:flex;gap:8px;align-items:center}
 #type_indicator{font-size:11px;color:var(--muted)}
 .app{display:grid;grid-template-columns:272px 1fr 308px;height:calc(100vh - 48px);margin-top:48px;overflow:hidden}
-.left,.right{overflow-y:auto;background:var(--surface)}
+.left,.right{overflow-y:auto;background:var(--surface);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.left::-webkit-scrollbar,.right::-webkit-scrollbar{width:8px}
+.left::-webkit-scrollbar-thumb,.right::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.left::-webkit-scrollbar-thumb:hover,.right::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.left::-webkit-scrollbar-track,.right::-webkit-scrollbar-track{background:transparent}
 .left{border-right:1px solid var(--border)}
 .right{border-left:1px solid var(--border)}
 .ph{padding:12px 17px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
@@ -28,6 +33,9 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .ta{background:linear-gradient(150deg,#e8ddc8,#c9b48a)}
 .tb{background:linear-gradient(150deg,#111,#252010)}
 .tc{background:linear-gradient(150deg,#3a2fd8,#7b3fc8)}
+.td{background:linear-gradient(150deg,#FCE7E9,#DDE8F0)}
+.te{background:linear-gradient(150deg,#FFFFFF,#EEEEEE)}
+.tf{background:linear-gradient(150deg,#F2EDDE,#D9CCAE)}
 .tcheck{position:absolute;top:3px;right:3px;width:14px;height:14px;background:var(--primary);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;color:#fff}
 .type-btn.active .tcheck{display:flex}
 .tlabel{font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
@@ -63,7 +71,7 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .frow.off .fbody input,.frow.off .fbody textarea{opacity:.3;pointer-events:none}
 .tog{position:relative;width:32px;height:17px;cursor:pointer;display:block}
 .tog input{opacity:0;width:0;height:0;position:absolute}
-.ttr{position:absolute;inset:0;background:#2a2a2a;border-radius:9px;transition:.2s}
+.ttr{position:absolute;inset:0;background:#D8D2C2;border-radius:9px;transition:.2s}
 .tog input:checked~.ttr{background:var(--primary)}
 .tth{position:absolute;top:2px;left:2px;width:13px;height:13px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none}
 .tog input:checked~.tth{left:17px}
@@ -89,8 +97,8 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .ci-field label{display:block;font-size:9px;color:var(--muted);margin-bottom:3px}
 .ci-field input{width:100%;padding:5px 7px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit}
 .ci-field input:focus{outline:0;border-color:var(--primary)}
-.center{background:#0a0a0c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;overflow:auto}
-.cf{border-radius:14px;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.7)}
+.center{background:#1F1A14;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;overflow:auto}
+.cf{border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.45)}
 canvas#cv{display:block;width:328px;height:583px}
 .cv-actions{display:flex;gap:7px}
 .hist-grid{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
@@ -102,8 +110,8 @@ canvas#cv{display:block;width:328px;height:583px}
 .hist-empty{font-size:11px;color:var(--muted);margin-top:6px}
 .hist-loading{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:6px}
 .hist-loading::before{content:'';width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-.fb-badge{font-size:10px;background:#1a3a2a;color:#4ade80;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px}
-.fb-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:fbpulse 2s ease-in-out infinite}
+.fb-badge{font-size:10px;background:#E8F2F4;color:#3D7B91;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;border:1px solid #BADADD}
+.fb-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:fbpulse 2s ease-in-out infinite}
 @keyframes fbpulse{0%,100%{opacity:1}50%{opacity:.4}}
 .parea{padding:12px 17px;display:flex;flex-direction:column;gap:10px}
 .tool-tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -113,7 +121,7 @@ canvas#cv{display:block;width:328px;height:583px}
 .c-btn:hover{border-color:var(--primary);color:var(--primary)}
 .c-btn.pri{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
 .c-btn.pri:hover{opacity:.9}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;border:1px solid var(--border2)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#2A2520;color:#F6F4EE;padding:9px 18px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .toast.show{opacity:1}
 .preset-cards{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .preset-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;cursor:pointer;position:relative;transition:.15s}
@@ -123,7 +131,7 @@ canvas#cv{display:block;width:328px;height:583px}
 .preset-type{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:var(--surface3);color:var(--muted)}
 .preset-date{font-size:9px;color:var(--muted2)}
 .preset-del{position:absolute;top:6px;right:7px;width:16px;height:16px;background:0 0;border:none;cursor:pointer;color:var(--muted2);font-size:11px;display:flex;align-items:center;justify-content:center;border-radius:3px;transition:.15s;padding:0;line-height:1}
-.preset-del:hover{background:rgba(255,60,60,.18);color:#f55}
+.preset-del:hover{background:rgba(198,36,58,.12);color:var(--accent)}
 .preset-empty{font-size:11px;color:var(--muted);margin-top:6px}
 .preset-save-row{display:flex;gap:6px;margin-top:2px}
 .preset-save-row input{flex:1;min-width:0;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;font-family:inherit}
@@ -135,19 +143,13 @@ canvas#cv{display:block;width:328px;height:583px}
 .timing-lbl{font-size:10px;color:var(--muted);width:28px;flex-shrink:0}
 .timing-slider{flex:1;accent-color:var(--primary);height:4px;cursor:pointer}
 .timing-val{font-size:10px;color:var(--muted);width:24px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
-#sz_overlay{position:absolute;inset:0;pointer-events:none;z-index:50;display:none}
-.sz-danger{position:absolute;background:rgba(255,50,50,.22);border:1px solid rgba(255,80,80,.45)}
-.sz-cta{position:absolute;background:rgba(255,145,0,.18);border:1px dashed rgba(255,160,0,.6)}
-.sz-safe{position:absolute;border:1.5px dashed rgba(55,220,100,.8)}
-.sz-lbl{position:absolute;font-size:7px;font-weight:700;letter-spacing:.04em;padding:1px 4px;border-radius:2px;white-space:nowrap;line-height:1.5}
-.sz-lbl.d{background:rgba(210,35,35,.8);color:#fff}
-.sz-lbl.o{background:rgba(190,105,0,.8);color:#fff}
-.sz-lbl.g{background:rgba(25,175,75,.85);color:#fff}
-.sz-tabs{display:flex;gap:4px;margin-bottom:7px}
-.sz-tab{flex:1;padding:4px 2px;border:1px solid var(--border2);border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
-.sz-tab.active{background:var(--surface3);border-color:var(--border2);color:var(--text)}
-.sz-toggle{width:100%;padding:6px;border:1px solid var(--border2);border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
-.sz-toggle.on{border-color:#22c55e;color:#22c55e;background:rgba(34,197,94,.08)}
+.recent-strip{display:flex;gap:5px;margin-top:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.recent-strip::-webkit-scrollbar{height:4px}
+.recent-strip::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.recent-thumb{width:40px;height:40px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2);padding:0;overflow:hidden;flex-shrink:0;transition:.15s;display:block;position:relative}
+.recent-thumb:hover{border-color:var(--primary);transform:translateY(-1px)}
+.recent-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.recent-label{font-size:9px;color:var(--muted2);margin-top:6px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
 .audio-slot{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px}
 .audio-slot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
 .audio-slot-title{font-size:11px;font-weight:700;color:var(--text);flex-shrink:0}
@@ -158,15 +160,40 @@ canvas#cv{display:block;width:328px;height:583px}
 .audio-clr{padding:3px 6px;font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;flex-shrink:0;font-family:inherit}
 .audio-vol-slider{flex:1;accent-color:var(--primary);height:4px;cursor:pointer;min-width:30px}
 .audio-vol-val{font-size:10px;color:var(--muted);min-width:34px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+#auth_gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:36px 32px;text-align:center;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(42,37,32,.08)}
+.auth-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-.01em}
+.auth-sub{font-size:12px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.auth-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid #DADCE0;color:#3C4043;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;width:100%;justify-content:center}
+.auth-btn:hover{background:#F8F9FA;border-color:#BDC1C6;box-shadow:0 1px 2px rgba(60,64,67,.1)}
+.auth-btn:disabled{opacity:.5;cursor:wait}
+.auth-error{margin-top:14px;font-size:12px;color:var(--accent);min-height:14px}
+.auth-hint{margin-top:16px;font-size:11px;color:var(--muted2);line-height:1.5}
+.auth-userline{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.signout-btn{padding:4px 9px;font-size:11px;border:1px solid var(--border2);background:transparent;color:var(--muted);border-radius:4px;cursor:pointer;font-family:inherit;transition:.15s}
+.signout-btn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-title">Dr.Felis Shortclip <span class="v-badge">v2</span><span class="fb-badge"><span class="fb-dot"></span>Firebase</span></div>
+  <div class="topbar-title"><img id="brand_mark" alt="" style="height:1.05em;width:auto;flex-shrink:0;display:block"><span>숏클립 생성기</span><span class="v-badge">v2.1</span><span class="fb-badge"><span class="fb-dot"></span>Firebase</span></div>
   <div class="top-actions">
+    <span class="auth-userline" id="auth_userline" style="display:none"><span id="user_email"></span><button class="signout-btn" id="signout_btn" type="button">로그아웃</button></span>
     <span id="type_indicator"></span>
     <button class="c-btn pri" onclick="saveAndExport()">PNG 저장</button>
-    <button class="c-btn pri" style="background:#ff4d00;border-color:#ff4d00" onclick="startVideoExport()">미리보기 (MP4)</button>
+    <button class="c-btn pri" style="background:#FB9E45;border-color:#FB9E45" onclick="startVideoExport()">미리보기 (MP4)</button>
+  </div>
+</div>
+<div id="auth_gate">
+  <div class="auth-card">
+    <div class="auth-title">숏클립 생성기</div>
+    <div class="auth-sub">Dr.Felis 내부 도구 · 로그인이 필요합니다</div>
+    <button id="auth_signin_btn" class="auth-btn" type="button">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.49h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18a8.59 8.59 0 0 0 5.96-2.18l-2.92-2.26a5.4 5.4 0 0 1-8.04-2.83H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.73a5.4 5.4 0 0 1 0-3.46V4.94H.96a9 9 0 0 0 0 8.12l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 9 0 9 9 0 0 0 .96 4.94l3 2.33A5.36 5.36 0 0 1 9 3.58z"/></svg>
+      Google 계정으로 로그인
+    </button>
+    <div id="auth_error" class="auth-error"></div>
+    <div class="auth-hint">@drfelis.com 이메일 계정만 사용 가능합니다</div>
   </div>
 </div>
 <div class="app">
@@ -182,6 +209,9 @@ canvas#cv{display:block;width:328px;height:583px}
 <div class="type-btn active" onclick='setType("A",this)'><div class="tbi ta"><div class="tlabel">A</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("B",this)'><div class="tbi tb"><div class="tlabel">B</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("C",this)'><div class="tbi tc"><div class="tlabel">C</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("D",this)'><div class="tbi td"><div class="tlabel" style="color:#7A5970">D</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("E",this)'><div class="tbi te"><div class="tlabel" style="color:#222">E</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("F",this)'><div class="tbi tf"><div class="tlabel" style="color:#5A4A2A">F</div></div><div class="tcheck">✓</div></div>
 </div>
 <div id="type_name" style="text-align:center;font-size:10px;color:var(--muted);margin-top:7px">A · 웜 라이프스타일</div>
 </div>
@@ -245,6 +275,8 @@ canvas#cv{display:block;width:328px;height:583px}
 <input type="file" accept="image/*" onchange='loadImg("logo",event)'>
 <button class="clr" onclick='clearImg("logo",event)'>✕</button>
 </div>
+<div class="recent-label" id="logo_recent_label" style="display:none">최근 사용</div>
+<div class="recent-strip" id="logo_recent"></div>
 </div>
 <div class="sec">
 <div class="sl">메인 이미지</div>
@@ -257,6 +289,8 @@ canvas#cv{display:block;width:328px;height:583px}
 <input type="file" accept="image/*" onchange='loadImg("main",event)'>
 <button class="clr" onclick='clearImg("main",event)'>✕</button>
 </div>
+<div class="recent-label" id="main_recent_label" style="display:none">최근 사용</div>
+<div class="recent-strip" id="main_recent"></div>
 <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
 <span style="font-size:10px;color:var(--muted);flex-shrink:0">크기</span>
 <input type="range" id="main_scale" min="-20" max="20" value="0" style="flex:1;accent-color:var(--primary);height:4px;cursor:pointer" oninput='document.getElementById("main_scale_val").textContent=(0<this.value?"+":"")+this.value+"%",render()'>
@@ -311,41 +345,13 @@ canvas#cv{display:block;width:328px;height:583px}
 <span class="audio-vol-val" id="bgm_vol_val">60%</span>
 </div>
 </div>
-<div class="audio-slot" id="sfx_logo_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 로고 등장</span><span class="audio-slot-name" id="sfx_logo_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('logo',event)"></label>
-<button class="audio-clr" onclick="clearAudio('logo')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.logo=this.value/100;document.getElementById('sfx_logo_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_logo_vol_val">80%</span>
-</div>
-</div>
-<div class="audio-slot" id="sfx_copy_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 카피 등장</span><span class="audio-slot-name" id="sfx_copy_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('copy',event)"></label>
-<button class="audio-clr" onclick="clearAudio('copy')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.copy=this.value/100;document.getElementById('sfx_copy_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_copy_vol_val">80%</span>
-</div>
-</div>
-<div class="audio-slot" id="sfx_coupon_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 쿠폰 등장</span><span class="audio-slot-name" id="sfx_coupon_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('coupon',event)"></label>
-<button class="audio-clr" onclick="clearAudio('coupon')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.coupon=this.value/100;document.getElementById('sfx_coupon_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_coupon_vol_val">80%</span>
-</div>
-</div>
-<div style="font-size:10px;color:var(--muted);margin-top:8px;padding:7px 9px;background:var(--surface2);border-radius:4px;line-height:1.6">💡 SFX는 우측 <strong>요소 등장 타이밍</strong> 시점에 자동 재생. BGM은 영상 전체 길이만큼 루프. <strong>MP4 녹화 시에만 합성</strong>되며, 히스토리/프리셋에는 저장되지 않습니다 (세션 한정).</div>
+<div style="font-size:10px;color:var(--muted);margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:5px;line-height:1.6;border:1px solid var(--border)">💡 BGM은 영상 길이만큼 자동 루프되며 <strong>MP4 녹화 시에만</strong> 합성됩니다. 히스토리/프리셋에는 저장되지 않습니다 (세션 한정).</div>
 </div>
 </div>
 </div>
 <div class="center">
 <div class="cf" style="position:relative">
 <canvas id="cv" width="504" height="896"></canvas>
-<div id="sz_overlay"></div>
 <div id="rec_overlay">
 <div class="rec-spinner"></div>
 <div class="rec-text" id="rec_text">영상 생성 중... (0%)</div>
@@ -354,26 +360,12 @@ canvas#cv{display:block;width:328px;height:583px}
 </div>
 <div class="cv-actions">
 <button class="c-btn" onclick="render()">새로고침</button>
-<button class="c-btn pri" style="background:#ff4d00;border-color:#ff4d00" onclick="startVideoExport()" id="btn_video_export">미리보기 (MP4)</button>
+<button class="c-btn pri" style="background:#FB9E45;border-color:#FB9E45" onclick="startVideoExport()" id="btn_video_export">미리보기 (MP4)</button>
 <button class="c-btn pri" onclick="saveAndExport()">PNG 저장</button>
 </div>
 </div>
 <div class="right">
 <div class="ph">히스토리</div>
-<div class="sec" style="padding:10px 17px">
-<div class="sl" style="margin-bottom:7px">세이프존 가이드</div>
-<div class="sz-tabs">
-<button class="sz-tab active" id="sz_tiktok" onclick='setSzPlatform("tiktok",this)'>TikTok</button>
-<button class="sz-tab" id="sz_reels" onclick='setSzPlatform("reels",this)'>Reels</button>
-<button class="sz-tab" id="sz_shorts" onclick='setSzPlatform("shorts",this)'>Shorts</button>
-</div>
-<button class="sz-toggle" id="sz_btn" onclick="toggleSafezone()">⬜ 세이프존 OFF</button>
-<div style="display:flex;gap:10px;margin-top:6px;font-size:9px;color:var(--muted)">
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,50,50,.45);border:1px solid rgba(255,80,80,.6)"></span>UI 위험</span>
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,145,0,.35);border:1px dashed rgba(255,160,0,.7)"></span>CTA</span>
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;border:1.5px dashed rgba(55,220,100,.85)"></span>안전구간</span>
-</div>
-</div>
 <div class="sec">
 <div class="sl">저장 히스토리</div>
 <div class="hist-grid" id="hist_grid"><div class="hist-loading">Firebase 연결 중...</div></div>
@@ -400,6 +392,13 @@ canvas#cv{display:block;width:328px;height:583px}
 <button class="ttab" onclick='setMotion("bounce",this)'>바운스</button>
 <button class="ttab" onclick='setMotion("glow",this)'>글로우</button>
 <button class="ttab" onclick='setMotion("radar",this)'>레이더</button>
+<button class="ttab" onclick='setMotion("kenburns",this)'>켄번스</button>
+<button class="ttab" onclick='setMotion("breathe",this)'>브리드</button>
+<button class="ttab" onclick='setMotion("tilt",this)'>틸트</button>
+<button class="ttab" onclick='setMotion("flash",this)'>플래시</button>
+<button class="ttab" onclick='setMotion("ripple",this)'>리플</button>
+<button class="ttab" onclick='setMotion("dust",this)'>더스트</button>
+<button class="ttab" onclick='setMotion("swipe",this)'>스와이프</button>
 </div>
 <div class="sl" style="margin-top:14px;margin-bottom:7px">영상 길이</div>
 <div class="dur-tabs">
@@ -445,8 +444,6 @@ let _badgeDragging = false;
 let _badgeDragStartX = 0;
 let _badgeDragStartY = 0;
 let _lastBadgePos = { x: 0, y: 0, r: 54 };
-let _szOn = false;
-let _szPlatform = 'tiktok';
 let _durationSec = 10;
 let _timing = { logo: 0.0, copy: 0.08, coupon: 0.20 };
 let _layerAlpha = { logo: 1.0, copy: 1.0, coupon: 1.0 };
@@ -461,81 +458,20 @@ let _animProgress = 0;
 
 let _coupons = [{disc:'20', cond:'자사몰 회원 전용'}];
 
-// ── AUDIO STATE ──
+// ── AUDIO STATE (BGM only) ──
 let _audio = {
   bgm: { url: null, name: null },
-  bgmVol: 0.6,
-  sfx: { logo: {buffer:null,name:null}, copy: {buffer:null,name:null}, coupon: {buffer:null,name:null} },
-  sfxVol: { logo: 0.8, copy: 0.8, coupon: 0.8 }
-};
-let _audioCtx = null;
-function getAudioCtx(){
-  if(!_audioCtx){
-    const C = window.AudioContext || window.webkitAudioContext;
-    if(!C) return null;
-    _audioCtx = new C();
-  }
-  return _audioCtx;
-}
-
-const TYPE_NAMES = {A:'A · 웜 라이프스타일',B:'B · 다크 프리미엄',C:'C · 비비드 일렉트릭'};
-const TYPE_IND   = {A:'Type A · Warm',B:'Type B · Dark',C:'Type C · Vivid'};
-
-const SZ_DATA = {
-  tiktok: { bottomPct:0.165, rightPct:0.10, ctaW:60,  ctaH:200, name:'TikTok' },
-  reels:  { bottomPct:0.150, rightPct:0.08, ctaW:55,  ctaH:175, name:'Reels'  },
-  shorts: { bottomPct:0.200, rightPct:0.06, ctaW:50,  ctaH:160, name:'Shorts' },
+  bgmVol: 0.6
 };
 
-function setSzPlatform(p, btn){
-  _szPlatform = p;
-  document.querySelectorAll('.sz-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if(_szOn) renderSafezone();
-}
-function toggleSafezone(){
-  _szOn = !_szOn;
-  const btn = document.getElementById('sz_btn');
-  btn.textContent = _szOn ? '🟩 세이프존 ON' : '⬜ 세이프존 OFF';
-  btn.classList.toggle('on', _szOn);
-  document.getElementById('sz_overlay').style.display = _szOn ? 'block' : 'none';
-  if(_szOn) renderSafezone();
-}
-function hideSafezone(){ document.getElementById('sz_overlay').style.display = 'none'; }
-function showSafezone(){ if(_szOn) document.getElementById('sz_overlay').style.display = 'block'; }
-
-// FIX: 실제 캔버스 표시 크기 동적 측정 (이전 v1: 252×448 하드코딩 → 어긋남)
-function renderSafezone(){
-  const overlay = document.getElementById('sz_overlay');
-  const rect = CV.getBoundingClientRect();
-  const CW = Math.round(rect.width);
-  const CH = Math.round(rect.height);
-  if(CW === 0 || CH === 0) return;
-  const d = SZ_DATA[_szPlatform];
-  const botH  = Math.round(CH * d.bottomPct);
-  const rgtW  = Math.round(CW * d.rightPct);
-  const safeW = CW - rgtW;
-  const safeH = CH - botH;
-  // CTA 박스도 캔버스 크기에 비례 (원래 252px 기준이었음)
-  const SCALE = CW / 252;
-  const ctaWpx = Math.round(d.ctaW * SCALE);
-  const ctaHpx = Math.min(Math.round(d.ctaH * SCALE), safeH);
-  overlay.innerHTML = `
-    <div class="sz-danger" style="left:0;bottom:0;width:${CW}px;height:${botH}px">
-      <span class="sz-lbl d" style="top:4px;left:50%;transform:translateX(-50%)">UI · 하단 ${Math.round(d.bottomPct*100)}%</span>
-    </div>
-    <div class="sz-danger" style="right:0;top:0;width:${rgtW}px;height:${safeH}px">
-      <span class="sz-lbl d" style="top:3px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl">UI</span>
-    </div>
-    <div class="sz-cta" style="left:0;bottom:${botH}px;width:${ctaWpx}px;height:${ctaHpx}px">
-      <span class="sz-lbl o" style="bottom:3px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl">CTA</span>
-    </div>
-    <div class="sz-safe" style="left:0;top:0;width:${safeW}px;height:${safeH}px">
-      <span class="sz-lbl g" style="top:3px;left:4px">${d.name} 안전</span>
-    </div>
-  `;
-}
-window.addEventListener('resize', ()=>{ if(_szOn) renderSafezone(); });
+const TYPE_NAMES = {
+  A:'A · 웜 라이프스타일', B:'B · 다크 프리미엄', C:'C · 비비드 일렉트릭',
+  D:'D · 소프트 파스텔',   E:'E · 미니멀 클린',   F:'F · 매거진 에디토리얼'
+};
+const TYPE_IND   = {
+  A:'Type A · Warm',       B:'Type B · Dark',     C:'Type C · Vivid',
+  D:'Type D · Pastel',     E:'Type E · Minimal',  F:'Type F · Editorial'
+};
 
 function switchLeftTab(tabId, btn) {
   document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
@@ -591,7 +527,10 @@ function setType(t,btn){
   const D={
     A:{s:'solid',c:'#FBF7F3',g1:'#ede3cf',g2:'#c9b48a',ctext:'#3a2a10',pCol:'#7a5a2a'},
     B:{s:'solid',c:'#0d0d0d',g1:'#111',g2:'#252010',ctext:'#ffffff',pCol:'#8a8a8a'},
-    C:{s:'grad',c:'#4233d4',g1:'#3a2fd8',g2:'#7b3fc8',ctext:'#ffffff',pCol:'#d0d0d0'}
+    C:{s:'grad',c:'#4233d4',g1:'#3a2fd8',g2:'#7b3fc8',ctext:'#ffffff',pCol:'#d0d0d0'},
+    D:{s:'grad',c:'#FCE7E9',g1:'#FCE7E9',g2:'#DDE8F0',ctext:'#5A4360',pCol:'#8A7A95'},
+    E:{s:'solid',c:'#FFFFFF',g1:'#FFFFFF',g2:'#EEEEEE',ctext:'#1A1A1A',pCol:'#666666'},
+    F:{s:'solid',c:'#F2EDDE',g1:'#F2EDDE',g2:'#D9CCAE',ctext:'#3A2D1A',pCol:'#7A6A50'}
   };
   const d=D[t];
   ['c_solid','ct_solid'].forEach(id=>document.getElementById(id).value=d.c);
@@ -657,12 +596,72 @@ function loadImg(k,e){
   const r=new FileReader();
   r.onload=ev=>{
     const img=new Image();
-    img.onload=()=>{if(k==='logo'){_logo=img;_logoSrc=ev.target.result;}else{_main=img;_mainSrc=ev.target.result;}render();};
+    img.onload=()=>{if(k==='logo'){_logo=img;_logoSrc=ev.target.result;}else{_main=img;_mainSrc=ev.target.result;}render();renderRecentImages();};
     img.src=ev.target.result;
     document.getElementById(k+'_img').src=ev.target.result;
     document.getElementById(k+'_img').style.display='block';
     document.getElementById(k+'_hint').style.display='none';
   };r.readAsDataURL(f);
+}
+
+// ── RECENT IMAGES LIBRARY (히스토리에서 추출) ──
+let _recentImagesByField = { logo: [], main: [] };
+const RECENT_IMG_LIMIT = 8;
+
+function getRecentImages(field){
+  const key = field === 'logo' ? 'logoSrc' : 'mainSrc';
+  const seen = new Set();
+  const out = [];
+  // 현재 세션 값을 가장 위에 (있다면)
+  const current = field === 'logo' ? _logoSrc : _mainSrc;
+  if(current){ seen.add(current); }
+  for(const h of _history){
+    const src = h && h[key];
+    if(src && !seen.has(src)){
+      seen.add(src);
+      out.push(src);
+      if(out.length >= RECENT_IMG_LIMIT) break;
+    }
+  }
+  return out;
+}
+
+function applyRecentImage(field, idx){
+  const src = _recentImagesByField[field][idx];
+  if(!src) return;
+  const img = new Image();
+  img.onload = () => {
+    if(field === 'logo'){ _logo = img; _logoSrc = src; }
+    else { _main = img; _mainSrc = src; }
+    render();
+    renderRecentImages();  // 방금 적용된 이미지가 "현재" 자리로 이동하여 목록에서 빠짐
+  };
+  img.onerror = () => toast('이미지를 불러올 수 없습니다');
+  img.src = src;
+  const imgEl = document.getElementById(field + '_img');
+  imgEl.src = src;
+  imgEl.style.display = 'block';
+  document.getElementById(field + '_hint').style.display = 'none';
+}
+
+function renderRecentImages(){
+  ['logo','main'].forEach(field => {
+    const container = document.getElementById(field + '_recent');
+    const label = document.getElementById(field + '_recent_label');
+    if(!container || !label) return;
+    _recentImagesByField[field] = getRecentImages(field);
+    const arr = _recentImagesByField[field];
+    if(!arr.length){
+      container.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+    label.style.display = 'block';
+    container.style.display = 'flex';
+    container.innerHTML = arr.map((src, i) =>
+      `<button class="recent-thumb" type="button" title="클릭해서 사용" onclick="applyRecentImage('${field}',${i})"><img src="${src}" alt=""></button>`
+    ).join('');
+  });
 }
 function clearImg(k,e){
   e.stopPropagation();
@@ -670,48 +669,26 @@ function clearImg(k,e){
   document.getElementById(k+'_img').style.display='none';
   document.getElementById(k+'_hint').style.display='flex';
   render();
+  renderRecentImages();
 }
 
-// ── AUDIO LOAD/CLEAR ──
-async function loadAudio(key, e){
+// ── AUDIO LOAD/CLEAR (BGM only) ──
+function loadAudio(key, e){
   const f = e.target.files[0];
   if(!f) return;
-  if(key === 'bgm'){
-    if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
-    _audio.bgm.url = URL.createObjectURL(f);
-    _audio.bgm.name = f.name;
-    document.getElementById('bgm_name').textContent = f.name;
-    toast('BGM 등록: ' + f.name);
-  } else {
-    try {
-      const ctx = getAudioCtx();
-      if(!ctx){ toast('이 브라우저는 오디오 API를 지원하지 않습니다'); return; }
-      if(ctx.state === 'suspended') await ctx.resume();
-      const arrBuf = await f.arrayBuffer();
-      const decoded = await ctx.decodeAudioData(arrBuf.slice(0));
-      _audio.sfx[key] = { buffer: decoded, name: f.name };
-      document.getElementById('sfx_' + key + '_name').textContent = f.name;
-      toast('SFX 등록: ' + f.name);
-    } catch(err){
-      console.warn('SFX decode error', err);
-      toast('SFX 디코딩 실패: 지원되지 않는 형식일 수 있습니다');
-    }
-  }
+  if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
+  _audio.bgm.url = URL.createObjectURL(f);
+  _audio.bgm.name = f.name;
+  document.getElementById('bgm_name').textContent = f.name;
+  toast('BGM 등록: ' + f.name);
 }
 
-function clearAudio(key){
-  if(key === 'bgm'){
-    if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
-    _audio.bgm = { url:null, name:null };
-    document.getElementById('bgm_name').textContent = '파일 없음';
-    const inp = document.querySelector('#bgm_slot input[type=file]');
-    if(inp) inp.value = '';
-  } else {
-    _audio.sfx[key] = { buffer:null, name:null };
-    document.getElementById('sfx_' + key + '_name').textContent = '파일 없음';
-    const inp = document.querySelector('#sfx_' + key + '_slot input[type=file]');
-    if(inp) inp.value = '';
-  }
+function clearAudio(){
+  if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
+  _audio.bgm = { url:null, name:null };
+  document.getElementById('bgm_name').textContent = '파일 없음';
+  const inp = document.querySelector('#bgm_slot input[type=file]');
+  if(inp) inp.value = '';
 }
 
 function rr(x,y,w,h,r){
@@ -865,12 +842,20 @@ function render(p=0) {
   _bounceActive = p > 0 && _motions.includes('bounce');
   _layerAlpha = calcLayerAlphas(p);
   CTX.clearRect(0,0,W,H);
-  if(_type==='A') renderA(p);
+  if(_type==='A')      renderA(p);
   else if(_type==='B') renderB(p);
-  else renderC(p);
+  else if(_type==='C') renderC(p);
+  else if(_type==='D') renderD(p);
+  else if(_type==='E') renderE(p);
+  else if(_type==='F') renderF(p);
+  else                 renderA(p);
   if(p > 0 && _motions.includes('particle'))   drawConfetti(p);
   if(p > 0 && _motions.includes('aurora'))     drawAurora(p);
   if(p > 0 && _motions.includes('bokeh'))      drawBokeh(p);
+  if(p > 0 && _motions.includes('dust'))       drawDust(p);
+  if(p > 0 && _motions.includes('ripple'))     drawRipple(p);
+  if(p > 0 && _motions.includes('swipe'))      drawSwipe(p);
+  if(p > 0 && _motions.includes('flash'))      drawFlash(p);
   if(p > 0 && _motions.includes('glitch'))     drawGlitch(p);
   if(p > 0 && _motions.includes('shine'))      drawShine(p);
   if(p > 0 && _motions.includes('glow'))       drawGlow(p);
@@ -881,27 +866,31 @@ function drawMainImgFit(zoneTop, zoneBottom, p){
   if(!_main) return;
   const zoneW = W-60, zoneH = zoneBottom - zoneTop;
   if(zoneH <= 0) return;
-  let s = Math.min(zoneW/_main.width, zoneH/_main.height) * 0.75 * getMainScale();
-  let m_dw = _main.width*s, m_dh = _main.height*s;
-  let m_dx = (W-m_dw)/2, m_dy = zoneTop+(zoneH-m_dh)/2;
+  const baseS = Math.min(zoneW/_main.width, zoneH/_main.height) * 0.75 * getMainScale();
+  let extraScale = 1, panX = 0, panY = 0, rotation = 0;
   if(p > 0) {
-    if(_motions.includes('zoom')) {
-      s = s * (1 + 0.15 * Math.min(p/0.5, 1));
-      m_dw = _main.width*s; m_dh = _main.height*s;
-      m_dx = (W-m_dw)/2; m_dy = zoneTop+(zoneH-m_dh)/2;
+    if(_motions.includes('zoom'))     extraScale *= (1 + 0.15 * Math.min(p/0.5, 1));
+    if(_motions.includes('kenburns')){
+      extraScale *= (1 + 0.18 * p);
+      panX += Math.sin(p * Math.PI) * 22;
+      panY += Math.cos(p * Math.PI * 0.7) * 10;
     }
-    if(_motions.includes('float')) {
-      m_dy += Math.sin(p * Math.PI * 4) * 10;
-    }
-    if(_motions.includes('wave')) {
-      m_dx += Math.sin(p * Math.PI * 6) * 8;
-      m_dy += Math.cos(p * Math.PI * 4) * 6;
-    }
-    if(_bounceActive) {
-      m_dy += getBounceOffset(p, 0);
-    }
+    if(_motions.includes('breathe'))  extraScale *= (1 + 0.022 * Math.sin(p * Math.PI * 4));
+    if(_motions.includes('float'))    panY += Math.sin(p * Math.PI * 4) * 10;
+    if(_motions.includes('wave'))   { panX += Math.sin(p * Math.PI * 6) * 8;
+                                      panY += Math.cos(p * Math.PI * 4) * 6; }
+    if(_motions.includes('tilt'))     rotation = Math.sin(p * Math.PI * 3) * 0.04;
+    if(_bounceActive)                 panY += getBounceOffset(p, 0);
   }
-  CTX.save(); CTX.globalAlpha=0.96;
+  const s = baseS * extraScale;
+  const m_dw = _main.width * s, m_dh = _main.height * s;
+  const m_dx = (W - m_dw)/2 + panX;
+  const m_dy = zoneTop + (zoneH - m_dh)/2 + panY;
+  CTX.save(); CTX.globalAlpha = 0.96;
+  if(rotation !== 0){
+    const cx = m_dx + m_dw/2, cy = m_dy + m_dh/2;
+    CTX.translate(cx, cy); CTX.rotate(rotation); CTX.translate(-cx, -cy);
+  }
   CTX.drawImage(_main, m_dx, m_dy, m_dw, m_dh);
   CTX.restore();
   return {dx:m_dx, dy:m_dy, dw:m_dw, dh:m_dh};
@@ -1100,6 +1089,238 @@ function renderC(p=0){
   }
 }
 
+/* ══════════════════════════════════════
+   TYPE D — Soft Pastel
+   · 파스텔 그라데이션 + 둥근 캡슐 카피
+   · 쿠폰은 통상 스타일 유지
+══════════════════════════════════════ */
+function renderD(p=0){
+  applyBg();
+
+  // 부드러운 하단 비네트
+  const vign = CTX.createLinearGradient(0,H*0.55,0,H);
+  vign.addColorStop(0,'rgba(255,255,255,0)');
+  vign.addColorStop(1,'rgba(255,255,255,0.35)');
+  CTX.fillStyle=vign; CTX.fillRect(0,H*0.55,W,H*0.45);
+
+  const logoBottom = drawLogo();
+  let textBottom = logoBottom;
+
+  if(on('row_copy')){
+    const copyText = getTypedText(v('f_copy'),p);
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.font=F(20,500);
+    const tw = CTX.measureText(copyText).width;
+    const pillW = tw + 36, pillH = 32;
+    const px = (W-pillW)/2, py = logoBottom + 14;
+    CTX.fillStyle='rgba(255,255,255,0.7)';
+    rr(px, py, pillW, pillH, pillH/2); CTX.fill();
+    CTX.fillStyle=gc('ct_copy'); CTX.textAlign='center';
+    CTX.fillText(copyText, W/2, py + pillH*0.68);
+    CTX.restore();
+    textBottom = py + pillH + 4;
+  }
+  if(on('row_period')){
+    const py = textBottom + 20;
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period'); CTX.font=F(15,400); CTX.textAlign='center';
+    CTX.fillText(v('f_ds')+' ~ '+v('f_de'),W/2,py);
+    CTX.restore();
+    textBottom = py+6;
+  }
+
+  const margin = 18;
+  const preferredCouponY = H*0.79;
+  const couponStartY = _couponShow ? safeCouponStartY(preferredCouponY) : H*0.79;
+  let afterCoupons;
+  if(_couponShow){
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    afterCoupons = drawCoupons(couponStartY, p);
+    CTX.restore();
+  } else { afterCoupons = couponStartY; }
+
+  drawMainImgFit(textBottom + margin, couponStartY - margin, p);
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    const extraTextY = _couponShow ? afterCoupons + 24 : H * 0.93;
+    CTX.fillStyle=gc('ct_extra')||'#8A7A95'; CTX.font=F(15,400); CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,extraTextY);
+  }
+}
+
+/* ══════════════════════════════════════
+   TYPE E — Minimal Clean
+   · 화이트 위 거대 할인율 + 미니멀 타이포
+   · 쿠폰은 얇은 라인 카드 1개로 단순화
+══════════════════════════════════════ */
+function renderE(p=0){
+  applyBg();
+
+  // 상단 로고 (작게, 중앙)
+  let logoBottom = H*0.07;
+  if(_logo){
+    const maxW=W*0.45, maxH=58;
+    const s=Math.min(maxW/_logo.width,maxH/_logo.height);
+    const lw=_logo.width*s, lh=_logo.height*s;
+    CTX.save();CTX.globalAlpha=0.95*_layerAlpha.logo;
+    CTX.drawImage(_logo,(W-lw)/2,logoBottom,lw,lh);
+    CTX.restore();
+    logoBottom += lh;
+  }
+
+  // 상단 우측 기간 (작은 캐피털)
+  if(on('row_period')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period'); CTX.font=F(11,500); CTX.textAlign='right';
+    CTX.fillText((v('f_ds')+' — '+v('f_de')).toUpperCase(), W-32, H*0.07+14);
+    CTX.restore();
+  }
+
+  // 메인 이미지 — 캔버스 중앙(상부 60%)
+  const imgZoneTop = logoBottom + 24;
+  const imgZoneBottom = H*0.62;
+  drawMainImgFit(imgZoneTop, imgZoneBottom, p);
+
+  // 거대 할인율 (첫 쿠폰 기준)
+  const firstDisc = _coupons.find(c=>c.disc);
+  if(firstDisc && _couponShow){
+    const baseY = H*0.78;
+    const numStr=String(parseInt(firstDisc.disc)||0);
+    const ns=130, ps=Math.round(ns*0.55);
+    CTX.save();CTX.textBaseline='alphabetic';CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.font=F(ns,900); const nw=CTX.measureText(numStr).width;
+    CTX.font=F(ps,900); const pw=CTX.measureText('%').width;
+    const totW = nw+pw+4;
+    const startX=(W-totW)/2;
+    CTX.fillStyle=gc('ct_copy')||'#1A1A1A';
+    CTX.font=F(ns,900);CTX.textAlign='left';
+    CTX.fillText(numStr,startX,baseY);
+    CTX.font=F(ps,900);CTX.fillText('%',startX+nw+4,baseY);
+    CTX.restore();
+
+    // 작은 카피 (할인율 아래)
+    if(on('row_copy')){
+      CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+      CTX.fillStyle=gc('ct_period')||'#555'; CTX.font=F(14,400); CTX.textAlign='center';
+      CTX.fillText(getTypedText(v('f_copy'),p), W/2, baseY+22);
+      CTX.restore();
+    }
+  }
+
+  // 단일 쿠폰 카드 (얇은 라인)
+  if(_couponShow && firstDisc){
+    const cw = W*0.65, ch = 44;
+    const cx = (W-cw)/2, cy = H*0.86 + getBounceOffset(p,0.12);
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.strokeStyle=gc('ct_copy')||'#1A1A1A'; CTX.lineWidth=1.2;
+    rr(cx,cy,cw,ch,ch/2); CTX.stroke();
+    CTX.fillStyle=gc('ct_copy')||'#1A1A1A'; CTX.font=F(13,700); CTX.textAlign='center';
+    CTX.fillText('쿠폰 받기', W/2, cy + ch*0.65);
+    CTX.restore();
+  }
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    CTX.fillStyle=gc('ct_extra')||'#888'; CTX.font=F(11,400); CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,H*0.95);
+  }
+}
+
+/* ══════════════════════════════════════
+   TYPE F — Magazine Editorial
+   · 페이퍼 톤 + 좌우 비대칭 + 회전 스탬프
+══════════════════════════════════════ */
+function renderF(p=0){
+  applyBg();
+
+  // 좌측 상단 라벨 + 우측 상단 기간 (헤어라인)
+  CTX.save();CTX.strokeStyle='rgba(58,45,26,0.25)';CTX.lineWidth=0.7;
+  CTX.beginPath();CTX.moveTo(28, H*0.13);CTX.lineTo(W-28, H*0.13);CTX.stroke();
+  CTX.restore();
+
+  // 작은 캡션 (브랜드)
+  CTX.save();CTX.globalAlpha=_layerAlpha.logo;
+  CTX.fillStyle=gc('ct_copy')||'#3A2D1A';
+  CTX.font=F(9,700); CTX.textAlign='left';
+  CTX.fillText('EDITORIAL · ISSUE', 28, H*0.08);
+  CTX.restore();
+
+  // 로고 (좌측 상단)
+  if(_logo){
+    const maxW=W*0.42, maxH=42;
+    const s=Math.min(maxW/_logo.width,maxH/_logo.height);
+    const lw=_logo.width*s, lh=_logo.height*s;
+    CTX.save();CTX.globalAlpha=0.95*_layerAlpha.logo;
+    CTX.drawImage(_logo,28,H*0.09,lw,lh);
+    CTX.restore();
+  }
+
+  // 기간 (우측 상단)
+  if(on('row_period')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_period');CTX.font=F(12,500);CTX.textAlign='right';
+    CTX.fillText(v('f_ds')+' / '+v('f_de'),W-28,H*0.08);
+    CTX.restore();
+  }
+
+  // 메인 이미지 — 약간 우측 오프셋
+  const imgZoneTop = H*0.18;
+  const imgZoneBottom = H*0.66;
+  const imgResult = drawMainImgFit(imgZoneTop, imgZoneBottom, p);
+
+  // 회전된 할인 스탬프 (우측 하단)
+  const firstDisc=_coupons.find(c=>c.disc);
+  if(firstDisc && _couponShow){
+    const cx = W*0.78, cy = imgZoneBottom - 30 + getBounceOffset(p, 0.08);
+    const r = 52;
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    CTX.translate(cx, cy);CTX.rotate(-0.18);
+    // 이중 원 테두리
+    CTX.strokeStyle=gc('ct_copy')||'#3A2D1A';CTX.lineWidth=1.4;
+    CTX.beginPath();CTX.arc(0,0,r,0,Math.PI*2);CTX.stroke();
+    CTX.beginPath();CTX.arc(0,0,r-4,0,Math.PI*2);CTX.stroke();
+    // 숫자
+    CTX.fillStyle=gc('ct_copy')||'#3A2D1A';
+    CTX.font=F(34,900);CTX.textAlign='center';CTX.textBaseline='middle';
+    CTX.fillText(String(parseInt(firstDisc.disc)||0)+'%', 0, -4);
+    CTX.font=F(9,700);
+    CTX.fillText('SALE', 0, 18);
+    CTX.restore();
+  }
+
+  // 좌측 카피 블록 (하단)
+  if(on('row_copy')){
+    CTX.save();CTX.globalAlpha=_layerAlpha.copy;
+    CTX.fillStyle=gc('ct_copy');
+    CTX.font=F(22,700);CTX.textAlign='left';
+    const copyText = getTypedText(v('f_copy'), p);
+    CTX.fillText(copyText, 28, H*0.74);
+    CTX.restore();
+  }
+
+  // 하단 헤어라인
+  CTX.save();CTX.strokeStyle='rgba(58,45,26,0.25)';CTX.lineWidth=0.7;
+  CTX.beginPath();CTX.moveTo(28, H*0.78);CTX.lineTo(W-28, H*0.78);CTX.stroke();
+  CTX.restore();
+
+  // 쿠폰 (하단)
+  let afterCoupons;
+  const couponStartY = _couponShow ? safeCouponStartY(H*0.82) : H*0.82;
+  if(_couponShow){
+    CTX.save();CTX.globalAlpha=_layerAlpha.coupon;
+    afterCoupons = drawCoupons(couponStartY, p);
+    CTX.restore();
+  } else { afterCoupons = couponStartY; }
+
+  const extraTxt=v('f_extra');
+  if(extraTxt){
+    const extraTextY = _couponShow ? afterCoupons + 22 : H * 0.93;
+    CTX.fillStyle=gc('ct_extra');CTX.font=F(13,400);CTX.textAlign='center';
+    CTX.fillText(extraTxt,W/2,extraTextY);
+  }
+}
+
 function drawBadgeAt(cx, cy, br, couponData){
   const firstDisc=couponData;
   CTX.save();
@@ -1161,31 +1382,33 @@ function setBadgeLabel(label,btn){
 
 function initConfetti(){
   _confettis = [];
-  const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#ffffff'];
-  for(let i=0; i<80; i++){
+  // 브랜드 팔레트 기반 — 화려하지 않고 절제된 톤
+  const colors = ['#C6243A','#FB9E45','#65ADC6','#BADADD','#F6F4EE','#FFFFFF'];
+  for(let i=0; i<70; i++){
     _confettis.push({
-      x: W/2 + (Math.random()-0.5)*20,
-      y: H/2 + (Math.random()-0.5)*20,
-      vx: (Math.random()-0.5)*18,
-      vy: (Math.random()-0.5)*15 - 10,
-      size: Math.random()*8 + 4,
+      x: W/2 + (Math.random()-0.5)*40,
+      y: H/2 + (Math.random()-0.5)*40,
+      vx: (Math.random()-0.5)*14,
+      vy: (Math.random()-0.5)*12 - 9,
+      size: Math.random()*6 + 3,
       color: colors[Math.floor(Math.random()*colors.length)],
       angle: Math.random() * Math.PI*2,
-      vAngle: (Math.random()-0.5)*0.5
+      vAngle: (Math.random()-0.5)*0.45
     });
   }
 }
 function drawConfetti(p){
   _confettis.forEach(c => {
-    c.vy += 0.2;
-    c.vx *= 0.99;
-    c.vy *= 0.99;
+    c.vy += 0.14;          // 더 느린 낙하
+    c.vx *= 0.985;
+    c.vy *= 0.985;
     c.x += c.vx;
     c.y += c.vy;
     c.angle += c.vAngle;
     CTX.save();
     CTX.translate(c.x, c.y);
     CTX.rotate(c.angle);
+    CTX.globalAlpha = Math.max(0, 1 - p*0.9);  // 후반부 자연스럽게 페이드아웃
     CTX.fillStyle = c.color;
     CTX.fillRect(-c.size/2, -c.size*0.3, c.size, c.size*0.6);
     CTX.restore();
@@ -1193,10 +1416,11 @@ function drawConfetti(p){
 }
 
 function drawAurora(p){
+  // 브랜드 팔레트 기반: 주황 · 크림슨 · 틸
   const bands=[
-    {col:'rgba(80,200,255,',y:H*0.08,w:W*1.2,h:H*0.25,phase:0},
-    {col:'rgba(140,80,255,',y:H*0.18,w:W*1.1,h:H*0.2,phase:0.3},
-    {col:'rgba(60,255,180,',y:H*0.04,w:W*0.9,h:H*0.18,phase:0.6},
+    {col:'rgba(251,158,69,', y:H*0.06, w:W*1.2, h:H*0.26, phase:0},     // FB9E45
+    {col:'rgba(198,36,58,',  y:H*0.18, w:W*1.1, h:H*0.20, phase:0.4},   // C6243A
+    {col:'rgba(101,173,198,',y:H*0.02, w:W*0.95,h:H*0.18, phase:0.75},  // 65ADC6
   ];
   CTX.save();
   bands.forEach(b=>{
@@ -1217,14 +1441,16 @@ function drawAurora(p){
 let _bokenParticles=[];
 function initBokeh(){
   _bokenParticles=[];
-  for(let i=0;i<30;i++){
+  // 팔레트 hue (오렌지 30°·크림슨 350°·틸 195°)에서 골고루 추출
+  const hues = [30, 350, 195, 195, 30, 350, 25, 350];
+  for(let i=0;i<28;i++){
     _bokenParticles.push({
       x:Math.random()*W, y:Math.random()*H,
-      r:Math.random()*40+15,
+      r:Math.random()*42+18,
       a:Math.random()*Math.PI*2,
       speed:Math.random()*0.4+0.1,
-      col:`hsl(${Math.floor(Math.random()*60+200)},80%,70%)`,
-      alpha:Math.random()*0.12+0.04
+      col:`hsl(${hues[i % hues.length] + (Math.random()*10-5)|0},70%,68%)`,
+      alpha:Math.random()*0.12+0.05
     });
   }
 }
@@ -1320,9 +1546,10 @@ function drawGlow(p){
   const pad = 14;
   CTX.save();
   CTX.shadowBlur = blur;
-  const glowColor = _type === 'C' ? `rgba(180,100,255,${alpha})`
-                  : _type === 'B' ? `rgba(200,170,80,${alpha})`
-                  :                  `rgba(255,120,40,${alpha})`;
+  // 팔레트 기반 글로우: C=틸 / B=웜골드 / A=오렌지
+  const glowColor = _type === 'C' ? `rgba(101,173,198,${alpha})`
+                  : _type === 'B' ? `rgba(220,180,90,${alpha})`
+                  :                  `rgba(251,158,69,${alpha})`;
   CTX.shadowColor = glowColor;
   CTX.strokeStyle = glowColor;
   CTX.lineWidth = 2;
@@ -1342,12 +1569,99 @@ function drawRadar(p){
   CTX.fillStyle = lineGrd;
   CTX.fillRect(0, scanY - 3, W, 6);
   const trailGrd = CTX.createLinearGradient(0, scanY - 40, 0, scanY);
-  trailGrd.addColorStop(0, 'rgba(100,200,255,0)');
-  trailGrd.addColorStop(1, 'rgba(100,200,255,0.08)');
+  trailGrd.addColorStop(0, 'rgba(101,173,198,0)');
+  trailGrd.addColorStop(1, 'rgba(101,173,198,0.10)');
   CTX.fillStyle = trailGrd;
   CTX.fillRect(0, scanY - 40, W, 40);
   CTX.fillStyle = 'rgba(0,0,0,0.22)';
   CTX.fillRect(0, Math.max(0, scanY + 3), W, H - Math.max(0, scanY + 3));
+  CTX.restore();
+}
+
+/* ── FLASH ── 짧은 화이트 플래시 (시작 + 중간 키 모먼트) */
+function drawFlash(p){
+  let alpha = 0;
+  if(p < 0.07) alpha = (1 - p/0.07) * 0.85;                   // 오프닝 플래시
+  if(p > 0.49 && p < 0.53){
+    alpha = Math.max(alpha, (1 - Math.abs(p - 0.51)/0.02) * 0.45);  // 미드 임팩트
+  }
+  if(alpha <= 0) return;
+  CTX.save();
+  CTX.fillStyle = `rgba(255,255,255,${alpha})`;
+  CTX.fillRect(0, 0, W, H);
+  CTX.restore();
+}
+
+/* ── RIPPLE ── 중앙에서 퍼지는 동심원 (3겹 스태거) */
+function drawRipple(p){
+  const cx = W/2, cy = H * 0.45;
+  const ringCount = 3;
+  const maxR = Math.min(W, H) * 0.55;
+  CTX.save();
+  CTX.lineWidth = 1.8;
+  for(let i = 0; i < ringCount; i++){
+    const phase = ((p * 1.4) + i / ringCount) % 1;
+    const r = phase * maxR;
+    const alpha = (1 - phase) * 0.45;
+    CTX.strokeStyle = `rgba(101,173,198,${alpha})`;  // 틸 톤
+    CTX.beginPath();
+    CTX.arc(cx, cy, r, 0, Math.PI * 2);
+    CTX.stroke();
+  }
+  CTX.restore();
+}
+
+/* ── DUST ── 상승하는 먼지/포자 입자 (분위기용) */
+let _dustParticles = [];
+function initDust(){
+  _dustParticles = [];
+  for(let i = 0; i < 28; i++){
+    _dustParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vy: -(Math.random() * 0.5 + 0.25),
+      vx: (Math.random() - 0.5) * 0.35,
+      size: Math.random() * 2.2 + 0.8,
+      alpha: Math.random() * 0.35 + 0.18,
+      drift: Math.random() * Math.PI * 2
+    });
+  }
+}
+function drawDust(p){
+  CTX.save();
+  _dustParticles.forEach(d => {
+    d.drift += 0.02;
+    d.x += d.vx + Math.sin(d.drift) * 0.15;
+    d.y += d.vy;
+    if(d.y < -10){ d.y = H + 10; d.x = Math.random() * W; }
+    CTX.fillStyle = `rgba(246,244,238,${d.alpha})`;  // 크림 톤
+    CTX.beginPath();
+    CTX.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    CTX.fill();
+  });
+  CTX.restore();
+}
+
+/* ── SWIPE ── 대각선 글로스 스와이프 (전체 영상에 1회) */
+function drawSwipe(p){
+  const beamW = W * 0.35;
+  const totalDist = W + beamW * 2;
+  const x = -beamW + totalDist * p;
+  CTX.save();
+  CTX.globalCompositeOperation = 'screen';
+  const grd = CTX.createLinearGradient(x, 0, x + beamW, H);
+  grd.addColorStop(0,   'rgba(255,255,255,0)');
+  grd.addColorStop(0.5, 'rgba(255,255,255,0.18)');
+  grd.addColorStop(1,   'rgba(255,255,255,0)');
+  CTX.fillStyle = grd;
+  // 비스듬한 평행사변형
+  CTX.beginPath();
+  CTX.moveTo(x, 0);
+  CTX.lineTo(x + beamW, 0);
+  CTX.lineTo(x + beamW + 120, H);
+  CTX.lineTo(x + 120, H);
+  CTX.closePath();
+  CTX.fill();
   CTX.restore();
 }
 
@@ -1386,7 +1700,6 @@ async function downloadVideo(){
 async function startVideoExport(){
   if(_isRecording) return;
   if(!_main) { alert('메인 이미지를 먼저 등록해주세요!'); return; }
-  hideSafezone();
   _isRecording = true;
   document.getElementById('rec_overlay').style.display = 'flex';
   document.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -1399,36 +1712,37 @@ async function startVideoExport(){
   offscreenCv.height = 1920;
   const offscreenCtx = offscreenCv.getContext('2d');
 
-  // ── AUDIO MIX SETUP ──
-  const hasBgm = !!_audio.bgm.url;
-  const hasSfx = !!(_audio.sfx.logo.buffer || _audio.sfx.copy.buffer || _audio.sfx.coupon.buffer);
-  const hasAudio = hasBgm || hasSfx;
+  // ── AUDIO MIX SETUP (BGM only) ──
+  // Fresh AudioContext per recording — released on stop. Avoids stale-state bugs.
   let audioCtx = null, audioDest = null, bgmEl = null, bgmGain = null, bgmSrc = null;
-  if(hasAudio){
-    audioCtx = getAudioCtx();
-    if(audioCtx){
+  if(_audio.bgm.url){
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if(Ctor){
+      audioCtx = new Ctor();
       if(audioCtx.state === 'suspended'){ try { await audioCtx.resume(); } catch(e){} }
       if(audioCtx.state === 'suspended'){
-        // Browser blocked resume (autoplay policy) — record without audio rather than silently dropping it
+        // Autoplay policy blocked us — record without audio rather than silently failing
         console.warn('AudioContext could not be resumed; recording without audio');
+        try { audioCtx.close(); } catch(e){}
         audioCtx = null;
-        toast('오디오 컨텍스트가 차단됨 — 무음으로 녹화됩니다');
+        toast('브라우저가 오디오를 차단함 — 무음으로 녹화됩니다');
       } else {
         audioDest = audioCtx.createMediaStreamDestination();
-        if(hasBgm){
-          bgmEl = new Audio();
-          bgmEl.src = _audio.bgm.url;
-          bgmEl.loop = true;
-          try {
-            bgmSrc = audioCtx.createMediaElementSource(bgmEl);
-            bgmGain = audioCtx.createGain();
-            bgmGain.gain.value = _audio.bgmVol;
-            bgmSrc.connect(bgmGain);
-            bgmGain.connect(audioDest);
-            bgmGain.connect(audioCtx.destination);
-            bgmEl.currentTime = 0;
-            await bgmEl.play();
-          } catch(err){ console.warn('BGM setup failed', err); }
+        bgmEl = new Audio();
+        bgmEl.src = _audio.bgm.url;
+        bgmEl.loop = true;
+        try {
+          bgmSrc = audioCtx.createMediaElementSource(bgmEl);
+          bgmGain = audioCtx.createGain();
+          bgmGain.gain.value = _audio.bgmVol;
+          bgmSrc.connect(bgmGain);
+          bgmGain.connect(audioDest);
+          bgmGain.connect(audioCtx.destination);
+          bgmEl.currentTime = 0;
+          await bgmEl.play();
+        } catch(err){
+          console.warn('BGM setup failed', err);
+          toast('BGM 재생 실패 — 무음으로 녹화됩니다');
         }
       }
     }
@@ -1457,14 +1771,18 @@ async function startVideoExport(){
   }
   _lastVideoMime = mime;
 
+  const teardownAudio = () => {
+    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
+    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
+    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    if(audioCtx){ try { audioCtx.close(); } catch(e){} audioCtx = null; }
+  };
+
   const abortRecording = (msg) => {
     _isRecording = false;
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
-    showSafezone();
-    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
-    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
-    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    teardownAudio();
     if(msg) alert(msg);
   };
 
@@ -1488,13 +1806,10 @@ async function startVideoExport(){
     _lastVideoUrl = url;
     _isRecording = false;
     _animProgress = 0;
-    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
-    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
-    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    teardownAudio();
     render();
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
-    showSafezone();
     document.getElementById('preview_modal').style.display = 'flex';
     const vid = document.getElementById('preview_video');
     vid.src = url;
@@ -1503,26 +1818,9 @@ async function startVideoExport(){
 
   initConfetti();
   initBokeh();
+  initDust();
   const startTime = performance.now();
   const durationMs = durationSec * 1000;
-  const sfxFired = { logo:false, copy:false, coupon:false };
-  function fireSfx(key){
-    if(sfxFired[key]) return;
-    const s = _audio.sfx[key];
-    if(!s || !s.buffer || !audioCtx || !audioDest) return;
-    sfxFired[key] = true;
-    try {
-      const src = audioCtx.createBufferSource();
-      src.buffer = s.buffer;
-      const g = audioCtx.createGain();
-      g.gain.value = _audio.sfxVol[key];
-      src.connect(g);
-      g.connect(audioDest);
-      g.connect(audioCtx.destination);
-      src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };
-      src.start();
-    } catch(err){ console.warn('SFX fire failed', key, err); }
-  }
 
   rec.start();
 
@@ -1530,12 +1828,6 @@ async function startVideoExport(){
     let elapsed = now - startTime;
     if(elapsed > durationMs) elapsed = durationMs;
     _animProgress = elapsed / durationMs;
-
-    if(audioCtx){
-      if(_animProgress >= _timing.logo)   fireSfx('logo');
-      if(_animProgress >= _timing.copy)   fireSfx('copy');
-      if(_animProgress >= _timing.coupon) fireSfx('coupon');
-    }
 
     const pct = Math.round(_animProgress * 100);
     document.getElementById('rec_text').textContent = `영상 생성 중... (${pct}%)`;
@@ -1580,7 +1872,6 @@ function hexA(hex,a){
 }
 
 async function saveAndExport(){
-  hideSafezone();
   render();
   const thumb=CV.toDataURL('image/jpeg',0.7);
   const s=captureSettings();
@@ -1602,7 +1893,6 @@ async function saveAndExport(){
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  showSafezone();
   toast('PNG 저장 완료! (1080×1920) ☁ Firebase 동기화 중...');
 }
 
@@ -1629,7 +1919,7 @@ function captureSettings(){
 
 function applySettings(s,logoSrc,mainSrc){
   _type=s.type;
-  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C'][i]===s.type);});
+  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C','D','E','F'][i]===s.type);});
   document.getElementById('type_name').textContent=TYPE_NAMES[s.type];
   document.getElementById('type_indicator').textContent=TYPE_IND[s.type];
   const sv=(id,val)=>{const e=document.getElementById(id);if(e&&val!=null)e.value=val;};
@@ -1698,7 +1988,11 @@ function applySettings(s,logoSrc,mainSrc){
 
 function renderHistory(){
   const grid=document.getElementById('hist_grid');
-  if(!_history.length){grid.innerHTML='<div class="hist-empty">저장된 이미지가 없습니다</div>';return;}
+  if(!_history.length){
+    grid.innerHTML='<div class="hist-empty">저장된 이미지가 없습니다</div>';
+    renderRecentImages();
+    return;
+  }
   grid.innerHTML='';
   _history.forEach((h,i)=>{
     const wrap=document.createElement('div');wrap.className='ht';wrap.title='클릭 시 세팅 복원';
@@ -1714,6 +2008,7 @@ function renderHistory(){
     wrap.onclick=()=>applySettings(h.s,h.logoSrc||null,h.mainSrc||null);
     grid.appendChild(wrap);
   });
+  renderRecentImages();
 }
 
 const PRESET_MAX = 10;
@@ -1902,6 +2197,8 @@ CV_EL.addEventListener('mouseleave', ()=>{
 <script type="module">
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs,
          deleteDoc, doc, query, orderBy, limit, setDoc, getDoc }
   from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -1916,19 +2213,24 @@ const firebaseConfig = {
   measurementId:     "G-H8ZS41NWSR"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const ALLOWED_DOMAIN = 'drfelis.com';
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const provider = new GoogleAuthProvider();
+// `hd`: 구글 계정 선택 UI에서 drfelis.com 호스팅 계정만 노출되도록 힌트 (강제는 아님 — 서버 규칙으로 진짜 차단)
+provider.setCustomParameters({ hd: ALLOWED_DOMAIN, prompt: 'select_account' });
 
 const UID = 'drfelis_team';
-
-const HIST_COL = () => collection(db, 'sc_histories', UID, 'items');
+const HIST_COL  = () => collection(db, 'sc_histories', UID, 'items');
+const PRESET_DOC = () => doc(db, 'sc_presets', UID);
 
 window.fbSaveHistory = async (item) => {
-  try {
-    await addDoc(HIST_COL(), { ...item, createdAt: Date.now() });
-  } catch(e) { console.warn('[FB] history save error', e); }
+  try { await addDoc(HIST_COL(), { ...item, createdAt: Date.now() }); }
+  catch(e) { console.warn('[FB] history save error', e); }
 };
-
 window.fbLoadHistory = async () => {
   try {
     const q = query(HIST_COL(), orderBy('createdAt','desc'), limit(30));
@@ -1936,36 +2238,79 @@ window.fbLoadHistory = async () => {
     return snap.docs.map(d => ({ fbId: d.id, ...d.data() }));
   } catch(e) { console.warn('[FB] history load error', e); return []; }
 };
-
 window.fbDeleteHistory = async (fbId) => {
-  try {
-    await deleteDoc(doc(db, 'sc_histories', UID, 'items', fbId));
-  } catch(e) { console.warn('[FB] history delete error', e); }
+  try { await deleteDoc(doc(db, 'sc_histories', UID, 'items', fbId)); }
+  catch(e) { console.warn('[FB] history delete error', e); }
 };
-
-const PRESET_DOC = () => doc(db, 'sc_presets', UID);
-
 window.fbSavePresets = async (presetsArr) => {
-  try {
-    await setDoc(PRESET_DOC(), { presets: presetsArr, updatedAt: Date.now() });
-  } catch(e) { console.warn('[FB] preset save error', e); }
+  try { await setDoc(PRESET_DOC(), { presets: presetsArr, updatedAt: Date.now() }); }
+  catch(e) { console.warn('[FB] preset save error', e); }
 };
-
 window.fbLoadPresets = async () => {
   try {
     const snap = await getDoc(PRESET_DOC());
-    if(snap.exists()) return snap.data().presets || [];
-    return [];
+    return snap.exists() ? (snap.data().presets || []) : [];
   } catch(e) { console.warn('[FB] preset load error', e); return []; }
 };
 
-window.addEventListener('load', async () => {
-  const [histItems, presetItems] = await Promise.all([
-    window.fbLoadHistory(),
-    window.fbLoadPresets()
-  ]);
-  window.dispatchEvent(new CustomEvent('fb-history-loaded',  { detail: histItems   }));
-  window.dispatchEvent(new CustomEvent('fb-presets-loaded',  { detail: presetItems }));
+// ── AUTH GATE ──
+const gateEl     = document.getElementById('auth_gate');
+const signinBtn  = document.getElementById('auth_signin_btn');
+const errEl      = document.getElementById('auth_error');
+const userline   = document.getElementById('auth_userline');
+const userEmail  = document.getElementById('user_email');
+const signoutBtn = document.getElementById('signout_btn');
+
+function showErr(msg){ if(errEl) errEl.textContent = msg; }
+function clearErr(){ if(errEl) errEl.textContent = ''; }
+
+signinBtn.addEventListener('click', async () => {
+  clearErr();
+  signinBtn.disabled = true;
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(err) {
+    console.warn('signInWithPopup error', err);
+    let msg = err.code || err.message || '알 수 없는 오류';
+    if(err.code === 'auth/popup-blocked') msg = '브라우저가 팝업을 차단했습니다. 팝업 허용 후 다시 시도해주세요.';
+    if(err.code === 'auth/popup-closed-by-user') msg = '로그인 창이 닫혔습니다.';
+    showErr('로그인 실패: ' + msg);
+    signinBtn.disabled = false;
+  }
+});
+signoutBtn.addEventListener('click', async () => {
+  try { await signOut(auth); } catch(e) { console.warn('signOut error', e); }
+});
+
+let _appBootstrapped = false;
+onAuthStateChanged(auth, async (user) => {
+  signinBtn.disabled = false;
+  if(!user){
+    gateEl.style.display = 'flex';
+    userline.style.display = 'none';
+    return;
+  }
+  const email = (user.email || '').toLowerCase();
+  // 클라이언트 측 도메인 가드 (서버 규칙이 진짜 enforcement)
+  if(!email.endsWith('@' + ALLOWED_DOMAIN) || !user.emailVerified){
+    showErr(`@${ALLOWED_DOMAIN} 계정만 사용 가능합니다 (현재: ${email || '이메일 없음'})`);
+    try { await signOut(auth); } catch(e){}
+    gateEl.style.display = 'flex';
+    userline.style.display = 'none';
+    return;
+  }
+  // 통과
+  clearErr();
+  gateEl.style.display = 'none';
+  userEmail.textContent = email;
+  userline.style.display = 'inline-flex';
+  if(_appBootstrapped) return;
+  _appBootstrapped = true;
+  try {
+    const [hist, pres] = await Promise.all([window.fbLoadHistory(), window.fbLoadPresets()]);
+    window.dispatchEvent(new CustomEvent('fb-history-loaded', { detail: hist }));
+    window.dispatchEvent(new CustomEvent('fb-presets-loaded', { detail: pres }));
+  } catch(err){ console.warn('bootstrap load error', err); }
 });
 </script>
 </body>

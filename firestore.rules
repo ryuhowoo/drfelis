@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Dr.Felis Shortclip Generator — Firestore Security Rules
+//
+// 정책: @drfelis.com 도메인의 인증된 Google 계정만 read/write 허용.
+// 그 외 접근(익명·외부 도메인·이메일 미인증)은 모두 차단.
+//
+// 배포 방법:
+//   1. Firebase Console → drfelis-tools 프로젝트 → Firestore → 규칙
+//   2. 아래 내용을 그대로 붙여넣고 "게시" 클릭
+//   또는 CLI: `firebase deploy --only firestore:rules` (firebase.json 설정 후)
+//
+// 추가로 Authentication 콘솔에서 Google 로그인 공급자가 사용 설정되어야 합니다.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isDrfelisUser() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@drfelis[.]com$');
+    }
+
+    // 숏클립 히스토리 (팀 공유 컬렉션)
+    match /sc_histories/{uid}/items/{itemId} {
+      allow read, write: if isDrfelisUser();
+    }
+
+    // 숏클립 프리셋 (팀 공유 문서)
+    match /sc_presets/{uid} {
+      allow read, write: if isDrfelisUser();
+    }
+
+    // 기본 거부 — 위에 매치되지 않은 모든 경로는 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
