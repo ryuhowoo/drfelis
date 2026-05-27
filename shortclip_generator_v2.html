@@ -7,7 +7,7 @@
 <style>
 @font-face{font-family:'Asta Sans';src:local('Asta Sans'),local('AstaSans');font-weight:400 900}
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--surface3:#252530;--border:#28282f;--border2:#333340;--text:#eeeef2;--muted:#777;--muted2:#555;--primary:#FF4D00}
+:root{--bg:#F6F4EE;--surface:#FFFFFF;--surface2:#FAF8F2;--surface3:#EFEBDD;--border:#E5DECB;--border2:#CFC6AC;--text:#2A2520;--muted:#7D7568;--muted2:#A39A88;--primary:#C6243A;--secondary:#FB9E45;--accent:#65ADC6;--accent-soft:#BADADD;--shadow:0 1px 3px rgba(42,37,32,.06),0 1px 2px rgba(42,37,32,.04)}
 body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;overflow-x:hidden}
 .topbar{position:fixed;top:0;left:0;right:0;height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:200}
 .topbar-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}
@@ -15,7 +15,11 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .top-actions{display:flex;gap:8px;align-items:center}
 #type_indicator{font-size:11px;color:var(--muted)}
 .app{display:grid;grid-template-columns:272px 1fr 308px;height:calc(100vh - 48px);margin-top:48px;overflow:hidden}
-.left,.right{overflow-y:auto;background:var(--surface)}
+.left,.right{overflow-y:auto;background:var(--surface);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.left::-webkit-scrollbar,.right::-webkit-scrollbar{width:8px}
+.left::-webkit-scrollbar-thumb,.right::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.left::-webkit-scrollbar-thumb:hover,.right::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.left::-webkit-scrollbar-track,.right::-webkit-scrollbar-track{background:transparent}
 .left{border-right:1px solid var(--border)}
 .right{border-left:1px solid var(--border)}
 .ph{padding:12px 17px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
@@ -63,7 +67,7 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .frow.off .fbody input,.frow.off .fbody textarea{opacity:.3;pointer-events:none}
 .tog{position:relative;width:32px;height:17px;cursor:pointer;display:block}
 .tog input{opacity:0;width:0;height:0;position:absolute}
-.ttr{position:absolute;inset:0;background:#2a2a2a;border-radius:9px;transition:.2s}
+.ttr{position:absolute;inset:0;background:#D8D2C2;border-radius:9px;transition:.2s}
 .tog input:checked~.ttr{background:var(--primary)}
 .tth{position:absolute;top:2px;left:2px;width:13px;height:13px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none}
 .tog input:checked~.tth{left:17px}
@@ -89,8 +93,8 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .ci-field label{display:block;font-size:9px;color:var(--muted);margin-bottom:3px}
 .ci-field input{width:100%;padding:5px 7px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit}
 .ci-field input:focus{outline:0;border-color:var(--primary)}
-.center{background:#0a0a0c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;overflow:auto}
-.cf{border-radius:14px;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,.7)}
+.center{background:#1F1A14;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;overflow:auto}
+.cf{border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.45)}
 canvas#cv{display:block;width:328px;height:583px}
 .cv-actions{display:flex;gap:7px}
 .hist-grid{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
@@ -102,8 +106,8 @@ canvas#cv{display:block;width:328px;height:583px}
 .hist-empty{font-size:11px;color:var(--muted);margin-top:6px}
 .hist-loading{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:6px}
 .hist-loading::before{content:'';width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-.fb-badge{font-size:10px;background:#1a3a2a;color:#4ade80;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px}
-.fb-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:fbpulse 2s ease-in-out infinite}
+.fb-badge{font-size:10px;background:#E8F2F4;color:#3D7B91;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;border:1px solid #BADADD}
+.fb-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:fbpulse 2s ease-in-out infinite}
 @keyframes fbpulse{0%,100%{opacity:1}50%{opacity:.4}}
 .parea{padding:12px 17px;display:flex;flex-direction:column;gap:10px}
 .tool-tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -113,7 +117,7 @@ canvas#cv{display:block;width:328px;height:583px}
 .c-btn:hover{border-color:var(--primary);color:var(--primary)}
 .c-btn.pri{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
 .c-btn.pri:hover{opacity:.9}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;border:1px solid var(--border2)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#2A2520;color:#F6F4EE;padding:9px 18px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .toast.show{opacity:1}
 .preset-cards{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .preset-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;cursor:pointer;position:relative;transition:.15s}
@@ -123,7 +127,7 @@ canvas#cv{display:block;width:328px;height:583px}
 .preset-type{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:var(--surface3);color:var(--muted)}
 .preset-date{font-size:9px;color:var(--muted2)}
 .preset-del{position:absolute;top:6px;right:7px;width:16px;height:16px;background:0 0;border:none;cursor:pointer;color:var(--muted2);font-size:11px;display:flex;align-items:center;justify-content:center;border-radius:3px;transition:.15s;padding:0;line-height:1}
-.preset-del:hover{background:rgba(255,60,60,.18);color:#f55}
+.preset-del:hover{background:rgba(198,36,58,.12);color:var(--primary)}
 .preset-empty{font-size:11px;color:var(--muted);margin-top:6px}
 .preset-save-row{display:flex;gap:6px;margin-top:2px}
 .preset-save-row input{flex:1;min-width:0;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;font-family:inherit}
@@ -138,16 +142,16 @@ canvas#cv{display:block;width:328px;height:583px}
 #sz_overlay{position:absolute;inset:0;pointer-events:none;z-index:50;display:none}
 .sz-danger{position:absolute;background:rgba(255,50,50,.22);border:1px solid rgba(255,80,80,.45)}
 .sz-cta{position:absolute;background:rgba(255,145,0,.18);border:1px dashed rgba(255,160,0,.6)}
-.sz-safe{position:absolute;border:1.5px dashed rgba(55,220,100,.8)}
+.sz-safe{position:absolute;border:1.5px dashed rgba(101,173,198,.85)}
 .sz-lbl{position:absolute;font-size:7px;font-weight:700;letter-spacing:.04em;padding:1px 4px;border-radius:2px;white-space:nowrap;line-height:1.5}
 .sz-lbl.d{background:rgba(210,35,35,.8);color:#fff}
 .sz-lbl.o{background:rgba(190,105,0,.8);color:#fff}
-.sz-lbl.g{background:rgba(25,175,75,.85);color:#fff}
+.sz-lbl.g{background:rgba(61,123,145,.95);color:#fff}
 .sz-tabs{display:flex;gap:4px;margin-bottom:7px}
 .sz-tab{flex:1;padding:4px 2px;border:1px solid var(--border2);border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
 .sz-tab.active{background:var(--surface3);border-color:var(--border2);color:var(--text)}
 .sz-toggle{width:100%;padding:6px;border:1px solid var(--border2);border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);background:0 0;font-family:inherit;transition:.15s;text-align:center}
-.sz-toggle.on{border-color:#22c55e;color:#22c55e;background:rgba(34,197,94,.08)}
+.sz-toggle.on{border-color:var(--accent);color:var(--accent);background:rgba(101,173,198,.10)}
 .audio-slot{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px}
 .audio-slot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
 .audio-slot-title{font-size:11px;font-weight:700;color:var(--text);flex-shrink:0}
@@ -162,11 +166,11 @@ canvas#cv{display:block;width:328px;height:583px}
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-title">Dr.Felis Shortclip <span class="v-badge">v2</span><span class="fb-badge"><span class="fb-dot"></span>Firebase</span></div>
+  <div class="topbar-title">Dr.Felis Shortclip <span class="v-badge">v2.1</span><span class="fb-badge"><span class="fb-dot"></span>Firebase</span></div>
   <div class="top-actions">
     <span id="type_indicator"></span>
     <button class="c-btn pri" onclick="saveAndExport()">PNG 저장</button>
-    <button class="c-btn pri" style="background:#ff4d00;border-color:#ff4d00" onclick="startVideoExport()">미리보기 (MP4)</button>
+    <button class="c-btn pri" style="background:#FB9E45;border-color:#FB9E45" onclick="startVideoExport()">미리보기 (MP4)</button>
   </div>
 </div>
 <div class="app">
@@ -311,34 +315,7 @@ canvas#cv{display:block;width:328px;height:583px}
 <span class="audio-vol-val" id="bgm_vol_val">60%</span>
 </div>
 </div>
-<div class="audio-slot" id="sfx_logo_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 로고 등장</span><span class="audio-slot-name" id="sfx_logo_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('logo',event)"></label>
-<button class="audio-clr" onclick="clearAudio('logo')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.logo=this.value/100;document.getElementById('sfx_logo_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_logo_vol_val">80%</span>
-</div>
-</div>
-<div class="audio-slot" id="sfx_copy_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 카피 등장</span><span class="audio-slot-name" id="sfx_copy_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('copy',event)"></label>
-<button class="audio-clr" onclick="clearAudio('copy')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.copy=this.value/100;document.getElementById('sfx_copy_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_copy_vol_val">80%</span>
-</div>
-</div>
-<div class="audio-slot" id="sfx_coupon_slot">
-<div class="audio-slot-head"><span class="audio-slot-title">🔊 SFX · 쿠폰 등장</span><span class="audio-slot-name" id="sfx_coupon_name">파일 없음</span></div>
-<div class="audio-row">
-<label class="audio-file-btn">파일 선택<input type="file" accept="audio/*" onchange="loadAudio('coupon',event)"></label>
-<button class="audio-clr" onclick="clearAudio('coupon')">✕</button>
-<input type="range" class="audio-vol-slider" min="0" max="100" value="80" oninput="_audio.sfxVol.coupon=this.value/100;document.getElementById('sfx_coupon_vol_val').textContent=this.value+'%'">
-<span class="audio-vol-val" id="sfx_coupon_vol_val">80%</span>
-</div>
-</div>
-<div style="font-size:10px;color:var(--muted);margin-top:8px;padding:7px 9px;background:var(--surface2);border-radius:4px;line-height:1.6">💡 SFX는 우측 <strong>요소 등장 타이밍</strong> 시점에 자동 재생. BGM은 영상 전체 길이만큼 루프. <strong>MP4 녹화 시에만 합성</strong>되며, 히스토리/프리셋에는 저장되지 않습니다 (세션 한정).</div>
+<div style="font-size:10px;color:var(--muted);margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:5px;line-height:1.6;border:1px solid var(--border)">💡 BGM은 영상 길이만큼 자동 루프되며 <strong>MP4 녹화 시에만</strong> 합성됩니다. 히스토리/프리셋에는 저장되지 않습니다 (세션 한정).</div>
 </div>
 </div>
 </div>
@@ -354,7 +331,7 @@ canvas#cv{display:block;width:328px;height:583px}
 </div>
 <div class="cv-actions">
 <button class="c-btn" onclick="render()">새로고침</button>
-<button class="c-btn pri" style="background:#ff4d00;border-color:#ff4d00" onclick="startVideoExport()" id="btn_video_export">미리보기 (MP4)</button>
+<button class="c-btn pri" style="background:#FB9E45;border-color:#FB9E45" onclick="startVideoExport()" id="btn_video_export">미리보기 (MP4)</button>
 <button class="c-btn pri" onclick="saveAndExport()">PNG 저장</button>
 </div>
 </div>
@@ -371,7 +348,7 @@ canvas#cv{display:block;width:328px;height:583px}
 <div style="display:flex;gap:10px;margin-top:6px;font-size:9px;color:var(--muted)">
 <span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,50,50,.45);border:1px solid rgba(255,80,80,.6)"></span>UI 위험</span>
 <span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;background:rgba(255,145,0,.35);border:1px dashed rgba(255,160,0,.7)"></span>CTA</span>
-<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;border:1.5px dashed rgba(55,220,100,.85)"></span>안전구간</span>
+<span style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:9px;height:9px;border:1.5px dashed rgba(101,173,198,.85)"></span>안전구간</span>
 </div>
 </div>
 <div class="sec">
@@ -461,22 +438,11 @@ let _animProgress = 0;
 
 let _coupons = [{disc:'20', cond:'자사몰 회원 전용'}];
 
-// ── AUDIO STATE ──
+// ── AUDIO STATE (BGM only) ──
 let _audio = {
   bgm: { url: null, name: null },
-  bgmVol: 0.6,
-  sfx: { logo: {buffer:null,name:null}, copy: {buffer:null,name:null}, coupon: {buffer:null,name:null} },
-  sfxVol: { logo: 0.8, copy: 0.8, coupon: 0.8 }
+  bgmVol: 0.6
 };
-let _audioCtx = null;
-function getAudioCtx(){
-  if(!_audioCtx){
-    const C = window.AudioContext || window.webkitAudioContext;
-    if(!C) return null;
-    _audioCtx = new C();
-  }
-  return _audioCtx;
-}
 
 const TYPE_NAMES = {A:'A · 웜 라이프스타일',B:'B · 다크 프리미엄',C:'C · 비비드 일렉트릭'};
 const TYPE_IND   = {A:'Type A · Warm',B:'Type B · Dark',C:'Type C · Vivid'};
@@ -672,46 +638,23 @@ function clearImg(k,e){
   render();
 }
 
-// ── AUDIO LOAD/CLEAR ──
-async function loadAudio(key, e){
+// ── AUDIO LOAD/CLEAR (BGM only) ──
+function loadAudio(key, e){
   const f = e.target.files[0];
   if(!f) return;
-  if(key === 'bgm'){
-    if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
-    _audio.bgm.url = URL.createObjectURL(f);
-    _audio.bgm.name = f.name;
-    document.getElementById('bgm_name').textContent = f.name;
-    toast('BGM 등록: ' + f.name);
-  } else {
-    try {
-      const ctx = getAudioCtx();
-      if(!ctx){ toast('이 브라우저는 오디오 API를 지원하지 않습니다'); return; }
-      if(ctx.state === 'suspended') await ctx.resume();
-      const arrBuf = await f.arrayBuffer();
-      const decoded = await ctx.decodeAudioData(arrBuf.slice(0));
-      _audio.sfx[key] = { buffer: decoded, name: f.name };
-      document.getElementById('sfx_' + key + '_name').textContent = f.name;
-      toast('SFX 등록: ' + f.name);
-    } catch(err){
-      console.warn('SFX decode error', err);
-      toast('SFX 디코딩 실패: 지원되지 않는 형식일 수 있습니다');
-    }
-  }
+  if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
+  _audio.bgm.url = URL.createObjectURL(f);
+  _audio.bgm.name = f.name;
+  document.getElementById('bgm_name').textContent = f.name;
+  toast('BGM 등록: ' + f.name);
 }
 
-function clearAudio(key){
-  if(key === 'bgm'){
-    if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
-    _audio.bgm = { url:null, name:null };
-    document.getElementById('bgm_name').textContent = '파일 없음';
-    const inp = document.querySelector('#bgm_slot input[type=file]');
-    if(inp) inp.value = '';
-  } else {
-    _audio.sfx[key] = { buffer:null, name:null };
-    document.getElementById('sfx_' + key + '_name').textContent = '파일 없음';
-    const inp = document.querySelector('#sfx_' + key + '_slot input[type=file]');
-    if(inp) inp.value = '';
-  }
+function clearAudio(){
+  if(_audio.bgm.url) URL.revokeObjectURL(_audio.bgm.url);
+  _audio.bgm = { url:null, name:null };
+  document.getElementById('bgm_name').textContent = '파일 없음';
+  const inp = document.querySelector('#bgm_slot input[type=file]');
+  if(inp) inp.value = '';
 }
 
 function rr(x,y,w,h,r){
@@ -1161,31 +1104,33 @@ function setBadgeLabel(label,btn){
 
 function initConfetti(){
   _confettis = [];
-  const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#ffffff'];
-  for(let i=0; i<80; i++){
+  // 브랜드 팔레트 기반 — 화려하지 않고 절제된 톤
+  const colors = ['#C6243A','#FB9E45','#65ADC6','#BADADD','#F6F4EE','#FFFFFF'];
+  for(let i=0; i<70; i++){
     _confettis.push({
-      x: W/2 + (Math.random()-0.5)*20,
-      y: H/2 + (Math.random()-0.5)*20,
-      vx: (Math.random()-0.5)*18,
-      vy: (Math.random()-0.5)*15 - 10,
-      size: Math.random()*8 + 4,
+      x: W/2 + (Math.random()-0.5)*40,
+      y: H/2 + (Math.random()-0.5)*40,
+      vx: (Math.random()-0.5)*14,
+      vy: (Math.random()-0.5)*12 - 9,
+      size: Math.random()*6 + 3,
       color: colors[Math.floor(Math.random()*colors.length)],
       angle: Math.random() * Math.PI*2,
-      vAngle: (Math.random()-0.5)*0.5
+      vAngle: (Math.random()-0.5)*0.45
     });
   }
 }
 function drawConfetti(p){
   _confettis.forEach(c => {
-    c.vy += 0.2;
-    c.vx *= 0.99;
-    c.vy *= 0.99;
+    c.vy += 0.14;          // 더 느린 낙하
+    c.vx *= 0.985;
+    c.vy *= 0.985;
     c.x += c.vx;
     c.y += c.vy;
     c.angle += c.vAngle;
     CTX.save();
     CTX.translate(c.x, c.y);
     CTX.rotate(c.angle);
+    CTX.globalAlpha = Math.max(0, 1 - p*0.9);  // 후반부 자연스럽게 페이드아웃
     CTX.fillStyle = c.color;
     CTX.fillRect(-c.size/2, -c.size*0.3, c.size, c.size*0.6);
     CTX.restore();
@@ -1193,10 +1138,11 @@ function drawConfetti(p){
 }
 
 function drawAurora(p){
+  // 브랜드 팔레트 기반: 주황 · 크림슨 · 틸
   const bands=[
-    {col:'rgba(80,200,255,',y:H*0.08,w:W*1.2,h:H*0.25,phase:0},
-    {col:'rgba(140,80,255,',y:H*0.18,w:W*1.1,h:H*0.2,phase:0.3},
-    {col:'rgba(60,255,180,',y:H*0.04,w:W*0.9,h:H*0.18,phase:0.6},
+    {col:'rgba(251,158,69,', y:H*0.06, w:W*1.2, h:H*0.26, phase:0},     // FB9E45
+    {col:'rgba(198,36,58,',  y:H*0.18, w:W*1.1, h:H*0.20, phase:0.4},   // C6243A
+    {col:'rgba(101,173,198,',y:H*0.02, w:W*0.95,h:H*0.18, phase:0.75},  // 65ADC6
   ];
   CTX.save();
   bands.forEach(b=>{
@@ -1217,14 +1163,16 @@ function drawAurora(p){
 let _bokenParticles=[];
 function initBokeh(){
   _bokenParticles=[];
-  for(let i=0;i<30;i++){
+  // 팔레트 hue (오렌지 30°·크림슨 350°·틸 195°)에서 골고루 추출
+  const hues = [30, 350, 195, 195, 30, 350, 25, 350];
+  for(let i=0;i<28;i++){
     _bokenParticles.push({
       x:Math.random()*W, y:Math.random()*H,
-      r:Math.random()*40+15,
+      r:Math.random()*42+18,
       a:Math.random()*Math.PI*2,
       speed:Math.random()*0.4+0.1,
-      col:`hsl(${Math.floor(Math.random()*60+200)},80%,70%)`,
-      alpha:Math.random()*0.12+0.04
+      col:`hsl(${hues[i % hues.length] + (Math.random()*10-5)|0},70%,68%)`,
+      alpha:Math.random()*0.12+0.05
     });
   }
 }
@@ -1320,9 +1268,10 @@ function drawGlow(p){
   const pad = 14;
   CTX.save();
   CTX.shadowBlur = blur;
-  const glowColor = _type === 'C' ? `rgba(180,100,255,${alpha})`
-                  : _type === 'B' ? `rgba(200,170,80,${alpha})`
-                  :                  `rgba(255,120,40,${alpha})`;
+  // 팔레트 기반 글로우: C=틸 / B=웜골드 / A=오렌지
+  const glowColor = _type === 'C' ? `rgba(101,173,198,${alpha})`
+                  : _type === 'B' ? `rgba(220,180,90,${alpha})`
+                  :                  `rgba(251,158,69,${alpha})`;
   CTX.shadowColor = glowColor;
   CTX.strokeStyle = glowColor;
   CTX.lineWidth = 2;
@@ -1342,8 +1291,8 @@ function drawRadar(p){
   CTX.fillStyle = lineGrd;
   CTX.fillRect(0, scanY - 3, W, 6);
   const trailGrd = CTX.createLinearGradient(0, scanY - 40, 0, scanY);
-  trailGrd.addColorStop(0, 'rgba(100,200,255,0)');
-  trailGrd.addColorStop(1, 'rgba(100,200,255,0.08)');
+  trailGrd.addColorStop(0, 'rgba(101,173,198,0)');
+  trailGrd.addColorStop(1, 'rgba(101,173,198,0.10)');
   CTX.fillStyle = trailGrd;
   CTX.fillRect(0, scanY - 40, W, 40);
   CTX.fillStyle = 'rgba(0,0,0,0.22)';
@@ -1399,36 +1348,37 @@ async function startVideoExport(){
   offscreenCv.height = 1920;
   const offscreenCtx = offscreenCv.getContext('2d');
 
-  // ── AUDIO MIX SETUP ──
-  const hasBgm = !!_audio.bgm.url;
-  const hasSfx = !!(_audio.sfx.logo.buffer || _audio.sfx.copy.buffer || _audio.sfx.coupon.buffer);
-  const hasAudio = hasBgm || hasSfx;
+  // ── AUDIO MIX SETUP (BGM only) ──
+  // Fresh AudioContext per recording — released on stop. Avoids stale-state bugs.
   let audioCtx = null, audioDest = null, bgmEl = null, bgmGain = null, bgmSrc = null;
-  if(hasAudio){
-    audioCtx = getAudioCtx();
-    if(audioCtx){
+  if(_audio.bgm.url){
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if(Ctor){
+      audioCtx = new Ctor();
       if(audioCtx.state === 'suspended'){ try { await audioCtx.resume(); } catch(e){} }
       if(audioCtx.state === 'suspended'){
-        // Browser blocked resume (autoplay policy) — record without audio rather than silently dropping it
+        // Autoplay policy blocked us — record without audio rather than silently failing
         console.warn('AudioContext could not be resumed; recording without audio');
+        try { audioCtx.close(); } catch(e){}
         audioCtx = null;
-        toast('오디오 컨텍스트가 차단됨 — 무음으로 녹화됩니다');
+        toast('브라우저가 오디오를 차단함 — 무음으로 녹화됩니다');
       } else {
         audioDest = audioCtx.createMediaStreamDestination();
-        if(hasBgm){
-          bgmEl = new Audio();
-          bgmEl.src = _audio.bgm.url;
-          bgmEl.loop = true;
-          try {
-            bgmSrc = audioCtx.createMediaElementSource(bgmEl);
-            bgmGain = audioCtx.createGain();
-            bgmGain.gain.value = _audio.bgmVol;
-            bgmSrc.connect(bgmGain);
-            bgmGain.connect(audioDest);
-            bgmGain.connect(audioCtx.destination);
-            bgmEl.currentTime = 0;
-            await bgmEl.play();
-          } catch(err){ console.warn('BGM setup failed', err); }
+        bgmEl = new Audio();
+        bgmEl.src = _audio.bgm.url;
+        bgmEl.loop = true;
+        try {
+          bgmSrc = audioCtx.createMediaElementSource(bgmEl);
+          bgmGain = audioCtx.createGain();
+          bgmGain.gain.value = _audio.bgmVol;
+          bgmSrc.connect(bgmGain);
+          bgmGain.connect(audioDest);
+          bgmGain.connect(audioCtx.destination);
+          bgmEl.currentTime = 0;
+          await bgmEl.play();
+        } catch(err){
+          console.warn('BGM setup failed', err);
+          toast('BGM 재생 실패 — 무음으로 녹화됩니다');
         }
       }
     }
@@ -1457,14 +1407,19 @@ async function startVideoExport(){
   }
   _lastVideoMime = mime;
 
+  const teardownAudio = () => {
+    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
+    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
+    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    if(audioCtx){ try { audioCtx.close(); } catch(e){} audioCtx = null; }
+  };
+
   const abortRecording = (msg) => {
     _isRecording = false;
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
     showSafezone();
-    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
-    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
-    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    teardownAudio();
     if(msg) alert(msg);
   };
 
@@ -1488,9 +1443,7 @@ async function startVideoExport(){
     _lastVideoUrl = url;
     _isRecording = false;
     _animProgress = 0;
-    if(bgmEl){ try { bgmEl.pause(); } catch(e){} }
-    if(bgmGain){ try { bgmGain.disconnect(); } catch(e){} }
-    if(bgmSrc){ try { bgmSrc.disconnect(); } catch(e){} }
+    teardownAudio();
     render();
     document.getElementById('rec_overlay').style.display = 'none';
     document.querySelectorAll('button').forEach(b=>b.disabled=false);
@@ -1505,24 +1458,6 @@ async function startVideoExport(){
   initBokeh();
   const startTime = performance.now();
   const durationMs = durationSec * 1000;
-  const sfxFired = { logo:false, copy:false, coupon:false };
-  function fireSfx(key){
-    if(sfxFired[key]) return;
-    const s = _audio.sfx[key];
-    if(!s || !s.buffer || !audioCtx || !audioDest) return;
-    sfxFired[key] = true;
-    try {
-      const src = audioCtx.createBufferSource();
-      src.buffer = s.buffer;
-      const g = audioCtx.createGain();
-      g.gain.value = _audio.sfxVol[key];
-      src.connect(g);
-      g.connect(audioDest);
-      g.connect(audioCtx.destination);
-      src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };
-      src.start();
-    } catch(err){ console.warn('SFX fire failed', key, err); }
-  }
 
   rec.start();
 
@@ -1530,12 +1465,6 @@ async function startVideoExport(){
     let elapsed = now - startTime;
     if(elapsed > durationMs) elapsed = durationMs;
     _animProgress = elapsed / durationMs;
-
-    if(audioCtx){
-      if(_animProgress >= _timing.logo)   fireSfx('logo');
-      if(_animProgress >= _timing.copy)   fireSfx('copy');
-      if(_animProgress >= _timing.coupon) fireSfx('coupon');
-    }
 
     const pct = Math.round(_animProgress * 100);
     document.getElementById('rec_text').textContent = `영상 생성 중... (${pct}%)`;
