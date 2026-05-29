@@ -1900,63 +1900,74 @@ CV_EL.addEventListener('mouseleave', ()=>{
 });
 </script>
 <script type="module">
-import { initializeApp }
-  from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs,
-         deleteDoc, doc, query, orderBy, limit, setDoc, getDoc }
-  from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { createClient }
+  from "https://esm.sh/@supabase/supabase-js@2";
 
-const firebaseConfig = {
-  apiKey:            "AIzaSyCYYoZ0ZifswCM0w47eD0Sj0WnqvqQWzsc",
-  authDomain:        "drfelis-tools.firebaseapp.com",
-  projectId:         "drfelis-tools",
-  storageBucket:     "drfelis-tools.firebasestorage.app",
-  messagingSenderId: "663035314388",
-  appId:             "1:663035314388:web:479403383804c3ee71bb41",
-  measurementId:     "G-H8ZS41NWSR"
-};
+const SUPABASE_URL  = "https://ugwzgnraikzwhklodplf.supabase.co";
+const SUPABASE_ANON = "sb_publishable_oNM9DbzmW6_Ua7HCZ6DR3Q_JhMeqqSz";
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
 
 const UID = 'drfelis_team';
 
-const HIST_COL = () => collection(db, 'sc_histories', UID, 'items');
-
 window.fbSaveHistory = async (item) => {
   try {
-    await addDoc(HIST_COL(), { ...item, createdAt: Date.now() });
-  } catch(e) { console.warn('[FB] history save error', e); }
+    const { error } = await sb.from('sc_histories').insert({
+      uid: UID,
+      item: item,
+      created_at: Date.now()
+    });
+    if(error) throw error;
+  } catch(e) { console.warn('[SB] history save error', e); }
 };
 
 window.fbLoadHistory = async () => {
   try {
-    const q = query(HIST_COL(), orderBy('createdAt','desc'), limit(30));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ fbId: d.id, ...d.data() }));
-  } catch(e) { console.warn('[FB] history load error', e); return []; }
+    const { data, error } = await sb
+      .from('sc_histories')
+      .select('id, item, created_at')
+      .eq('uid', UID)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if(error) throw error;
+    return (data || []).map(row => ({
+      fbId: row.id,
+      createdAt: Number(row.created_at),
+      ...(row.item || {})
+    }));
+  } catch(e) { console.warn('[SB] history load error', e); return []; }
 };
 
 window.fbDeleteHistory = async (fbId) => {
   try {
-    await deleteDoc(doc(db, 'sc_histories', UID, 'items', fbId));
-  } catch(e) { console.warn('[FB] history delete error', e); }
+    const { error } = await sb.from('sc_histories').delete().eq('id', fbId);
+    if(error) throw error;
+  } catch(e) { console.warn('[SB] history delete error', e); }
 };
-
-const PRESET_DOC = () => doc(db, 'sc_presets', UID);
 
 window.fbSavePresets = async (presetsArr) => {
   try {
-    await setDoc(PRESET_DOC(), { presets: presetsArr, updatedAt: Date.now() });
-  } catch(e) { console.warn('[FB] preset save error', e); }
+    const { error } = await sb.from('sc_presets').upsert({
+      uid: UID,
+      presets: presetsArr,
+      updated_at: Date.now()
+    }, { onConflict: 'uid' });
+    if(error) throw error;
+  } catch(e) { console.warn('[SB] preset save error', e); }
 };
 
 window.fbLoadPresets = async () => {
   try {
-    const snap = await getDoc(PRESET_DOC());
-    if(snap.exists()) return snap.data().presets || [];
-    return [];
-  } catch(e) { console.warn('[FB] preset load error', e); return []; }
+    const { data, error } = await sb
+      .from('sc_presets')
+      .select('presets')
+      .eq('uid', UID)
+      .maybeSingle();
+    if(error) throw error;
+    return (data && data.presets) || [];
+  } catch(e) { console.warn('[SB] preset load error', e); return []; }
 };
 
 window.addEventListener('load', async () => {
