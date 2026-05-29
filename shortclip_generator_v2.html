@@ -162,7 +162,7 @@ canvas#cv{display:block;width:328px;height:583px}
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-title">Dr.Felis Shortclip <span class="v-badge">v2</span><span class="fb-badge"><span class="fb-dot"></span>Firebase</span></div>
+  <div class="topbar-title">Dr.Felis Shortclip <span class="v-badge">v2</span><span class="fb-badge"><span class="fb-dot"></span>Supabase</span></div>
   <div class="top-actions">
     <span id="type_indicator"></span>
     <button class="c-btn pri" onclick="saveAndExport()">PNG 저장</button>
@@ -376,7 +376,7 @@ canvas#cv{display:block;width:328px;height:583px}
 </div>
 <div class="sec">
 <div class="sl">저장 히스토리</div>
-<div class="hist-grid" id="hist_grid"><div class="hist-loading">Firebase 연결 중...</div></div>
+<div class="hist-grid" id="hist_grid"><div class="hist-loading">Supabase 연결 중...</div></div>
 </div>
 <div class="sec">
 <div class="sl">브랜드 프리셋</div>
@@ -1603,7 +1603,7 @@ async function saveAndExport(){
   link.click();
   document.body.removeChild(link);
   showSafezone();
-  toast('PNG 저장 완료! (1080×1920) ☁ Firebase 동기화 중...');
+  toast('PNG 저장 완료! (1080×1920) ☁ Supabase 동기화 중...');
 }
 
 function captureSettings(){
