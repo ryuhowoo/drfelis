@@ -36,6 +36,7 @@ body{font-family:'Asta Sans','Noto Sans KR','Apple SD Gothic Neo',sans-serif;bac
 .td{background:linear-gradient(150deg,#FCE7E9,#DDE8F0)}
 .te{background:linear-gradient(150deg,#FFFFFF,#EEEEEE)}
 .tf{background:linear-gradient(150deg,#F2EDDE,#D9CCAE)}
+.tg{background:linear-gradient(150deg,#E8F4F7,#65ADC6)}
 .tcheck{position:absolute;top:3px;right:3px;width:14px;height:14px;background:var(--primary);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;color:#fff}
 .type-btn.active .tcheck{display:flex}
 .tlabel{font-size:11px;font-weight:700;color:rgba(255,255,255,.8)}
@@ -212,6 +213,7 @@ canvas#cv{display:block;width:328px;height:583px}
 <div class="type-btn" onclick='setType("D",this)'><div class="tbi td"><div class="tlabel" style="color:#7A5970">D</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("E",this)'><div class="tbi te"><div class="tlabel" style="color:#222">E</div></div><div class="tcheck">✓</div></div>
 <div class="type-btn" onclick='setType("F",this)'><div class="tbi tf"><div class="tlabel" style="color:#5A4A2A">F</div></div><div class="tcheck">✓</div></div>
+<div class="type-btn" onclick='setType("G",this)' title="네이버+ 라이브 UI에 가리지 않는 안전구역만 사용"><div class="tbi tg"><div class="tlabel" style="color:#fff">G</div></div><div class="tcheck">✓</div></div>
 </div>
 <div id="type_name" style="text-align:center;font-size:10px;color:var(--muted);margin-top:7px">A · 웜 라이프스타일</div>
 </div>
@@ -466,11 +468,13 @@ let _audio = {
 
 const TYPE_NAMES = {
   A:'A · 웜 라이프스타일', B:'B · 다크 프리미엄', C:'C · 비비드 일렉트릭',
-  D:'D · 소프트 파스텔',   E:'E · 미니멀 클린',   F:'F · 매거진 에디토리얼'
+  D:'D · 소프트 파스텔',   E:'E · 미니멀 클린',   F:'F · 매거진 에디토리얼',
+  G:'G · Naver+ Live (안전구역 전용)'
 };
 const TYPE_IND   = {
   A:'Type A · Warm',       B:'Type B · Dark',     C:'Type C · Vivid',
-  D:'Type D · Pastel',     E:'Type E · Minimal',  F:'Type F · Editorial'
+  D:'Type D · Pastel',     E:'Type E · Minimal',  F:'Type F · Editorial',
+  G:'Type G · Naver+ Live'
 };
 
 function switchLeftTab(tabId, btn) {
@@ -530,7 +534,8 @@ function setType(t,btn){
     C:{s:'grad',c:'#4233d4',g1:'#3a2fd8',g2:'#7b3fc8',ctext:'#ffffff',pCol:'#d0d0d0'},
     D:{s:'grad',c:'#FCE7E9',g1:'#FCE7E9',g2:'#DDE8F0',ctext:'#5A4360',pCol:'#8A7A95'},
     E:{s:'solid',c:'#FFFFFF',g1:'#FFFFFF',g2:'#EEEEEE',ctext:'#1A1A1A',pCol:'#666666'},
-    F:{s:'solid',c:'#F2EDDE',g1:'#F2EDDE',g2:'#D9CCAE',ctext:'#3A2D1A',pCol:'#7A6A50'}
+    F:{s:'solid',c:'#F2EDDE',g1:'#F2EDDE',g2:'#D9CCAE',ctext:'#3A2D1A',pCol:'#7A6A50'},
+    G:{s:'solid',c:'#F6F4EE',g1:'#E8F4F7',g2:'#BADADD',ctext:'#2A2520',pCol:'#7D7568'}
   };
   const d=D[t];
   ['c_solid','ct_solid'].forEach(id=>document.getElementById(id).value=d.c);
@@ -848,6 +853,7 @@ function render(p=0) {
   else if(_type==='D') renderD(p);
   else if(_type==='E') renderE(p);
   else if(_type==='F') renderF(p);
+  else if(_type==='G') renderG(p);
   else                 renderA(p);
   if(p > 0 && _motions.includes('particle'))   drawConfetti(p);
   if(p > 0 && _motions.includes('aurora'))     drawAurora(p);
@@ -1319,6 +1325,58 @@ function renderF(p=0){
     CTX.fillStyle=gc('ct_extra');CTX.font=F(13,400);CTX.textAlign='center';
     CTX.fillText(extraTxt,W/2,extraTextY);
   }
+}
+
+/* ══════════════════════════════════════
+   TYPE G — Naver+ Live (네이버 플러스 스토어 전용)
+   네이버+ 라이브 UI 점유 분석 결과(2025):
+   · 상단 0~22%: Live 뱃지/스토어 칩/닫기 X/쿠폰 뱃지/숏클립 시청수에 가림
+   · 하단 67~100%: 카피 텍스트·상품 카드·검색바에 가림
+   · 우측 ~10% (55~87% 세로 구간): 액션 아이콘(♥·💬·↗)에 가림
+   → 안전구역(22~65%)만 사용. 메인 이미지 중심, 로고/카피 선택적.
+   → 쿠폰·할인 뱃지·추가 텍스트는 자동 미렌더(네이버 UI와 100% 중복).
+══════════════════════════════════════ */
+function renderG(p=0){
+  applyBg();
+
+  const safeTop    = H * 0.24;
+  const safeBottom = H * 0.64;
+  let cursorY = safeTop;
+
+  // 로고 — 안전구역 상단 중앙
+  if(_logo){
+    const maxW = W * 0.55, maxH = 64;
+    const s = Math.min(maxW/_logo.width, maxH/_logo.height);
+    const lw = _logo.width*s, lh = _logo.height*s;
+    CTX.save(); CTX.globalAlpha = 0.95 * _layerAlpha.logo;
+    CTX.drawImage(_logo, (W-lw)/2, cursorY, lw, lh);
+    CTX.restore();
+    cursorY += lh + 8;
+  }
+
+  // 선택적 카피 (토글로 ON일 때만)
+  if(on('row_copy') && v('f_copy')){
+    CTX.save(); CTX.globalAlpha = _layerAlpha.copy;
+    CTX.fillStyle = gc('ct_copy'); CTX.font = F(17, 500); CTX.textAlign = 'center';
+    CTX.fillText(getTypedText(v('f_copy'), p), W/2, cursorY + 18);
+    CTX.restore();
+    cursorY += 28;
+  }
+
+  // 선택적 기간 (토글로 ON일 때만)
+  if(on('row_period')){
+    CTX.save(); CTX.globalAlpha = _layerAlpha.copy;
+    CTX.fillStyle = gc('ct_period'); CTX.font = F(13, 400); CTX.textAlign = 'center';
+    CTX.fillText(v('f_ds')+' ~ '+v('f_de'), W/2, cursorY + 14);
+    CTX.restore();
+    cursorY += 22;
+  }
+
+  // 메인 이미지 — 남은 안전구역 전체에 크게 (히어로)
+  drawMainImgFit(cursorY + 10, safeBottom, p);
+
+  // 쿠폰·뱃지·추가텍스트는 의도적으로 미렌더
+  // (네이버+ UI가 이미 카피·쿠폰·할인가·검색바를 화면에 표시)
 }
 
 function drawBadgeAt(cx, cy, br, couponData){
@@ -1919,7 +1977,7 @@ function captureSettings(){
 
 function applySettings(s,logoSrc,mainSrc){
   _type=s.type;
-  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C','D','E','F'][i]===s.type);});
+  document.querySelectorAll('.type-btn').forEach((b,i)=>{b.classList.toggle('active',['A','B','C','D','E','F','G'][i]===s.type);});
   document.getElementById('type_name').textContent=TYPE_NAMES[s.type];
   document.getElementById('type_indicator').textContent=TYPE_IND[s.type];
   const sv=(id,val)=>{const e=document.getElementById(id);if(e&&val!=null)e.value=val;};
