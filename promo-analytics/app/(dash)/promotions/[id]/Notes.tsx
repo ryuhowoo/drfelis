@@ -58,7 +58,7 @@ export default function Notes({
               onClick={() => setQuestion(q)}
               className={`rounded-full border px-3 py-1 text-xs transition ${
                 question === q
-                  ? "border-neutral-900 bg-neutral-900 text-white"
+                  ? "border-neutral-900 bg-brand-500 text-white"
                   : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
               }`}
             >
@@ -72,14 +72,14 @@ export default function Notes({
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         placeholder="이 성과의 원인을 묻는 질문"
-        className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
       />
       <textarea
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder="원인·가설을 기록하세요. (다음 예측의 근거로 축적됩니다)"
         rows={2}
-        className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="mt-2 w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
       />
       <div className="mt-2 flex flex-wrap gap-1.5">
         {CAUSE_TAGS.map((tag) => (
@@ -99,7 +99,7 @@ export default function Notes({
       <button
         onClick={submit}
         disabled={saving || !answer.trim()}
-        className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+        className="mt-3 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
       >
         {saving ? "저장 중…" : "메모 추가"}
       </button>

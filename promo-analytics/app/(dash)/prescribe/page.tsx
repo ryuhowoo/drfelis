@@ -45,7 +45,7 @@ export default function PrescribePage() {
         추천합니다. (공헌이익률 우선 정렬)
       </p>
 
-      <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
+      <div className="mt-6 rounded-[24px] bg-white card-soft p-5">
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="목표 증분(₩)">
             <input
@@ -53,7 +53,7 @@ export default function PrescribePage() {
               onChange={(e) => setTarget(e.target.value)}
               inputMode="numeric"
               placeholder="50000000"
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
             />
           </Field>
           <Field label="기간(일)">
@@ -61,14 +61,14 @@ export default function PrescribePage() {
               value={days}
               onChange={(e) => setDays(e.target.value)}
               inputMode="numeric"
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
             />
           </Field>
           <Field label="시점 / 시즌 (선택)">
             <select
               value={seasonTag}
               onChange={(e) => setSeasonTag(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm"
             >
               <option value="">무관</option>
               {SEASON_TAGS.map((s) => (
@@ -82,7 +82,7 @@ export default function PrescribePage() {
         <button
           onClick={run}
           disabled={loading}
-          className="mt-4 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+          className="mt-4 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
           {loading ? "분석 중…" : "추천 받기"}
         </button>
@@ -96,7 +96,7 @@ export default function PrescribePage() {
       {recs && (
         <div className="mt-6">
           {recs.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
+            <p className="rounded-[24px] border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
               추천할 사례가 부족합니다. 프로모션 데이터를 더 쌓아주세요.
             </p>
           ) : (
