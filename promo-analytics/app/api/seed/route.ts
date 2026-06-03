@@ -31,11 +31,21 @@ type PromoSeed = {
   }[];
 };
 
+function originOf(req: Request): string {
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  return host ? `${proto}://${host}` : new URL(req.url).origin;
+}
+
 async function loadJson<T>(req: Request, path: string): Promise<T> {
-  const url = new URL(path, new URL(req.url).origin).toString();
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(`${originOf(req)}${path}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`${path} 로드 실패 (${res.status})`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`${path} 응답이 JSON이 아닙니다 (인증/경로 확인)`);
+  }
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
