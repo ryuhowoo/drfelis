@@ -5,7 +5,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * base_name → product_id 맵을 반환. (없으면 이름만으로 생성)
  */
 export async function ensureProducts(
-  supabase: SupabaseClient,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
   baseNames: string[],
 ): Promise<Map<string, string>> {
   const unique = [...new Set(baseNames.map((n) => n.trim()).filter(Boolean))];
