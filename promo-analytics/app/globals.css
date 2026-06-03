@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
-@theme inline {
+@theme {
+  /* 키컬러: 오렌지(코랄) */
+  --color-brand-50: #fff4ef;
+  --color-brand-100: #ffe6da;
+  --color-brand-200: #ffc8b0;
+  --color-brand-300: #ffa482;
+  --color-brand-400: #ff7d50;
+  --color-brand-500: #f15a2b;
+  --color-brand-600: #df4a1d;
+  --color-brand-700: #b93b17;
+
+  /* 따뜻한 캔버스 배경 */
+  --color-canvas: #e9e7e3;
+  --color-ink: #1c1b1a;
+
   --font-sans:
     ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic",
     "Pretendard", sans-serif;
@@ -8,4 +22,16 @@
 
 html {
   font-family: var(--font-sans);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* 부드러운 카드 그림자 */
+@utility card-soft {
+  box-shadow:
+    0 1px 2px rgba(28, 27, 26, 0.04),
+    0 8px 24px -12px rgba(28, 27, 26, 0.12);
 }
