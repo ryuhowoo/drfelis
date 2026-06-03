@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Promotion, PromotionSummary } from "./types";
+import type { Promotion, PromotionSummary, MeasurementRow } from "./types";
 import type { CaseFeature } from "./predict";
 import { daysBetween } from "./format";
 
-/** 모든 프로모션 + 요약을 CaseFeature 배열로 로드 */
+/** 모든 프로모션 + 요약/측정을 CaseFeature 배열로 로드 */
 export async function loadCases(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
@@ -13,9 +13,17 @@ export async function loadCases(
 
   return Promise.all(
     (promos as Promotion[]).map(async (p) => {
-      const { data } = await supabase.rpc("promotion_summary", { p_id: p.id });
-      const s = (data?.[0] as PromotionSummary) ?? null;
+      const [{ data: sData }, { data: mData }] = await Promise.all([
+        supabase.rpc("promotion_summary", { p_id: p.id }),
+        supabase.rpc("promotion_measurement", { p_id: p.id }),
+      ]);
+      const s = (sData?.[0] as PromotionSummary) ?? null;
+      const meas = (mData as MeasurementRow[]) ?? [];
       const duration = daysBetween(p.start_date, p.end_date);
+      const promoDays = meas[0]?.promo_days ?? duration;
+      const baseline_daily = meas.reduce((a, x) => a + x.baseline_daily_revenue, 0);
+      const actual_daily =
+        promoDays > 0 ? meas.reduce((a, x) => a + x.actual_revenue, 0) / promoDays : 0;
       return {
         id: p.id,
         name: p.name,
@@ -30,6 +38,8 @@ export async function loadCases(
         contribution: s?.contribution ?? 0,
         contribution_rate: s?.contribution_rate ?? null,
         halo_share: s?.halo_share ?? null,
+        baseline_daily,
+        actual_daily,
       };
     }),
   );
