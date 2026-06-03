@@ -7,7 +7,7 @@ import type {
   PromotionSummary,
   PromotionNote,
 } from "@/lib/types";
-import { won, wonShort, pct, num, daysBetween } from "@/lib/format";
+import { won, wonShort, pct, daysBetween } from "@/lib/format";
 import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
 

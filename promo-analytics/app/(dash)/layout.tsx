@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 
 const NAV = [
   { href: "/", label: "대시보드" },
+  { href: "/predict", label: "예상 매출 추산" },
+  { href: "/prescribe", label: "프로모션 처방" },
   { href: "/library", label: "사례 라이브러리" },
   { href: "/upload", label: "데이터 업로드" },
 ];
