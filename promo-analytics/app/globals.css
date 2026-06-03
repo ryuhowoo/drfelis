@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  /* 키컬러: 오렌지(코랄) */
-  --color-brand-50: #fff4ef;
-  --color-brand-100: #ffe6da;
-  --color-brand-200: #ffc8b0;
-  --color-brand-300: #ffa482;
-  --color-brand-400: #ff7d50;
-  --color-brand-500: #f15a2b;
-  --color-brand-600: #df4a1d;
-  --color-brand-700: #b93b17;
+  /* 키컬러: 차분한 테라코타 코랄 (쨍하지 않게) */
+  --color-brand-50: #fdf3ef;
+  --color-brand-100: #f9e0d6;
+  --color-brand-200: #f1c0ac;
+  --color-brand-300: #e79e80;
+  --color-brand-400: #e08260;
+  --color-brand-500: #e76f51;
+  --color-brand-600: #d0573a;
+  --color-brand-700: #ab4329;
 
   /* 따뜻한 캔버스 배경 */
-  --color-canvas: #e9e7e3;
-  --color-ink: #1c1b1a;
+  --color-canvas: #ecebe7;
+  --color-ink: #211f1d;
 
   --font-sans:
     ui-sans-serif, system-ui, "Apple SD Gothic Neo", "Malgun Gothic",

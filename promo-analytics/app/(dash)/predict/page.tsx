@@ -56,7 +56,7 @@ export default function PredictPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* 입력 */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+        <div className="rounded-[24px] bg-white card-soft p-5">
           <Field label="혜택 종류">
             <Chips options={PROMO_TYPES} value={promoType} onChange={setPromoType} />
           </Field>
@@ -70,7 +70,7 @@ export default function PredictPage() {
                 onChange={(e) => setDiscount(e.target.value)}
                 inputMode="numeric"
                 placeholder="50"
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
               />
             </Field>
             <Field label="기간(일)">
@@ -78,14 +78,14 @@ export default function PredictPage() {
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
                 inputMode="numeric"
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
               />
             </Field>
           </div>
           <button
             onClick={run}
             disabled={loading}
-            className="mt-2 w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+            className="mt-2 w-full rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
           >
             {loading ? "추산 중…" : "예상 매출 추산"}
           </button>
@@ -97,7 +97,7 @@ export default function PredictPage() {
         </div>
 
         {/* 결과 */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+        <div className="rounded-[24px] bg-white card-soft p-5">
           {!result ? (
             <p className="text-sm text-neutral-400">
               조건을 입력하고 추산을 실행하세요.
@@ -183,7 +183,7 @@ function Chips({
           onClick={() => onChange(value === o ? "" : o)}
           className={`rounded-full border px-3 py-1 text-xs transition ${
             value === o
-              ? "border-neutral-900 bg-neutral-900 text-white"
+              ? "border-neutral-900 bg-brand-500 text-white"
               : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
           }`}
         >

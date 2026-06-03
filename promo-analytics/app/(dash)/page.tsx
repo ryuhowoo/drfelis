@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Promotion, PromotionSummary } from "@/lib/types";
+import type { Promotion, PromotionSummary, MeasurementRow } from "@/lib/types";
 import { won, wonShort, pct } from "@/lib/format";
-import { MonthlyArea, Concentric, Donut } from "./DashCharts";
+import { MonthlyArea, Concentric, Donut, BaselineVsPromo } from "./DashCharts";
 
 export const dynamic = "force-dynamic";
 
-type Row = Promotion & { summary: PromotionSummary | null };
+type Row = Promotion & {
+  summary: PromotionSummary | null;
+  baseline_daily: number;
+  promo_daily: number;
+  promo_days: number;
+};
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -17,8 +22,22 @@ export default async function Dashboard() {
 
   const rows: Row[] = await Promise.all(
     (promos ?? []).map(async (p: Promotion) => {
-      const { data } = await supabase.rpc("promotion_summary", { p_id: p.id });
-      return { ...p, summary: (data?.[0] as PromotionSummary) ?? null };
+      const [{ data: s }, { data: m }] = await Promise.all([
+        supabase.rpc("promotion_summary", { p_id: p.id }),
+        supabase.rpc("promotion_measurement", { p_id: p.id }),
+      ]);
+      const meas = (m as MeasurementRow[]) ?? [];
+      const promo_days = meas[0]?.promo_days ?? 1;
+      const baseline_daily = sum(meas.map((x) => x.baseline_daily_revenue));
+      const promo_daily =
+        promo_days > 0 ? sum(meas.map((x) => x.actual_revenue)) / promo_days : 0;
+      return {
+        ...p,
+        summary: (s?.[0] as PromotionSummary) ?? null,
+        baseline_daily,
+        promo_daily,
+        promo_days,
+      };
     }),
   );
 
@@ -29,6 +48,20 @@ export default async function Dashboard() {
   const totalDirect = sum(rows.map((r) => r.summary?.direct_uplift ?? 0));
   const totalHalo = sum(rows.map((r) => r.summary?.halo_uplift ?? 0));
   const haloShare = totalUplift !== 0 ? totalHalo / totalUplift : null;
+
+  // 상시 일평균 vs 행사 일평균
+  const totalBaselineDaily = sum(rows.map((r) => r.baseline_daily));
+  const totalPromoDaily = sum(rows.map((r) => r.promo_daily));
+  const liftRatio =
+    totalBaselineDaily > 0 ? totalPromoDaily / totalBaselineDaily : null;
+  const compData = [...rows]
+    .sort((a, b) => b.promo_daily - a.promo_daily)
+    .slice(0, 5)
+    .map((r) => ({
+      name: r.name.replace(/^CF_P_\d+_?/, ""),
+      baseline: r.baseline_daily,
+      promo: r.promo_daily,
+    }));
 
   const byMonth = new Map<string, number>();
   for (const r of rows) {
@@ -105,6 +138,12 @@ export default async function Dashboard() {
               에요.
             </p>
           )}
+          {liftRatio != null && (
+            <p className="mt-1 text-[15px] leading-relaxed text-neutral-600">
+              프로모션 기간엔 평소(상시 일평균)보다{" "}
+              <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.
+            </p>
+          )}
         </div>
       </section>
 
@@ -114,6 +153,33 @@ export default async function Dashboard() {
         <Kpi label="직접효과" value={wonShort(totalDirect)} />
         <Kpi label="후광효과" value={wonShort(totalHalo)} />
         <Kpi label="누적 공헌이익" value={won(totalContribution)} />
+      </div>
+
+      {/* 상시 vs 행사 비교 (비교 기준) */}
+      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardTitle>상시 대비 행사 일매출</CardTitle>
+          <p className="-mt-2 mb-3 text-xs text-neutral-400">
+            회색=평소(상시 일평균) · 주황=프로모션 기간 일평균
+          </p>
+          <BaselineVsPromo data={compData} />
+        </Card>
+        <Card className="flex flex-col justify-center bg-ink text-white">
+          <div className="text-xs text-neutral-300">평소 대비 행사 매출</div>
+          <div className="mt-1 text-4xl font-bold text-brand-400">
+            {liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
+          </div>
+          <div className="mt-4 space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-neutral-400">상시 일평균</span>
+              <span className="tabular-nums">{wonShort(totalBaselineDaily)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-neutral-400">행사 일평균</span>
+              <span className="font-semibold tabular-nums text-brand-400">{wonShort(totalPromoDaily)}</span>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* 차트 Bento */}

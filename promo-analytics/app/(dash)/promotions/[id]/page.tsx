@@ -77,7 +77,7 @@ export default async function PromotionDetail({
         </div>
         <Link
           href={`/promotions/${id}/edit`}
-          className="shrink-0 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
+          className="shrink-0 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50"
         >
           메타·메인상품 편집
         </Link>
@@ -116,7 +116,7 @@ export default async function PromotionDetail({
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">
             상품별 증분 측정
           </h2>
-          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <div className="overflow-x-auto rounded-[24px] bg-white card-soft">
             <table className="w-full min-w-[680px] text-sm">
               <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
                 <tr>
@@ -133,7 +133,7 @@ export default async function PromotionDetail({
                     <td className="px-3 py-2.5">
                       <span className="text-neutral-800">{r.base_name}</span>
                       {r.is_main && (
-                        <span className="ml-1.5 rounded bg-neutral-900 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        <span className="ml-1.5 rounded bg-brand-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
                           메인
                         </span>
                       )}
@@ -173,11 +173,11 @@ export default async function PromotionDetail({
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">
             증분 Top 10 (검정=메인 · 회색=후광)
           </h2>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="rounded-[24px] bg-white card-soft p-4">
             <UpliftChart data={chartData} />
           </div>
 
-          <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="mt-4 rounded-[24px] bg-white card-soft p-4">
             <div className="text-xs text-neutral-500">메인 상품</div>
             {mains.length > 0 ? (
               <ul className="mt-1.5 space-y-1 text-sm">
@@ -231,7 +231,7 @@ function Stat({
     <div
       className={`rounded-xl border p-4 ${
         primary
-          ? "border-neutral-900 bg-neutral-900 text-white"
+          ? "border-neutral-900 bg-brand-500 text-white"
           : "border-neutral-200 bg-white"
       }`}
     >

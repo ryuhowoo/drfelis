@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
-const BRAND = "#f15a2b";
+const BRAND = "#e76f51";
 
 // 월별 증분 — 오렌지 영역 스파크라인
 export function MonthlyArea({
@@ -90,6 +90,56 @@ export function Concentric({
             >
               {d.label} · {wonShort(d.value)}
             </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// 상시 일평균 vs 프로모션 일평균 — 비교 막대
+export function BaselineVsPromo({
+  data,
+}: {
+  data: { name: string; baseline: number; promo: number }[];
+}) {
+  if (data.length === 0)
+    return <div className="text-sm text-neutral-300">데이터가 없습니다.</div>;
+  const max = Math.max(...data.flatMap((d) => [d.baseline, d.promo]), 1);
+  return (
+    <div className="space-y-4">
+      {data.map((d) => {
+        const ratio = d.baseline > 0 ? d.promo / d.baseline : null;
+        return (
+          <div key={d.name}>
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="truncate font-medium text-neutral-700">{d.name}</span>
+              {ratio != null && (
+                <span className="ml-2 shrink-0 font-semibold text-brand-600">
+                  평소 대비 {ratio.toFixed(1)}배
+                </span>
+              )}
+            </div>
+            {/* 상시 */}
+            <div className="flex items-center gap-2">
+              <span className="w-8 shrink-0 text-[10px] text-neutral-400">상시</span>
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                <div className="h-full rounded-full bg-neutral-300" style={{ width: `${(d.baseline / max) * 100}%` }} />
+              </div>
+              <span className="w-16 shrink-0 text-right text-[10px] tabular-nums text-neutral-400">
+                {wonShort(d.baseline)}
+              </span>
+            </div>
+            {/* 프로모션 */}
+            <div className="mt-1 flex items-center gap-2">
+              <span className="w-8 shrink-0 text-[10px] text-brand-600">행사</span>
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-brand-50">
+                <div className="h-full rounded-full bg-brand-500" style={{ width: `${(d.promo / max) * 100}%` }} />
+              </div>
+              <span className="w-16 shrink-0 text-right text-[10px] font-semibold tabular-nums text-neutral-700">
+                {wonShort(d.promo)}
+              </span>
+            </div>
           </div>
         );
       })}

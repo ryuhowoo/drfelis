@@ -62,7 +62,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               onClick={() => setSort(s.key)}
               className={`rounded-full px-2.5 py-1 ${
                 sort === s.key
-                  ? "bg-neutral-900 text-white"
+                  ? "bg-brand-500 text-white"
                   : "text-neutral-600 hover:bg-neutral-100"
               }`}
             >
@@ -72,7 +72,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-[24px] bg-white card-soft">
         <table className="w-full min-w-[680px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
@@ -151,7 +151,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-700"
+      className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-700"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => (
