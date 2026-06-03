@@ -47,7 +47,7 @@ export default async function EditPromotion({
   const mainIds = (mains ?? []).map((m) => m.product_id);
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <EditForm
         promo={promo}
         products={products}

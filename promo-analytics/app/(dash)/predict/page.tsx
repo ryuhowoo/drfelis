@@ -48,7 +48,7 @@ export default function PredictPage() {
         : "text-neutral-600 bg-neutral-100";
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">예상 매출 추산</h1>
       <p className="mt-1 text-sm text-neutral-500">
         계획 중인 프로모션 조건을 넣으면 유사 사례로 예상 증분을 추산합니다.
