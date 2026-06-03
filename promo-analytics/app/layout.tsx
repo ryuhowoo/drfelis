@@ -11,9 +11,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full bg-neutral-50 text-neutral-900">
-        {children}
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

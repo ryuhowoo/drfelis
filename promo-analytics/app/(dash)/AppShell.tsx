@@ -5,11 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/", label: "대시보드", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-  { href: "/predict", label: "예상 매출 추산", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" },
-  { href: "/prescribe", label: "프로모션 처방", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
-  { href: "/library", label: "사례 라이브러리", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
-  { href: "/upload", label: "데이터 업로드", icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" },
+  { href: "/", label: "대시보드", icon: "M3.5 12l8.5-8 8.5 8M5.5 10.5V19a1 1 0 001 1h3.5v-5h3v5H18a1 1 0 001-1v-8.5" },
+  { href: "/predict", label: "예상 매출 추산", icon: "M4 18l5-5 3 3 7-8M21 8v4m0-4h-4" },
+  { href: "/prescribe", label: "프로모션 처방", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 104 0M9 5a2 2 0 014 0m-3 8l2 2 3-4" },
+  { href: "/library", label: "사례 라이브러리", icon: "M4 7h16M4 12h16M4 17h10" },
+  { href: "/upload", label: "데이터 업로드", icon: "M12 16V4m0 0l-4 4m4-4l4 4M5 20h14" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -28,13 +28,13 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             key={n.href}
             href={n.href}
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+            className={`flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium transition ${
               active
-                ? "bg-neutral-900 text-white shadow-sm"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                ? "bg-brand-500 text-white shadow-[0_8px_20px_-8px_var(--color-brand-500)]"
+                : "text-neutral-500 hover:bg-white hover:text-neutral-900"
             }`}
           >
-            <svg className="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor">
+            <svg className="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d={n.icon} />
             </svg>
             {n.label}
@@ -48,11 +48,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-sm font-bold text-white">
+      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-ink text-sm font-bold text-white">
         P
       </span>
       <span className="leading-tight">
-        <span className="block text-[15px] font-semibold tracking-tight">프로모션 애널리틱스</span>
+        <span className="block text-[15px] font-bold tracking-tight">프로모션 애널리틱스</span>
         <span className="block text-[11px] text-neutral-400">드르펠리스 MD</span>
       </span>
     </Link>
@@ -61,13 +61,15 @@ function Brand() {
 
 function UserFooter({ email }: { email?: string }) {
   return (
-    <div className="border-t border-neutral-100 px-4 py-4">
-      <div className="truncate text-xs text-neutral-500">{email}</div>
-      <form action="/auth/signout" method="post">
-        <button className="mt-1.5 text-xs text-neutral-400 underline-offset-2 hover:text-neutral-700 hover:underline">
-          로그아웃
-        </button>
-      </form>
+    <div className="px-5 py-4">
+      <div className="rounded-2xl bg-white/70 px-3 py-2.5">
+        <div className="truncate text-xs font-medium text-neutral-600">{email}</div>
+        <form action="/auth/signout" method="post">
+          <button className="mt-0.5 text-xs text-neutral-400 hover:text-brand-600">
+            로그아웃
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
@@ -84,8 +86,8 @@ export default function AppShell({
   return (
     <div className="min-h-screen md:flex">
       {/* 데스크톱 사이드바 */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
-        <div className="px-5 py-5">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col py-4 md:flex">
+        <div className="px-5 py-4">
           <Brand />
         </div>
         <NavLinks />
@@ -95,12 +97,12 @@ export default function AppShell({
       </aside>
 
       {/* 모바일 상단바 */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-neutral-200 bg-white/85 px-4 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-canvas/80 px-4 backdrop-blur md:hidden">
         <Brand />
         <button
           onClick={() => setOpen(true)}
           aria-label="메뉴 열기"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-700"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-neutral-700 card-soft"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -111,17 +113,14 @@ export default function AppShell({
       {/* 모바일 드로어 */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between px-5 py-5">
+          <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-canvas py-4 shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4">
               <Brand />
               <button
                 onClick={() => setOpen(false)}
                 aria-label="메뉴 닫기"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-neutral-500 hover:bg-white"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -136,7 +135,9 @@ export default function AppShell({
         </div>
       )}
 
-      <main className="min-w-0 flex-1">{children}</main>
+      <main className="min-w-0 flex-1 md:py-4 md:pr-4">
+        <div className="min-h-full md:rounded-[32px] md:bg-white/40 md:card-soft">{children}</div>
+      </main>
     </div>
   );
 }
