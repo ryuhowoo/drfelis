@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# 공개 안전값(URL·publishable 키·도메인)만 커밋 — 비밀 아님
+!.env.production
 
 # vercel
 .vercel
