@@ -58,7 +58,7 @@ export default async function PromotionDetail({
   const hasBaseline = rows.some((r) => r.baseline_daily_revenue > 0);
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <div className="mb-1 text-sm text-neutral-400">
         <Link href="/" className="hover:underline">
           대시보드
@@ -116,8 +116,8 @@ export default async function PromotionDetail({
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">
             상품별 증분 측정
           </h2>
-          <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full min-w-[680px] text-sm">
               <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
                 <tr>
                   <th className="px-3 py-2.5 font-medium">상품</th>

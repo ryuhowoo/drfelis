@@ -28,7 +28,7 @@ export default async function Dashboard() {
   );
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <header className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="text-xl font-semibold">대시보드</h1>
@@ -48,8 +48,8 @@ export default async function Dashboard() {
       {rows.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full min-w-[680px] text-sm">
             <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
               <tr>
                 <th className="px-4 py-3 font-medium">프로모션</th>

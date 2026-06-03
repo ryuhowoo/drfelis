@@ -34,7 +34,7 @@ export default async function LibraryPage() {
   );
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">사례 라이브러리</h1>
       <p className="mt-1 text-sm text-neutral-500">
         유형·시즌·성과 기준으로 과거 프로모션을 비교하세요.

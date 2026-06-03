@@ -37,7 +37,7 @@ const CARDS: CardDef[] = [
 
 export default function UploadPage() {
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">데이터 업로드</h1>
       <p className="mt-1 text-sm text-neutral-500">
         엑셀(.xlsx) 파일을 순서대로 올려주세요. 헤더 이름으로 자동 인식합니다.
