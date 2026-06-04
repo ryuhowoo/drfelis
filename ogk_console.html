@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr.Felis OGK Console — 120억 · 36억</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://www.gstatic.com">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--surface3:#252530;
+  --border:#28282f;--border2:#333340;--text:#eeeef2;--muted:#999;--muted2:#666;
+  --primary:#FF4D00;--primary-soft:rgba(255,77,0,.14);
+  --success:#4ade80;--warning:#fbbf24;--danger:#ef4444;--info:#60a5fa;
+  --gate-pass:#4ade80;--gate-warn:#fbbf24;--gate-fail:#ef4444;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.45;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:inherit}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+
+/* ===== Top bar ===== */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(13,13,15,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:18px;padding:10px 20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px;letter-spacing:.01em}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 12px var(--primary)}
+.brand small{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.tabs{display:flex;gap:4px;margin-left:14px}
+.tab{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);transition:.15s}
+.tab.active{background:var(--surface2);color:var(--text)}
+.tab:hover{color:var(--text)}
+.top-spacer{flex:1}
+.top-actions{display:flex;align-items:center;gap:8px}
+.sync-pill{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:var(--surface2);font-size:11px;color:var(--muted);border:1px solid var(--border)}
+.sync-pill .ind{width:7px;height:7px;border-radius:50%;background:var(--muted2)}
+.sync-pill.on .ind{background:var(--success);box-shadow:0 0 8px var(--success)}
+.sync-pill.local .ind{background:var(--warning)}
+.icon-btn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;border:1px solid transparent}
+.icon-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+
+/* ===== Layout ===== */
+.page{max-width:1480px;margin:0 auto;padding:22px 20px 80px}
+.section-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title .bar{width:3px;height:11px;background:var(--primary);border-radius:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.card.tight{padding:13px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-head h3{font-size:13px;font-weight:700}
+.card-head .meta{font-size:11px;color:var(--muted)}
+.muted{color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:var(--surface3);color:var(--muted);border:1px solid var(--border)}
+.tag.pass{background:rgba(74,222,128,.12);color:var(--gate-pass);border-color:rgba(74,222,128,.3)}
+.tag.warn{background:rgba(251,191,36,.12);color:var(--gate-warn);border-color:rgba(251,191,36,.3)}
+.tag.fail{background:rgba(239,68,68,.12);color:var(--gate-fail);border-color:rgba(239,68,68,.3)}
+.tag.info{background:rgba(96,165,250,.12);color:var(--info);border-color:rgba(96,165,250,.3)}
+.tag.primary{background:var(--primary-soft);color:var(--primary);border-color:rgba(255,77,0,.3)}
+
+/* ===== Doc tab ===== */
+.doc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.doc .full{grid-column:1/-1}
+.doc h2{font-size:18px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.doc h2 .num{font-size:11px;background:var(--primary);color:#fff;padding:2px 7px;border-radius:6px;font-weight:800}
+.doc h4{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 6px;letter-spacing:.04em;text-transform:uppercase}
+.doc p{font-size:13px;line-height:1.7;color:#ddd;margin-bottom:8px}
+.doc ul{list-style:none;padding:0}
+.doc li{padding:6px 0 6px 18px;position:relative;font-size:13px;color:#ddd;line-height:1.55}
+.doc li::before{content:'';position:absolute;left:4px;top:14px;width:5px;height:5px;border-radius:50%;background:var(--primary)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:8px}
+.doc-mini{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.doc-mini .k{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.doc-mini .v{font-size:18px;font-weight:800;color:var(--text)}
+.doc-mini .v small{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px}
+.gate-row{display:grid;grid-template-columns:60px 1fr 90px;gap:10px;align-items:center;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px}
+.gate-row .gid{font-size:11px;font-weight:800;color:var(--primary)}
+.gate-row .gname{font-size:12px;font-weight:700}
+.gate-row .gdesc{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ===== Dashboard grid ===== */
+.dashboard{display:grid;gap:18px}
+.dash-row1{display:grid;grid-template-columns:1.2fr 1.4fr 1fr;gap:14px}
+.dash-row2{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px}
+.dash-row3{}
+@media(max-width:1100px){.dash-row1,.dash-row2{grid-template-columns:1fr}.doc{grid-template-columns:1fr}}
+
+/* Big metric */
+.metric{display:flex;flex-direction:column;gap:4px}
+.metric .label{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.metric .val{font-size:28px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.metric .val small{font-size:13px;color:var(--muted);font-weight:600;margin-left:4px}
+.metric .sub{font-size:12px;color:var(--muted)}
+.bar-track{height:8px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),#ff7a3a);border-radius:99px;transition:width .4s}
+.bar-fill.good{background:linear-gradient(90deg,var(--success),#86efac)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--warning),#fcd34d)}
+.bar-fill.bad{background:linear-gradient(90deg,var(--danger),#fca5a5)}
+
+/* Plan signal */
+.plan-signal{margin-top:8px;padding:9px 11px;border-radius:var(--radius-sm);font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--border)}
+.plan-signal.a{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.3);color:#86efac}
+.plan-signal.warn{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.35);color:#fcd34d}
+.plan-signal.b{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#fca5a5}
+.plan-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);color:var(--text);margin-left:auto}
+.plan-toggle:hover{border-color:var(--primary)}
+.plan-toggle.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+
+/* Gates */
+.gates{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gate{padding:11px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);position:relative}
+.gate .gh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.gate .gn{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em}
+.gate .gv{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.gate .gt{font-size:10px;color:var(--muted);margin-top:2px}
+.gate .gprog{height:5px;background:var(--surface3);border-radius:99px;margin-top:6px;overflow:hidden}
+.gate .gprog .gpf{height:100%;border-radius:99px;transition:width .4s}
+
+/* Track cards */
+.track .track-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.track .track-name{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+.track .track-name .icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface2)}
+.track .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.track .kv .ki{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px}
+.track .kv .ki .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:3px}
+.track .kv .ki .v{font-size:15px;font-weight:800}
+.track ul.checks{list-style:none;padding:0;margin-top:8px}
+.track ul.checks li{padding:6px 0;font-size:12px;display:flex;align-items:flex-start;gap:8px;border-top:1px dashed var(--border)}
+.track ul.checks li:first-child{border-top:none}
+.check-box{flex-shrink:0;width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:transparent;margin-top:1px;transition:.15s}
+.check-box.on{background:var(--success);border-color:var(--success);color:#0d0d0f;font-weight:800}
+.check-text{flex:1;color:#ccc}
+.check-text.done{color:var(--muted);text-decoration:line-through}
+
+/* Margin calc */
+.calc-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.calc-row.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.field input,.field select{padding:7px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;transition:.15s}
+.field input:focus,.field select:focus{outline:0;border-color:var(--primary)}
+.calc-result{margin-top:8px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.calc-result .cr-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-top:1px dashed var(--border)}
+.calc-result .cr-row:first-child{border-top:none}
+.calc-result .cr-row .k{color:var(--muted)}
+.calc-result .cr-row .v{font-weight:800;font-variant-numeric:tabular-nums}
+.calc-result .cr-row.hi{font-size:13px}
+.calc-result .cr-row.hi .v{color:var(--primary);font-size:16px}
+.calc-verdict{margin-top:8px;padding:8px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;text-align:center;border:1px solid var(--border)}
+.calc-verdict.ok{background:rgba(74,222,128,.1);color:var(--success);border-color:rgba(74,222,128,.3)}
+.calc-verdict.tight{background:rgba(251,191,36,.1);color:var(--warning);border-color:rgba(251,191,36,.35)}
+.calc-verdict.bad{background:rgba(239,68,68,.1);color:var(--danger);border-color:rgba(239,68,68,.35)}
+
+/* Calendar */
+.calendar{}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+.cal-head .cal-title{font-size:14px;font-weight:800;display:flex;align-items:center;gap:10px}
+.cal-head .cal-nav{display:flex;align-items:center;gap:4px}
+.cal-head .cal-nav button{padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:700;color:var(--text)}
+.cal-head .cal-nav button:hover{border-color:var(--primary)}
+.cal-legend{display:flex;gap:10px;align-items:center;font-size:10px;color:var(--muted)}
+.cal-legend .li{display:flex;align-items:center;gap:5px}
+.cal-legend .li .sw{width:9px;height:9px;border-radius:2px}
+.cal-grid{display:grid;grid-template-columns:90px repeat(3,1fr);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.cal-hcell{padding:9px 10px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center}
+.cal-hcell:last-child{border-right:none}
+.cal-month-label{padding:14px 10px;font-size:12px;font-weight:800;color:var(--text);background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.cal-month-label small{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.cal-cell{min-height:108px;padding:6px;background:var(--surface);border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:.15s;position:relative}
+.cal-cell:last-of-type{border-right:none}
+.cal-cell.drag-over{background:var(--surface3);box-shadow:inset 0 0 0 2px var(--primary)}
+.cal-cell:hover .add-btn{opacity:1}
+.cal-cell .add-btn{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:4px;background:var(--surface3);color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s;border:1px solid var(--border)}
+.cal-cell .add-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.cmp{padding:5px 7px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:grab;transition:.15s;position:relative;border-left-width:3px}
+.cmp:active{cursor:grabbing}
+.cmp:hover{border-color:var(--primary);background:var(--surface3)}
+.cmp.dragging{opacity:.4}
+.cmp .cmp-name{font-weight:700;font-size:11px;line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cmp .cmp-meta{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)}
+.cmp .dots{display:flex;gap:2px;margin-top:3px}
+.cmp .dot{width:6px;height:6px;border-radius:50%;background:var(--muted2)}
+.cmp .dot.pass{background:var(--success)}
+.cmp .dot.warn{background:var(--warning)}
+.cmp .dot.fail{background:var(--danger)}
+
+/* Channel colors (left border accent) */
+.cmp.ch-official{border-left-color:var(--primary)}
+.cmp.ch-smart{border-left-color:#60a5fa}
+.cmp.ch-kakao{border-left-color:#fbbf24}
+.cmp.ch-29cm{border-left-color:#a78bfa}
+.cmp.ch-coupang{border-left-color:#34d399}
+.cmp.ch-b2b{border-left-color:#fb7185}
+.cmp.ch-event{border-left-color:#9ca3af;border-style:dashed}
+
+/* Side panel (campaign editor) */
+.side{position:fixed;right:0;top:0;bottom:0;width:420px;background:var(--surface);border-left:1px solid var(--border);z-index:100;transform:translateX(100%);transition:.25s cubic-bezier(.4,0,.2,1);overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.5)}
+.side.open{transform:translateX(0)}
+.side-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:2}
+.side-head h3{font-size:14px;font-weight:800}
+.side-body{padding:16px 18px}
+.side-body .group{margin-bottom:14px}
+.side-body .group label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px}
+.side-body .group input,.side-body .group select,.side-body .group textarea{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px}
+.side-body .group textarea{min-height:60px;resize:vertical;font-family:inherit}
+.side-body .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.side-body .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.side-body .check-list{display:flex;flex-direction:column;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px}
+.side-body .check-list .ci{display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer}
+.side-body .check-list .ci input{width:auto;padding:0}
+.side-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:.15s}
+.btn:hover{border-color:var(--primary)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:#ff6a26}
+.btn.danger{color:var(--danger);border-color:rgba(239,68,68,.3)}
+.btn.danger:hover{background:rgba(239,68,68,.1)}
+.btn.ghost{background:transparent}
+
+/* Backdrop / modal */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;opacity:0;pointer-events:none;transition:.2s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:min(520px,92vw);max-height:88vh;overflow-y:auto;z-index:101;display:none;box-shadow:0 20px 80px rgba(0,0,0,.6)}
+.modal.show{display:block}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:14px;font-weight:800}
+.modal-body{padding:16px 18px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* Chart wrapper */
+.chart-wrap{position:relative;height:200px;margin-top:8px}
+.chart-wrap.lg{height:240px}
+
+/* Empty / hint */
+.hint{font-size:11px;color:var(--muted);padding:8px 10px;background:var(--surface2);border:1px dashed var(--border);border-radius:var(--radius-sm)}
+
+/* Tab content show/hide */
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#444}
+
+/* Misc */
+.kbd{font-family:'SF Mono',Menlo,monospace;font-size:10px;background:var(--surface3);padding:1px 5px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.spacer-sm{height:6px}.spacer{height:14px}.spacer-lg{height:24px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:.2s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(74,222,128,.4);color:var(--success)}
+.toast.warn{border-color:rgba(251,191,36,.4);color:var(--warning)}
+.toast.error{border-color:rgba(239,68,68,.4);color:var(--danger)}
+</style>
+</head>
+<body>
+
+<!-- ============== TOP BAR ============== -->
+<div class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span>Dr.Felis OGK Console</span>
+    <small>FY26.06 ▸ 27.05</small>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="dash">운영 콘솔</button>
+    <button class="tab" data-tab="doc">전략 문서</button>
+  </div>
+  <div class="top-spacer"></div>
+  <div class="top-actions">
+    <div class="sync-pill local" id="syncPill"><span class="ind"></span><span id="syncText">로컬 저장</span></div>
+    <button class="icon-btn" id="openSettings" title="설정">⚙</button>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ============== DASHBOARD TAB ============== -->
+<div class="tab-pane active" id="pane-dash">
+  <div class="dashboard">
+
+    <!-- ROW 1: 계기판 -->
+    <div class="dash-row1">
+      <!-- 1-1: 매출 런레이트 + Plan A/B -->
+      <div class="card">
+        <div class="section-title"><span class="bar"></span>월 매출 런레이트</div>
+        <div class="metric">
+          <div class="val" id="runRevVal">—</div>
+          <div class="sub" id="runRevSub">월 목표 — / 진척률 —</div>
+          <div class="bar-track"><div class="bar-fill" id="runRevBar" style="width:0%"></div></div>
+        </div>
+        <div class="plan-signal a" id="planSignal">
+          <span id="planSignalIcon">●</span>
+          <span id="planSignalText">Plan A 정상 — 광고 정상 운용</span>
+          <button class="plan-toggle" id="planToggle">이번 달 Plan B 적용</button>
+        </div>
+        <div class="chart-wrap"><canvas id="chartRev"></canvas></div>
+      </div>
+
+      <!-- 1-2: Gate 4개 스코어 -->
+      <div class="card">
+        <div class="section-title"><span class="bar"></span>OGK Gate · 분기 진척</div>
+        <div class="gates" id="gatesGrid"></div>
+        <div class="hint" style="margin-top:10px">
+          Gate 1·2는 분기 마감 시 PASS 여부를 평가, 3·4는 누적 운영 지표. 분기 임계값은 supply-adjusted 기준.
+        </div>
+      </div>
+
+      <!-- 1-3: 누적 공헌이익 -->
+      <div class="card">
+        <div class="section-title"><span class="bar"></span>누적 공헌이익</div>
+        <div class="metric">
+          <div class="val" id="cumProfitVal">—</div>
+          <div class="sub" id="cumProfitSub">목표 36억 / 진척률 —</div>
+          <div class="bar-track"><div class="bar-fill" id="cumProfitBar" style="width:0%"></div></div>
+        </div>
+        <div class="chart-wrap" style="margin-top:14px"><canvas id="chartProfit"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 2: 트랙 + 마진룸 -->
+    <div class="dash-row2">
+      <!-- 2-1: 모래 트랙 -->
+      <div class="card track">
+        <div class="track-head">
+          <div class="track-name"><span class="icon">⏸</span>모래 트랙 <span class="tag warn">중단 · 통제 빌드</span></div>
+          <span class="meta muted">SCM 정렬 대기</span>
+        </div>
+        <div class="kv">
+          <div class="ki"><div class="k">Sell Cap (주차)</div><div class="v" id="sandCap">—</div></div>
+          <div class="ki"><div class="k">안전재고일수</div><div class="v" id="sandSafe">—</div></div>
+        </div>
+        <ul class="checks" data-track="sand"></ul>
+      </div>
+
+      <!-- 2-2: 영양 트랙 -->
+      <div class="card track">
+        <div class="track-head">
+          <div class="track-name"><span class="icon">⏸</span>영양 트랙 <span class="tag warn">중단 · 게이트 통과</span></div>
+          <span class="meta muted">7~9월 런칭 큐</span>
+        </div>
+        <div class="kv">
+          <div class="ki"><div class="k">게이트 통과 SKU</div><div class="v" id="nutGate">—</div></div>
+          <div class="ki"><div class="k">런칭 일정 슬라이드</div><div class="v" id="nutSlide">—</div></div>
+        </div>
+        <ul class="checks" data-track="nutrition"></ul>
+      </div>
+
+      <!-- 2-3: 마진룸 계산기 -->
+      <div class="card">
+        <div class="section-title"><span class="bar"></span>마진룸 계산기</div>
+        <div class="calc-row">
+          <div class="field"><label>제품</label><select id="calcProduct"></select></div>
+          <div class="field"><label>채널</label><select id="calcChannel"></select></div>
+        </div>
+        <div class="calc-row">
+          <div class="field"><label>할인율 %</label><input type="number" id="calcDisc" value="15" min="0" max="80"></div>
+          <div class="field"><label>사은품 원가 ₩</label><input type="number" id="calcGift" value="0" min="0"></div>
+        </div>
+        <div class="calc-row">
+          <div class="field"><label>예상 판매수량</label><input type="number" id="calcQty" value="500" min="0"></div>
+          <div class="field"><label>광고비 ₩</label><input type="number" id="calcAdSpend" value="0" min="0"></div>
+        </div>
+        <div class="calc-result" id="calcResult"></div>
+        <div class="calc-verdict" id="calcVerdict">—</div>
+      </div>
+    </div>
+
+    <!-- ROW 3: 캘린더 -->
+    <div class="dash-row3">
+      <div class="card">
+        <div class="cal-head">
+          <div class="cal-title">
+            캠페인 캘린더
+            <span class="tag info" id="calRange">26년 6월 — 27년 5월</span>
+          </div>
+          <div class="cal-legend">
+            <div class="li"><span class="sw" style="background:var(--primary)"></span>공식몰</div>
+            <div class="li"><span class="sw" style="background:#60a5fa"></span>스마트스토어</div>
+            <div class="li"><span class="sw" style="background:#fbbf24"></span>카카오/토스</div>
+            <div class="li"><span class="sw" style="background:#a78bfa"></span>29CM</div>
+            <div class="li"><span class="sw" style="background:#fb7185"></span>B2B</div>
+            <div class="li"><span class="sw" style="background:#9ca3af"></span>이벤트</div>
+          </div>
+          <div class="cal-nav">
+            <button id="calPrev">◀ 이전 6개월</button>
+            <button id="calToday">현재 분기</button>
+            <button id="calNext">다음 6개월 ▶</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid">
+          <div class="cal-hcell">월</div>
+          <div class="cal-hcell">上 (1~10일)</div>
+          <div class="cal-hcell">中 (11~20일)</div>
+          <div class="cal-hcell">下 (21~말일)</div>
+        </div>
+        <div class="hint" style="margin-top:8px">
+          셀의 <span class="kbd">+</span> 로 새 캠페인 추가. 카드 클릭으로 편집, 드래그로 다른 셀로 이동. 좌측 컬러바 = 채널.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============== DOC TAB ============== -->
+<div class="tab-pane" id="pane-doc">
+  <div class="doc">
+    <div class="full card">
+      <h2><span class="num">OGK</span>2026.06 ▸ 2027.05 · 수정 북극성</h2>
+      <p style="font-size:14px;color:#ddd;margin-bottom:14px">
+        매출 <b style="color:var(--primary)">120억</b>과 공헌이익 <b style="color:var(--primary)">36억</b>을 <u>동시</u> 추구하되,
+        SCM 공급 제약을 인정하는 <b>supply-adjusted</b> 계획. 모래·영양은 통제 빌드 중이며,
+        OGK는 분기마다 Gate로 측정하고 미달 시 Plan B(이익 보전 모드) 전환을 허용한다.
+      </p>
+      <div class="doc-grid">
+        <div class="doc-mini"><div class="k">목표 매출</div><div class="v">120<small>억</small></div></div>
+        <div class="doc-mini"><div class="k">목표 공헌이익</div><div class="v">36<small>억</small></div></div>
+        <div class="doc-mini"><div class="k">목표 이익률</div><div class="v">30<small>%</small></div></div>
+        <div class="doc-mini"><div class="k">광고비 상한</div><div class="v">12<small>% / 매출</small></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>4개 Gate (분기별 평가)</h4>
+      <div class="gate-row">
+        <span class="gid">G1</span>
+        <div><div class="gname">공헌이익률 + 공식몰 비중</div>
+        <div class="gdesc">분기 평균 이익률 ≥ 30% &nbsp;·&nbsp; 공식몰 비중 분기별 상향 (Q1 70% → Q4 77%)</div></div>
+        <span class="tag info">건강성</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G2</span>
+        <div><div class="gname">구독 고객 수</div>
+        <div class="gdesc">구독 베이스 = 안정 수익 + LTV. 분기 누적 신규 가입 / 이탈 차감 후 순증.</div></div>
+        <span class="tag info">고객</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G3</span>
+        <div><div class="gname">광고비/매출 ≤ 12%</div>
+        <div class="gdesc">12% 상한 초과 시 전환율·소재 효율 점검. 16% 초과는 Plan B 신호.</div></div>
+        <span class="tag info">효율</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G4</span>
+        <div><div class="gname">브랜드 캠페인 누적</div>
+        <div class="gdesc">분기당 브랜드 자산 캠페인 ≥ 2건 (단순 할인 제외, 사은품·콜라보·콘텐츠 포함).</div></div>
+        <span class="tag info">브랜드</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Plan A · Plan B 전환 규칙</h4>
+      <p><b>Plan A (기본)</b> — 매출 120 / 이익 36 동시 추구. 광고 정상 운용, 가격 가드 준수, 모든 Gate 추적.</p>
+      <p><b>Plan B (이익 보전)</b> — 월 런레이트가 목표 대비 부진할 때 발동. 광고비 컷 → 이익률 우선.</p>
+      <ul>
+        <li><b>경고 (자동)</b> · 월 런레이트 ≤ 월 목표 × 90% → 상단 시그널이 노랗게.</li>
+        <li><b>전환 (수동)</b> · 팀이 "이번 달 Plan B 적용" 버튼으로 결정. 콘솔에 기록 남음.</li>
+        <li>전환 중에는 신규 광고 캠페인 금지, 사은품·콜라보 위주로 운영.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>가격 원칙 (운영 통합)</h4>
+      <ul>
+        <li><b>채널별 마진 밑선</b> · 공식몰 35% · 스마트스토어 25% · 29CM 30% · 카카오/토스 25%</li>
+        <li><b>정가 vs 실판매가 분리</b> · 모든 캠페인은 정가 기준 할인율 명시</li>
+        <li><b>할인 겹침 금지</b> · 채널 동시 진행 시 가장 강한 혜택 하나만 노출</li>
+        <li><b>Sell cap 정렬</b> · 모래·런칭 SKU는 SCM 동의 없이 캠페인 노출 금지</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>모래 트랙 — 통제 빌드</h4>
+      <p>핵심 SKU: 마스터 4.3/8.3kg · 슈퍼볼 4.3/8.3kg · 하드볼 4.3/8.3kg</p>
+      <ul>
+        <li>주차별 sell cap을 SCM과 합의 후 캘린더에 입력</li>
+        <li>구독 보호 레인을 별도 모집 캡으로 운영 (구독자 우선 배정)</li>
+        <li>B2B / 밀크런은 별 트랙으로 분리, 일반 캠페인 cap에서 차감</li>
+        <li>안전재고일수 ≥ 14일 미만 시 신규 캠페인 푸시 금지</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>영양 트랙 — 게이트 통과</h4>
+      <p>핵심 SKU: 퍼펙트 · 세븐플러스 · 올인원 트릿 · 프로바이오틱스 (리뉴얼 대체 예정)</p>
+      <ul>
+        <li>런칭 큐: 케어라인 리뉴얼(7월말) · 카사바(8월) · 프로바이오틱스 리뉴얼(8월) · 오메가3(9월)</li>
+        <li>각 런칭 게이트 통과 = QC + 패키지 + 콘텐츠 + 가격 + 채널 진열 모두 OK</li>
+        <li>일정 슬라이드 발생 시 캘린더에 자동 표시되도록 캠페인 종속화</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /.page -->
+
+<!-- Side panel (campaign editor) -->
+<div class="side" id="sidePanel">
+  <div class="side-head">
+    <h3 id="sideTitle">캠페인 편집</h3>
+    <button class="icon-btn" id="sideClose">✕</button>
+  </div>
+  <div class="side-body">
+    <div class="group"><label>캠페인 이름</label><input type="text" id="fName" placeholder="예: 3주년 세일 — 영양 본품 +체험팩"></div>
+    <div class="row3">
+      <div class="group"><label>채널</label><select id="fChannel">
+        <option value="official">공식몰</option>
+        <option value="smart">스마트스토어</option>
+        <option value="kakao">카카오/토스</option>
+        <option value="29cm">29CM</option>
+        <option value="coupang">쿠팡</option>
+        <option value="b2b">B2B</option>
+        <option value="event">이벤트(공통)</option>
+      </select></div>
+      <div class="group"><label>월</label><select id="fMonth"></select></div>
+      <div class="group"><label>주차</label><select id="fWeek">
+        <option value="0">上 (1~10)</option>
+        <option value="1">中 (11~20)</option>
+        <option value="2">下 (21~말)</option>
+      </select></div>
+    </div>
+    <div class="group"><label>메인 SKU</label><select id="fSku"></select></div>
+    <div class="row2">
+      <div class="group"><label>할인율 %</label><input type="number" id="fDisc" value="0" min="0" max="80"></div>
+      <div class="group"><label>사은품 원가 ₩</label><input type="number" id="fGift" value="0" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="group"><label>예상 매출 ₩</label><input type="number" id="fRev" value="0" min="0"></div>
+      <div class="group"><label>예상 광고비 ₩</label><input type="number" id="fAd" value="0" min="0"></div>
+    </div>
+    <div class="group"><label>메모</label><textarea id="fMemo" placeholder="목적·메인 후크·우려사항"></textarea></div>
+    <div class="group">
+      <label>운영 체크리스트 (모두 OK → Gate 1 카운트)</label>
+      <div class="check-list">
+        <label class="ci"><input type="checkbox" id="fChkCap"> Sell cap 정렬 (SCM 합의)</label>
+        <label class="ci"><input type="checkbox" id="fChkPrice"> 가격 밑선 사수 (채널 마진 밑선 위)</label>
+        <label class="ci"><input type="checkbox" id="fChkOverlap"> 할인 겹침 없음 (단일 혜택)</label>
+        <label class="ci"><input type="checkbox" id="fChkBrand"> 브랜드 캠페인 카운트 (Gate 4)</label>
+      </div>
+    </div>
+  </div>
+  <div class="side-foot">
+    <button class="btn danger" id="sideDelete">삭제</button>
+    <button class="btn ghost" id="sideCancel">취소</button>
+    <button class="btn primary" id="sideSave" style="margin-left:auto">저장</button>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="backdrop" id="backdrop"></div>
+<div class="modal" id="settingsModal">
+  <div class="modal-head">
+    <h3>설정</h3>
+    <button class="icon-btn" id="settingsClose">✕</button>
+  </div>
+  <div class="modal-body">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Firebase config를 입력하면 팀과 실시간 공유됩니다. 비워두면 이 브라우저에만 저장됩니다.
+    </p>
+    <div class="group">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px;display:block">Firebase Config (JSON)</label>
+      <textarea id="fbConfig" style="width:100%;min-height:140px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--text);resize:vertical" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://xxx.firebaseio.com","projectId":"..."}'></textarea>
+    </div>
+    <div class="group">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px;display:block">데이터 노드 경로</label>
+      <input type="text" id="fbPath" value="ogk_console_v3" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px">
+    </div>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="exportData">데이터 내보내기 (JSON)</button>
+      <button class="btn" id="importData">JSON 가져오기</button>
+      <button class="btn" id="resetSeed">시드 초기화</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn ghost" id="settingsCancel">닫기</button>
+    <button class="btn primary" id="settingsSave">저장 + 연결</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Firebase (compat, lazy init) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   Dr.Felis OGK Console — single-file app
+   ============================================================ */
+
+/* ---------- Utils ---------- */
+const fmtKRW = n => {
+  if (n == null || isNaN(n)) return '—';
+  const v = Math.round(n);
+  if (Math.abs(v) >= 1e8) return '₩' + (v/1e8).toFixed(2) + '억';
+  if (Math.abs(v) >= 1e4) return '₩' + (v/1e4).toFixed(0) + '만';
+  return '₩' + v.toLocaleString('ko-KR');
+};
+const fmtPct = (n, digits=1) => (n == null || isNaN(n)) ? '—' : (n*100).toFixed(digits) + '%';
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const uid = () => 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function toast(msg, kind='') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = 'toast ' + kind, 2400);
+}
+
+/* ---------- Constants & seed ---------- */
+const FY_MONTHS = [
+  { y:2026, m:6 }, { y:2026, m:7 }, { y:2026, m:8 },
+  { y:2026, m:9 }, { y:2026, m:10 }, { y:2026, m:11 },
+  { y:2026, m:12 }, { y:2027, m:1 }, { y:2027, m:2 },
+  { y:2027, m:3 }, { y:2027, m:4 }, { y:2027, m:5 },
+];
+const MONTH_KEY = ({y,m}) => `${y}-${String(m).padStart(2,'0')}`;
+const MONTH_LABEL = ({y,m}) => `${String(y).slice(2)}년 ${m}월`;
+
+// Quarter targets (FY 26.06~27.05) — even split, user can edit later
+const Q_TARGETS = [
+  { id:'Q1', label:'Q1 (6~8월)', months:[0,1,2],  rev: 3_000_000_000, profit:  900_000_000, official: 0.70 },
+  { id:'Q2', label:'Q2 (9~11월)', months:[3,4,5], rev: 3_000_000_000, profit:  900_000_000, official: 0.73 },
+  { id:'Q3', label:'Q3 (12~2월)', months:[6,7,8], rev: 3_000_000_000, profit:  900_000_000, official: 0.75 },
+  { id:'Q4', label:'Q4 (3~5월)',  months:[9,10,11],rev: 3_000_000_000, profit: 900_000_000, official: 0.77 },
+];
+
+// Previous 11 months actuals (provided by user, 25/7 ~ 26/5)
+const PREV_ACTUALS = [
+  { ym:'25-07', rev:692782613,  profit:184946338, marginPct:26.7, adPct:11.7 },
+  { ym:'25-08', rev:845948739,  profit:256759488, marginPct:30.4, adPct:10.2 },
+  { ym:'25-09', rev:906540685,  profit:273746102, marginPct:30.2, adPct:11.1 },
+  { ym:'25-10', rev:727160970,  profit:218250164, marginPct:30.0, adPct:10.6 },
+  { ym:'25-11', rev:949886973,  profit:282286453, marginPct:29.7, adPct:11.3 },
+  { ym:'25-12', rev:942710945,  profit:275885120, marginPct:29.3, adPct: 9.8 },
+  { ym:'26-01', rev:820497403,  profit:224647320, marginPct:27.4, adPct:12.8 },
+  { ym:'26-02', rev:776368809,  profit:212103294, marginPct:27.3, adPct:10.8 },
+  { ym:'26-03', rev:765111315,  profit:234499648, marginPct:30.6, adPct:12.3 },
+  { ym:'26-04', rev:817941362,  profit:264084072, marginPct:32.3, adPct:11.3 },
+  { ym:'26-05', rev:836134235,  profit:262398458, marginPct:31.4, adPct: 9.9 },
+];
+
+// Channels (default margin floors from May actuals)
+const CHANNELS = [
+  { id:'official', name:'공식몰',         floor:0.35, baseMargin:0.364 },
+  { id:'smart',    name:'스마트스토어',   floor:0.25, baseMargin:0.259 },
+  { id:'kakao',    name:'카카오/토스',    floor:0.25, baseMargin:0.27 },
+  { id:'29cm',     name:'29CM',           floor:0.30, baseMargin:0.31 },
+  { id:'coupang',  name:'쿠팡',           floor:0.20, baseMargin:0.22 },
+  { id:'b2b',      name:'B2B',            floor:0.25, baseMargin:0.28 },
+  { id:'event',    name:'이벤트(공통)',   floor:0.25, baseMargin:0.30 },
+];
+
+// Core SKUs (10)
+const SKUS = [
+  { id:'sand-master43',  name:'마스터 4.3kg',     track:'sand', price:19900, cost:8900 },
+  { id:'sand-master83',  name:'마스터 8.3kg',     track:'sand', price:34900, cost:15600 },
+  { id:'sand-super43',   name:'슈퍼볼 4.3kg',     track:'sand', price:21900, cost:9800 },
+  { id:'sand-super83',   name:'슈퍼볼 8.3kg',     track:'sand', price:38900, cost:17300 },
+  { id:'sand-hard43',    name:'하드볼 4.3kg',     track:'sand', price:22900, cost:10200 },
+  { id:'sand-hard83',    name:'하드볼 8.3kg',     track:'sand', price:39900, cost:17800 },
+  { id:'nut-perfect',    name:'퍼펙트',           track:'nutrition', price:49000, cost:14200 },
+  { id:'nut-seven',      name:'세븐플러스',       track:'nutrition', price:55000, cost:16500 },
+  { id:'nut-treat',      name:'올인원 트릿',       track:'nutrition', price:18000, cost:5800 },
+  { id:'nut-probio',     name:'프로바이오틱스',   track:'nutrition', price:42000, cost:12500 },
+  // Slots (런칭 큐)
+  { id:'nut-cassava',    name:'카사바 (8월 런칭)', track:'nutrition', price:45000, cost:14000, slot:true },
+  { id:'nut-probio2',    name:'프로바이오틱스 리뉴얼 (8월)', track:'nutrition', price:46000, cost:13800, slot:true },
+  { id:'nut-careline',   name:'케어라인 리뉴얼 (7월말)', track:'nutrition', price:38000, cost:11000, slot:true },
+  { id:'nut-omega3',     name:'오메가3 (9월 런칭)', track:'nutrition', price:48000, cost:14500, slot:true },
+];
+
+// Track checklist seeds
+const SAND_CHECKS = [
+  { id:'sc1', text:'주차별 sell cap을 SCM과 합의', done:false },
+  { id:'sc2', text:'구독 보호 레인 별도 모집 캡 설정', done:false },
+  { id:'sc3', text:'B2B/밀크런 분리 트랙 정의', done:false },
+  { id:'sc4', text:'안전재고일수 모니터링 자동화', done:false },
+  { id:'sc5', text:'6월 sell cap을 캘린더에 반영', done:false },
+];
+const NUT_CHECKS = [
+  { id:'nc1', text:'케어라인 리뉴얼 게이트 통과 (7월말)', done:false },
+  { id:'nc2', text:'카사바 런칭 게이트 통과 (8월)', done:false },
+  { id:'nc3', text:'프로바이오틱스 리뉴얼 → 본품 대체 안내', done:false },
+  { id:'nc4', text:'오메가3 런칭 게이트 통과 (9월)', done:false },
+  { id:'nc5', text:'런칭별 콘텐츠·CRM 세트 준비', done:false },
+];
+
+/* ---------- Default state ---------- */
+function defaultState() {
+  return {
+    settings: {
+      monthRevTarget: 1_000_000_000,        // 월 매출 목표 = 10억 (120/12)
+      monthProfitTarget: 300_000_000,       // 월 공헌이익 목표 = 3억
+      warnThreshold: 0.90,                  // 90% 미만이면 경고
+      currentMonthIdx: 0,                   // 0=2026/6 (FY 시작)
+      planBOverride: {},                    // { 'YYYY-MM': true }
+    },
+    sandKv: { cap:'주차 미정', safe:'데이터 입력 대기' },
+    nutKv:  { gate:'0 / 4', slide:'정상' },
+    checks: { sand: SAND_CHECKS, nutrition: NUT_CHECKS },
+    campaigns: defaultCampaigns(),
+    actuals: {},                            // { 'YYYY-MM': { rev, profit } } — user fills as month closes
+    fb: { config:'', path:'ogk_console_v3' },
+  };
+}
+
+function defaultCampaigns() {
+  // Seed a few campaigns to make the calendar feel alive
+  return [
+    { id:uid(), name:'영양 본품 6월 정기 SALE', channel:'official', month:0, week:0, sku:'nut-perfect',
+      disc:15, gift:0, rev:120_000_000, ad:14_000_000, memo:'분기 첫 푸시. 후크: 퍼펙트 + 무료 체험팩.',
+      checks:{cap:true,price:true,overlap:true,brand:false} },
+    { id:uid(), name:'스마트스토어 6월 라이브', channel:'smart', month:0, week:1, sku:'nut-seven',
+      disc:10, gift:0, rev:60_000_000, ad:6_000_000, memo:'',
+      checks:{cap:true,price:true,overlap:true,brand:false} },
+    { id:uid(), name:'케어라인 리뉴얼 티저', channel:'official', month:1, week:2, sku:'nut-careline',
+      disc:0, gift:5000, rev:40_000_000, ad:4_000_000, memo:'리뉴얼 5일 전 콘텐츠 푸시.',
+      checks:{cap:false,price:true,overlap:true,brand:true} },
+    { id:uid(), name:'카사바 런칭 캠페인', channel:'official', month:2, week:0, sku:'nut-cassava',
+      disc:0, gift:8000, rev:80_000_000, ad:12_000_000, memo:'런칭 게이트 통과 필수.',
+      checks:{cap:false,price:true,overlap:true,brand:true} },
+    { id:uid(), name:'29CM 가을 콜라보', channel:'29cm', month:3, week:1, sku:'nut-perfect',
+      disc:20, gift:0, rev:45_000_000, ad:3_000_000, memo:'29CM 라이프 카테고리 큐레이션.',
+      checks:{cap:true,price:true,overlap:true,brand:true} },
+    { id:uid(), name:'카카오 톡딜 — 트릿', channel:'kakao', month:0, week:2, sku:'nut-treat',
+      disc:25, gift:0, rev:30_000_000, ad:2_000_000, memo:'',
+      checks:{cap:true,price:true,overlap:true,brand:false} },
+    { id:uid(), name:'블랙프라이데이 통합', channel:'event', month:5, week:2, sku:'nut-perfect',
+      disc:30, gift:0, rev:180_000_000, ad:22_000_000, memo:'전 채널 동시. 단일 혜택만.',
+      checks:{cap:false,price:true,overlap:false,brand:true} },
+  ];
+}
+
+/* ---------- Storage ---------- */
+const LS_KEY = 'ogk_console_v3_state';
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return { ...defaultState(), ...parsed };
+  } catch (e) {
+    return defaultState();
+  }
+}
+function saveState() {
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+  syncToFirebase();
+}
+
+/* ---------- Firebase (lazy) ---------- */
+let fbDb = null, fbRef = null, fbConnected = false, fbSuppress = false;
+function initFirebase() {
+  const cfgStr = (state.fb && state.fb.config || '').trim();
+  if (!cfgStr) { setSyncIndicator('local'); return; }
+  try {
+    const cfg = JSON.parse(cfgStr);
+    if (firebase.apps && firebase.apps.length) firebase.app().delete();
+    firebase.initializeApp(cfg);
+    fbDb = firebase.database();
+    fbRef = fbDb.ref(state.fb.path || 'ogk_console_v3');
+    fbRef.on('value', snap => {
+      if (fbSuppress) return;
+      const data = snap.val();
+      if (data && data._ts && data._ts !== state._ts) {
+        const incoming = { ...data };
+        delete incoming._ts;
+        Object.assign(state, incoming);
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+        renderAll();
+        setSyncIndicator('on', '동기화됨');
+      }
+    });
+    fbConnected = true;
+    setSyncIndicator('on', '동기화됨');
+    syncToFirebase();
+  } catch (e) {
+    console.warn('Firebase init failed', e);
+    fbConnected = false;
+    setSyncIndicator('local', '로컬 저장');
+    toast('Firebase 설정 오류: ' + e.message, 'error');
+  }
+}
+function syncToFirebase() {
+  if (!fbConnected || !fbRef) return;
+  fbSuppress = true;
+  state._ts = Date.now();
+  fbRef.set(state).finally(() => { setTimeout(() => fbSuppress = false, 200); });
+}
+function setSyncIndicator(mode, text) {
+  const pill = $('#syncPill');
+  pill.classList.remove('on','local');
+  pill.classList.add(mode);
+  $('#syncText').textContent = text || (mode === 'on' ? '동기화됨' : '로컬 저장');
+}
+
+/* ---------- Tabs ---------- */
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  const tab = t.dataset.tab;
+  $$('.tab-pane').forEach(p => p.classList.remove('active'));
+  $('#pane-' + tab).classList.add('active');
+}));
+
+/* ---------- Compute ---------- */
+function getCurrentMonthKey() {
+  const i = state.settings.currentMonthIdx;
+  return MONTH_KEY(FY_MONTHS[i]);
+}
+function getMonthActual(idx) {
+  const key = MONTH_KEY(FY_MONTHS[idx]);
+  if (state.actuals[key]) return state.actuals[key];
+  // Fallback: planned from campaigns
+  const cmps = state.campaigns.filter(c => c.month === idx);
+  const rev = cmps.reduce((s,c) => s + (Number(c.rev)||0), 0);
+  const ad = cmps.reduce((s,c) => s + (Number(c.ad)||0), 0);
+  // Estimate profit from per-SKU margins
+  let profit = 0;
+  cmps.forEach(c => {
+    const sku = SKUS.find(s => s.id === c.sku);
+    if (!sku) return;
+    const unit = (sku.price * (1 - (c.disc||0)/100)) - sku.cost - (c.gift||0);
+    const qty = (c.rev && sku.price) ? c.rev / (sku.price * (1 - (c.disc||0)/100)) : 0;
+    profit += unit * qty - (c.ad||0);
+  });
+  return { rev, profit: Math.max(0, profit), planned:true };
+}
+function getCumProfitToDate() {
+  let sum = 0;
+  for (let i = 0; i <= state.settings.currentMonthIdx; i++) {
+    sum += getMonthActual(i).profit || 0;
+  }
+  return sum;
+}
+
+/* ---------- Dashboard rendering ---------- */
+function renderDashboard() {
+  renderRunRev();
+  renderGates();
+  renderCumProfit();
+  renderTracks();
+  renderCalc();
+  renderCalendar();
+}
+
+function renderRunRev() {
+  const idx = state.settings.currentMonthIdx;
+  const cur = getMonthActual(idx);
+  const target = state.settings.monthRevTarget;
+  const ratio = cur.rev / target;
+  $('#runRevVal').innerHTML = fmtKRW(cur.rev) + (cur.planned ? ' <small>예정</small>' : '');
+  $('#runRevSub').textContent = `${MONTH_LABEL(FY_MONTHS[idx])} 목표 ${fmtKRW(target)} · 진척률 ${fmtPct(ratio)}`;
+  const bar = $('#runRevBar');
+  bar.style.width = clamp(ratio*100, 0, 100) + '%';
+  bar.classList.remove('good','warn','bad');
+  bar.classList.add(ratio >= 1 ? 'good' : ratio >= state.settings.warnThreshold ? '' : ratio >= state.settings.warnThreshold-0.05 ? 'warn' : 'bad');
+
+  // Plan signal
+  const signal = $('#planSignal'), text = $('#planSignalText');
+  const ymKey = getCurrentMonthKey();
+  const isB = !!state.settings.planBOverride[ymKey];
+  signal.classList.remove('a','warn','b');
+  if (isB) {
+    signal.classList.add('b');
+    text.textContent = `Plan B 적용 중 (${ymKey}) — 광고비 컷, 이익 보전 모드`;
+  } else if (ratio < state.settings.warnThreshold) {
+    signal.classList.add('warn');
+    text.textContent = `경고: 런레이트가 목표의 ${(ratio*100).toFixed(0)}% — Plan B 검토 권고`;
+  } else {
+    signal.classList.add('a');
+    text.textContent = `Plan A 정상 — 광고 정상 운용`;
+  }
+  const toggle = $('#planToggle');
+  toggle.textContent = isB ? `Plan B 해제 (${ymKey})` : `이번 달 Plan B 적용`;
+  toggle.classList.toggle('active', isB);
+
+  // chart: prev 11 months + FY targets
+  drawRevChart();
+}
+
+function renderGates() {
+  // Determine current quarter from currentMonthIdx
+  const idx = state.settings.currentMonthIdx;
+  const qIdx = Math.floor(idx / 3);
+  const q = Q_TARGETS[qIdx];
+  // Aggregate quarter so far
+  let qRev = 0, qProfit = 0, qOfficial = 0, qAd = 0;
+  let monthsCounted = 0;
+  q.months.forEach(mi => {
+    if (mi <= idx) {
+      const a = getMonthActual(mi);
+      qRev += a.rev || 0;
+      qProfit += a.profit || 0;
+      // approximate official share from campaigns for that month
+      const cmps = state.campaigns.filter(c => c.month === mi);
+      const officialRev = cmps.filter(c => c.channel === 'official').reduce((s,c) => s + (c.rev||0), 0);
+      const totRev = cmps.reduce((s,c) => s + (c.rev||0), 0) || 1;
+      qOfficial += (officialRev / totRev);
+      qAd += cmps.reduce((s,c) => s + (c.ad||0), 0);
+      monthsCounted++;
+    }
+  });
+  const officialShare = monthsCounted ? qOfficial / monthsCounted : 0;
+  const marginRate = qRev ? qProfit / qRev : 0;
+  const adRate = qRev ? qAd / qRev : 0;
+  const brandCount = state.campaigns.filter(c => q.months.includes(c.month) && c.checks && c.checks.brand).length;
+
+  // Subscription customers — not tracked in v1; show placeholder
+  const subVal = '—';
+
+  const gates = [
+    { id:'G1', label:'이익률 / 공식몰', val:`${(marginRate*100).toFixed(1)}% · ${(officialShare*100).toFixed(0)}%`,
+      target:`≥ 30% · ≥ ${(q.official*100).toFixed(0)}%`,
+      pct: clamp(marginRate / 0.30, 0, 1),
+      status: (marginRate >= 0.30 && officialShare >= q.official) ? 'pass' : (marginRate >= 0.28 ? 'warn' : 'fail') },
+    { id:'G2', label:'구독 고객 수', val:subVal, target:'분기 순증 입력', pct:0, status:'warn' },
+    { id:'G3', label:'광고비 / 매출', val:`${(adRate*100).toFixed(1)}%`, target:'≤ 12%',
+      pct: clamp(1 - adRate / 0.12, 0, 1),
+      status: adRate <= 0.12 ? 'pass' : (adRate <= 0.16 ? 'warn' : 'fail') },
+    { id:'G4', label:'브랜드 캠페인', val:`${brandCount} 건`, target:'분기 ≥ 2건',
+      pct: clamp(brandCount / 2, 0, 1),
+      status: brandCount >= 2 ? 'pass' : (brandCount >= 1 ? 'warn' : 'fail') },
+  ];
+
+  const grid = $('#gatesGrid');
+  grid.innerHTML = gates.map(g => `
+    <div class="gate">
+      <div class="gh"><span class="gn">${g.id}</span><span class="tag ${g.status}">${g.status === 'pass' ? 'PASS' : g.status === 'warn' ? 'WATCH' : 'FAIL'}</span></div>
+      <div class="gv">${g.val}</div>
+      <div class="gt">${g.label} · ${g.target}</div>
+      <div class="gprog"><div class="gpf" style="width:${g.pct*100}%;background:var(--gate-${g.status === 'pass' ? 'pass' : g.status === 'warn' ? 'warn' : 'fail'})"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderCumProfit() {
+  const cum = getCumProfitToDate();
+  const target = 3_600_000_000;
+  const ratio = cum / target;
+  $('#cumProfitVal').textContent = fmtKRW(cum);
+  $('#cumProfitSub').textContent = `목표 36억 · 진척률 ${fmtPct(ratio)}`;
+  const bar = $('#cumProfitBar');
+  bar.style.width = clamp(ratio*100, 0, 100) + '%';
+  bar.classList.remove('good','warn','bad');
+  // Pace-aware coloring
+  const expectedRatio = (state.settings.currentMonthIdx + 1) / 12;
+  bar.classList.add(ratio >= expectedRatio ? 'good' : ratio >= expectedRatio*0.9 ? 'warn' : 'bad');
+  drawProfitChart();
+}
+
+function renderTracks() {
+  $('#sandCap').textContent = state.sandKv.cap;
+  $('#sandSafe').textContent = state.sandKv.safe;
+  $('#nutGate').textContent = state.nutKv.gate;
+  $('#nutSlide').textContent = state.nutKv.slide;
+  renderChecks('sand');
+  renderChecks('nutrition');
+}
+function renderChecks(track) {
+  const ul = document.querySelector(`ul.checks[data-track="${track}"]`);
+  const list = state.checks[track] || [];
+  ul.innerHTML = list.map(c => `
+    <li>
+      <span class="check-box ${c.done?'on':''}" data-track="${track}" data-id="${c.id}">${c.done?'✓':''}</span>
+      <span class="check-text ${c.done?'done':''}">${c.text}</span>
+    </li>
+  `).join('');
+  ul.querySelectorAll('.check-box').forEach(box => {
+    box.addEventListener('click', () => {
+      const item = state.checks[box.dataset.track].find(c => c.id === box.dataset.id);
+      item.done = !item.done;
+      saveState();
+      renderChecks(box.dataset.track);
+    });
+  });
+}
+
+/* ---------- Margin calculator ---------- */
+function renderCalc() {
+  const prodSel = $('#calcProduct');
+  prodSel.innerHTML = SKUS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  const chSel = $('#calcChannel');
+  chSel.innerHTML = CHANNELS.map(c => `<option value="${c.id}">${c.name} (밑선 ${(c.floor*100).toFixed(0)}%)</option>`).join('');
+  ['#calcProduct','#calcChannel','#calcDisc','#calcGift','#calcQty','#calcAdSpend'].forEach(s => {
+    $(s).addEventListener('input', updateCalc);
+    $(s).addEventListener('change', updateCalc);
+  });
+  updateCalc();
+}
+function updateCalc() {
+  const sku = SKUS.find(s => s.id === $('#calcProduct').value);
+  const ch = CHANNELS.find(c => c.id === $('#calcChannel').value);
+  const disc = Number($('#calcDisc').value) || 0;
+  const gift = Number($('#calcGift').value) || 0;
+  const qty = Number($('#calcQty').value) || 0;
+  const ad = Number($('#calcAdSpend').value) || 0;
+  if (!sku || !ch) return;
+
+  const grossPrice = sku.price * (1 - disc/100);
+  // channel fee approximated as (1 - baseMargin) - cost share; simplified: net price = grossPrice * (1 - feeShare)
+  // We use channel "floor" as min margin gate; actual margin assumes channel fee + cost
+  const channelFee = grossPrice * (1 - ch.baseMargin) - (sku.cost / sku.price) * grossPrice;
+  // Simpler model: contribution per unit = grossPrice - sku.cost - gift - channelFee/qty (approx)
+  // Use: contribution = grossPrice - sku.cost - gift - (grossPrice * (1 - ch.baseMargin - sku.cost/sku.price))
+  // Cleaner: assume channel takes (1 - ch.baseMargin) of grossPrice on top of cost. So unit profit:
+  const unitProfit = grossPrice * ch.baseMargin - gift;
+  // (Approximation: channel "margin" = % of gross that ends up as gross profit before ad)
+  const totalRev = grossPrice * qty;
+  const totalProfit = unitProfit * qty - ad;
+  const marginRate = totalRev > 0 ? totalProfit / totalRev : 0;
+  // Marginal room for additional ad before margin hits floor
+  const targetFloorProfit = totalRev * ch.floor;
+  const adRoom = (unitProfit * qty) - targetFloorProfit;
+  // Break-even qty for current ad spend
+  const breakEvenQty = unitProfit > 0 ? Math.ceil(ad / unitProfit) : Infinity;
+
+  $('#calcResult').innerHTML = `
+    <div class="cr-row"><span class="k">단가(할인 후)</span><span class="v">${fmtKRW(grossPrice)}</span></div>
+    <div class="cr-row"><span class="k">단위 공헌이익</span><span class="v">${fmtKRW(unitProfit)}</span></div>
+    <div class="cr-row"><span class="k">예상 매출</span><span class="v">${fmtKRW(totalRev)}</span></div>
+    <div class="cr-row"><span class="k">예상 공헌이익</span><span class="v">${fmtKRW(totalProfit)}</span></div>
+    <div class="cr-row hi"><span class="k">이익률</span><span class="v">${(marginRate*100).toFixed(1)}%</span></div>
+    <div class="cr-row"><span class="k">추가 광고 여력 (밑선까지)</span><span class="v">${fmtKRW(adRoom)}</span></div>
+    <div class="cr-row"><span class="k">손익분기 판매수량</span><span class="v">${isFinite(breakEvenQty) ? breakEvenQty.toLocaleString() + ' 개' : '계산 불가'}</span></div>
+  `;
+  const v = $('#calcVerdict');
+  v.classList.remove('ok','tight','bad');
+  if (marginRate >= ch.floor + 0.05) {
+    v.classList.add('ok');
+    v.textContent = `✓ 마진룸 충분 — 밑선 ${(ch.floor*100).toFixed(0)}% 대비 +${((marginRate-ch.floor)*100).toFixed(1)}%p`;
+  } else if (marginRate >= ch.floor) {
+    v.classList.add('tight');
+    v.textContent = `⚠ 빠듯 — 밑선 ${(ch.floor*100).toFixed(0)}% 대비 +${((marginRate-ch.floor)*100).toFixed(1)}%p (광고 추가 불가)`;
+  } else {
+    v.classList.add('bad');
+    v.textContent = `✗ 밑선 이탈 — 채널 마진 ${(ch.floor*100).toFixed(0)}% 미달 (할인/사은품 재설계 필요)`;
+  }
+}
+
+/* ---------- Calendar ---------- */
+let calStartIdx = 0; // first month shown in current calendar view (window = 6 months)
+const CAL_WINDOW = 6;
+
+function renderCalendar() {
+  const grid = $('#calGrid');
+  // clear all rows except header
+  grid.querySelectorAll('.cal-month-label, .cal-cell').forEach(el => el.remove());
+
+  const end = Math.min(calStartIdx + CAL_WINDOW, 12);
+  $('#calRange').textContent = `${MONTH_LABEL(FY_MONTHS[calStartIdx])} — ${MONTH_LABEL(FY_MONTHS[end-1])}`;
+
+  for (let i = calStartIdx; i < end; i++) {
+    const m = FY_MONTHS[i];
+    const label = document.createElement('div');
+    label.className = 'cal-month-label';
+    const isCurrent = i === state.settings.currentMonthIdx;
+    label.innerHTML = `${MONTH_LABEL(m)}${isCurrent ? '<small style="color:var(--primary)">● 현재</small>' : ''}`;
+    grid.appendChild(label);
+
+    for (let w = 0; w < 3; w++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      cell.dataset.month = i;
+      cell.dataset.week = w;
+      cell.innerHTML = `<button class="add-btn" title="새 캠페인 추가">+</button>`;
+
+      const cmps = state.campaigns.filter(c => c.month === i && c.week === w);
+      cmps.forEach(c => {
+        cell.appendChild(buildCampaignChip(c));
+      });
+
+      // drag and drop
+      cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+      cell.addEventListener('drop', e => {
+        e.preventDefault();
+        cell.classList.remove('drag-over');
+        const id = e.dataTransfer.getData('text/plain');
+        const cmp = state.campaigns.find(x => x.id === id);
+        if (!cmp) return;
+        cmp.month = i;
+        cmp.week = w;
+        saveState();
+        renderCalendar();
+        renderRunRev();
+        renderGates();
+      });
+      cell.querySelector('.add-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSidePanel({ id:null, month:i, week:w });
+      });
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function buildCampaignChip(c) {
+  const el = document.createElement('div');
+  el.className = `cmp ch-${c.channel}`;
+  el.draggable = true;
+  el.dataset.id = c.id;
+  const sku = SKUS.find(s => s.id === c.sku);
+  const checksOk = c.checks ? (c.checks.cap && c.checks.price && c.checks.overlap) : false;
+  el.innerHTML = `
+    <div class="cmp-name">${c.name}</div>
+    <div class="cmp-meta">${sku ? sku.name : ''} ${c.disc ? '· -' + c.disc + '%' : ''}</div>
+    <div class="dots">
+      <span class="dot ${c.checks && c.checks.cap?'pass':'fail'}" title="Sell cap"></span>
+      <span class="dot ${c.checks && c.checks.price?'pass':'fail'}" title="가격 가드"></span>
+      <span class="dot ${c.checks && c.checks.overlap?'pass':'fail'}" title="할인 겹침"></span>
+      <span class="dot ${c.checks && c.checks.brand?'pass':''}" title="브랜드 캠페인"></span>
+    </div>
+  `;
+  el.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', c.id);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('click', () => openSidePanel(c));
+  return el;
+}
+
+/* ---------- Side panel (campaign edit) ---------- */
+let editingId = null;
+function openSidePanel(c) {
+  editingId = c.id || null;
+  $('#sideTitle').textContent = c.id ? '캠페인 편집' : '새 캠페인';
+  // month select
+  $('#fMonth').innerHTML = FY_MONTHS.map((m,i) => `<option value="${i}">${MONTH_LABEL(m)}</option>`).join('');
+  // sku select
+  $('#fSku').innerHTML = SKUS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  // populate
+  $('#fName').value = c.name || '';
+  $('#fChannel').value = c.channel || 'official';
+  $('#fMonth').value = c.month != null ? c.month : 0;
+  $('#fWeek').value = c.week != null ? c.week : 0;
+  $('#fSku').value = c.sku || SKUS[0].id;
+  $('#fDisc').value = c.disc || 0;
+  $('#fGift').value = c.gift || 0;
+  $('#fRev').value = c.rev || 0;
+  $('#fAd').value = c.ad || 0;
+  $('#fMemo').value = c.memo || '';
+  $('#fChkCap').checked = !!(c.checks && c.checks.cap);
+  $('#fChkPrice').checked = !!(c.checks && c.checks.price);
+  $('#fChkOverlap').checked = !!(c.checks && c.checks.overlap);
+  $('#fChkBrand').checked = !!(c.checks && c.checks.brand);
+  $('#sideDelete').style.display = c.id ? '' : 'none';
+  $('#sidePanel').classList.add('open');
+}
+function closeSidePanel() {
+  $('#sidePanel').classList.remove('open');
+  editingId = null;
+}
+$('#sideClose').addEventListener('click', closeSidePanel);
+$('#sideCancel').addEventListener('click', closeSidePanel);
+$('#sideSave').addEventListener('click', () => {
+  const data = {
+    name: $('#fName').value.trim() || '(이름 없음)',
+    channel: $('#fChannel').value,
+    month: Number($('#fMonth').value),
+    week: Number($('#fWeek').value),
+    sku: $('#fSku').value,
+    disc: Number($('#fDisc').value) || 0,
+    gift: Number($('#fGift').value) || 0,
+    rev: Number($('#fRev').value) || 0,
+    ad: Number($('#fAd').value) || 0,
+    memo: $('#fMemo').value,
+    checks: {
+      cap: $('#fChkCap').checked,
+      price: $('#fChkPrice').checked,
+      overlap: $('#fChkOverlap').checked,
+      brand: $('#fChkBrand').checked,
+    },
+  };
+  if (editingId) {
+    const cmp = state.campaigns.find(c => c.id === editingId);
+    Object.assign(cmp, data);
+  } else {
+    state.campaigns.push({ id: uid(), ...data });
+  }
+  saveState();
+  closeSidePanel();
+  renderCalendar();
+  renderRunRev();
+  renderGates();
+  renderCumProfit();
+  toast('캠페인 저장됨', 'success');
+});
+$('#sideDelete').addEventListener('click', () => {
+  if (!editingId) return;
+  if (!confirm('이 캠페인을 삭제할까요?')) return;
+  state.campaigns = state.campaigns.filter(c => c.id !== editingId);
+  saveState();
+  closeSidePanel();
+  renderCalendar();
+  renderRunRev();
+  renderGates();
+  renderCumProfit();
+  toast('삭제됨', 'warn');
+});
+
+/* ---------- Calendar nav ---------- */
+$('#calPrev').addEventListener('click', () => { calStartIdx = Math.max(0, calStartIdx - CAL_WINDOW); renderCalendar(); });
+$('#calNext').addEventListener('click', () => { calStartIdx = Math.min(12 - CAL_WINDOW, calStartIdx + CAL_WINDOW); renderCalendar(); });
+$('#calToday').addEventListener('click', () => {
+  const qStart = Math.floor(state.settings.currentMonthIdx / 3) * 3;
+  calStartIdx = clamp(qStart, 0, 12 - CAL_WINDOW);
+  renderCalendar();
+});
+
+/* ---------- Plan B toggle ---------- */
+$('#planToggle').addEventListener('click', () => {
+  const k = getCurrentMonthKey();
+  if (state.settings.planBOverride[k]) {
+    delete state.settings.planBOverride[k];
+    toast('Plan A로 복귀', 'success');
+  } else {
+    state.settings.planBOverride[k] = true;
+    toast('Plan B 적용', 'warn');
+  }
+  saveState();
+  renderRunRev();
+});
+
+/* ---------- Settings modal ---------- */
+function openSettings() {
+  $('#fbConfig').value = state.fb.config || '';
+  $('#fbPath').value = state.fb.path || 'ogk_console_v3';
+  $('#backdrop').classList.add('show');
+  $('#settingsModal').classList.add('show');
+}
+function closeSettings() {
+  $('#backdrop').classList.remove('show');
+  $('#settingsModal').classList.remove('show');
+}
+$('#openSettings').addEventListener('click', openSettings);
+$('#settingsClose').addEventListener('click', closeSettings);
+$('#settingsCancel').addEventListener('click', closeSettings);
+$('#backdrop').addEventListener('click', closeSettings);
+$('#settingsSave').addEventListener('click', () => {
+  state.fb.config = $('#fbConfig').value.trim();
+  state.fb.path = $('#fbPath').value.trim() || 'ogk_console_v3';
+  saveState();
+  initFirebase();
+  closeSettings();
+});
+$('#exportData').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ogk_console_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+});
+$('#importData').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      state = { ...defaultState(), ...parsed };
+      saveState();
+      renderAll();
+      toast('가져오기 완료', 'success');
+      closeSettings();
+    } catch (err) { toast('파일 파싱 실패', 'error'); }
+  };
+  reader.readAsText(f);
+});
+$('#resetSeed').addEventListener('click', () => {
+  if (!confirm('시드 데이터로 초기화할까요? (Firebase 노드도 덮어씁니다)')) return;
+  state = defaultState();
+  state.fb = { config: $('#fbConfig').value.trim(), path: $('#fbPath').value.trim() || 'ogk_console_v3' };
+  saveState();
+  renderAll();
+  toast('시드로 초기화됨', 'success');
+});
+
+/* ---------- Charts ---------- */
+let chartRev = null, chartProfit = null;
+function drawRevChart() {
+  const ctx = $('#chartRev').getContext('2d');
+  const labels = [
+    ...PREV_ACTUALS.map(a => a.ym.slice(2)),    // '25-07' → '5-07' (shortened)
+    ...FY_MONTHS.map(m => `${String(m.y).slice(2)}-${String(m.m).padStart(2,'0')}`)
+  ];
+  const actualLine = [
+    ...PREV_ACTUALS.map(a => a.rev),
+    ...FY_MONTHS.map((_, i) => i <= state.settings.currentMonthIdx ? getMonthActual(i).rev : null),
+  ];
+  const targetLine = [
+    ...PREV_ACTUALS.map(() => null),
+    ...FY_MONTHS.map(() => state.settings.monthRevTarget),
+  ];
+  if (chartRev) chartRev.destroy();
+  chartRev = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'실적', data: actualLine, borderColor:'#FF4D00', backgroundColor:'rgba(255,77,0,.12)', borderWidth:2, tension:.3, pointRadius:2, fill:true },
+        { label:'월 목표 (10억)', data: targetLine, borderColor:'#4ade80', borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false },
+      ]
+    },
+    options: chartOpts(true)
+  });
+}
+function drawProfitChart() {
+  const ctx = $('#chartProfit').getContext('2d');
+  // Cumulative profit through FY (running sum, blanks for future)
+  let cum = 0;
+  const cumLine = FY_MONTHS.map((_, i) => {
+    if (i > state.settings.currentMonthIdx) return null;
+    cum += getMonthActual(i).profit || 0;
+    return cum;
+  });
+  const targetCum = FY_MONTHS.map((_, i) => ((i+1)/12) * 3_600_000_000);
+  if (chartProfit) chartProfit.destroy();
+  chartProfit = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: FY_MONTHS.map(m => `${m.m}월`),
+      datasets: [
+        { label:'누적 이익', data:cumLine, borderColor:'#FF4D00', backgroundColor:'rgba(255,77,0,.15)', borderWidth:2, tension:.3, pointRadius:3, fill:true },
+        { label:'페이스 라인', data:targetCum, borderColor:'#60a5fa', borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false },
+      ]
+    },
+    options: chartOpts(false)
+  });
+}
+function chartOpts(smallY) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction: { mode:'index', intersect:false },
+    plugins: {
+      legend: { labels: { color:'#999', font:{size:10}, boxWidth:10 } },
+      tooltip: { backgroundColor:'#1e1e24', borderColor:'#333340', borderWidth:1, titleColor:'#fff', bodyColor:'#ccc',
+        callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw == null ? '—' : fmtKRW(ctx.raw)) } }
+    },
+    scales: {
+      x: { ticks:{color:'#777', font:{size:9}, maxRotation:0, autoSkip:true, maxTicksLimit:12}, grid:{color:'rgba(255,255,255,.04)'} },
+      y: { ticks:{color:'#777', font:{size:9}, callback: v => smallY ? (v/1e8).toFixed(1)+'억' : (v/1e8).toFixed(0)+'억'}, grid:{color:'rgba(255,255,255,.04)'} }
+    }
+  };
+}
+
+/* ---------- Render all ---------- */
+function renderAll() {
+  renderDashboard();
+}
+
+/* ---------- Init ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  initFirebase();
+});
+</script>
+</body>
+</html>
