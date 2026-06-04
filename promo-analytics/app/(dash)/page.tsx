@@ -157,22 +157,22 @@ export default async function Dashboard() {
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
-        <Card className="flex flex-col justify-center bg-ink text-white">
-          <div className="text-xs text-neutral-300">평소 대비 행사 매출</div>
+        <div className="flex flex-col justify-center rounded-[28px] bg-neutral-900 p-5 text-white card-soft">
+          <div className="text-xs text-neutral-400">평소 대비 행사 매출</div>
           <div className="mt-1 text-4xl font-bold text-brand-400">
             {liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
           </div>
           <div className="mt-4 space-y-1.5 text-sm">
             <div className="flex justify-between">
               <span className="text-neutral-400">상시 일평균</span>
-              <span className="tabular-nums">{wonShort(totalBaselineDaily)}</span>
+              <span className="tabular-nums text-white">{wonShort(totalBaselineDaily)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-400">행사 일평균</span>
               <span className="font-semibold tabular-nums text-brand-400">{wonShort(totalPromoDaily)}</span>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* 차트 Bento */}
@@ -193,10 +193,10 @@ export default async function Dashboard() {
           <MonthlyArea data={monthly} />
         </Card>
 
-        <Card className="bg-ink text-white">
-          <CardTitle className="mb-0 text-neutral-300">전체 후광 비중</CardTitle>
+        <div className="rounded-[28px] bg-neutral-900 p-5 text-white card-soft">
+          <h2 className="mb-3 text-sm font-semibold text-neutral-300">전체 간접 매출 비중</h2>
           <Donut pct={haloShare} label="기타 제품 동반구매 기여" />
-        </Card>
+        </div>
       </div>
 
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
