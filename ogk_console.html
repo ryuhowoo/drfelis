@@ -63,8 +63,8 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 .tag.primary{background:var(--primary-soft);color:var(--primary);border-color:rgba(255,77,0,.3)}
 
 /* ===== KPI strip ===== */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:1100px){.kpis{grid-template-columns:1fr}}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
 .kpi.past{border-top:3px solid var(--info)}
 .kpi.target{border-top:3px solid var(--primary)}
@@ -88,9 +88,14 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 /* ===== Dashboard rows ===== */
 .row{display:grid;gap:14px;margin-bottom:18px}
 .row.r-chart{grid-template-columns:1.7fr 1fr}
-.row.r-gates{grid-template-columns:repeat(4,1fr)}
+.row.r-gates{grid-template-columns:repeat(3,1fr)}
 .row.r-mid{grid-template-columns:1fr 1fr 1.2fr}
 @media(max-width:1100px){.row.r-chart,.row.r-gates,.row.r-mid{grid-template-columns:1fr}}
+
+.gate-input{width:90px;background:var(--surface3);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
+.gate-input:focus{outline:none;border-color:var(--primary)}
+.gate-inputs{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.gate-input-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
 
 /* Gate card */
 .gate{padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);position:relative}
@@ -313,22 +318,9 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 <!-- ============== DASHBOARD ============== -->
 <div class="tab-pane active" id="pane-dash">
 
-  <!-- KPI strip: 4 cards -->
+  <!-- KPI strip: 3 cards -->
   <div class="kpis">
-    <!-- KPI 1: 1~5월 실적 -->
-    <div class="kpi past">
-      <div class="label">올해 1~5월 실적 <small>· FY25 후반 5개월</small></div>
-      <div class="big mono"><span id="k1Rev">—</span><small>억</small></div>
-      <div class="sub">
-        <span>공헌이익 <b id="k1Profit">—</b></span>
-        <span>이익률 <b id="k1Margin">—</b></span>
-      </div>
-      <div class="progress">
-        <div class="label-row"><span>월평균 매출</span><span id="k1AvgRev">—</span></div>
-        <div class="bar-track"><div class="bar-fill info" id="k1Bar" style="width:0%"></div></div>
-      </div>
-    </div>
-    <!-- KPI 2: FY26 목표 -->
+    <!-- KPI 1: FY26 목표 -->
     <div class="kpi target">
       <div class="label">FY26 목표 <small>· 26.06 ▸ 27.05 12개월</small></div>
       <div class="big mono"><span>120</span><small>억 · 매출</small></div>
@@ -342,9 +334,9 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
         <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
       </div>
     </div>
-    <!-- KPI 3: 현재 진행 -->
+    <!-- KPI 2: FY26 현재 진행 (1~5월 페이스 포함) -->
     <div class="kpi now">
-      <div class="label">FY26 현재 진행 <small>· 누적</small></div>
+      <div class="label">FY26 현재 진행 <small>· 누적 + 직전 페이스 비교</small></div>
       <div class="big mono"><span id="k3Rev">—</span><small>억</small></div>
       <div class="sub">
         <span>이익 <b id="k3Profit">—</b></span>
@@ -353,6 +345,9 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
       <div class="progress">
         <div class="label-row"><span id="k3Ratiolbl">진척률 vs 목표</span><span id="k3Pace">—</span></div>
         <div class="bar-track"><div class="bar-fill good" id="k3Bar" style="width:0%"></div></div>
+      </div>
+      <div class="sub" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:10px">
+        직전 1~5월 월평균 <b id="k3RecentAvg">—</b> · 이익률 <b id="k3RecentMargin">—</b> · FY26 월목표까지 <b id="k3Gap">—</b>
       </div>
     </div>
     <!-- KPI 4: 남은 목표 -->
@@ -374,8 +369,8 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
   <div class="row r-chart">
     <div class="card">
       <div class="section-title">
-        <span class="bar"></span>월별 매출 흐름 — 지난 11개월 + 앞으로 12개월
-        <span class="meta">FY25 마감 → FY26 목표 라인 비교</span>
+        <span class="bar"></span>2026년 월별 매출 + 공헌이익
+        <span class="meta">1~5월 실적 · 6~12월 진행/예정 · 막대 매출 · 선 공헌이익</span>
       </div>
       <div class="chart-wrap lg"><canvas id="chartRev"></canvas></div>
     </div>
@@ -530,30 +525,42 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
     </div>
 
     <div class="card">
-      <h4>4개 Gate (분기별 평가)</h4>
+      <h4>6개 Gate (분기별 평가)</h4>
       <div class="gate-row">
         <span class="gid">G1</span>
-        <div><div class="gname">공헌이익률 + 공식몰 비중</div>
-        <div class="gdesc">분기 평균 이익률 ≥ 30% · 공식몰 비중 분기별 상향 (Q1 70% → Q4 77%)</div></div>
+        <div><div class="gname">공헌이익률 ≥ 30%</div>
+        <div class="gdesc">분기 평균 이익률 ≥ 30%. FY26 이익률 목표(30%)와 직결. 자동 계산.</div></div>
         <span class="tag info">건강성</span>
       </div>
       <div class="gate-row">
         <span class="gid">G2</span>
-        <div><div class="gname">구독 고객 수</div>
-        <div class="gdesc">구독 베이스 = 안정 수익 + LTV. 분기 누적 신규 가입 / 이탈 차감 후 순증.</div></div>
-        <span class="tag info">고객</span>
+        <div><div class="gname">공식몰 비중 분기 상향</div>
+        <div class="gdesc">분기별 상향 (Q1 70% → Q2 73% → Q3 75% → Q4 77%). 채널 건강성 + 마진 흐림 방지. 자동 계산.</div></div>
+        <span class="tag info">건강성</span>
       </div>
       <div class="gate-row">
         <span class="gid">G3</span>
-        <div><div class="gname">광고비/매출 ≤ 12%</div>
-        <div class="gdesc">12% 상한 초과 시 전환율·소재 효율 점검. 16% 초과는 Plan B 신호.</div></div>
+        <div><div class="gname">광고비 / 매출 ≤ 12%</div>
+        <div class="gdesc">12% 상한 초과 시 전환율·소재 효율 점검. 16% 초과는 Plan B 신호. 자동 계산.</div></div>
         <span class="tag info">효율</span>
       </div>
       <div class="gate-row">
         <span class="gid">G4</span>
-        <div><div class="gname">브랜드 캠페인 누적</div>
-        <div class="gdesc">분기당 브랜드 자산 캠페인 ≥ 2건 (단순 할인 제외, 사은품·콜라보·콘텐츠 포함).</div></div>
+        <div><div class="gname">브랜드 캠페인 분기 ≥ 2건</div>
+        <div class="gdesc">분기당 브랜드 자산 캠페인 ≥ 2건 (단순 할인 제외, 사은품·콜라보·콘텐츠 포함). 캠페인 체크리스트로 카운트.</div></div>
         <span class="tag info">브랜드</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G5</span>
+        <div><div class="gname">객단가 (AOV) 상승</div>
+        <div class="gdesc">분기 평균 AOV가 목표값 이상. 번들·업셀로 객단가를 올리는 게 핵심. 분기별 수동 입력.</div></div>
+        <span class="tag primary">신규</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G6</span>
+        <div><div class="gname">교차구독자 수 증대</div>
+        <div class="gdesc">모래·영양·트릿 중 둘 이상을 구독하는 고객 수. LTV 핵심 지표. 분기별 수동 입력.</div></div>
+        <span class="tag primary">신규</span>
       </div>
     </div>
 
@@ -807,6 +814,10 @@ function defaultState() {
     campaigns: [],
     actuals: {},
     bundles: defaultBundles(),
+    gateInputs: {
+      aov: { current: 0, target: 0 },
+      crossSub: { current: 0, target: 0 },
+    },
     fb: { config:'', path:'ogk_console_v3' },
   };
 }
@@ -971,21 +982,18 @@ function computeBundle(b) {
 
 /* ---------- KPI rendering ---------- */
 function renderKPIs() {
-  // KPI 1: 1~5월 실적
+  // 1~5월 페이스 (현재 진행 카드에 녹임)
   const recent = PREV_ACTUALS.filter(a => a.recent);
-  const sumRev = recent.reduce((s,a) => s + a.rev, 0);
-  const sumProfit = recent.reduce((s,a) => s + a.profit, 0);
-  const avgMargin = sumRev > 0 ? sumProfit / sumRev : 0;
-  const avgMonth = sumRev / recent.length;
-  $('#k1Rev').textContent = fmtEok(sumRev);
-  $('#k1Profit').textContent = fmtEok(sumProfit) + '억';
-  $('#k1Margin').textContent = (avgMargin*100).toFixed(1) + '%';
-  $('#k1AvgRev').textContent = '₩ ' + (avgMonth/1e8).toFixed(2) + '억';
-  // K1 bar = avg month vs FY26 monthly target
-  const ratioVsTarget = avgMonth / state.settings.monthRevTarget;
-  $('#k1Bar').style.width = clamp(ratioVsTarget*100, 0, 100) + '%';
+  const recentSumRev = recent.reduce((s,a) => s + a.rev, 0);
+  const recentSumProfit = recent.reduce((s,a) => s + a.profit, 0);
+  const recentAvgMonth = recentSumRev / recent.length;
+  const recentMargin = recentSumRev > 0 ? recentSumProfit / recentSumRev : 0;
+  const gapToTarget = state.settings.monthRevTarget - recentAvgMonth;
+  $('#k3RecentAvg').textContent = '₩ ' + (recentAvgMonth/1e8).toFixed(2) + '억';
+  $('#k3RecentMargin').textContent = (recentMargin*100).toFixed(1) + '%';
+  $('#k3Gap').textContent = (gapToTarget >= 0 ? '+₩ ' : '−₩ ') + (Math.abs(gapToTarget)/1e8).toFixed(2) + '억 필요';
 
-  // KPI 3: 현재 진행
+  // KPI 2: 현재 진행
   const idx = state.settings.currentMonthIdx;
   let cumRev = 0, cumProfit = 0;
   for (let i = 0; i <= idx; i++) {
@@ -1054,7 +1062,6 @@ function renderGates() {
   const qIdx = Math.floor(idx / 3);
   const q = Q_TARGETS[qIdx];
   let qRev = 0, qProfit = 0, qOfficialRev = 0, qAd = 0;
-  let monthsCounted = 0;
   q.months.forEach(mi => {
     if (mi <= idx) {
       const a = getMonthActual(mi);
@@ -1064,7 +1071,6 @@ function renderGates() {
       const officialRev = cmps.filter(c => c.channel === 'official').reduce((s,c) => s + (c.rev||0), 0);
       qOfficialRev += officialRev;
       qAd += cmps.reduce((s,c) => s + (c.ad||0), 0);
-      monthsCounted++;
     }
   });
   const officialShare = qRev > 0 ? qOfficialRev / qRev : 0;
@@ -1072,29 +1078,70 @@ function renderGates() {
   const adRate = qRev > 0 ? qAd / qRev : 0;
   const brandCount = state.campaigns.filter(c => q.months.includes(c.month) && c.checks && c.checks.brand).length;
 
+  const aov = state.gateInputs.aov;
+  const aovStatus = (aov.current > 0 && aov.target > 0)
+    ? (aov.current >= aov.target ? 'pass' : aov.current >= aov.target * 0.95 ? 'warn' : 'fail')
+    : 'warn';
+  const aovPct = aov.target > 0 ? clamp(aov.current / aov.target, 0, 1) : 0;
+
+  const cs = state.gateInputs.crossSub;
+  const csStatus = (cs.current > 0 && cs.target > 0)
+    ? (cs.current >= cs.target ? 'pass' : cs.current >= cs.target * 0.9 ? 'warn' : 'fail')
+    : 'warn';
+  const csPct = cs.target > 0 ? clamp(cs.current / cs.target, 0, 1) : 0;
+
   const gates = [
-    { id:'G1', label:'이익률 / 공식몰', val:`${(marginRate*100).toFixed(1)}% · ${(officialShare*100).toFixed(0)}%`,
-      target:`≥ 30% · ≥ ${(q.official*100).toFixed(0)}%`,
+    { id:'G1', label:'공헌이익률', val:`${(marginRate*100).toFixed(1)}%`, target:'≥ 30%',
       pct: clamp(marginRate / 0.30, 0, 1),
-      status: (marginRate >= 0.30 && officialShare >= q.official) ? 'pass' : (marginRate >= 0.28 ? 'warn' : 'fail') },
-    { id:'G2', label:'구독 고객 수', val:'—', target:'분기 순증 입력', pct:0, status:'warn' },
+      status: qRev === 0 ? 'warn' : marginRate >= 0.30 ? 'pass' : marginRate >= 0.28 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G2', label:'공식몰 비중', val:`${(officialShare*100).toFixed(0)}%`, target:`≥ ${(q.official*100).toFixed(0)}% (${q.id})`,
+      pct: clamp(officialShare / q.official, 0, 1),
+      status: qRev === 0 ? 'warn' : officialShare >= q.official ? 'pass' : officialShare >= q.official * 0.9 ? 'warn' : 'fail',
+      auto: true },
     { id:'G3', label:'광고비 / 매출', val:`${(adRate*100).toFixed(1)}%`, target:'≤ 12%',
       pct: clamp(1 - adRate / 0.12, 0, 1),
-      status: qRev === 0 ? 'warn' : adRate <= 0.12 ? 'pass' : (adRate <= 0.16 ? 'warn' : 'fail') },
+      status: qRev === 0 ? 'warn' : adRate <= 0.12 ? 'pass' : adRate <= 0.16 ? 'warn' : 'fail',
+      auto: true },
     { id:'G4', label:'브랜드 캠페인', val:`${brandCount} 건`, target:'분기 ≥ 2건',
       pct: clamp(brandCount / 2, 0, 1),
-      status: brandCount >= 2 ? 'pass' : (brandCount >= 1 ? 'warn' : 'fail') },
+      status: brandCount >= 2 ? 'pass' : brandCount >= 1 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G5', label:'객단가 (AOV)', val:null, target:'분기 목표 입력',
+      pct: aovPct, status: aovStatus, manual: 'aov' },
+    { id:'G6', label:'교차구독자 수', val:null, target:'분기 목표 입력',
+      pct: csPct, status: csStatus, manual: 'crossSub' },
   ];
 
   const grid = $('#gatesGrid');
-  grid.innerHTML = gates.map(g => `
-    <div class="gate">
-      <div class="gh"><span class="gn">${g.id} · ${q.id}</span><span class="tag ${g.status}">${g.status === 'pass' ? 'PASS' : g.status === 'warn' ? 'WATCH' : 'FAIL'}</span></div>
-      <div class="gv">${g.val}</div>
-      <div class="gt">${g.label} · ${g.target}</div>
-      <div class="gprog"><div class="gpf" style="width:${g.pct*100}%;background:var(--${g.status === 'pass' ? 'success' : g.status === 'warn' ? 'warning' : 'danger'})"></div></div>
-    </div>
-  `).join('');
+  grid.innerHTML = gates.map(g => {
+    const valHtml = g.manual
+      ? `<div class="gate-inputs">
+           <div class="gate-input-row">현재 <input type="number" class="gate-input" data-g="${g.manual}" data-k="current" value="${state.gateInputs[g.manual].current || 0}" placeholder="0"></div>
+           <div class="gate-input-row">목표 <input type="number" class="gate-input" data-g="${g.manual}" data-k="target" value="${state.gateInputs[g.manual].target || 0}" placeholder="0"></div>
+         </div>`
+      : `<div class="gv">${g.val}</div>`;
+    return `
+      <div class="gate">
+        <div class="gh"><span class="gn">${g.id} · ${q.id}${g.manual?' · 수동':''}</span><span class="tag ${g.status}">${g.status === 'pass' ? 'PASS' : g.status === 'warn' ? 'WATCH' : 'FAIL'}</span></div>
+        ${valHtml}
+        <div class="gt">${g.label} · ${g.target}</div>
+        <div class="gprog"><div class="gpf" style="width:${g.pct*100}%;background:var(--${g.status === 'pass' ? 'success' : g.status === 'warn' ? 'warning' : 'danger'})"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind manual gate inputs
+  grid.querySelectorAll('.gate-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const g = inp.dataset.g, k = inp.dataset.k;
+      state.gateInputs[g][k] = Number(inp.value) || 0;
+    });
+    inp.addEventListener('change', () => {
+      saveState();
+      renderGates();
+    });
+  });
 }
 
 /* ---------- Tracks ---------- */
@@ -1518,41 +1565,78 @@ function renderPastTable() {
 let chartRev = null;
 function drawRevChart() {
   const ctx = $('#chartRev').getContext('2d');
-  const labels = [
-    ...PREV_ACTUALS.map(a => a.label),
-    ...FY_MONTHS.map(m => `${String(m.y).slice(2)}.${String(m.m).padStart(2,'0')}`)
-  ];
-  const actualLine = [
-    ...PREV_ACTUALS.map(a => a.rev),
-    ...FY_MONTHS.map((_, i) => i <= state.settings.currentMonthIdx ? getMonthActual(i).rev : null),
-  ];
-  const targetLine = [
-    ...PREV_ACTUALS.map(() => null),
-    ...FY_MONTHS.map(() => state.settings.monthRevTarget),
-  ];
-  // Cumulative target line for FY26 only: 누적 ÷ months = ramp
+  // 2026년 1월 ~ 12월 (calendar year)
+  // 1~5월: PREV_ACTUALS의 recent
+  // 6~12월: FY_MONTHS의 0~6 (FY26.06 ~ FY26.12)
+  const labels = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const recent = PREV_ACTUALS.filter(a => a.recent); // 26-01 ~ 26-05
+  const revBars = [];
+  const profitLine = [];
+  const isPlanned = [];
+
+  // 1~5월
+  recent.forEach(a => {
+    revBars.push(a.rev);
+    profitLine.push(a.profit);
+    isPlanned.push(false);
+  });
+  // 6~12월 (FY26 인덱스 0~6)
+  for (let i = 0; i <= 6; i++) {
+    const a = getMonthActual(i);
+    revBars.push(a.rev || 0);
+    profitLine.push(a.profit || 0);
+    isPlanned.push(i > state.settings.currentMonthIdx);
+  }
+
+  // 매출 막대 색상: 실측은 짙은 오렌지, 예정은 옅은
+  const barColors = isPlanned.map(p => p ? 'rgba(255,77,0,.25)' : 'rgba(255,77,0,.75)');
+  const barBorders = isPlanned.map(p => p ? 'rgba(255,77,0,.5)' : 'rgba(255,77,0,1)');
+
+  const monthRevTarget = state.settings.monthRevTarget;
+  const monthProfitTarget = state.settings.monthProfitTarget;
+  const revTargetLine = labels.map(() => monthRevTarget);
+  const profitTargetLine = labels.map(() => monthProfitTarget);
+
   if (chartRev) chartRev.destroy();
   chartRev = new Chart(ctx, {
-    type: 'bar',
     data: {
       labels,
       datasets: [
-        { type:'bar', label:'월 매출 (실적)', data: actualLine, backgroundColor: labels.map((_, i) => i < 11 ? (i >= 6 ? 'rgba(96,165,250,.6)' : 'rgba(96,165,250,.3)') : 'rgba(255,77,0,.6)'),
-          borderColor:'transparent', borderRadius:4, barThickness:12 },
-        { type:'line', label:'FY26 월 목표 (10억)', data: targetLine, borderColor:'#4ade80', borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0 },
+        { type:'bar', label:'월 매출', data: revBars,
+          backgroundColor: barColors, borderColor: barBorders, borderWidth:1,
+          borderRadius:4, barThickness:18, yAxisID:'y',
+          order:3 },
+        { type:'line', label:'공헌이익', data: profitLine,
+          borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,.15)',
+          borderWidth:2.5, tension:.3, pointRadius:4, pointBackgroundColor:'#4ade80',
+          fill:false, yAxisID:'y', order:1 },
+        { type:'line', label:'월 매출 목표 (10억)', data: revTargetLine,
+          borderColor:'rgba(255,77,0,.5)', borderDash:[4,4], borderWidth:1.5,
+          pointRadius:0, fill:false, yAxisID:'y', order:2 },
+        { type:'line', label:'월 공헌이익 목표 (3억)', data: profitTargetLine,
+          borderColor:'rgba(74,222,128,.5)', borderDash:[4,4], borderWidth:1.5,
+          pointRadius:0, fill:false, yAxisID:'y', order:2 },
       ]
     },
     options: {
       responsive:true, maintainAspectRatio:false,
       interaction: { mode:'index', intersect:false },
       plugins: {
-        legend: { labels: { color:'#a0a0a8', font:{size:10}, boxWidth:10 } },
+        legend: { labels: { color:'#a0a0a8', font:{size:10}, boxWidth:10, usePointStyle:true } },
         tooltip: { backgroundColor:'#1e1e24', borderColor:'#333340', borderWidth:1, titleColor:'#fff', bodyColor:'#ccc',
-          callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.raw == null ? '—' : fmtKRW(ctx.raw)) } }
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.raw == null ? '—' : fmtKRW(ctx.raw)),
+            afterBody: items => {
+              const i = items[0].dataIndex;
+              return isPlanned[i] ? '(예정/계획)' : '(실측)';
+            }
+          }
+        }
       },
       scales: {
-        x: { ticks:{color:'#777', font:{size:9}, maxRotation:0, autoSkip:false}, grid:{display:false} },
-        y: { ticks:{color:'#777', font:{size:9}, callback: v => (v/1e8).toFixed(1)+'억'}, grid:{color:'rgba(255,255,255,.04)'} }
+        x: { ticks:{color:'#a0a0a8', font:{size:10}, maxRotation:0}, grid:{display:false} },
+        y: { ticks:{color:'#777', font:{size:9}, callback: v => (v/1e8).toFixed(1)+'억'}, grid:{color:'rgba(255,255,255,.04)'},
+             beginAtZero:true }
       }
     }
   });
