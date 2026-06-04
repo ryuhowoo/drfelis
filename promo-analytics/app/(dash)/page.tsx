@@ -43,10 +43,13 @@ export default async function Dashboard() {
 
   if (rows.length === 0) return <EmptyState />;
 
+  const n = rows.length;
   const totalUplift = sum(rows.map((r) => r.summary?.total_uplift ?? 0));
-  const totalContribution = sum(rows.map((r) => r.summary?.contribution ?? 0));
   const totalDirect = sum(rows.map((r) => r.summary?.direct_uplift ?? 0));
   const totalHalo = sum(rows.map((r) => r.summary?.halo_uplift ?? 0));
+  const avgDirect = n ? totalDirect / n : 0;
+  const avgHalo = n ? totalHalo / n : 0;
+  const avgDuration = n ? sum(rows.map((r) => r.promo_days)) / n : 0;
   const haloShare = totalUplift !== 0 ? totalHalo / totalUplift : null;
 
   // 상시 일평균 vs 행사 일평균
@@ -111,48 +114,37 @@ export default async function Dashboard() {
           href="/predict"
           className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_-10px_var(--color-brand-500)] transition hover:bg-brand-600"
         >
-          예상 매출 추산 →
+          매출 시뮬레이터 →
         </Link>
       </header>
 
-      {/* 헤로 — AI 인사이트 */}
-      <section className="mb-5 flex flex-col gap-4 rounded-[28px] bg-white p-6 card-soft sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      {/* AI 인사이트 */}
+      {best?.summary && (
+        <section className="mb-5 rounded-[28px] bg-white p-6 card-soft">
           <div className="flex items-center gap-2 text-xs font-semibold text-brand-600">
             <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             AI MD 인사이트
           </div>
-          <h1 className="mt-2 text-2xl font-bold leading-snug tracking-tight">
-            안녕하세요 <span className="align-middle">👋</span>
-          </h1>
-          {best?.summary && (
-            <p className="mt-1 max-w-2xl text-[15px] leading-relaxed text-neutral-600">
-              가장 효과적이었던 건{" "}
-              <Link href={`/promotions/${best.id}`} className="font-semibold text-brand-600 hover:underline">
-                {best.name}
-              </Link>
-              {" "}— 증분 <strong className="text-neutral-900">{won(best.summary.total_uplift)}</strong>
-              {best.summary.halo_share != null && (
-                <>, 후광효과 {pct(best.summary.halo_share)}</>
-              )}
-              에요.
-            </p>
-          )}
-          {liftRatio != null && (
-            <p className="mt-1 text-[15px] leading-relaxed text-neutral-600">
-              프로모션 기간엔 평소(상시 일평균)보다{" "}
-              <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.
-            </p>
-          )}
-        </div>
-      </section>
+          <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-neutral-700">
+            가장 효과적이었던 건{" "}
+            <Link href={`/promotions/${best.id}`} className="font-semibold text-brand-600 hover:underline">
+              {best.name}
+            </Link>
+            {" "}— 기여 매출 <strong className="text-neutral-900">{won(best.summary.total_uplift)}</strong>
+            {best.summary.halo_share != null && <>, 간접 비중 {pct(best.summary.halo_share)}</>}.
+            {liftRatio != null && (
+              <> 프로모션 기간엔 평소(상시 일평균)보다 <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.</>
+            )}
+          </p>
+        </section>
+      )}
 
       {/* KPI Bento */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="누적 증분 기여" value={won(totalUplift)} brand />
-        <Kpi label="직접효과" value={wonShort(totalDirect)} />
-        <Kpi label="후광효과" value={wonShort(totalHalo)} />
-        <Kpi label="누적 공헌이익" value={won(totalContribution)} />
+        <Kpi label="프로모션 기여 총 매출" value={won(totalUplift)} brand />
+        <Kpi label="평균 직접 매출" value={wonShort(avgDirect)} sub={`프로모션 ${n}건 평균`} />
+        <Kpi label="평균 간접 매출" value={wonShort(avgHalo)} sub={`프로모션 ${n}건 평균`} />
+        <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`프로모션 ${n}건 평균`} />
       </div>
 
       {/* 상시 vs 행사 비교 (비교 기준) */}
@@ -160,7 +152,8 @@ export default async function Dashboard() {
         <Card className="lg:col-span-2">
           <CardTitle>상시 대비 행사 일매출</CardTitle>
           <p className="-mt-2 mb-3 text-xs text-neutral-400">
-            회색=평소(상시 일평균) · 주황=프로모션 기간 일평균
+            <span className="font-medium text-neutral-500">상시 일평균</span> = 프로모션 직전 8주의
+            비프로모션 일평균 매출 · <span className="font-medium text-brand-600">행사 일평균</span> = 프로모션 기간 매출 ÷ 운영일수
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
@@ -257,7 +250,7 @@ function sum(a: number[]) {
   return a.reduce((x, y) => x + y, 0);
 }
 
-function Kpi({ label, value, brand }: { label: string; value: string; brand?: boolean }) {
+function Kpi({ label, value, sub, brand }: { label: string; value: string; sub?: string; brand?: boolean }) {
   return (
     <div
       className={`rounded-[24px] p-5 ${
@@ -266,6 +259,7 @@ function Kpi({ label, value, brand }: { label: string; value: string; brand?: bo
     >
       <div className={`text-xs ${brand ? "text-brand-100" : "text-neutral-400"}`}>{label}</div>
       <div className="mt-2 text-xl font-bold tracking-tight tabular-nums sm:text-2xl">{value}</div>
+      {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-neutral-400"}`}>{sub}</div>}
     </div>
   );
 }

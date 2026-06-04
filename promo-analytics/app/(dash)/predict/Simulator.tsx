@@ -43,16 +43,30 @@ export default function Simulator({ cases }: { cases: CaseFeature[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const pred = useMemo(() => predict(spec, cases), [promoType, seasonTag, discount, days, cases]);
 
-  // 할인율별 예상 증분 곡선
+  // 할인율별 예상 증분/공헌이익 곡선
   const curve = useMemo(() => {
-    const out: { discount: number; uplift: number }[] = [];
+    const out: { discount: number; uplift: number; contribution: number }[] = [];
     for (let d = 0; d <= 70; d += 5) {
       const p = predict({ ...spec, discount_rate: d / 100 }, cases);
-      out.push({ discount: d, uplift: Math.round(p.expected_uplift) });
+      out.push({
+        discount: d,
+        uplift: Math.round(p.expected_uplift),
+        contribution: Math.round(p.expected_contribution),
+      });
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [promoType, seasonTag, days, cases]);
+
+  // 스윗스팟: 최고 효과(증분 최대) / 최고 효율(공헌이익 최대)
+  const bestEffect = useMemo(
+    () => curve.reduce((b, c) => (c.uplift > b.uplift ? c : b), curve[0]),
+    [curve],
+  );
+  const bestEfficiency = useMemo(
+    () => curve.reduce((b, c) => (c.contribution > b.contribution ? c : b), curve[0]),
+    [curve],
+  );
 
   const curUplift = Math.round(pred.expected_uplift);
 
@@ -96,7 +110,7 @@ export default function Simulator({ cases }: { cases: CaseFeature[] }) {
           <Field label="혜택 종류">
             <Chips options={PROMO_TYPES} value={promoType} onChange={setPromoType} />
           </Field>
-          <Field label="시점 / 시즌">
+          <Field label="시즈널리티">
             <Chips options={SEASON_TAGS} value={seasonTag} onChange={setSeasonTag} clearable />
           </Field>
 
@@ -166,12 +180,43 @@ export default function Simulator({ cases }: { cases: CaseFeature[] }) {
         </section>
       </div>
 
-      {/* 할인율 곡선 */}
+      {/* 할인율 곡선 — 스윗스팟 */}
       <section className="mt-3 rounded-[24px] bg-white p-6 card-soft sm:mt-4">
-        <h2 className="mb-1 text-sm font-semibold text-neutral-700">할인율별 예상 증분 — 스윗스팟 찾기</h2>
-        <p className="mb-3 text-xs text-neutral-400">
-          현재 조건({promoType || "전체"}·{days}일)에서 할인율만 바꿨을 때의 예상 증분. 점이 현재 설정.
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🎯</span>
+          <h2 className="text-2xl font-bold tracking-tight">스윗스팟 찾기</h2>
+        </div>
+        <p className="mt-1 text-xs text-neutral-400">
+          현재 조건({promoType || "전체"}·{days}일{seasonTag ? `·${seasonTag}` : ""})에서 할인율만 바꿨을 때의 곡선. 점이 현재 설정.
         </p>
+
+        {/* 최고 포인트 미리보기 */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            onClick={() => setDiscount(bestEffect.discount)}
+            className="rounded-2xl bg-brand-50 p-4 text-left ring-1 ring-brand-100 transition hover:ring-brand-300"
+          >
+            <div className="text-xs font-semibold text-brand-600">최고 효과 (증분 최대)</div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-brand-600">{bestEffect.discount}% 할인</span>
+              <span className="text-sm text-neutral-500">→ 증분 {wonShort(bestEffect.uplift)}</span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-neutral-400">클릭하면 이 조건으로 설정</div>
+          </button>
+          <button
+            onClick={() => setDiscount(bestEfficiency.discount)}
+            className="rounded-2xl bg-neutral-900 p-4 text-left transition hover:bg-neutral-800"
+          >
+            <div className="text-xs font-semibold text-brand-400">최고 효율 (공헌이익 최대)</div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white">{bestEfficiency.discount}% 할인</span>
+              <span className="text-sm text-neutral-300">→ 이익 {wonShort(bestEfficiency.contribution)}</span>
+            </div>
+            <div className="mt-0.5 text-[11px] text-neutral-500">클릭하면 이 조건으로 설정</div>
+          </button>
+        </div>
+
+        <p className="mb-2 mt-5 text-xs font-medium text-neutral-500">할인율별 예상 증분</p>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={curve} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
             <XAxis dataKey="discount" tickFormatter={(d) => `${d}%`} fontSize={11} stroke="#bcb8b3" tickLine={false} axisLine={false} />
