@@ -152,6 +152,17 @@ export default function EditForm({
 
         <Field label="시즈널리티">
           <SingleChips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} />
+          <button
+            type="button"
+            onClick={async () => {
+              const { inferSeasonality } = await import("@/lib/season");
+              const inferred = inferSeasonality(name, startDate, options.seasonalities);
+              setSeasonTag(inferred ?? "");
+            }}
+            className="mt-2 rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] text-neutral-600 hover:bg-neutral-50"
+          >
+            이름·기간으로 자동 추정
+          </button>
         </Field>
 
         <div className="grid grid-cols-3 gap-4">

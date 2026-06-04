@@ -88,7 +88,59 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[24px] bg-white card-soft">
+      {/* 모바일: 카드 리스트 */}
+      <ul className="space-y-2 md:hidden">
+        {rows.map((r) => (
+          <li key={r.id} className="rounded-[20px] bg-white p-4 card-soft">
+            <div className="flex items-start gap-3">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                  r.score >= 70
+                    ? "bg-brand-500 text-white"
+                    : r.score >= 40
+                      ? "bg-brand-50 text-brand-600"
+                      : "bg-neutral-100 text-neutral-400"
+                }`}
+              >
+                {r.score}
+              </span>
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/promotions/${r.id}`}
+                  className="block truncate text-[15px] font-semibold text-neutral-900 hover:text-brand-600"
+                >
+                  {r.name}
+                </Link>
+                <div className="mt-0.5 text-xs text-neutral-400">
+                  {r.start_date} ~ {r.end_date}
+                </div>
+                {(r.promo_type || r.season_tag) && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {r.promo_type && <Tag>{r.promo_type}</Tag>}
+                    {r.season_tag && <Tag>{r.season_tag}</Tag>}
+                  </div>
+                )}
+              </div>
+            </div>
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <Stat label="총 기여" value={wonShort(r.total_uplift)} bold />
+              <Stat label="간접비중" value={pct(r.halo_share)} />
+              <Stat label="공헌이익" value={wonShort(r.contribution)} />
+              <Stat label="일평균 기여" value={wonShort(r.uplift_per_day)} />
+              <Stat label="할인" value={r.discount_rate != null ? pct(r.discount_rate, 0) : "—"} />
+              {r.purpose && <Stat label="목적" value={r.purpose} truncate />}
+            </dl>
+          </li>
+        ))}
+        {rows.length === 0 && (
+          <li className="rounded-[20px] bg-white px-4 py-10 text-center text-sm text-neutral-400 card-soft">
+            조건에 맞는 캠페인이 없습니다.
+          </li>
+        )}
+      </ul>
+
+      {/* 데스크톱: 테이블 */}
+      <div className="hidden overflow-x-auto rounded-[24px] bg-white card-soft md:block">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
@@ -127,9 +179,9 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 <td className="px-4 py-3 text-right text-neutral-600">
                   {r.discount_rate != null ? pct(r.discount_rate, 0) : "—"}
                 </td>
-                <td className="px-4 py-3 text-right font-semibold">{wonShort(r.total_uplift)}</td>
-                <td className="px-4 py-3 text-right text-neutral-600">{pct(r.halo_share)}</td>
-                <td className="px-4 py-3 text-right text-neutral-600">{wonShort(r.contribution)}</td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums">{wonShort(r.total_uplift)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{pct(r.halo_share)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{wonShort(r.contribution)}</td>
               </tr>
             ))}
             {rows.length === 0 && (
@@ -145,6 +197,31 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
       <p className="mt-2 px-1 text-xs text-neutral-400">
         종합점수 = 공헌이익 40% · 일평균 기여 30% · 효율(기여/할인깊이) 20% · 간접비중 10% (전체 대비 상대 점수)
       </p>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  bold,
+  truncate,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="rounded-lg bg-neutral-50 px-2 py-1.5">
+      <dt className="text-[10px] text-neutral-400">{label}</dt>
+      <dd
+        className={`mt-0.5 tabular-nums ${bold ? "font-semibold text-neutral-900" : "text-neutral-700"} ${
+          truncate ? "truncate" : ""
+        }`}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

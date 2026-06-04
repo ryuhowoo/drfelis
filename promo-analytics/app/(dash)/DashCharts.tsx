@@ -74,25 +74,34 @@ export function Concentric({
   const baseShade = (i: number) => shades[Math.min(i, shades.length - 1)];
 
   return (
-    <div className="relative mx-auto h-[230px] w-full max-w-[300px]">
-      {items.map((d, i) => {
-        const dia = 110 + 150 * Math.sqrt(d.value / max);
-        const shade = baseShade(items.length - 1 - i); // 바깥=연하게, 안=진하게
-        return (
-          <div
-            key={d.label}
-            className="absolute bottom-0 left-1/2 flex -translate-x-1/2 justify-center rounded-full"
-            style={{ width: dia, height: dia, background: shade, zIndex: i }}
-          >
+    <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end sm:gap-5">
+      <div className="relative h-[220px] w-[220px] shrink-0">
+        {items.map((d, i) => {
+          const dia = 110 + 110 * Math.sqrt(d.value / max);
+          const shade = baseShade(items.length - 1 - i); // 바깥=연하게, 안=진하게
+          return (
+            <div
+              key={d.label}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
+              style={{ width: dia, height: dia, background: shade, zIndex: i }}
+            />
+          );
+        })}
+      </div>
+      <ul className="flex w-full flex-col gap-1.5 text-xs sm:max-w-[180px]">
+        {items.map((d, i) => (
+          <li key={d.label} className="flex items-center gap-2">
             <span
-              className="mt-2 text-xs font-semibold"
-              style={{ color: i >= items.length - 1 ? "#fff" : "#7a3b22" }}
-            >
-              {d.label} · {wonShort(d.value)}
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ background: baseShade(items.length - 1 - i) }}
+            />
+            <span className="min-w-0 flex-1 truncate text-neutral-700">{d.label}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-neutral-900">
+              {wonShort(d.value)}
             </span>
-          </div>
-        );
-      })}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
