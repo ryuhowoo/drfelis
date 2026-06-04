@@ -1,44 +1,9 @@
 @import "tailwindcss";
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 
-/* ASTA Sans (라이선스 폰트) — 폰트 파일을 public/fonts/asta-sans/에 두면 자동 적용.
-   파일이 없으면 폴백(Pretendard → 시스템)으로 안전하게 표시됨. */
-@font-face {
-  font-family: "ASTA Sans";
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src:
-    url("/fonts/asta-sans/ASTASans-Regular.woff2") format("woff2"),
-    url("/fonts/asta-sans/ASTASans-Regular.woff")  format("woff");
-}
-@font-face {
-  font-family: "ASTA Sans";
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src:
-    url("/fonts/asta-sans/ASTASans-Medium.woff2") format("woff2"),
-    url("/fonts/asta-sans/ASTASans-Medium.woff")  format("woff");
-}
-@font-face {
-  font-family: "ASTA Sans";
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-  src:
-    url("/fonts/asta-sans/ASTASans-SemiBold.woff2") format("woff2"),
-    url("/fonts/asta-sans/ASTASans-SemiBold.woff")  format("woff");
-}
-@font-face {
-  font-family: "ASTA Sans";
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  src:
-    url("/fonts/asta-sans/ASTASans-Bold.woff2") format("woff2"),
-    url("/fonts/asta-sans/ASTASans-Bold.woff")  format("woff");
-}
+/* ASTA Sans: @fontsource-variable/asta-sans 패키지에서 자체호스팅(npm 설치).
+   빌드 시 외부 네트워크(Google Fonts) 의존 없음. 한글은 ASTA Sans 자체 글리프 +
+   Pretendard 폴백으로 커버. */
 
 @theme {
   /* 키컬러: 차분한 테라코타 코랄 (쨍하지 않게) */
@@ -56,7 +21,7 @@
   --color-ink: #211f1d;
 
   --font-sans:
-    "ASTA Sans", "Pretendard Variable", "Pretendard",
+    "Asta Sans Variable", "Pretendard Variable", "Pretendard",
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
     ui-sans-serif, system-ui, sans-serif;
 }
