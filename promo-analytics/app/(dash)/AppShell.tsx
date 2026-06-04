@@ -10,6 +10,7 @@ const NAV = [
   { href: "/prescribe", label: "프로모션 추천", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 104 0M9 5a2 2 0 014 0m-3 8l2 2 3-4" },
   { href: "/library", label: "히스토리 비교/분석", icon: "M4 7h16M4 12h16M4 17h10" },
   { href: "/upload", label: "데이터 업로드", icon: "M12 16V4m0 0l-4 4m4-4l4 4M5 20h14" },
+  { href: "/settings", label: "설정", icon: "M10.3 4.3a1 1 0 011.4 0l.7.7a1 1 0 00.9.3l1-.2a1 1 0 011.2.9l.1 1a1 1 0 00.6.8l.9.4a1 1 0 01.5 1.3l-.4.9a1 1 0 000 .9l.4.9a1 1 0 01-.5 1.3l-.9.4a1 1 0 00-.6.8l-.1 1a1 1 0 01-1.2.9l-1-.2a1 1 0 00-.9.3l-.7.7a1 1 0 01-1.4 0M12 9a3 3 0 100 6 3 3 0 000-6z" },
 ];
 
 function isActive(pathname: string, href: string) {

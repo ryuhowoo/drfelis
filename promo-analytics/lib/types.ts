@@ -17,8 +17,10 @@ export type Promotion = {
   channel: string | null;
   purpose: string | null;
   promo_type: string | null;
+  promo_types: string[] | null;
   season_tag: string | null;
   benefits: Benefits | null;
+  contribution_amount: number | null;
   notes: string | null;
   created_at: string;
 };
