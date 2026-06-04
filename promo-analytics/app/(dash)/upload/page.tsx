@@ -84,6 +84,44 @@ function UploadCard({ def }: { def: CardDef }) {
         const rows = parse.parseDailySales(buf);
         if (rows.length === 0) throw new Error("유효한 행이 없습니다.");
 
+        // 다른 source의 동일 기간·동일 상품 데이터 중복 경고
+        const allDates = rows.map((r) => r.sale_date);
+        const minDate = allDates.reduce((a, b) => (a < b ? a : b));
+        const maxDate = allDates.reduce((a, b) => (a > b ? a : b));
+        const baseNamesList = [...new Set(rows.map((r) => r.base_name))];
+        setP({ phase: "uploading", message: "기존 데이터 중복 확인 중…" });
+        const { count: existingCount, error: cntErr } = await supabase
+          .from("daily_sales")
+          .select("*", { count: "exact", head: true })
+          .gte("sale_date", minDate)
+          .lte("sale_date", maxDate)
+          .in("base_name", baseNamesList)
+          .neq("source_file", file.name);
+        if (cntErr) throw cntErr;
+        if (existingCount && existingCount > 0) {
+          const { data: srcSample } = await supabase
+            .from("daily_sales")
+            .select("source_file")
+            .gte("sale_date", minDate)
+            .lte("sale_date", maxDate)
+            .in("base_name", baseNamesList)
+            .neq("source_file", file.name)
+            .limit(200);
+          const srcSet = [
+            ...new Set((srcSample ?? []).map((r) => r.source_file as string)),
+          ];
+          const ok = window.confirm(
+            `같은 기간(${minDate} ~ ${maxDate})에 다른 파일에서 적재된 데이터가 ${existingCount.toLocaleString()}건 있어요.\n` +
+              `기존 source: ${srcSet.join(", ") || "(이름 없음)"}\n\n` +
+              `옵션 표기가 같으면 덮어써지지만, 다르면 별도 행으로 추가돼 매출이 중복 합산될 수 있어요.\n\n` +
+              `그래도 진행할까요?`,
+          );
+          if (!ok) {
+            setP({ phase: "idle", message: "" });
+            return;
+          }
+        }
+
         setP({ phase: "uploading", message: `상품 매칭 중… (${rows.length}행)` });
         const productMap = await products.ensureProducts(
           supabase,
