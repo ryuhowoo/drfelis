@@ -92,8 +92,13 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 .row{display:grid;gap:14px;margin-bottom:18px}
 .row.r-chart{grid-template-columns:1.7fr 1fr}
 .row.r-gates{grid-template-columns:repeat(3,1fr)}
-.row.r-mid{grid-template-columns:1fr 1fr 1.2fr}
+.row.r-mid{grid-template-columns:1fr 1fr}
 @media(max-width:1100px){.row.r-chart,.row.r-gates,.row.r-mid{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .cal-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cal-grid{min-width:720px}
+  .page{padding:14px 12px 60px}
+}
 
 .gate-input{width:90px;background:var(--surface3);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
 .gate-input:focus{outline:none;border-color:var(--primary)}
@@ -133,38 +138,6 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 .check-box.on{background:var(--success);border-color:var(--success);color:#0d0d0f;font-weight:800}
 .check-text{flex:1;color:#ccc}
 .check-text.done{color:var(--muted);text-decoration:line-through}
-
-/* ===== Bundle simulator ===== */
-.bsim .bsim-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.bsim .bsim-head select{flex:1;min-width:140px;padding:7px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px}
-.bsim-line{display:grid;grid-template-columns:1fr 70px 70px 26px;gap:6px;align-items:center;margin-bottom:6px}
-.bsim-line select,.bsim-line input{padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:11px}
-.bsim-line .del{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--surface3);border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:11px}
-.bsim-line .del:hover{color:var(--danger);border-color:var(--danger)}
-.bsim-line.main{background:var(--primary-soft);padding:6px;border-radius:5px;border:1px solid rgba(255,77,0,.25);grid-template-columns:1fr 70px 70px}
-.bsim-attach-label{font-size:9px;color:var(--muted);text-align:center;font-weight:700;text-transform:uppercase;margin-top:2px}
-.bsim-sub-head{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin:10px 0 5px}
-.bsim-add{font-size:11px;padding:5px 9px;background:var(--surface2);border:1px dashed var(--border2);border-radius:5px;color:var(--muted);margin-top:4px}
-.bsim-add:hover{border-color:var(--primary);color:var(--primary)}
-.scenario{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-.scenario .sf{display:flex;flex-direction:column;gap:3px}
-.scenario .sf label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
-.scenario .sf input,.scenario .sf select{padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:11px}
-.bsim-result{margin-top:10px;padding:11px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px}
-.bsim-result .cr-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-variant-numeric:tabular-nums;border-top:1px dashed var(--border)}
-.bsim-result .cr-row:first-child{border-top:none}
-.bsim-result .cr-row .k{color:var(--muted)}
-.bsim-result .cr-row .v{font-weight:700}
-.bsim-result .cr-row.neg .v{color:var(--danger)}
-.bsim-result .cr-row.hi{font-size:14px;border-top:1px solid var(--border);margin-top:4px;padding-top:8px}
-.bsim-result .cr-row.hi .v{color:var(--primary);font-size:17px;font-weight:800}
-.bsim-compare{margin-top:8px;padding:10px;background:var(--info-soft);border:1px solid rgba(96,165,250,.25);border-radius:var(--radius-sm);font-size:11px;color:#bfdbfe}
-.bsim-compare b{color:var(--info);font-size:13px}
-.bsim-formula{margin-top:8px;padding:10px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;color:var(--muted);display:none}
-.bsim-formula.open{display:block}
-.bsim-formula code{display:block;padding:3px 0;font-family:'SF Mono',Menlo,monospace;color:#ddd}
-.bsim-toggle{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:var(--muted);cursor:pointer}
-.bsim-actions{display:flex;gap:6px;margin-top:10px}
 
 /* Calendar */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap}
@@ -420,51 +393,6 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
       </div>
       <ul class="checks" data-track="nutrition"></ul>
     </div>
-    <div class="card bsim">
-      <div class="section-title">
-        <span class="bar"></span>번들 시뮬레이터
-        <span class="meta">메인 + 동반구매 attach</span>
-      </div>
-      <div class="bsim-head">
-        <select id="bsimSelect"></select>
-        <button class="btn sm" id="bsimNew">+ 새 번들</button>
-        <button class="btn sm" id="bsimSave">저장</button>
-        <button class="btn sm danger" id="bsimDelete">삭제</button>
-      </div>
-      <div class="group" style="margin-bottom:8px">
-        <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700">번들 이름</label>
-        <input type="text" id="bsimName" placeholder="예: 퍼펙트 + 트릿 패키지" style="width:100%;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:11px;margin-top:3px">
-      </div>
-      <div class="bsim-sub-head">메인 SKU <span style="color:var(--muted2);text-transform:none;font-weight:600">— 캠페인의 헤드라인 제품</span></div>
-      <div class="bsim-line main">
-        <select id="bsimMain"></select>
-        <input type="number" id="bsimMainQty" value="1" min="1" title="번들당 메인 수량">
-        <input type="number" id="bsimMainDisc" value="10" min="0" max="80" title="할인 %">
-      </div>
-      <div class="bsim-sub-head">동반 구매 <span style="color:var(--muted2);text-transform:none;font-weight:600">— 메인 1번들 당 attach rate</span></div>
-      <div id="bsimAttachList"></div>
-      <button class="bsim-add" id="bsimAddAttach">+ 동반 제품 추가</button>
-
-      <div class="bsim-sub-head">시나리오</div>
-      <div class="scenario">
-        <div class="sf"><label>채널</label><select id="bsimChannel"></select></div>
-        <div class="sf"><label>메인 판매 번들 수</label><input type="number" id="bsimVolume" value="500" min="0"></div>
-        <div class="sf"><label>광고비 (총) ₩</label><input type="number" id="bsimAd" value="0" min="0"></div>
-        <div class="sf"><label>사은품 원가 / 번들 ₩</label><input type="number" id="bsimGift" value="0" min="0"></div>
-      </div>
-
-      <div class="bsim-result" id="bsimResult"></div>
-      <div class="bsim-compare" id="bsimCompare"></div>
-      <div class="bsim-toggle" id="bsimFormulaToggle">▸ 계산 공식 보기</div>
-      <div class="bsim-formula" id="bsimFormula">
-        <code>매출 = Σ(SKU 단가 × (1 − 할인%)) × 판매 번들 수</code>
-        <code>수수료 = 매출 × 채널 수수료율</code>
-        <code>원가 = Σ(SKU 원가 × 수량) × 판매 번들 수</code>
-        <code>공헌이익 = 매출 − 수수료 − 원가 − (사은품 × 번들수) − 광고비</code>
-        <code>이익률 = 공헌이익 / 매출</code>
-        <div style="margin-top:6px;color:var(--muted2)">동반 SKU는 메인 판매 수 × attach rate 만큼 함께 판매되는 것으로 계산.</div>
-      </div>
-    </div>
   </div>
 
   <!-- Calendar -->
@@ -488,11 +416,13 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
         <button id="calNext">다음 6개월 ▶</button>
       </div>
     </div>
-    <div class="cal-grid" id="calGrid">
-      <div class="cal-hcell">월</div>
-      <div class="cal-hcell">上 (1~10일)</div>
-      <div class="cal-hcell">中 (11~20일)</div>
-      <div class="cal-hcell">下 (21~말일)</div>
+    <div class="cal-grid-wrap">
+      <div class="cal-grid" id="calGrid">
+        <div class="cal-hcell">월</div>
+        <div class="cal-hcell">上 (1~10일)</div>
+        <div class="cal-hcell">中 (11~20일)</div>
+        <div class="cal-hcell">下 (21~말일)</div>
+      </div>
     </div>
     <div class="hint" style="margin-top:8px">
       셀의 <span class="kbd">+</span> 로 새 캠페인 추가. 카드 클릭으로 편집, 드래그로 다른 셀로 이동. 좌측 컬러바 = 채널.
@@ -639,7 +569,6 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
         <option value="2">下 (21~말)</option>
       </select></div>
     </div>
-    <div class="group"><label>연결 번들 (선택)</label><select id="fBundle"></select></div>
     <div class="row2">
       <div class="group"><label>예상 매출 ₩</label><input type="number" id="fRev" value="0" min="0"></div>
       <div class="group"><label>예상 광고비 ₩</label><input type="number" id="fAd" value="0" min="0"></div>
@@ -816,13 +745,12 @@ function defaultState() {
     checks: { sand: SAND_CHECKS, nutrition: NUT_CHECKS },
     campaigns: defaultCampaigns(),
     actuals: {},
-    bundles: defaultBundles(),
     gateInputs: {
       aov: { current: 0, target: 0 },
       crossSub: { current: 0, target: 0 },
     },
     fb: { config:'', path:'ogk_console_v3' },
-    _seedVer: 'notion_2026_v1',
+    _seedVer: 'notion_2026_v2',
   };
 }
 function defaultCampaigns() {
@@ -863,20 +791,6 @@ function defaultCampaigns() {
     mk('멤버스위크', 'official', 6, 2, 'SALES'),
   ];
 }
-function defaultBundles() {
-  return [
-    { id:uid(), name:'퍼펙트 + 트릿', main:{sku:'nut-perfect', qty:1, disc:10},
-      attach:[{sku:'nut-treat', rate:40, qty:1, disc:0}],
-      scenario:{ channel:'official', volume:500, ad:5_000_000, gift:0 } },
-    { id:uid(), name:'퍼펙트 + 프로바이오틱스', main:{sku:'nut-perfect', qty:1, disc:10},
-      attach:[{sku:'nut-probio', rate:25, qty:1, disc:0}],
-      scenario:{ channel:'official', volume:300, ad:3_000_000, gift:0 } },
-    { id:uid(), name:'모래 + 영양 시너지', main:{sku:'sand-super83', qty:1, disc:5},
-      attach:[{sku:'nut-perfect', rate:20, qty:1, disc:0},{sku:'nut-treat', rate:15, qty:1, disc:0}],
-      scenario:{ channel:'official', volume:400, ad:6_000_000, gift:0 } },
-  ];
-}
-
 const LS_KEY = 'ogk_console_v3_state';
 let state = loadState();
 function loadState() {
@@ -886,9 +800,9 @@ function loadState() {
     const parsed = JSON.parse(raw);
     const merged = { ...defaultState(), ...parsed };
     // Migration: 노션 캠페인 시드를 한 번만 적용
-    if (merged._seedVer !== 'notion_2026_v1') {
+    if (merged._seedVer !== 'notion_2026_v2') {
       merged.campaigns = defaultCampaigns();
-      merged._seedVer = 'notion_2026_v1';
+      merged._seedVer = 'notion_2026_v2';
     }
     return merged;
   } catch (e) { return defaultState(); }
@@ -959,73 +873,8 @@ function getMonthActual(idx) {
   const cmps = state.campaigns.filter(c => c.month === idx);
   const rev = cmps.reduce((s,c) => s + (Number(c.rev)||0), 0);
   const ad = cmps.reduce((s,c) => s + (Number(c.ad)||0), 0);
-  // Approximate profit from connected bundle (or 30% of rev as fallback)
-  let profit = 0;
-  cmps.forEach(c => {
-    if (c.bundle) {
-      const b = state.bundles.find(x => x.id === c.bundle);
-      if (b) {
-        const calc = computeBundle(b);
-        // Apply campaign rev / scenario rev as scale
-        const scale = c.rev > 0 ? c.rev / Math.max(1, calc.totalRev) : 1;
-        profit += calc.contribution * scale - (c.ad || 0);
-        return;
-      }
-    }
-    profit += (c.rev || 0) * 0.30 - (c.ad || 0); // fallback heuristic
-  });
-  return { rev, profit: Math.max(0, profit), planned:true };
-}
-
-function computeBundle(b) {
-  const main = SKUS.find(s => s.id === b.main.sku);
-  const ch = CHANNELS.find(c => c.id === b.scenario.channel);
-  if (!main || !ch) return { totalRev:0, contribution:0, marginRate:0 };
-  const vol = Number(b.scenario.volume) || 0;
-  const ad = Number(b.scenario.ad) || 0;
-  const gift = Number(b.scenario.gift) || 0;
-  const mainQty = Number(b.main.qty) || 1;
-  const mainDisc = (Number(b.main.disc) || 0) / 100;
-  // Main rev / cost per bundle
-  const mainPriceEach = main.price * (1 - mainDisc);
-  const mainRevPerBundle = mainPriceEach * mainQty;
-  const mainCostPerBundle = main.cost * mainQty;
-  // Attach
-  let attachRevPerBundle = 0, attachCostPerBundle = 0;
-  const attachLines = [];
-  (b.attach || []).forEach(a => {
-    const s = SKUS.find(x => x.id === a.sku);
-    if (!s) return;
-    const r = (Number(a.rate) || 0) / 100;
-    const q = Number(a.qty) || 1;
-    const d = (Number(a.disc) || 0) / 100;
-    const each = s.price * (1 - d);
-    const rev = each * q * r;
-    const cost = s.cost * q * r;
-    attachRevPerBundle += rev;
-    attachCostPerBundle += cost;
-    attachLines.push({ name:s.name, rate:r*100, rev, cost });
-  });
-  const revPerBundle = mainRevPerBundle + attachRevPerBundle;
-  const costPerBundle = mainCostPerBundle + attachCostPerBundle;
-  // Totals
-  const totalRev = revPerBundle * vol;
-  const totalCost = costPerBundle * vol;
-  const totalFee = totalRev * ch.feeRate;
-  const totalGift = gift * vol;
-  const contribution = totalRev - totalFee - totalCost - totalGift - ad;
-  const marginRate = totalRev > 0 ? contribution / totalRev : 0;
-  // Main-only comparison
-  const mainOnlyRev = mainRevPerBundle * vol;
-  const mainOnlyContribution = mainOnlyRev - (mainOnlyRev * ch.feeRate) - (mainCostPerBundle * vol) - totalGift - ad;
-  return {
-    main, ch, mainPriceEach, mainRevPerBundle, mainCostPerBundle,
-    attachRevPerBundle, attachCostPerBundle, attachLines,
-    revPerBundle, costPerBundle,
-    totalRev, totalCost, totalFee, totalGift, ad,
-    contribution, marginRate,
-    mainOnlyRev, mainOnlyContribution,
-  };
+  const profit = Math.max(0, rev * 0.30 - ad);
+  return { rev, profit, planned:true };
 }
 
 /* ---------- KPI rendering ---------- */
@@ -1220,159 +1069,6 @@ function renderChecks(track) {
   });
 }
 
-/* ---------- Bundle Simulator ---------- */
-let currentBundleId = null;
-function renderBundleSelect() {
-  const sel = $('#bsimSelect');
-  sel.innerHTML = state.bundles.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  if (!currentBundleId || !state.bundles.find(b => b.id === currentBundleId)) {
-    currentBundleId = state.bundles[0] ? state.bundles[0].id : null;
-  }
-  sel.value = currentBundleId || '';
-}
-function getCurrentBundle() {
-  return state.bundles.find(b => b.id === currentBundleId);
-}
-function renderBundleForm() {
-  const b = getCurrentBundle();
-  if (!b) {
-    $('#bsimName').value = '';
-    $('#bsimMain').innerHTML = SKUS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    $('#bsimAttachList').innerHTML = '';
-    $('#bsimResult').innerHTML = '<div class="hint">번들이 없습니다. + 새 번들 로 추가하세요.</div>';
-    $('#bsimCompare').innerHTML = '';
-    return;
-  }
-  $('#bsimName').value = b.name;
-  // Main
-  $('#bsimMain').innerHTML = SKUS.map(s => `<option value="${s.id}" ${s.id===b.main.sku?'selected':''}>${s.name}</option>`).join('');
-  $('#bsimMainQty').value = b.main.qty;
-  $('#bsimMainDisc').value = b.main.disc;
-  // Attach list
-  const list = $('#bsimAttachList');
-  list.innerHTML = '';
-  (b.attach || []).forEach((a, i) => {
-    const row = document.createElement('div');
-    row.className = 'bsim-line';
-    row.innerHTML = `
-      <select data-att="sku" data-i="${i}">${SKUS.map(s => `<option value="${s.id}" ${s.id===a.sku?'selected':''}>${s.name}</option>`).join('')}</select>
-      <input type="number" data-att="rate" data-i="${i}" value="${a.rate}" min="0" max="100" title="Attach %">
-      <input type="number" data-att="qty" data-i="${i}" value="${a.qty}" min="1" title="수량">
-      <button class="del" data-rm="${i}" title="제거">✕</button>
-    `;
-    list.appendChild(row);
-  });
-  // Scenario
-  $('#bsimChannel').innerHTML = CHANNELS.map(c => `<option value="${c.id}" ${c.id===b.scenario.channel?'selected':''}>${c.name} (수수료 ${(c.feeRate*100).toFixed(0)}%)</option>`).join('');
-  $('#bsimVolume').value = b.scenario.volume;
-  $('#bsimAd').value = b.scenario.ad;
-  $('#bsimGift').value = b.scenario.gift;
-  renderBundleResult();
-}
-function renderBundleResult() {
-  const b = getCurrentBundle();
-  if (!b) return;
-  const r = computeBundle(b);
-  if (!r || !r.main) return;
-  const lines = [
-    `<div class="cr-row"><span class="k">메인 ${r.main.name} (${r.attachLines.length ? '× '+r.main.name+'+동반' : ''})</span><span class="v mono">${fmtKRW(r.mainRevPerBundle * Number(b.scenario.volume))}</span></div>`,
-    ...r.attachLines.map(a => `<div class="cr-row"><span class="k">+ ${a.name} <small class="muted">attach ${a.rate.toFixed(0)}%</small></span><span class="v mono">${fmtKRW(a.rev * Number(b.scenario.volume))}</span></div>`),
-    `<div class="cr-row hi"><span class="k">총 매출</span><span class="v mono">${fmtKRW(r.totalRev)}</span></div>`,
-    `<div class="cr-row neg"><span class="k">− 채널 수수료 (${(r.ch.feeRate*100).toFixed(0)}%)</span><span class="v mono">${fmtKRW(-r.totalFee)}</span></div>`,
-    `<div class="cr-row neg"><span class="k">− 원가</span><span class="v mono">${fmtKRW(-r.totalCost)}</span></div>`,
-    `<div class="cr-row neg"><span class="k">− 사은품</span><span class="v mono">${fmtKRW(-r.totalGift)}</span></div>`,
-    `<div class="cr-row neg"><span class="k">− 광고비</span><span class="v mono">${fmtKRW(-r.ad)}</span></div>`,
-    `<div class="cr-row hi"><span class="k">공헌이익 (${(r.marginRate*100).toFixed(1)}%)</span><span class="v mono">${fmtKRW(r.contribution)}</span></div>`,
-  ];
-  $('#bsimResult').innerHTML = lines.join('');
-  // Compare
-  const diff = r.contribution - r.mainOnlyContribution;
-  const diffPct = r.mainOnlyContribution > 0 ? (diff / r.mainOnlyContribution * 100) : 0;
-  $('#bsimCompare').innerHTML = `
-    <div>메인만 팔았다면 공헌이익 <b>${fmtKRW(r.mainOnlyContribution)}</b></div>
-    <div style="margin-top:4px">동반 포함 효과: <b style="color:${diff>=0?'var(--success)':'var(--danger)'}">${diff>=0?'+':''}${fmtKRW(diff)} (${diff>=0?'+':''}${diffPct.toFixed(1)}%)</b></div>
-  `;
-}
-function bindBundleInputs() {
-  $('#bsimSelect').addEventListener('change', e => {
-    currentBundleId = e.target.value;
-    renderBundleForm();
-  });
-  $('#bsimNew').addEventListener('click', () => {
-    const b = { id:uid(), name:'새 번들', main:{sku:SKUS[0].id, qty:1, disc:0}, attach:[],
-      scenario:{ channel:'official', volume:100, ad:0, gift:0 } };
-    state.bundles.push(b);
-    currentBundleId = b.id;
-    saveState();
-    renderBundleSelect();
-    renderBundleForm();
-  });
-  $('#bsimDelete').addEventListener('click', () => {
-    if (!getCurrentBundle()) return;
-    if (!confirm('이 번들을 삭제할까요?')) return;
-    state.bundles = state.bundles.filter(b => b.id !== currentBundleId);
-    currentBundleId = state.bundles[0] ? state.bundles[0].id : null;
-    saveState();
-    renderBundleSelect();
-    renderBundleForm();
-  });
-  $('#bsimSave').addEventListener('click', () => {
-    saveState();
-    renderBundleSelect();
-    toast('번들 저장됨', 'success');
-  });
-  $('#bsimAddAttach').addEventListener('click', () => {
-    const b = getCurrentBundle();
-    if (!b) return;
-    b.attach = b.attach || [];
-    b.attach.push({ sku:SKUS[0].id, rate:20, qty:1, disc:0 });
-    renderBundleForm();
-    // saveState (debounced via blur on inputs to avoid spam)
-  });
-  $('#bsimAttachList').addEventListener('input', e => {
-    const b = getCurrentBundle(); if (!b) return;
-    const i = Number(e.target.dataset.i);
-    const att = e.target.dataset.att;
-    if (i == null || !att) return;
-    if (att === 'sku') b.attach[i].sku = e.target.value;
-    else b.attach[i][att] = Number(e.target.value) || 0;
-    renderBundleResult();
-  });
-  $('#bsimAttachList').addEventListener('click', e => {
-    const rm = e.target.dataset.rm;
-    if (rm == null) return;
-    const b = getCurrentBundle(); if (!b) return;
-    b.attach.splice(Number(rm), 1);
-    renderBundleForm();
-  });
-  // Main + scenario
-  const inputs = ['#bsimName','#bsimMain','#bsimMainQty','#bsimMainDisc','#bsimChannel','#bsimVolume','#bsimAd','#bsimGift'];
-  inputs.forEach(sel => {
-    $(sel).addEventListener('input', () => {
-      const b = getCurrentBundle(); if (!b) return;
-      b.name = $('#bsimName').value;
-      b.main.sku = $('#bsimMain').value;
-      b.main.qty = Number($('#bsimMainQty').value) || 1;
-      b.main.disc = Number($('#bsimMainDisc').value) || 0;
-      b.scenario.channel = $('#bsimChannel').value;
-      b.scenario.volume = Number($('#bsimVolume').value) || 0;
-      b.scenario.ad = Number($('#bsimAd').value) || 0;
-      b.scenario.gift = Number($('#bsimGift').value) || 0;
-      renderBundleResult();
-    });
-  });
-  // Save on blur
-  inputs.concat(['#bsimAttachList']).forEach(sel => {
-    const el = $(sel);
-    if (el) el.addEventListener('change', () => saveState());
-  });
-  $('#bsimFormulaToggle').addEventListener('click', () => {
-    const f = $('#bsimFormula');
-    const open = f.classList.toggle('open');
-    $('#bsimFormulaToggle').textContent = (open ? '▾' : '▸') + ' 계산 공식 보기';
-  });
-}
-
 /* ---------- Calendar ---------- */
 let calStartIdx = 0;
 const CAL_WINDOW = 6;
@@ -1422,10 +1118,9 @@ function buildCampaignChip(c) {
   el.className = `cmp ch-${c.channel}`;
   el.draggable = true;
   el.dataset.id = c.id;
-  const bundle = state.bundles.find(b => b.id === c.bundle);
   el.innerHTML = `
     <div class="cmp-name">${c.name}</div>
-    <div class="cmp-meta">${bundle ? '📦 ' + bundle.name : '단품'} ${c.rev ? '· ' + fmtKRW(c.rev) : ''}</div>
+    <div class="cmp-meta">${c.memo ? c.memo.split('·')[0].trim() : ''} ${c.rev ? '· ' + fmtKRW(c.rev) : ''}</div>
     <div class="dots">
       <span class="dot ${c.checks && c.checks.cap?'pass':'fail'}" title="Sell cap"></span>
       <span class="dot ${c.checks && c.checks.price?'pass':'fail'}" title="가격 가드"></span>
@@ -1448,12 +1143,10 @@ function openSidePanel(c) {
   editingId = c.id || null;
   $('#sideTitle').textContent = c.id ? '캠페인 편집' : '새 캠페인';
   $('#fMonth').innerHTML = FY_MONTHS.map((m,i) => `<option value="${i}">${MONTH_LABEL(m)}</option>`).join('');
-  $('#fBundle').innerHTML = '<option value="">— 연결 안 함 —</option>' + state.bundles.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
   $('#fName').value = c.name || '';
   $('#fChannel').value = c.channel || 'official';
   $('#fMonth').value = c.month != null ? c.month : 0;
   $('#fWeek').value = c.week != null ? c.week : 0;
-  $('#fBundle').value = c.bundle || '';
   $('#fRev').value = c.rev || 0;
   $('#fAd').value = c.ad || 0;
   $('#fMemo').value = c.memo || '';
@@ -1476,7 +1169,6 @@ $('#sideSave').addEventListener('click', () => {
     channel: $('#fChannel').value,
     month: Number($('#fMonth').value),
     week: Number($('#fWeek').value),
-    bundle: $('#fBundle').value || null,
     rev: Number($('#fRev').value) || 0,
     ad: Number($('#fAd').value) || 0,
     memo: $('#fMemo').value,
@@ -1695,8 +1387,6 @@ function renderAll() {
   renderKPIs();
   renderGates();
   renderTracks();
-  renderBundleSelect();
-  renderBundleForm();
   renderCalendar();
   renderPastTable();
   drawRevChart();
@@ -1704,9 +1394,7 @@ function renderAll() {
 
 /* ---------- Init ---------- */
 window.addEventListener('DOMContentLoaded', () => {
-  currentBundleId = state.bundles[0] ? state.bundles[0].id : null;
   renderAll();
-  bindBundleInputs();
   initFirebase();
 });
 </script>
