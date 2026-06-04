@@ -25,8 +25,8 @@ const CARDS: CardDef[] = [
   },
   {
     key: "promotion",
-    title: "③ 프로모션 시트",
-    desc: "프로모션 기간 실적(전 제품). 업로드하면 프로모션이 생성되고 상세로 이동합니다.",
+    title: "③ 캠페인 시트",
+    desc: "캠페인 기간 실적(전 제품). 업로드하면 캠페인이 생성되고 상세로 이동합니다.",
   },
 ];
 
@@ -140,7 +140,7 @@ function UploadCard({ def }: { def: CardDef }) {
       const parsed = parse.parsePromotionSheet(buf);
       if (parsed.rows.length === 0) throw new Error("유효한 행이 없습니다.");
       if (!parsed.start_date || !parsed.end_date)
-        throw new Error("프로모션 기간을 시트에서 찾지 못했습니다. (일자 누적 컬럼 확인)");
+        throw new Error("캠페인 기간을 시트에서 찾지 못했습니다. (일자 누적 컬럼 확인)");
 
       setP({ phase: "uploading", message: "상품 매칭 중…" });
       const productMap = await products.ensureProducts(
@@ -152,7 +152,7 @@ function UploadCard({ def }: { def: CardDef }) {
       const code = parse.extractPromoCode(rawName);
       const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
 
-      setP({ phase: "uploading", message: "프로모션 생성 중…" });
+      setP({ phase: "uploading", message: "캠페인 생성 중…" });
       const { data: promo, error: pErr } = await supabase
         .from("promotions")
         .insert({

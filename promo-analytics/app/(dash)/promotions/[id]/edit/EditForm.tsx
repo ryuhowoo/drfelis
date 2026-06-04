@@ -6,7 +6,7 @@ import type { Promotion } from "@/lib/types";
 import { wonShort } from "@/lib/format";
 
 type ProductItem = { product_id: string; base_name: string; revenue: number };
-type Options = { benefitTypes: string[]; seasonalities: string[] };
+type Options = { benefitTypes: string[]; seasonalities: string[]; purposes: string[] };
 
 export default function EditForm({
   promo,
@@ -25,7 +25,9 @@ export default function EditForm({
     promo.promo_types ?? (promo.promo_type ? [promo.promo_type] : []),
   );
   const [seasonTag, setSeasonTag] = useState(promo.season_tag ?? "");
-  const [purpose, setPurpose] = useState(promo.purpose ?? "");
+  const [purposes, setPurposes] = useState<string[]>(
+    promo.purposes ?? (promo.purpose ? [promo.purpose] : []),
+  );
   const [startDate, setStartDate] = useState(promo.start_date ?? "");
   const [endDate, setEndDate] = useState(promo.end_date ?? "");
   const [discountRate, setDiscountRate] = useState(
@@ -42,10 +44,14 @@ export default function EditForm({
   );
   const [mainIds, setMainIds] = useState<string[]>(initialMainIds);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [query, setQuery] = useState("");
 
   function toggleType(t: string) {
     setPromoTypes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
+  }
+  function togglePurpose(t: string) {
+    setPurposes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
   }
   function toggleMain(id: string) {
     setMainIds((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
@@ -76,7 +82,8 @@ export default function EditForm({
         promo_types: promoTypes,
         promo_type: promoTypes[0] ?? null,
         season_tag: seasonTag || null,
-        purpose: purpose || null,
+        purposes,
+        purpose: purposes[0] ?? null,
         start_date: startDate,
         end_date: endDate,
         benefits: Object.keys(benefits).length ? benefits : null,
@@ -88,7 +95,22 @@ export default function EditForm({
     if (res.ok) router.push(`/promotions/${promo.id}`);
     else {
       const d = await res.json().catch(() => ({}));
-      alert(d.error ?? "저장 실패 (Phase 2 SQL이 적용됐는지 확인하세요)");
+      alert(d.error ?? "저장 실패 (마이그레이션이 적용됐는지 확인하세요)");
+    }
+  }
+
+  async function remove() {
+    if (!confirm(`'${promo.name}' 캠페인을 삭제할까요?\n\n실적·메인상품·메모가 함께 삭제됩니다. 복구 불가.`))
+      return;
+    setDeleting(true);
+    const res = await fetch(`/api/promotions/${promo.id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (res.ok) {
+      router.push("/library");
+      router.refresh();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error ?? "삭제 실패");
     }
   }
 
@@ -98,13 +120,13 @@ export default function EditForm({
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-xl font-semibold tracking-tight">프로모션 편집</h1>
+      <h1 className="text-xl font-semibold tracking-tight">캠페인 편집</h1>
       <p className="mt-1 text-sm text-neutral-500">
         기간·목적·혜택을 채우고, 특별 혜택을 준 <strong>메인 상품</strong>을 지정하세요.
       </p>
 
       <div className="mt-6 space-y-5">
-        <Field label="프로모션명">
+        <Field label="캠페인명">
           <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
         </Field>
 
@@ -121,20 +143,15 @@ export default function EditForm({
           <MultiChips options={options.benefitTypes} values={promoTypes} onToggle={toggleType} />
         </Field>
 
-        <Field label="시즈널리티">
-          <SingleChips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} />
+        <Field label={`목적 (복수 선택) — ${purposes.length}개`}>
+          <MultiChips options={options.purposes} values={purposes} onToggle={togglePurpose} />
+          <p className="mt-1 text-xs text-neutral-400">
+            브랜딩 + 세일즈처럼 섞인 캠페인도 모두 체크해주세요. ‘설정 → 캠페인 목적’에서 항목을 추가할 수 있어요.
+          </p>
         </Field>
 
-        <Field label="목적">
-          <input
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            placeholder="예: 신제품 런칭 / 모래류 매출 극대화 / 3주년 / 재고 소진"
-            className={inputCls}
-          />
-          <p className="mt-1 text-xs text-neutral-400">
-            ‘런칭·리뉴얼’ 등은 혜택이 아니라 <strong>목적</strong>에 적어주세요.
-          </p>
+        <Field label="시즈널리티">
+          <SingleChips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} />
         </Field>
 
         <div className="grid grid-cols-3 gap-4">
@@ -217,10 +234,10 @@ export default function EditForm({
         </Field>
       </div>
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex items-center gap-2">
         <button
           onClick={save}
-          disabled={saving}
+          disabled={saving || deleting}
           className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
           {saving ? "저장 중…" : "저장"}
@@ -230,6 +247,13 @@ export default function EditForm({
           className="rounded-full border border-neutral-200 px-6 py-2.5 text-sm font-medium hover:bg-neutral-50"
         >
           취소
+        </button>
+        <button
+          onClick={remove}
+          disabled={saving || deleting}
+          className="ml-auto rounded-full border border-red-200 px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+        >
+          {deleting ? "삭제 중…" : "캠페인 삭제"}
         </button>
       </div>
     </div>

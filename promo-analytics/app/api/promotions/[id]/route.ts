@@ -21,6 +21,7 @@ export async function PATCH(
     const allowed = [
       "name",
       "purpose",
+      "purposes",
       "promo_type",
       "promo_types",
       "season_tag",

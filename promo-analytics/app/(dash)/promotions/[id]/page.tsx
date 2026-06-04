@@ -63,7 +63,7 @@ export default async function PromotionDetail({
         <Link href="/" className="hover:underline">
           대시보드
         </Link>{" "}
-        / 프로모션
+        / 캠페인
       </div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
@@ -95,7 +95,7 @@ export default async function PromotionDetail({
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Stat label="프로모션 총 매출" value={won(summary?.actual_revenue)} primary />
+        <Stat label="캠페인 총 매출" value={won(summary?.actual_revenue)} primary />
         <Stat
           label="총 기여 매출"
           value={won(summary?.total_uplift)}
@@ -199,7 +199,7 @@ export default async function PromotionDetail({
                 {rows.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-neutral-400">
-                      프로모션 기간의 판매 데이터가 없습니다.
+                      캠페인 기간의 판매 데이터가 없습니다.
                     </td>
                   </tr>
                 )}
@@ -207,7 +207,7 @@ export default async function PromotionDetail({
             </table>
           </div>
           <p className="mt-2 text-[11px] text-neutral-400">
-            baseline = 직전 8주 비프로모션 일자의 요일별 평균 (±2σ 트림). 추세 보정 적용. 95% CI는 baseline 변동성 기준.
+            baseline = 직전 8주 비캠페인 일자의 요일별 평균 (±2σ 트림). 추세 보정 적용. 95% CI는 baseline 변동성 기준.
           </p>
         </section>
 

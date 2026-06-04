@@ -97,7 +97,7 @@ export function Concentric({
   );
 }
 
-// 상시 일평균 vs 프로모션 일평균 — 비교 막대
+// 상시 일평균 vs 캠페인 일평균 — 비교 막대
 export function BaselineVsPromo({
   data,
 }: {
@@ -130,7 +130,7 @@ export function BaselineVsPromo({
                 {wonShort(d.baseline)}
               </span>
             </div>
-            {/* 프로모션 */}
+            {/* 캠페인 */}
             <div className="mt-1 flex items-center gap-2">
               <span className="w-8 shrink-0 text-[10px] text-brand-600">행사</span>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-brand-50">

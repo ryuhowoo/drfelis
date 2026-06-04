@@ -176,7 +176,7 @@ export type Recommendation = {
   meets_target: boolean;
 };
 
-// ── 목적 기반 추천 (매출/재고소진/브랜딩) + 종합점수 ──
+// ── 목적 기반 추천 (세일즈/재고소진/브랜딩) + 종합점수 ──
 export type Goal = "revenue" | "stock" | "branding";
 
 export type GoalRec = {
@@ -192,7 +192,18 @@ export type GoalRec = {
   sample: number;
   meets_target: boolean;
   examples: { id: string; name: string }[];
+  // 멀티 목표일 때 각 목표별 예측치/달성 여부
+  per_goal?: {
+    goal: Goal;
+    metric_per_day: number;
+    predicted_metric: number;
+    target: number;
+    meets_target: boolean;
+  }[];
 };
+
+// 멀티 목표 입력
+export type GoalTarget = { goal: Goal; target: number };
 
 function goalPerDay(goal: Goal, c: CaseFeature): number {
   if (goal === "stock") return c.qty_per_day;
@@ -282,6 +293,136 @@ export function recommendByGoal(
       sample: r.sample,
       meets_target: predicted_metric >= target,
       examples: r.examples,
+    };
+  });
+
+  return recs.sort((a, b) => {
+    if (a.meets_target !== b.meets_target) return a.meets_target ? -1 : 1;
+    return b.score - a.score;
+  });
+}
+
+// 멀티 목표(브랜딩+세일즈 등) 동시 추천: 각 목표별 점수를 동일 가중 평균.
+// 목표마다 별도 target을 받아 per_goal에서 달성 여부를 함께 반환.
+export function recommendByGoals(
+  goalTargets: GoalTarget[],
+  durationDays: number,
+  seasonTag: string | null,
+  cases: CaseFeature[],
+): GoalRec[] {
+  if (goalTargets.length === 0) return [];
+  if (goalTargets.length === 1) {
+    const { goal, target } = goalTargets[0];
+    return recommendByGoal(goal, target, durationDays, seasonTag, cases);
+  }
+
+  const buckets = new Map<string, CaseFeature[]>();
+  for (const c of cases) {
+    if (!c.promo_type) continue;
+    if (seasonTag && c.season_tag && c.season_tag !== seasonTag) continue;
+    const bucket =
+      c.discount_rate != null ? Math.round((c.discount_rate * 100) / 10) * 10 : -1;
+    const key = `${c.promo_type}|${bucket}`;
+    (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(c);
+  }
+
+  type Raw = {
+    promo_type: string;
+    discount_rate: number | null;
+    metrics: Map<Goal, number>; // 목적별 일평균 지표
+    uplift_per_day: number;
+    contribution_per_day: number;
+    contribution_rate: number | null;
+    efficiency: number;
+    halo_share: number;
+    sample: number;
+    examples: { id: string; name: string }[];
+  };
+  const raws: Raw[] = [];
+  for (const [key, g] of buckets) {
+    const [promo_type, bucketStr] = key.split("|");
+    const bucket = Number(bucketStr);
+    const avg = (pick: (c: CaseFeature) => number) =>
+      g.reduce((s, c) => s + pick(c), 0) / g.length;
+    const dr = bucket >= 0 ? bucket / 100 : null;
+    const uplift_per_day = avg((c) => c.uplift_per_day);
+    const crs = g.map((c) => c.contribution_rate).filter((x): x is number => x != null);
+    const cr = crs.length ? crs.reduce((a, b) => a + b, 0) / crs.length : null;
+    const metrics = new Map<Goal, number>();
+    metrics.set("revenue", uplift_per_day);
+    metrics.set("stock", avg((c) => c.qty_per_day));
+    metrics.set("branding", avg((c) => c.orders_per_day));
+    raws.push({
+      promo_type,
+      discount_rate: dr,
+      metrics,
+      uplift_per_day,
+      contribution_per_day: avg((c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
+      contribution_rate: cr,
+      efficiency: dr && dr > 0 ? uplift_per_day / dr : uplift_per_day,
+      halo_share: avg((c) => c.halo_share ?? 0),
+      sample: g.length,
+      examples: g.slice(0, 3).map((c) => ({ id: c.id, name: c.name })),
+    });
+  }
+
+  const maxOf = (pick: (r: Raw) => number) => Math.max(...raws.map(pick), 1e-9);
+  const mU = maxOf((r) => r.uplift_per_day);
+  const mC = maxOf((r) => r.contribution_per_day);
+  const mE = maxOf((r) => r.efficiency);
+  // 목적별 정규화용 최대값
+  const mMetric = new Map<Goal, number>();
+  for (const gt of goalTargets) {
+    mMetric.set(gt.goal, maxOf((r) => r.metrics.get(gt.goal) ?? 0));
+  }
+
+  const recs: GoalRec[] = raws.map((r) => {
+    // 단일 목표 점수: 공헌이익40·증분30·효율20·후광10 (기존 가중치)
+    // 멀티 목표 점수: 위 점수 + 선택한 목적별 정규화 metric 평균 점수
+    //                선택한 목적 비중을 절반 정도 반영(과도한 편향 방지)
+    const baseScore =
+      0.4 * (r.contribution_per_day / mC) +
+      0.3 * (r.uplift_per_day / mU) +
+      0.2 * (r.efficiency / mE) +
+      0.1 * Math.min(1, r.halo_share);
+    const goalScore =
+      goalTargets.reduce((s, gt) => {
+        const m = r.metrics.get(gt.goal) ?? 0;
+        const max = mMetric.get(gt.goal) ?? 1e-9;
+        return s + m / max;
+      }, 0) / goalTargets.length;
+    const score = (baseScore * 0.5 + goalScore * 0.5) * 100;
+
+    const per_goal = goalTargets.map((gt) => {
+      const metricPerDay = r.metrics.get(gt.goal) ?? 0;
+      const predictedMetric = metricPerDay * durationDays;
+      return {
+        goal: gt.goal,
+        metric_per_day: metricPerDay,
+        predicted_metric: predictedMetric,
+        target: gt.target,
+        meets_target: gt.target > 0 ? predictedMetric >= gt.target : true,
+      };
+    });
+    const meetsAll = per_goal.every((p) => p.meets_target);
+
+    const cScore = Math.min(1, r.sample / 5);
+    // GoalRec의 단일 metric 필드는 첫 목표 기준으로 채움(하위 호환).
+    const primary = per_goal[0];
+    return {
+      promo_type: r.promo_type,
+      discount_rate: r.discount_rate,
+      metric_per_day: primary.metric_per_day,
+      predicted_metric: primary.predicted_metric,
+      predicted_uplift: r.uplift_per_day * durationDays,
+      predicted_contribution: r.contribution_per_day * durationDays,
+      contribution_rate: r.contribution_rate,
+      score: Math.round(score),
+      confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
+      sample: r.sample,
+      meets_target: meetsAll,
+      examples: r.examples,
+      per_goal,
     };
   });
 

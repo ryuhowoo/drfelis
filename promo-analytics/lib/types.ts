@@ -16,6 +16,7 @@ export type Promotion = {
   end_date: string;
   channel: string | null;
   purpose: string | null;
+  purposes: string[] | null;
   promo_type: string | null;
   promo_types: string[] | null;
   season_tag: string | null;

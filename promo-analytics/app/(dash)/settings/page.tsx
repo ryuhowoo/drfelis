@@ -3,18 +3,19 @@
 import { useEffect, useState, useCallback } from "react";
 
 type Item = { id: string; name: string; sort: number };
-type Kind = "benefit_types" | "seasonalities";
+type Kind = "benefit_types" | "seasonalities" | "purposes";
 
 export default function SettingsPage() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <h1 className="text-xl font-semibold tracking-tight">설정 — 분류 관리</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        혜택 종류와 시즈널리티 항목을 추가·수정·삭제할 수 있어요. 시뮬레이터·편집 화면에 바로 반영됩니다.
+        혜택·시즈널리티·목적 항목을 추가·수정·삭제할 수 있어요. 시뮬레이터·편집 화면에 바로 반영됩니다.
       </p>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <ListEditor kind="benefit_types" title="혜택 종류" hint="할인·사은품·1+1 등 (고객이 받는 혜택)" />
         <ListEditor kind="seasonalities" title="시즈널리티" hint="N주년·명절·크리스마스 등 시점" />
+        <ListEditor kind="purposes" title="캠페인 목적" hint="세일즈·브랜딩·재고소진 등 (복수 선택 가능)" />
       </div>
     </div>
   );

@@ -33,11 +33,11 @@ export default function SeedPage() {
     setLog([]);
     setProgress(0);
     try {
-      append("마스터·프로모션 적재 중…");
+      append("마스터·캠페인 적재 중…");
       const m = await fetch(`/api/seed?key=${KEY}&phase=master`, { method: "POST" });
       const md = await m.json();
       if (!m.ok) throw new Error(md.error);
-      append(`상품 ${md.products}개 · 프로모션 ${md.promotions}개 완료`);
+      append(`상품 ${md.products}개 · 캠페인 ${md.promotions}개 완료`);
 
       let total = 0;
       for (let i = 0; i < meta.dailyChunks; i++) {
@@ -63,14 +63,14 @@ export default function SeedPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">초기 데이터 적재</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        첨부된 마스터·일별 매출·프로모션 시트를 한 번에 적재합니다. (중복 시 덮어쓰기)
+        첨부된 마스터·일별 매출·캠페인 시트를 한 번에 적재합니다. (중복 시 덮어쓰기)
       </p>
 
       {meta && (
         <div className="mt-5 grid max-w-md grid-cols-3 gap-3">
           <Mini label="상품" value={meta.products} />
           <Mini label="일별 행" value={meta.dailyTotal} />
-          <Mini label="프로모션" value={meta.promotions} />
+          <Mini label="캠페인" value={meta.promotions} />
         </div>
       )}
 
