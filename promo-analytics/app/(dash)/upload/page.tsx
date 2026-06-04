@@ -152,6 +152,15 @@ function UploadCard({ def }: { def: CardDef }) {
       const code = parse.extractPromoCode(rawName);
       const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
 
+      // 시즌 마스터 + 이름·기간으로 시즌성 자동 추정
+      const { inferSeasonality } = await import("@/lib/season");
+      const { data: seasonRows } = await supabase
+        .from("seasonalities")
+        .select("name")
+        .order("sort");
+      const seasonNames = (seasonRows ?? []).map((r) => r.name as string);
+      const season_tag = inferSeasonality(name, parsed.start_date, seasonNames);
+
       setP({ phase: "uploading", message: "캠페인 생성 중…" });
       const { data: promo, error: pErr } = await supabase
         .from("promotions")
@@ -160,6 +169,7 @@ function UploadCard({ def }: { def: CardDef }) {
           code,
           start_date: parsed.start_date,
           end_date: parsed.end_date,
+          season_tag,
         })
         .select("id")
         .single();

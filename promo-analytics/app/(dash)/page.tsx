@@ -141,7 +141,12 @@ export default async function Dashboard() {
 
       {/* KPI Bento */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="캠페인 기여 총 매출" value={won(totalUplift)} brand />
+        <Kpi
+          label="캠페인 기여 총 매출"
+          value={wonShort(totalUplift)}
+          full={won(totalUplift)}
+          brand
+        />
         <Kpi label="평균 직접 매출" value={wonShort(avgDirect)} sub={`캠페인 ${n}건 평균`} />
         <Kpi label="평균 간접 매출" value={wonShort(avgHalo)} sub={`캠페인 ${n}건 평균`} />
         <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`캠페인 ${n}건 평균`} />
@@ -250,15 +255,30 @@ function sum(a: number[]) {
   return a.reduce((x, y) => x + y, 0);
 }
 
-function Kpi({ label, value, sub, brand }: { label: string; value: string; sub?: string; brand?: boolean }) {
+function Kpi({
+  label,
+  value,
+  sub,
+  full,
+  brand,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  full?: string; // 데스크톱에서 풀 표기 (예: ₩3,409,316,915)
+  brand?: boolean;
+}) {
   return (
     <div
-      className={`rounded-[24px] p-5 ${
+      className={`rounded-[24px] p-4 sm:p-5 ${
         brand ? "bg-brand-500 text-white" : "bg-white card-soft"
       }`}
     >
       <div className={`text-xs ${brand ? "text-brand-100" : "text-neutral-400"}`}>{label}</div>
-      <div className="mt-2 text-xl font-bold tracking-tight tabular-nums sm:text-2xl">{value}</div>
+      <div className="mt-2 break-words text-lg font-bold tracking-tight tabular-nums sm:text-2xl">
+        <span className={full ? "sm:hidden" : ""}>{value}</span>
+        {full && <span className="hidden sm:inline">{full}</span>}
+      </div>
       {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-neutral-400"}`}>{sub}</div>}
     </div>
   );
