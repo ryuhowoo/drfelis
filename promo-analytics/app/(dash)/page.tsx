@@ -13,12 +13,24 @@ type Row = Promotion & {
   promo_days: number;
 };
 
+type OverallMetrics = {
+  data_start: string;
+  data_end: string;
+  non_promo_days: number;
+  promo_days: number;
+  baseline_daily: number;
+  promo_daily: number;
+  lift_ratio: number | null;
+};
+
 export default async function Dashboard() {
   const supabase = await createClient();
-  const { data: promos } = await supabase
-    .from("promotions")
-    .select("*")
-    .order("start_date", { ascending: false });
+  const [{ data: promos }, { data: overallData }] = await Promise.all([
+    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
+    supabase.rpc("overall_baseline_metrics"),
+  ]);
+
+  const overall = (overallData?.[0] as OverallMetrics | undefined) ?? null;
 
   const rows: Row[] = await Promise.all(
     (promos ?? []).map(async (p: Promotion) => {
@@ -52,11 +64,10 @@ export default async function Dashboard() {
   const avgDuration = n ? sum(rows.map((r) => r.promo_days)) / n : 0;
   const haloShare = totalUplift !== 0 ? totalHalo / totalUplift : null;
 
-  // 상시 일평균 vs 행사 일평균
-  const totalBaselineDaily = sum(rows.map((r) => r.baseline_daily));
-  const totalPromoDaily = sum(rows.map((r) => r.promo_daily));
-  const liftRatio =
-    totalBaselineDaily > 0 ? totalPromoDaily / totalBaselineDaily : null;
+  // 상시 일평균 vs 행사 일평균 — 데이터 기간 전체에서 일자 단위로 산출 (product 중복 합산 X)
+  const totalBaselineDaily = overall?.baseline_daily ?? 0;
+  const totalPromoDaily = overall?.promo_daily ?? 0;
+  const liftRatio = overall?.lift_ratio ?? null;
   const compData = [...rows]
     .sort((a, b) => b.promo_daily - a.promo_daily)
     .slice(0, 5)
@@ -155,15 +166,16 @@ export default async function Dashboard() {
       {/* 상시 vs 행사 비교 (비교 기준) */}
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardTitle>상시 대비 행사 일매출</CardTitle>
+          <CardTitle>상시 대비 행사 일매출 (캠페인별)</CardTitle>
           <p className="-mt-2 mb-3 text-xs text-neutral-400">
             <span className="font-medium text-neutral-500">상시 일평균</span> = 캠페인 직전 8주의
             비캠페인 일평균 매출 · <span className="font-medium text-brand-600">행사 일평균</span> = 캠페인 기간 매출 ÷ 운영일수
+            <span className="block">※ 그 캠페인에 등장한 상품들만 합산한 값 (전 매장 합계 아님)</span>
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
         <div className="flex flex-col justify-center rounded-[28px] bg-neutral-900 p-5 text-white card-soft">
-          <div className="text-xs text-neutral-400">평소 대비 행사 매출</div>
+          <div className="text-xs text-neutral-400">평소 대비 행사 매출 (전 매장)</div>
           <div className="mt-1 text-4xl font-bold text-brand-400">
             {liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
           </div>
@@ -177,6 +189,11 @@ export default async function Dashboard() {
               <span className="font-semibold tabular-nums text-brand-400">{wonShort(totalPromoDaily)}</span>
             </div>
           </div>
+          {overall && (
+            <div className="mt-3 text-[10px] text-neutral-500">
+              {overall.data_start} ~ {overall.data_end} · 비캠페인 {overall.non_promo_days}일 · 캠페인 {overall.promo_days}일
+            </div>
+          )}
         </div>
       </div>
 
