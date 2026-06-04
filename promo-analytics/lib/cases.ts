@@ -13,17 +13,24 @@ export async function loadCases(
 
   return Promise.all(
     (promos as Promotion[]).map(async (p) => {
-      const [{ data: sData }, { data: mData }] = await Promise.all([
+      const [{ data: sData }, { data: mData }, { data: psData }] = await Promise.all([
         supabase.rpc("promotion_summary", { p_id: p.id }),
         supabase.rpc("promotion_measurement", { p_id: p.id }),
+        supabase
+          .from("promotion_sales")
+          .select("quantity, order_count")
+          .eq("promotion_id", p.id),
       ]);
       const s = (sData?.[0] as PromotionSummary) ?? null;
       const meas = (mData as MeasurementRow[]) ?? [];
+      const ps = (psData as { quantity: number; order_count: number }[]) ?? [];
       const duration = daysBetween(p.start_date, p.end_date);
       const promoDays = meas[0]?.promo_days ?? duration;
       const baseline_daily = meas.reduce((a, x) => a + x.baseline_daily_revenue, 0);
       const actual_daily =
         promoDays > 0 ? meas.reduce((a, x) => a + x.actual_revenue, 0) / promoDays : 0;
+      const totalQty = ps.reduce((a, x) => a + (x.quantity ?? 0), 0);
+      const totalOrders = ps.reduce((a, x) => a + (x.order_count ?? 0), 0);
       return {
         id: p.id,
         name: p.name,
@@ -40,6 +47,8 @@ export async function loadCases(
         halo_share: s?.halo_share ?? null,
         baseline_daily,
         actual_daily,
+        qty_per_day: promoDays > 0 ? totalQty / promoDays : 0,
+        orders_per_day: promoDays > 0 ? totalOrders / promoDays : 0,
       };
     }),
   );

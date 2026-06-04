@@ -17,6 +17,8 @@ export type CaseFeature = {
   halo_share: number | null;
   baseline_daily: number; // 상시 일평균(전 제품 합)
   actual_daily: number; // 행사 기간 일평균
+  qty_per_day: number; // 일평균 판매수량
+  orders_per_day: number; // 일평균 구매건수
 };
 
 export type PredictionSpec = {
@@ -173,6 +175,121 @@ export type Recommendation = {
   sample: number;
   meets_target: boolean;
 };
+
+// ── 목적 기반 추천 (매출/재고소진/브랜딩) + 종합점수 ──
+export type Goal = "revenue" | "stock" | "branding";
+
+export type GoalRec = {
+  promo_type: string;
+  discount_rate: number | null;
+  metric_per_day: number; // 목적 지표 일평균
+  predicted_metric: number; // 기간 환산 목적 지표
+  predicted_uplift: number;
+  predicted_contribution: number;
+  contribution_rate: number | null;
+  score: number; // 종합 점수 0~100
+  confidence: "높음" | "보통" | "낮음";
+  sample: number;
+  meets_target: boolean;
+  examples: { id: string; name: string }[];
+};
+
+function goalPerDay(goal: Goal, c: CaseFeature): number {
+  if (goal === "stock") return c.qty_per_day;
+  if (goal === "branding") return c.orders_per_day;
+  return c.uplift_per_day; // revenue
+}
+
+export function recommendByGoal(
+  goal: Goal,
+  target: number,
+  durationDays: number,
+  seasonTag: string | null,
+  cases: CaseFeature[],
+): GoalRec[] {
+  const buckets = new Map<string, CaseFeature[]>();
+  for (const c of cases) {
+    if (!c.promo_type) continue;
+    if (seasonTag && c.season_tag && c.season_tag !== seasonTag) continue;
+    const bucket =
+      c.discount_rate != null ? Math.round((c.discount_rate * 100) / 10) * 10 : -1;
+    const key = `${c.promo_type}|${bucket}`;
+    (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(c);
+  }
+
+  type Raw = {
+    promo_type: string;
+    discount_rate: number | null;
+    metric_per_day: number;
+    uplift_per_day: number;
+    contribution_per_day: number;
+    contribution_rate: number | null;
+    efficiency: number; // 증분/할인깊이
+    halo_share: number;
+    sample: number;
+    examples: { id: string; name: string }[];
+  };
+  const raws: Raw[] = [];
+  for (const [key, g] of buckets) {
+    const [promo_type, bucketStr] = key.split("|");
+    const bucket = Number(bucketStr);
+    const avg = (pick: (c: CaseFeature) => number) =>
+      g.reduce((s, c) => s + pick(c), 0) / g.length;
+    const dr = bucket >= 0 ? bucket / 100 : null;
+    const uplift_per_day = avg((c) => c.uplift_per_day);
+    const crs = g.map((c) => c.contribution_rate).filter((x): x is number => x != null);
+    const cr = crs.length ? crs.reduce((a, b) => a + b, 0) / crs.length : null;
+    raws.push({
+      promo_type,
+      discount_rate: dr,
+      metric_per_day: avg((c) => goalPerDay(goal, c)),
+      uplift_per_day,
+      contribution_per_day: avg((c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
+      contribution_rate: cr,
+      efficiency: dr && dr > 0 ? uplift_per_day / dr : uplift_per_day,
+      halo_share: avg((c) => c.halo_share ?? 0),
+      sample: g.length,
+      examples: g.slice(0, 3).map((c) => ({ id: c.id, name: c.name })),
+    });
+  }
+
+  // 정규화용 최대값
+  const maxOf = (pick: (r: Raw) => number) => Math.max(...raws.map(pick), 1e-9);
+  const mU = maxOf((r) => r.uplift_per_day);
+  const mC = maxOf((r) => r.contribution_per_day);
+  const mE = maxOf((r) => r.efficiency);
+
+  const recs: GoalRec[] = raws.map((r) => {
+    // 종합 점수: 공헌이익 40 · 증분 30 · 효율 20 · 후광 10
+    const score =
+      (0.4 * (r.contribution_per_day / mC) +
+        0.3 * (r.uplift_per_day / mU) +
+        0.2 * (r.efficiency / mE) +
+        0.1 * Math.min(1, r.halo_share)) *
+      100;
+    const predicted_metric = r.metric_per_day * durationDays;
+    const cScore = Math.min(1, r.sample / 5);
+    return {
+      promo_type: r.promo_type,
+      discount_rate: r.discount_rate,
+      metric_per_day: r.metric_per_day,
+      predicted_metric,
+      predicted_uplift: r.uplift_per_day * durationDays,
+      predicted_contribution: r.contribution_per_day * durationDays,
+      contribution_rate: r.contribution_rate,
+      score: Math.round(score),
+      confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
+      sample: r.sample,
+      meets_target: predicted_metric >= target,
+      examples: r.examples,
+    };
+  });
+
+  return recs.sort((a, b) => {
+    if (a.meets_target !== b.meets_target) return a.meets_target ? -1 : 1;
+    return b.score - a.score;
+  });
+}
 
 export function prescribe(
   targetUplift: number,
