@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Promotion } from "@/lib/types";
 import EditForm from "./EditForm";
+import { loadOptions } from "@/lib/options";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,7 @@ export default async function EditPromotion({
   }
   const products = [...agg.values()].sort((a, b) => b.revenue - a.revenue);
   const mainIds = (mains ?? []).map((m) => m.product_id);
+  const options = await loadOptions(supabase);
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
@@ -52,6 +54,7 @@ export default async function EditPromotion({
         promo={promo}
         products={products}
         initialMainIds={mainIds}
+        options={options}
       />
     </div>
   );

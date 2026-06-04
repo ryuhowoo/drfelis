@@ -11,9 +11,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { PROMO_TYPES, SEASON_TAGS } from "@/lib/constants";
 import { won, wonShort, pct } from "@/lib/format";
 import { predict, type CaseFeature, type PredictionSpec } from "@/lib/predict";
+
+type Options = { benefitTypes: string[]; seasonalities: string[] };
 
 const BRAND = "#e76f51";
 
@@ -26,8 +27,8 @@ type Scenario = {
   contribution: number;
 };
 
-export default function Simulator({ cases }: { cases: CaseFeature[] }) {
-  const [promoType, setPromoType] = useState("할인");
+export default function Simulator({ cases, options }: { cases: CaseFeature[]; options: Options }) {
+  const [promoType, setPromoType] = useState(options.benefitTypes[0] ?? "할인");
   const [seasonTag, setSeasonTag] = useState("");
   const [discount, setDiscount] = useState(40);
   const [days, setDays] = useState(4);
@@ -108,10 +109,10 @@ export default function Simulator({ cases }: { cases: CaseFeature[] }) {
         {/* 컨트롤 */}
         <section className="rounded-[24px] bg-white p-6 card-soft lg:col-span-2">
           <Field label="혜택 종류">
-            <Chips options={PROMO_TYPES} value={promoType} onChange={setPromoType} />
+            <Chips options={options.benefitTypes} value={promoType} onChange={setPromoType} />
           </Field>
           <Field label="시즈널리티">
-            <Chips options={SEASON_TAGS} value={seasonTag} onChange={setSeasonTag} clearable />
+            <Chips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} clearable />
           </Field>
 
           <div className="mt-5">
