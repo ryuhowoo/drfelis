@@ -90,15 +90,27 @@ function UploadCard({ def }: { def: CardDef }) {
           rows.map((r) => r.base_name),
         );
 
-        const records = rows.map((r) => ({
-          sale_date: r.sale_date,
-          product_id: productMap.get(r.base_name) ?? null,
-          base_name: r.base_name,
-          option_info: r.option_info,
-          revenue: r.revenue,
-          quantity: r.quantity,
-          source_file: file.name,
-        }));
+        // 충돌 키(sale_date·base_name·option_info)로 사전 중복 제거 — 후순위 우선(합산).
+        // 같은 키가 한 배치에 두 번 들어가면 Postgres upsert가 실패하므로 방어.
+        const dedup = new Map<
+          string,
+          { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
+        >();
+        for (const r of rows) {
+          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info]);
+          const prev = dedup.get(key);
+          dedup.set(key, {
+            sale_date: r.sale_date,
+            product_id: productMap.get(r.base_name) ?? null,
+            base_name: r.base_name,
+            option_info: r.option_info,
+            // 동일 키가 여러 행으로 분리돼 있으면 합산(옵션 컬럼 없는 파일 대비)
+            revenue: (prev?.revenue ?? 0) + r.revenue,
+            quantity: (prev?.quantity ?? 0) + r.quantity,
+            source_file: file.name,
+          });
+        }
+        const records = [...dedup.values()];
 
         const batches = products.chunk(records, 1000);
         let done = 0;
