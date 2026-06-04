@@ -50,6 +50,13 @@ export default function EditForm({
   function toggleMain(id: string) {
     setMainIds((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
   }
+  function selectFiltered() {
+    setMainIds((m) => [...new Set([...m, ...filtered.map((p) => p.product_id)])]);
+  }
+  function clearMain() {
+    setMainIds([]);
+  }
+  const allSelected = products.length > 0 && mainIds.length === products.length;
 
   async function save() {
     setSaving(true);
@@ -155,13 +162,38 @@ export default function EditForm({
           </p>
         </Field>
 
-        <Field label={`메인 상품 지정 (${mainIds.length}개 선택됨)`}>
+        <Field label={`메인 상품 지정 (${mainIds.length}/${products.length}개 선택)`}>
+          <label className="mb-2 flex cursor-pointer items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={() => (allSelected ? clearMain() : setMainIds(products.map((p) => p.product_id)))}
+              className="accent-brand-500"
+            />
+            전 상품 대상 (전체 선택)
+          </label>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="상품명 검색"
             className={`mb-2 ${inputCls}`}
           />
+          <div className="mb-2 flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={selectFiltered}
+              className="rounded-full border border-neutral-200 px-2.5 py-1 text-neutral-600 hover:bg-neutral-50"
+            >
+              {query ? "검색결과 선택" : "전체 선택"}
+            </button>
+            <button
+              type="button"
+              onClick={clearMain}
+              className="rounded-full border border-neutral-200 px-2.5 py-1 text-neutral-600 hover:bg-neutral-50"
+            >
+              전체 해제
+            </button>
+          </div>
           <div className="max-h-72 overflow-y-auto rounded-xl border border-neutral-200">
             {filtered.map((p) => (
               <label
