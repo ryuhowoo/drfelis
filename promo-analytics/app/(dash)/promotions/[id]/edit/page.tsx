@@ -31,7 +31,7 @@ export default async function EditPromotion({
     .select("product_id")
     .eq("promotion_id", id);
 
-  // 프로모션 내 상품 목록 (매출 합으로 정렬, 중복 제거)
+  // 캠페인 내 상품 목록 (매출 합으로 정렬, 중복 제거)
   const agg = new Map<string, { product_id: string; base_name: string; revenue: number }>();
   for (const s of sales ?? []) {
     if (!s.product_id) continue;

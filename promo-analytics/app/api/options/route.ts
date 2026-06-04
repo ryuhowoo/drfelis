@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-const TABLES = ["benefit_types", "seasonalities"] as const;
+const TABLES = ["benefit_types", "seasonalities", "purposes"] as const;
 type Kind = (typeof TABLES)[number];
 
 function validKind(k: unknown): k is Kind {
@@ -12,13 +12,15 @@ function validKind(k: unknown): k is Kind {
 
 export async function GET() {
   const supabase = await createClient();
-  const [bt, ss] = await Promise.all([
+  const [bt, ss, pp] = await Promise.all([
     supabase.from("benefit_types").select("id, name, sort").order("sort"),
     supabase.from("seasonalities").select("id, name, sort").order("sort"),
+    supabase.from("purposes").select("id, name, sort").order("sort"),
   ]);
   return NextResponse.json({
     benefit_types: bt.data ?? [],
     seasonalities: ss.data ?? [],
+    purposes: pp.data ?? [],
   });
 }
 

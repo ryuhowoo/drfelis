@@ -93,7 +93,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
               <th className="px-4 py-3 text-center font-medium">종합점수</th>
-              <th className="px-4 py-3 font-medium">프로모션</th>
+              <th className="px-4 py-3 font-medium">캠페인</th>
               <th className="px-4 py-3 font-medium">혜택/시즈널리티</th>
               <th className="px-4 py-3 text-right font-medium">할인</th>
               <th className="px-4 py-3 text-right font-medium">총 기여</th>
@@ -135,7 +135,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
-                  조건에 맞는 프로모션이 없습니다.
+                  조건에 맞는 캠페인이 없습니다.
                 </td>
               </tr>
             )}

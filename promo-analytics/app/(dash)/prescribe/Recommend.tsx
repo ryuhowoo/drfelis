@@ -5,42 +5,72 @@ import Link from "next/link";
 import { won, wonShort, pct, num } from "@/lib/format";
 import type { GoalRec, Goal } from "@/lib/predict";
 
-type Options = { benefitTypes: string[]; seasonalities: string[] };
+type Options = { benefitTypes: string[]; seasonalities: string[]; purposes: string[] };
 
-const GOALS: { key: Goal; label: string; desc: string; targetLabel: string; unit: string }[] = [
-  { key: "revenue", label: "매출", desc: "기여 매출(증분)을 키우는 게 목표", targetLabel: "목표 증분 매출(₩)", unit: "won" },
-  { key: "stock", label: "재고소진", desc: "메인 제품 재고를 빠르게 소진", targetLabel: "목표 판매수량(개)", unit: "qty" },
-  { key: "branding", label: "브랜딩", desc: "구매 건수(저변 확대)가 목표", targetLabel: "목표 구매 건수", unit: "orders" },
+const GOALS: { key: Goal; label: string; desc: string; targetLabel: string; unit: "won" | "qty" | "orders"; placeholder: string }[] = [
+  { key: "revenue",  label: "세일즈",   desc: "기여 매출(증분)을 키우는 게 목표",   targetLabel: "목표 증분 매출(₩)", unit: "won",    placeholder: "50000000" },
+  { key: "stock",    label: "재고소진", desc: "메인 제품 재고를 빠르게 소진",        targetLabel: "목표 판매수량(개)",  unit: "qty",    placeholder: "3000" },
+  { key: "branding", label: "브랜딩",   desc: "구매 건수(저변 확대)가 목표",         targetLabel: "목표 구매 건수",     unit: "orders", placeholder: "1000" },
 ];
 
-function fmtMetric(unit: string, v: number) {
+const GOAL_LABEL: Record<Goal, string> = {
+  revenue: "세일즈",
+  stock: "재고소진",
+  branding: "브랜딩",
+};
+
+function fmtMetric(unit: "won" | "qty" | "orders", v: number) {
   if (unit === "won") return won(v);
   if (unit === "qty") return `${num(v)}개`;
   return `${num(v)}건`;
 }
 
+function unitFor(g: Goal): "won" | "qty" | "orders" {
+  return GOALS.find((x) => x.key === g)!.unit;
+}
+
 export default function Recommend({ options }: { options: Options }) {
-  const [goal, setGoal] = useState<Goal>("revenue");
-  const [target, setTarget] = useState("");
+  const [selected, setSelected] = useState<Goal[]>(["revenue"]);
+  const [targets, setTargets] = useState<Record<Goal, string>>({
+    revenue: "",
+    stock: "",
+    branding: "",
+  });
   const [days, setDays] = useState("4");
   const [season, setSeason] = useState("");
   const [recs, setRecs] = useState<GoalRec[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const goalDef = GOALS.find((g) => g.key === goal)!;
+  function toggleGoal(g: Goal) {
+    setRecs(null);
+    setSelected((s) => {
+      if (s.includes(g)) {
+        // 최소 1개는 남겨둠
+        if (s.length === 1) return s;
+        return s.filter((x) => x !== g);
+      }
+      return [...s, g];
+    });
+  }
+  function setTarget(g: Goal, v: string) {
+    setTargets((t) => ({ ...t, [g]: v }));
+  }
 
   async function run() {
     setLoading(true);
     setError("");
     setRecs(null);
     try {
+      const goal_targets = selected.map((g) => ({
+        goal: g,
+        target: Number(targets[g].replace(/[^0-9.]/g, "")) || 0,
+      }));
       const res = await fetch("/api/prescribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          goal,
-          target: Number(target.replace(/[^0-9.]/g, "")) || 0,
+          goal_targets,
           duration_days: Number(days) || 1,
           season_tag: season || null,
         }),
@@ -57,37 +87,60 @@ export default function Recommend({ options }: { options: Options }) {
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <h1 className="text-xl font-semibold tracking-tight">프로모션 추천</h1>
+      <h1 className="text-xl font-semibold tracking-tight">캠페인 추천</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        목적을 먼저 고르면, 과거 성과를 근거로 그 목적에 맞는 혜택 구성을 추천해요.
+        목적을 하나 또는 여러 개 선택하면, 과거 성과를 근거로 그에 맞는 혜택 구성을 추천해요.
+        (예: <strong>브랜딩</strong> + <strong>세일즈</strong> 혼합)
       </p>
 
-      {/* 목적 탭 */}
+      {/* 목적 선택 — 다중선택 */}
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {GOALS.map((g) => (
-          <button
-            key={g.key}
-            onClick={() => { setGoal(g.key); setRecs(null); }}
-            className={`rounded-2xl border p-4 text-left transition ${
-              goal === g.key
-                ? "border-brand-500 bg-brand-50"
-                : "border-neutral-200 bg-white hover:border-neutral-300"
-            }`}
-          >
-            <div className={`text-base font-bold ${goal === g.key ? "text-brand-600" : "text-neutral-800"}`}>{g.label}</div>
-            <div className="mt-0.5 text-xs text-neutral-500">{g.desc}</div>
-          </button>
-        ))}
+        {GOALS.map((g) => {
+          const active = selected.includes(g.key);
+          return (
+            <button
+              key={g.key}
+              onClick={() => toggleGoal(g.key)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                active
+                  ? "border-brand-500 bg-brand-50"
+                  : "border-neutral-200 bg-white hover:border-neutral-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => {}}
+                  className="pointer-events-none accent-brand-500"
+                />
+                <div className={`text-base font-bold ${active ? "text-brand-600" : "text-neutral-800"}`}>{g.label}</div>
+              </div>
+              <div className="mt-0.5 text-xs text-neutral-500">{g.desc}</div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 입력 */}
+      {/* 입력 — 선택된 목표마다 목표값 */}
       <div className="mt-4 rounded-[24px] bg-white p-5 card-soft">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label={goalDef.targetLabel}>
-            <input value={target} onChange={(e) => setTarget(e.target.value)} inputMode="numeric"
-              placeholder={goal === "revenue" ? "50000000" : goal === "stock" ? "3000" : "1000"}
-              className={inputCls} />
-          </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {selected.map((g) => {
+            const def = GOALS.find((x) => x.key === g)!;
+            return (
+              <Field key={g} label={def.targetLabel}>
+                <input
+                  value={targets[g]}
+                  onChange={(e) => setTarget(g, e.target.value)}
+                  inputMode="numeric"
+                  placeholder={def.placeholder}
+                  className={inputCls}
+                />
+              </Field>
+            );
+          })}
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="기간(일)">
             <input value={days} onChange={(e) => setDays(e.target.value)} inputMode="numeric" className={inputCls} />
           </Field>
@@ -103,20 +156,26 @@ export default function Recommend({ options }: { options: Options }) {
           {loading ? "분석 중…" : "추천 받기"}
         </button>
         {error && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {selected.length > 1 && (
+          <p className="mt-3 text-xs text-neutral-400">
+            여러 목적을 함께 고르면, 종합 점수는 각 목적 점수의 평균으로 계산돼요.
+            모든 목적의 목표를 만족하는 후보가 ‘목표 달성’으로 표시됩니다.
+          </p>
+        )}
       </div>
 
       {recs && (
         <div className="mt-6">
           {recs.length === 0 ? (
             <p className="rounded-[24px] border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
-              추천할 사례가 부족합니다. 프로모션 데이터를 더 쌓아주세요.
+              추천할 사례가 부족합니다. 캠페인 데이터를 더 쌓아주세요.
             </p>
           ) : (
             <div className="space-y-3">
               {recs.map((r, i) => (
                 <div key={i} className={`rounded-[24px] bg-white p-5 card-soft ${i === 0 ? "ring-2 ring-brand-500" : ""}`}>
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         {i === 0 && <span className="rounded-full bg-brand-500 px-2 py-0.5 text-xs font-semibold text-white">추천 1순위</span>}
                         <span className="text-base font-bold">
@@ -125,8 +184,39 @@ export default function Recommend({ options }: { options: Options }) {
                         {r.meets_target && <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">목표 달성</span>}
                         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">신뢰도 {r.confidence}</span>
                       </div>
+
+                      {/* 목적별 예측 */}
+                      <div className="mt-2 grid gap-1.5 text-xs text-neutral-500 sm:grid-cols-2">
+                        {(r.per_goal ?? [{
+                          goal: "revenue" as Goal,
+                          metric_per_day: r.metric_per_day,
+                          predicted_metric: r.predicted_metric,
+                          target: 0,
+                          meets_target: r.meets_target,
+                        }]).map((pg) => (
+                          <div key={pg.goal} className="flex items-center gap-1.5">
+                            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
+                              {GOAL_LABEL[pg.goal]}
+                            </span>
+                            <span>
+                              예상 <strong className="text-neutral-800">{fmtMetric(unitFor(pg.goal), pg.predicted_metric)}</strong>
+                              {pg.target > 0 && (
+                                <>
+                                  {" / "}
+                                  목표 {fmtMetric(unitFor(pg.goal), pg.target)}
+                                  {pg.meets_target ? (
+                                    <span className="ml-1 text-green-600">✓</span>
+                                  ) : (
+                                    <span className="ml-1 text-amber-600">▾</span>
+                                  )}
+                                </>
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
                       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
-                        <span>예상 {goalDef.label}: <strong className="text-neutral-800">{fmtMetric(goalDef.unit, r.predicted_metric)}</strong></span>
                         <span>예상 증분: {wonShort(r.predicted_uplift)}</span>
                         <span>예상 공헌이익: {wonShort(r.predicted_contribution)}</span>
                         <span>근거 {r.sample}건</span>

@@ -107,7 +107,7 @@ export default async function Dashboard() {
           </div>
           <div>
             <div className="text-sm font-semibold">{dateChip}</div>
-            <div className="text-xs text-neutral-400">프로모션 {rows.length}건 분석 중</div>
+            <div className="text-xs text-neutral-400">캠페인 {rows.length}건 분석 중</div>
           </div>
         </div>
         <Link
@@ -133,7 +133,7 @@ export default async function Dashboard() {
             {" "}— 기여 매출 <strong className="text-neutral-900">{won(best.summary.total_uplift)}</strong>
             {best.summary.halo_share != null && <>, 간접 비중 {pct(best.summary.halo_share)}</>}.
             {liftRatio != null && (
-              <> 프로모션 기간엔 평소(상시 일평균)보다 <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.</>
+              <> 캠페인 기간엔 평소(상시 일평균)보다 <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.</>
             )}
           </p>
         </section>
@@ -141,10 +141,10 @@ export default async function Dashboard() {
 
       {/* KPI Bento */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="프로모션 기여 총 매출" value={won(totalUplift)} brand />
-        <Kpi label="평균 직접 매출" value={wonShort(avgDirect)} sub={`프로모션 ${n}건 평균`} />
-        <Kpi label="평균 간접 매출" value={wonShort(avgHalo)} sub={`프로모션 ${n}건 평균`} />
-        <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`프로모션 ${n}건 평균`} />
+        <Kpi label="캠페인 기여 총 매출" value={won(totalUplift)} brand />
+        <Kpi label="평균 직접 매출" value={wonShort(avgDirect)} sub={`캠페인 ${n}건 평균`} />
+        <Kpi label="평균 간접 매출" value={wonShort(avgHalo)} sub={`캠페인 ${n}건 평균`} />
+        <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`캠페인 ${n}건 평균`} />
       </div>
 
       {/* 상시 vs 행사 비교 (비교 기준) */}
@@ -152,8 +152,8 @@ export default async function Dashboard() {
         <Card className="lg:col-span-2">
           <CardTitle>상시 대비 행사 일매출</CardTitle>
           <p className="-mt-2 mb-3 text-xs text-neutral-400">
-            <span className="font-medium text-neutral-500">상시 일평균</span> = 프로모션 직전 8주의
-            비프로모션 일평균 매출 · <span className="font-medium text-brand-600">행사 일평균</span> = 프로모션 기간 매출 ÷ 운영일수
+            <span className="font-medium text-neutral-500">상시 일평균</span> = 캠페인 직전 8주의
+            비캠페인 일평균 매출 · <span className="font-medium text-brand-600">행사 일평균</span> = 캠페인 기간 매출 ÷ 운영일수
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
@@ -281,7 +281,7 @@ function EmptyState() {
         </div>
         <p className="text-base font-semibold text-neutral-800">아직 데이터가 없습니다.</p>
         <p className="mx-auto mt-1 max-w-md text-sm text-neutral-500">
-          첨부해주신 마스터·일별 매출·프로모션 데이터를 버튼 한 번으로 적재할 수 있어요.
+          첨부해주신 마스터·일별 매출·캠페인 데이터를 버튼 한 번으로 적재할 수 있어요.
         </p>
         <Link
           href="/seed"

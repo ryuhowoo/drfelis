@@ -25,8 +25,8 @@ const CARDS: CardDef[] = [
   },
   {
     key: "promotion",
-    title: "③ 프로모션 시트",
-    desc: "프로모션 기간 실적(전 제품). 업로드하면 프로모션이 생성되고 상세로 이동합니다.",
+    title: "③ 캠페인 시트",
+    desc: "캠페인 기간 실적(전 제품). 업로드하면 캠페인이 생성되고 상세로 이동합니다.",
   },
 ];
 
@@ -90,15 +90,27 @@ function UploadCard({ def }: { def: CardDef }) {
           rows.map((r) => r.base_name),
         );
 
-        const records = rows.map((r) => ({
-          sale_date: r.sale_date,
-          product_id: productMap.get(r.base_name) ?? null,
-          base_name: r.base_name,
-          option_info: r.option_info,
-          revenue: r.revenue,
-          quantity: r.quantity,
-          source_file: file.name,
-        }));
+        // 충돌 키(sale_date·base_name·option_info)로 사전 중복 제거 — 후순위 우선(합산).
+        // 같은 키가 한 배치에 두 번 들어가면 Postgres upsert가 실패하므로 방어.
+        const dedup = new Map<
+          string,
+          { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
+        >();
+        for (const r of rows) {
+          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info]);
+          const prev = dedup.get(key);
+          dedup.set(key, {
+            sale_date: r.sale_date,
+            product_id: productMap.get(r.base_name) ?? null,
+            base_name: r.base_name,
+            option_info: r.option_info,
+            // 동일 키가 여러 행으로 분리돼 있으면 합산(옵션 컬럼 없는 파일 대비)
+            revenue: (prev?.revenue ?? 0) + r.revenue,
+            quantity: (prev?.quantity ?? 0) + r.quantity,
+            source_file: file.name,
+          });
+        }
+        const records = [...dedup.values()];
 
         const batches = products.chunk(records, 1000);
         let done = 0;
@@ -128,7 +140,7 @@ function UploadCard({ def }: { def: CardDef }) {
       const parsed = parse.parsePromotionSheet(buf);
       if (parsed.rows.length === 0) throw new Error("유효한 행이 없습니다.");
       if (!parsed.start_date || !parsed.end_date)
-        throw new Error("프로모션 기간을 시트에서 찾지 못했습니다. (일자 누적 컬럼 확인)");
+        throw new Error("캠페인 기간을 시트에서 찾지 못했습니다. (일자 누적 컬럼 확인)");
 
       setP({ phase: "uploading", message: "상품 매칭 중…" });
       const productMap = await products.ensureProducts(
@@ -140,7 +152,7 @@ function UploadCard({ def }: { def: CardDef }) {
       const code = parse.extractPromoCode(rawName);
       const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
 
-      setP({ phase: "uploading", message: "프로모션 생성 중…" });
+      setP({ phase: "uploading", message: "캠페인 생성 중…" });
       const { data: promo, error: pErr } = await supabase
         .from("promotions")
         .insert({

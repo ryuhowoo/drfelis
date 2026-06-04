@@ -20,3 +20,12 @@ export const SEASON_TAGS = [
   "여름",
   "겨울",
 ];
+
+export const PURPOSE_TAGS = [
+  "세일즈",
+  "브랜딩",
+  "재고소진",
+  "신제품 런칭",
+  "리뉴얼",
+  "회원 활성화",
+];
