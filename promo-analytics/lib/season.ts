@@ -15,9 +15,10 @@ const NAME_KEYWORDS: { season: string; aliases: string[] }[] = [
 ];
 
 // 시작일 기준 시즌 윈도 (월-일 → 시즌)
-// 음력 시즌(추석·설)은 매년 다르지만 근사 윈도로 잡음
+// 음력 시즌(추석·설)은 매년 다르지만 근사 윈도로 잡음.
+// 좁은 윈도가 넓은 윈도보다 우선하도록 windowLen 오름차순으로 자동 정렬.
 type Window = { season: string; from: [number, number]; to: [number, number] };
-const DATE_WINDOWS: Window[] = [
+const DATE_WINDOWS_RAW: Window[] = [
   { season: "설 연휴",           from: [1, 25],  to: [2, 15] },
   { season: "신학기",            from: [2, 25],  to: [3, 15] },
   { season: "여름",              from: [6, 15],  to: [8, 31] },
@@ -28,6 +29,23 @@ const DATE_WINDOWS: Window[] = [
   { season: "겨울",              from: [12, 1],  to: [1, 31] },
   { season: "세계 고양이의 날",  from: [8, 5],   to: [8, 10] }, // 8/8
 ];
+
+function windowLen(w: Window): number {
+  const from = w.from[0] * 100 + w.from[1];
+  const to = w.to[0] * 100 + w.to[1];
+  // 연도 경계(겨울 12/1 ~ 1/31)는 환산이 부정확하지만 좁은 윈도(holiday) 우선이 보장되면 충분.
+  return from <= to ? to - from : 12_31 - from + to;
+}
+const DATE_WINDOWS: Window[] = [...DATE_WINDOWS_RAW].sort(
+  (a, b) => windowLen(a) - windowLen(b),
+);
+
+// 마스터에 특정 시즌이 없을 때 폴백할 대안 시즌(완화 매칭용).
+// 기본 시드에 '명절'만 있고 '한가위 고양이'·'설 연휴'는 없을 수 있어 대응.
+const FALLBACK_ALIASES: Record<string, string[]> = {
+  "한가위 고양이": ["명절"],
+  "설 연휴":      ["명절"],
+};
 
 function normalize(s: string): string {
   return s.toLowerCase().replace(/[\s_\-·]+/g, "");
@@ -80,7 +98,7 @@ export function inferSeasonality(
   return null;
 }
 
-// available 마스터에서 정확 매칭 또는 부분 매칭(어느 한쪽이 포함)
+// available 마스터에서 정확 매칭 → 부분 매칭 → 폴백 별칭 순으로 시도.
 function pickAvailable(season: string, available?: string[]): string | null {
   if (!available || available.length === 0) return season;
   const exact = available.find((x) => x === season);
@@ -90,5 +108,10 @@ function pickAvailable(season: string, available?: string[]): string | null {
       normalize(x).includes(normalize(season)) ||
       normalize(season).includes(normalize(x)),
   );
-  return partial ?? null;
+  if (partial) return partial;
+  for (const alt of FALLBACK_ALIASES[season] ?? []) {
+    const altMatch = available.find((x) => x === alt);
+    if (altMatch) return altMatch;
+  }
+  return null;
 }
