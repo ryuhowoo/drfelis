@@ -91,17 +91,18 @@ export default async function PromotionDetail({
       )}
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="총 증분 기여" value={won(summary?.total_uplift)} primary />
-        <Stat label="직접효과 (메인)" value={won(summary?.direct_uplift)} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Stat label="프로모션 총 매출" value={won(summary?.actual_revenue)} primary />
+        <Stat label="총 기여 매출" value={won(summary?.total_uplift)} />
+        <Stat label="메인 상품 직접 매출" value={wonShort(summary?.direct_uplift)} />
         <Stat
-          label="후광효과 (기타)"
-          value={won(summary?.halo_uplift)}
+          label="간접 매출"
+          value={wonShort(summary?.halo_uplift)}
           sub={summary?.halo_share != null ? `비중 ${pct(summary.halo_share)}` : undefined}
         />
         <Stat
           label="공헌이익"
-          value={won(summary?.contribution)}
+          value={wonShort(summary?.contribution)}
           sub={
             summary?.contribution_rate != null
               ? `이익률 ${pct(summary.contribution_rate)}`

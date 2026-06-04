@@ -39,7 +39,7 @@ export default function PrescribePage() {
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
-      <h1 className="text-xl font-semibold">프로모션 처방</h1>
+      <h1 className="text-xl font-semibold">프로모션 추천</h1>
       <p className="mt-1 text-sm text-neutral-500">
         목표 증분을 입력하면, 과거 성과를 근거로 어떤 혜택 구성이 좋을지
         추천합니다. (공헌이익률 우선 정렬)
