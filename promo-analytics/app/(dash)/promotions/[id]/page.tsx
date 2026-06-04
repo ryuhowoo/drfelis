@@ -90,10 +90,17 @@ export default async function PromotionDetail({
         </div>
       )}
 
+      {/* 측정 v2: 보정 적용 안내 */}
+      <MeasurementBanner summary={summary} rows={rows} />
+
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="프로모션 총 매출" value={won(summary?.actual_revenue)} primary />
-        <Stat label="총 기여 매출" value={won(summary?.total_uplift)} />
+        <Stat
+          label="총 기여 매출"
+          value={won(summary?.total_uplift)}
+          sub={summary?.uplift_ci ? `±${wonShort(summary.uplift_ci)} (95% CI)` : undefined}
+        />
         <Stat label="메인 상품 직접 매출" value={wonShort(summary?.direct_uplift)} />
         <Stat
           label="간접 매출"
@@ -118,45 +125,77 @@ export default async function PromotionDetail({
             상품별 증분 측정
           </h2>
           <div className="overflow-x-auto rounded-[24px] bg-white card-soft">
-            <table className="w-full min-w-[680px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
                 <tr>
                   <th className="px-3 py-2.5 font-medium">상품</th>
                   <th className="px-3 py-2.5 text-right font-medium">baseline/일</th>
                   <th className="px-3 py-2.5 text-right font-medium">실적</th>
                   <th className="px-3 py-2.5 text-right font-medium">기대</th>
-                  <th className="px-3 py-2.5 text-right font-medium">증분</th>
+                  <th className="px-3 py-2.5 text-right font-medium">증분 ±95% CI</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {rows.map((r) => (
-                  <tr key={r.product_id} className="hover:bg-neutral-50">
-                    <td className="px-3 py-2.5">
-                      <span className="text-neutral-800">{r.base_name}</span>
-                      {r.is_main && (
-                        <span className="ml-1.5 rounded bg-brand-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                          메인
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-neutral-500">
-                      {wonShort(r.baseline_daily_revenue)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-neutral-600">
-                      {wonShort(r.actual_revenue)}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-neutral-400">
-                      {wonShort(r.expected_revenue)}
-                    </td>
-                    <td
-                      className={`px-3 py-2.5 text-right font-semibold ${
-                        r.uplift_revenue < 0 ? "text-red-600" : "text-neutral-900"
-                      }`}
-                    >
-                      {wonShort(r.uplift_revenue)}
-                    </td>
-                  </tr>
-                ))}
+                {rows.map((r) => {
+                  const significant =
+                    r.uplift_ci > 0 && Math.abs(r.uplift_revenue) > r.uplift_ci;
+                  return (
+                    <tr key={r.product_id} className="hover:bg-neutral-50">
+                      <td className="px-3 py-2.5">
+                        <span className="text-neutral-800">{r.base_name}</span>
+                        {r.is_main && (
+                          <span className="ml-1.5 rounded bg-brand-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                            메인
+                          </span>
+                        )}
+                        {r.cold_start && (
+                          <span
+                            className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
+                            title={`baseline 관측 ${r.observed_baseline_days}일 (14일 미만) — 측정 신뢰도 낮음`}
+                          >
+                            신상품
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-neutral-500">
+                        {wonShort(r.baseline_daily_revenue)}
+                        {!r.cold_start && r.observed_baseline_days > 0 && (
+                          <span className="ml-1 text-[10px] text-neutral-400">
+                            ({r.observed_baseline_days}일)
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-neutral-600">
+                        {wonShort(r.actual_revenue)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-neutral-400">
+                        {wonShort(r.expected_revenue)}
+                      </td>
+                      <td
+                        className={`px-3 py-2.5 text-right font-semibold ${
+                          r.uplift_revenue < 0 ? "text-red-600" : "text-neutral-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          <span>{wonShort(r.uplift_revenue)}</span>
+                          {!significant && r.uplift_ci > 0 && !r.cold_start && (
+                            <span
+                              className="text-[10px] text-neutral-400"
+                              title="증분이 baseline 변동성 범위 안 — 통계적으로 유의하지 않음"
+                            >
+                              n.s.
+                            </span>
+                          )}
+                        </div>
+                        {r.uplift_ci > 0 && !r.cold_start && (
+                          <div className="text-[10px] font-normal text-neutral-400">
+                            ±{wonShort(r.uplift_ci)}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {rows.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-neutral-400">
@@ -167,6 +206,9 @@ export default async function PromotionDetail({
               </tbody>
             </table>
           </div>
+          <p className="mt-2 text-[11px] text-neutral-400">
+            baseline = 직전 8주 비프로모션 일자의 요일별 평균 (±2σ 트림). 추세 보정 적용. 95% CI는 baseline 변동성 기준.
+          </p>
         </section>
 
         {/* 차트 */}
@@ -213,6 +255,62 @@ export default async function PromotionDetail({
         </p>
         <Notes promotionId={id} notes={notes} suggested={suggested} />
       </section>
+    </div>
+  );
+}
+
+function MeasurementBanner({
+  summary,
+  rows,
+}: {
+  summary: PromotionSummary | null;
+  rows: MeasurementRow[];
+}) {
+  if (!summary || rows.length === 0) return null;
+  const cold = summary.cold_start_count;
+  const trend = summary.trend_factor;
+  const trendPct = (trend - 1) * 100;
+  const significant =
+    summary.uplift_ci > 0 && Math.abs(summary.total_uplift) > summary.uplift_ci;
+
+  const chips: { label: string; tone: "neutral" | "warn" | "ok" }[] = [];
+  if (Math.abs(trendPct) >= 1) {
+    chips.push({
+      label: `추세 보정 ${trendPct > 0 ? "+" : ""}${trendPct.toFixed(1)}%`,
+      tone: "neutral",
+    });
+  }
+  if (cold > 0) {
+    chips.push({ label: `신상품 ${cold}건`, tone: "warn" });
+  }
+  if (summary.uplift_ci > 0) {
+    chips.push({
+      label: significant ? "통계적 유의" : "유의성 낮음",
+      tone: significant ? "ok" : "warn",
+    });
+  }
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-[20px] bg-white card-soft px-4 py-3">
+      <span className="text-xs font-medium text-neutral-500">측정 보정</span>
+      {chips.map((c) => (
+        <span
+          key={c.label}
+          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+            c.tone === "ok"
+              ? "bg-emerald-50 text-emerald-700"
+              : c.tone === "warn"
+              ? "bg-amber-50 text-amber-700"
+              : "bg-neutral-100 text-neutral-600"
+          }`}
+        >
+          {c.label}
+        </span>
+      ))}
+      <span className="text-[11px] text-neutral-400">
+        요일 보정·±2σ 트림 적용 / baseline은 직전 8주, 추세는 8주 대비 16주 평균
+      </span>
     </div>
   );
 }
