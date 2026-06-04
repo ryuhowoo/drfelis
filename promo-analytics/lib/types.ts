@@ -38,14 +38,21 @@ export type MeasurementRow = {
   product_id: string;
   base_name: string;
   is_main: boolean;
+  promo_days: number;
+  observed_baseline_days: number;
+  cold_start: boolean;
   baseline_daily_revenue: number;
   baseline_daily_qty: number;
-  promo_days: number;
+  baseline_std: number;
+  trend_factor: number;
+  expected_revenue: number;
+  expected_qty: number;
+  expected_revenue_naive: number;
   actual_revenue: number;
   actual_qty: number;
-  expected_revenue: number;
   uplift_revenue: number;
   uplift_qty: number;
+  uplift_ci: number;
 };
 
 // promotion_summary() 반환 행
@@ -58,6 +65,9 @@ export type PromotionSummary = {
   actual_revenue: number;
   contribution: number;
   contribution_rate: number | null;
+  cold_start_count: number;
+  trend_factor: number;
+  uplift_ci: number;
 };
 
 export type PromotionNote = {
