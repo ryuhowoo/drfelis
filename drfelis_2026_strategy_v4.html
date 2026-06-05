@@ -341,6 +341,179 @@ td.t-has-val,span.t-has-val{cursor:pointer;font-weight:700}
 #tl-inner{position:relative;height:200px}
 @media(max-width:768px){#tracker-wrap{padding:56px 16px 48px}.top-tab-bar{padding-left:12px}}
 </style>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     NEUMORPHISM THEME (Apple › Stripe › Flow Ninja)
+     - 단일 웜뉴트럴 표면 위에 듀얼 섀도(좌상 라이트 / 우하 웜다크)로 깊이 표현
+     - 텍스트는 고대비 유지(가독성 우선) · 깊이는 섀도가 담당
+     - 콘텐츠 카드: 호버 시 살짝 떠오름(Stripe 마이크로 리프트)
+     - 컨트롤(버튼·탭·게이트·태스크·네비): 클릭 시 안으로 눌림(Flow Ninja 택타일)
+     - 강조 헤딩/숫자: 브랜드 오렌지→코랄 그라데이션(Stripe)
+     ═══════════════════════════════════════════════════════════════ -->
+<style id="neu-theme">
+:root{
+  /* 표면 — 카드 = 배경 동일색(뉴모피즘 핵심) */
+  --bg:#ECE8E2; --bg-w:#ECE8E2; --bg-card:#ECE8E2; --bg-alt:#E4DED5;
+  /* 텍스트 — 고대비(가독성) */
+  --txt-900:#2F2B26; --txt-700:#4C463E; --txt-500:#7C746A; --txt-400:#938A7E; --txt-300:#A89E92; --txt-200:#CFC8BD;
+  /* 브랜드 액센트 + 보조색(웜뉴트럴 틴트로 순화) */
+  --accent:#BC5A35; --accent-md:#D6794E; --accent-lt:#E4D8CC;
+  --teal:#4C655E; --teal-lt:#DDE3DE;
+  --navy:#3F5A7E; --navy-lt:#DBE0E6;
+  --burgundy:#7E4040; --burgundy-lt:#E8D9D5;
+  --amber:#8A6A1E; --amber-lt:#E7DEC9;
+  --border:#DAD3C9; --border-md:#CDC5B9; --card-border:#DAD3C9;
+  --cover-bg:#262320;
+  --radius:22px;
+  /* 듀얼 섀도 토큰 (광원 = 좌상단) */
+  --nu-light:rgba(255,255,255,.92);
+  --nu-dark:rgba(70,58,44,.18);
+  --shadow:-6px -6px 14px var(--nu-light), 7px 7px 18px var(--nu-dark);
+  --shadow-h:-9px -9px 22px var(--nu-light), 12px 12px 28px var(--nu-dark);
+  --shadow-sm:-3px -3px 7px var(--nu-light), 4px 4px 10px var(--nu-dark);
+  --shadow-in:inset 4px 4px 9px var(--nu-dark), inset -4px -4px 9px var(--nu-light);
+  --shadow-in-sm:inset 2px 2px 5px var(--nu-dark), inset -2px -2px 5px var(--nu-light);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#2A2724; --bg-w:#2A2724; --bg-card:#2A2724; --bg-alt:#232019;
+    --txt-900:#EEEAE3; --txt-700:#D3CCC2; --txt-500:#9C9387; --txt-400:#857C70; --txt-300:#6E6559; --txt-200:#4A443C;
+    --accent:#D9855C; --accent-md:#E6A079; --accent-lt:#3C2E24;
+    --teal:#7FA89A; --teal-lt:#22302B;
+    --navy:#80A4C8; --navy-lt:#212E3B;
+    --burgundy:#C78C8C; --burgundy-lt:#3B2626;
+    --amber:#C6A648; --amber-lt:#39311B;
+    --border:#3A352F; --border-md:#4A443C; --card-border:#3A352F;
+    --cover-bg:#15130F;
+    --nu-light:rgba(255,255,255,.05);
+    --nu-dark:rgba(0,0,0,.55);
+    --shadow:-6px -6px 14px var(--nu-light), 7px 7px 18px var(--nu-dark);
+    --shadow-h:-9px -9px 22px var(--nu-light), 12px 12px 28px var(--nu-dark);
+    --shadow-sm:-3px -3px 7px var(--nu-light), 4px 4px 10px var(--nu-dark);
+    --shadow-in:inset 4px 4px 9px var(--nu-dark), inset -4px -4px 9px var(--nu-light);
+    --shadow-in-sm:inset 2px 2px 5px var(--nu-dark), inset -2px -2px 5px var(--nu-light);
+  }
+}
+
+/* ── 타이포 (Apple: 크고 또렷, 타이트한 자간, 넉넉한 행간) ── */
+body{background:var(--bg);letter-spacing:-.003em}
+h1{letter-spacing:-.035em}
+h2{letter-spacing:-.025em}
+.section-eye{font-weight:700;letter-spacing:3.5px}
+.section-heading{margin-bottom:44px}
+/* 강조 헤딩 — Stripe식 그라데이션 텍스트 */
+.section-heading em{
+  background:linear-gradient(120deg,var(--accent-md),var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)
+}
+
+/* ── 표면 통일 (뉴모피즘: 섹션·카드 동일색) ── */
+section:nth-child(odd),section:nth-child(even){background:var(--bg)}
+#cover{background:var(--cover-bg)!important}
+
+/* ── 카드 — 같은 색에서 솟아오른 입체 ── */
+.card{
+  background:var(--bg);border:none;border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  transition:box-shadow .35s cubic-bezier(.16,1,.3,1), transform .35s cubic-bezier(.16,1,.3,1)
+}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-4px)}
+
+/* ── 상단 탭바 / 좌측 네비 — 경계선 대신 부드러운 섀도 ── */
+.top-tab-bar{background:var(--bg);border-bottom:none;box-shadow:0 6px 18px var(--nu-dark)}
+.side-nav{background:var(--bg);border-right:none;box-shadow:6px 0 18px -8px var(--nu-dark)}
+
+/* 네비 점 — 작은 눌린 점, 활성 시 액센트 + 솟음 */
+.nav-dot{background:var(--bg);box-shadow:var(--shadow-in-sm);transition:all .3s cubic-bezier(.16,1,.3,1)}
+.nav-dot.active{background:var(--accent);box-shadow:var(--shadow-sm);width:11px;height:11px}
+.nav-dot:hover{background:var(--accent-md)}
+
+/* ── 탭 버튼 — 평소 솟음, 활성 시 안으로 눌림(택타일) ── */
+.tab-btn{background:var(--bg);box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.tab-btn:hover{color:var(--accent);transform:translateY(-1px)}
+.tab-btn.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.tab-btn:active{box-shadow:var(--shadow-in)}
+
+/* ── KPI 핵심 숫자 — 솔리드 유지(색 코딩·가독성 보존, Apple식) + 타이트한 자간 ── */
+.big-num{letter-spacing:-.03em}
+
+/* ── 강조/인용/경고 박스 — 표면에 박힌 패널(inset) ── */
+.quote,.insight,.warn-box{box-shadow:var(--shadow-in);border-radius:14px;border-left:none}
+.quote{background:var(--accent-lt)}
+.insight{background:var(--navy-lt)}
+.warn-box{background:var(--amber-lt)}
+
+/* ── 가드/플로우/오너 칩 — 살짝 솟은 타일 ── */
+.guard-item{border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.guard-item:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.flow-node:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node.accent{box-shadow:var(--shadow-sm),inset 0 0 0 1.5px var(--accent)}
+.owner{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.chip{box-shadow:var(--shadow-sm)}
+
+/* ── 칩/배지 컬러 틴트는 유지하되 경계선 제거 ── */
+.gate-card{border-top:3px solid var(--accent)}
+
+/* ── 표 — 경계선 최소화 ── */
+.tbl th{background:transparent;border-bottom:1.5px solid var(--border)}
+.tbl td{border-bottom:1px solid var(--border)}
+
+/* ── 슬라이더 — 눌린 트랙 + 솟은 thumb ── */
+input[type="range"]{background:var(--bg);box-shadow:var(--shadow-in-sm);height:8px;border-radius:8px}
+input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-light),3px 3px 7px var(--nu-dark)}
+
+/* ════════ 트래커 컨트롤 ════════ */
+/* 입력 필드 — 눌린 면 */
+.t-field input,.t-field select,.t-field textarea,#t-popover-input{
+  background:var(--bg);border:none;box-shadow:var(--shadow-in-sm)
+}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus,#t-popover-input:focus{
+  box-shadow:var(--shadow-in-sm),0 0 0 2px var(--accent)
+}
+/* 버튼류 — 솟음 → 클릭 시 눌림 */
+.t-btn-add,.t-btn-save,.t-btn-cancel{border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.t-btn-add:active,.t-btn-save:active,.t-btn-cancel:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-btn-save{background:var(--bg);color:var(--accent)}
+.t-btn-add{background:var(--bg)}
+/* 파트/월 탭 — 솟음, 활성 시 눌림 */
+.t-ptab,.t-mtab{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-ptab:hover,.t-mtab:hover{transform:translateY(-1px)}
+.t-ptab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.t-mtab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+/* 게이트 셀 — 솟은 타일, 클릭 시 눌림, 상태색 유지 */
+.t-gate-cell{border:none;box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.t-gate-cell:hover{transform:translateY(-3px);box-shadow:var(--shadow-h)}
+.t-gate-cell:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-gate-cell[data-state="pass"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--teal)}
+.t-gate-cell[data-state="fail"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--burgundy)}
+/* 태스크 항목 — 표면에 살짝 박힌 행, 호버 시 솟음 */
+.t-task-item{background:var(--bg);border:none;box-shadow:var(--shadow-in-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-task-item:hover{background:var(--bg);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.t-task-cb{border:none;box-shadow:var(--shadow-in-sm)}
+.t-issue-item{background:var(--bg);border:none;box-shadow:var(--shadow-sm)}
+/* 진행바 — 눌린 트랙 + 솟은 그라데이션 채움 */
+.t-progress-track{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.t-progress-fill{background:linear-gradient(90deg,var(--accent-md),var(--accent));box-shadow:1px 1px 3px var(--nu-dark)}
+/* 모달/팝오버 — 경계선 없이 깊게 솟음 */
+#t-modal,#t-task-modal,#t-tl-modal,#t-popover{border:none;box-shadow:var(--shadow-h)}
+.ts-eye{box-shadow:var(--shadow-in-sm)}
+.t-sc{box-shadow:var(--shadow-sm)}
+
+/* ── 스크롤 진행바 — 그라데이션 ── */
+.scroll-progress{background:linear-gradient(90deg,var(--accent-md),var(--accent))}
+
+/* ── 동작 줄이기 설정 존중 ── */
+@media(prefers-reduced-motion:reduce){
+  .card:hover,.t-gate-cell:hover,.guard-item:hover,.flow-node:hover,.t-task-item:hover,
+  .tab-btn:hover,.t-ptab:hover,.t-mtab:hover,.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:none}
+}
+@media(max-width:768px){
+  .card{border-radius:18px}
+  .card:hover{transform:none}
+}
+</style>
 </head>
 <body>
 <div class="top-tab-bar">
