@@ -2117,6 +2117,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     return {
       kpi,
       gates: Object.fromEntries(QUARTERS.map(q=>[q,{g1:'pending',g2:'pending',g3:'pending',g4:'pending'}])),
+      gateVals: Object.fromEntries(QUARTERS.map(q=>[q,{g1:'',g2:'',g3:'',g4:''}])),
       tasks: {},
       taskItems: seedTaskItems(),
       timelineEvents: seedTimeline(),
@@ -2132,6 +2133,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     return {
       kpi: {...defaultData().kpi, ...(incoming.kpi||{})},
       gates: {...defaultData().gates, ...(incoming.gates||{})},
+      gateVals: {...defaultData().gateVals, ...(incoming.gateVals||{})},
       tasks: incoming.tasks||{},
       // taskItems/timelineEvents가 서버에 없으면 시드(기존 완료상태 이관)
       taskItems: (incoming.taskItems && Object.keys(incoming.taskItems).length) ? incoming.taskItems : seedTaskItems(incoming.tasks||{}),
@@ -2359,16 +2361,20 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 
   /* ─── Block C: Gate Grid ─── */
   function renderBlockC(){
+    D.gateVals = D.gateVals || {};
     const qCols = QUARTERS.map(q=>{
       const g=D.gates[q];
+      const gv = D.gateVals[q] = D.gateVals[q] || {};
       const qColor = q==='Q2'?'var(--accent)':q==='Q3'?'var(--navy)':'var(--teal)';
       const cells = GATE_DEFS.map(gd=>{
         const state=g[gd.id];
         const tColor = state==='pass'?'var(--teal)':state==='fail'?'var(--burgundy)':'var(--txt-300)';
+        const val = gv[gd.id]||'';
         return `<div class="t-gate-cell" data-q="${q}" data-g="${gd.id}" data-state="${state}">
           <div style="font-size:24px">${gateIcon(state)}</div>
           <div style="font-size:11px;font-weight:600;color:var(--txt-500);margin-top:5px;line-height:1.4">${gd.label}</div>
-          <div style="font-size:12px;font-weight:700;margin-top:4px;color:${tColor}">${gd[q]}</div>
+          <div style="font-size:11px;color:var(--txt-400);margin-top:4px">목표 <b style="color:${tColor}">${gd[q]}</b></div>
+          <input type="text" class="t-gate-val" data-q="${q}" data-g="${gd.id}" value="${esc(val)}" placeholder="실적 입력" style="margin-top:6px;width:100%;text-align:center;font-size:12px;font-weight:700;color:var(--accent);background:var(--bg-alt);border:1px solid var(--border);border-radius:7px;padding:4px 6px;font-family:var(--ff)">
         </div>`;
       }).join('');
       return `<div class="card b-4">
@@ -2378,15 +2384,26 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     }).join('');
 
     document.getElementById('t-block-c').innerHTML=`
-<div class="tr-sec-title"><span class="ts-eye">OGK</span> Gate 달성 현황 <span class="ts-hint">셀 클릭 → 대기 → 달성 → 미달 순환</span></div>
+<div class="tr-sec-title"><span class="ts-eye">OGK</span> Gate 달성 현황 <span class="ts-hint">아이콘·라벨 클릭 → 대기·달성·미달 순환 · 실적값 직접 입력</span></div>
 <div class="bento">${qCols}</div>`;
 
     document.querySelectorAll('.t-gate-cell').forEach(cell=>{
-      cell.addEventListener('click',function(){
+      cell.addEventListener('click',function(e){
+        if(e.target.classList.contains('t-gate-val')) return; // 값 입력칸은 상태 순환 제외
         const q=this.dataset.q, g=this.dataset.g;
         const cycle=['pending','pass','fail'];
         D.gates[q][g]=cycle[(cycle.indexOf(D.gates[q][g])+1)%cycle.length];
         saveData(); renderBlockA(); renderBlockC();
+      });
+    });
+    document.querySelectorAll('.t-gate-val').forEach(inp=>{
+      inp.addEventListener('click',e=>e.stopPropagation());
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter') inp.blur(); });
+      inp.addEventListener('change',function(){
+        const q=this.dataset.q, g=this.dataset.g;
+        D.gateVals[q]=D.gateVals[q]||{};
+        D.gateVals[q][g]=this.value.trim();
+        saveData(); // 재렌더 없이 저장(입력 포커스 유지)
       });
     });
   }
