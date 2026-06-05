@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dr.Felis OGK Console — 120억 · 36억</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Asta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--surface3:#252530;
+  --border:#28282f;--border2:#333340;--text:#eeeef2;--muted:#a0a0a8;--muted2:#666;
+  --primary:#FF4D00;--primary-soft:rgba(255,77,0,.14);
+  --success:#4ade80;--success-soft:rgba(74,222,128,.12);
+  --warning:#fbbf24;--warning-soft:rgba(251,191,36,.12);
+  --danger:#ef4444;--danger-soft:rgba(239,68,68,.12);
+  --info:#60a5fa;--info-soft:rgba(96,165,250,.12);
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Asta Sans','Pretendard','Apple SD Gothic Neo','Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.45;min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:'ss01','tnum'}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:inherit}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+
+/* ===== Top bar ===== */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(13,13,15,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:18px;padding:10px 20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px;letter-spacing:.01em}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 12px var(--primary)}
+.brand small{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.tabs{display:flex;gap:4px;margin-left:14px}
+.tab{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted);transition:.15s}
+.tab.active{background:var(--surface2);color:var(--text)}
+.tab:hover{color:var(--text)}
+.top-spacer{flex:1}
+.top-actions{display:flex;align-items:center;gap:8px}
+.sync-pill{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:var(--surface2);font-size:11px;color:var(--muted);border:1px solid var(--border)}
+.sync-pill .ind{width:7px;height:7px;border-radius:50%;background:var(--muted2)}
+.sync-pill.on .ind{background:var(--success);box-shadow:0 0 8px var(--success)}
+.sync-pill.local .ind{background:var(--warning)}
+.icon-btn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;border:1px solid transparent}
+.icon-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+
+/* ===== Layout ===== */
+.page{max-width:1480px;margin:0 auto;padding:22px 20px 80px}
+.section-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title .bar{width:3px;height:11px;background:var(--primary);border-radius:2px}
+.section-title .meta{margin-left:auto;font-weight:600;color:var(--muted2);font-size:10px;letter-spacing:.04em;text-transform:none}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.card.tight{padding:13px}
+.card.accent{border-left:3px solid var(--primary)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-head h3{font-size:13px;font-weight:700}
+.card-head .meta{font-size:11px;color:var(--muted)}
+.muted{color:var(--muted)}
+.mono{font-variant-numeric:tabular-nums;font-family:'SF Mono',Menlo,monospace}
+.tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:var(--surface3);color:var(--muted);border:1px solid var(--border)}
+.tag.pass{background:var(--success-soft);color:var(--success);border-color:rgba(74,222,128,.3)}
+.tag.warn{background:var(--warning-soft);color:var(--warning);border-color:rgba(251,191,36,.3)}
+.tag.fail{background:var(--danger-soft);color:var(--danger);border-color:rgba(239,68,68,.3)}
+.tag.info{background:var(--info-soft);color:var(--info);border-color:rgba(96,165,250,.3)}
+.tag.primary{background:var(--primary-soft);color:var(--primary);border-color:rgba(255,77,0,.3)}
+
+/* ===== KPI strip ===== */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:1100px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+.kpi.past{border-top:3px solid var(--info)}
+.kpi.target{border-top:3px solid var(--primary)}
+.kpi.now{border-top:3px solid var(--success)}
+.kpi.left{border-top:3px solid var(--warning)}
+.kpi .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:8px}
+.kpi .label small{font-weight:600;color:var(--muted2);text-transform:none;letter-spacing:0}
+.kpi .big{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:2px}
+.kpi .big small{font-size:12px;color:var(--muted);font-weight:600;margin-left:3px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+.kpi .sub span b{color:var(--text);font-weight:700}
+.kpi .progress{margin-top:10px}
+.kpi .progress .label-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+.bar-track{height:6px;background:var(--surface3);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),#ff7a3a);border-radius:99px;transition:width .4s}
+.bar-fill.good{background:linear-gradient(90deg,var(--success),#86efac)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--warning),#fcd34d)}
+.bar-fill.bad{background:linear-gradient(90deg,var(--danger),#fca5a5)}
+.bar-fill.info{background:linear-gradient(90deg,var(--info),#93c5fd)}
+
+/* ===== Dashboard rows ===== */
+.row{display:grid;gap:14px;margin-bottom:18px}
+.row.r-chart{grid-template-columns:1.7fr 1fr}
+.row.r-gates{grid-template-columns:repeat(3,1fr)}
+.row.r-mid{grid-template-columns:1fr 1fr}
+@media(max-width:1100px){.row.r-chart,.row.r-gates,.row.r-mid{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .cal-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cal-grid{min-width:720px}
+  .page{padding:14px 12px 60px}
+}
+
+.gate-input{width:90px;background:var(--surface3);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
+.gate-input:focus{outline:none;border-color:var(--primary)}
+.gate-inputs{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.gate-input-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+
+/* Gate card */
+.gate{padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);position:relative}
+.gate .gh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.gate .gn{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em}
+.gate .gv{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.gate .gt{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.gate .gprog{height:5px;background:var(--surface3);border-radius:99px;margin-top:8px;overflow:hidden}
+.gate .gprog .gpf{height:100%;border-radius:99px;transition:width .4s}
+
+/* Plan signal */
+.plan-signal{padding:10px 12px;border-radius:var(--radius-sm);font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);margin-top:10px}
+.plan-signal.a{background:var(--success-soft);border-color:rgba(74,222,128,.3);color:#86efac}
+.plan-signal.warn{background:var(--warning-soft);border-color:rgba(251,191,36,.35);color:#fcd34d}
+.plan-signal.b{background:var(--danger-soft);border-color:rgba(239,68,68,.35);color:#fca5a5}
+.plan-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);color:var(--text);margin-left:auto}
+.plan-toggle:hover{border-color:var(--primary)}
+.plan-toggle.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+
+/* Track cards */
+.track .track-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.track .track-name{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+.track .track-name .icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface2)}
+.track .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.track .kv .ki{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px}
+.track .kv .ki .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:3px}
+.track .kv .ki .v{font-size:15px;font-weight:800}
+.track ul.checks{list-style:none;padding:0;margin-top:8px}
+.track ul.checks li{padding:6px 0;font-size:12px;display:flex;align-items:flex-start;gap:8px;border-top:1px dashed var(--border)}
+.track ul.checks li:first-child{border-top:none}
+.check-box{flex-shrink:0;width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:transparent;margin-top:1px;transition:.15s}
+.check-box.on{background:var(--success);border-color:var(--success);color:#0d0d0f;font-weight:800}
+.check-text{flex:1;color:#ccc}
+.check-text.done{color:var(--muted);text-decoration:line-through}
+
+/* Calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+.cal-head .cal-title{font-size:14px;font-weight:800;display:flex;align-items:center;gap:10px}
+.cal-head .cal-nav{display:flex;align-items:center;gap:4px}
+.cal-head .cal-nav button{padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:700;color:var(--text)}
+.cal-head .cal-nav button:hover{border-color:var(--primary)}
+.cal-legend{display:flex;gap:10px;align-items:center;font-size:10px;color:var(--muted);flex-wrap:wrap}
+.cal-legend .li{display:flex;align-items:center;gap:5px}
+.cal-legend .li .sw{width:9px;height:9px;border-radius:2px}
+.cal-grid{display:grid;grid-template-columns:90px repeat(3,1fr);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.cal-hcell{padding:9px 10px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center}
+.cal-hcell:last-child{border-right:none}
+.cal-month-label{padding:14px 10px;font-size:12px;font-weight:800;color:var(--text);background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.cal-month-label small{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.cal-cell{min-height:108px;padding:6px;background:var(--surface);border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:.15s;position:relative}
+.cal-cell:last-of-type{border-right:none}
+.cal-cell.drag-over{background:var(--surface3);box-shadow:inset 0 0 0 2px var(--primary)}
+.cal-cell:hover .add-btn{opacity:1}
+.cal-cell.empty{display:flex;align-items:center;justify-content:center;color:var(--muted2);font-size:18px;font-weight:300}
+.cal-cell .add-btn{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:4px;background:var(--surface3);color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s;border:1px solid var(--border)}
+.cal-cell .add-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.cmp{padding:5px 7px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:grab;transition:.15s;position:relative;border-left-width:3px}
+.cmp:active{cursor:grabbing}
+.cmp:hover{border-color:var(--primary);background:var(--surface3)}
+.cmp.dragging{opacity:.4}
+.cmp .cmp-name{font-weight:700;font-size:11px;line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cmp .cmp-meta{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)}
+.cmp .dots{display:flex;gap:2px;margin-top:3px}
+.cmp .dot{width:6px;height:6px;border-radius:50%;background:var(--muted2)}
+.cmp .dot.pass{background:var(--success)}
+.cmp .dot.warn{background:var(--warning)}
+.cmp .dot.fail{background:var(--danger)}
+
+.cmp.ch-official{border-left-color:var(--primary)}
+.cmp.ch-smart{border-left-color:#60a5fa}
+.cmp.ch-kakao{border-left-color:#fbbf24}
+.cmp.ch-29cm{border-left-color:#a78bfa}
+.cmp.ch-coupang{border-left-color:#34d399}
+.cmp.ch-b2b{border-left-color:#fb7185}
+.cmp.ch-event{border-left-color:#9ca3af;border-style:dashed}
+
+/* Side panel */
+.side{position:fixed;right:0;top:0;bottom:0;width:420px;background:var(--surface);border-left:1px solid var(--border);z-index:100;transform:translateX(100%);transition:.25s cubic-bezier(.4,0,.2,1);overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.5)}
+.side.open{transform:translateX(0)}
+.side-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:2}
+.side-head h3{font-size:14px;font-weight:800}
+.side-body{padding:16px 18px}
+.side-body .group{margin-bottom:14px}
+.side-body .group label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px}
+.side-body .group input,.side-body .group select,.side-body .group textarea{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px}
+.side-body .group textarea{min-height:60px;resize:vertical;font-family:inherit}
+.side-body .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.side-body .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.side-body .check-list{display:flex;flex-direction:column;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px}
+.side-body .check-list .ci{display:flex;align-items:center;gap:8px;font-size:11px;cursor:pointer}
+.side-body .check-list .ci input{width:auto;padding:0}
+.side-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.btn{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:.15s}
+.btn:hover{border-color:var(--primary)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:#ff6a26}
+.btn.danger{color:var(--danger);border-color:rgba(239,68,68,.3)}
+.btn.danger:hover{background:rgba(239,68,68,.1)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 9px;font-size:11px}
+
+/* Modal */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;opacity:0;pointer-events:none;transition:.2s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:min(560px,92vw);max-height:88vh;overflow-y:auto;z-index:101;display:none;box-shadow:0 20px 80px rgba(0,0,0,.6)}
+.modal.show{display:block}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:14px;font-weight:800}
+.modal-body{padding:16px 18px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* Chart wrapper */
+.chart-wrap{position:relative;height:240px;margin-top:8px}
+.chart-wrap.lg{height:300px}
+
+.hint{font-size:11px;color:var(--muted);padding:8px 10px;background:var(--surface2);border:1px dashed var(--border);border-radius:var(--radius-sm)}
+
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#444}
+
+.kbd{font-family:'SF Mono',Menlo,monospace;font-size:10px;background:var(--surface3);padding:1px 5px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.spacer-sm{height:6px}.spacer{height:14px}.spacer-lg{height:24px}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:.2s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(74,222,128,.4);color:var(--success)}
+.toast.warn{border-color:rgba(251,191,36,.4);color:var(--warning)}
+.toast.error{border-color:rgba(239,68,68,.4);color:var(--danger)}
+
+/* Doc */
+.doc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.doc .full{grid-column:1/-1}
+.doc h2{font-size:18px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.doc h2 .num{font-size:11px;background:var(--primary);color:#fff;padding:2px 7px;border-radius:6px;font-weight:800}
+.doc h4{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 6px;letter-spacing:.04em;text-transform:uppercase}
+.doc p{font-size:13px;line-height:1.7;color:#ddd;margin-bottom:8px}
+.doc ul{list-style:none;padding:0}
+.doc li{padding:6px 0 6px 18px;position:relative;font-size:13px;color:#ddd;line-height:1.55}
+.doc li::before{content:'';position:absolute;left:4px;top:14px;width:5px;height:5px;border-radius:50%;background:var(--primary)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:8px}
+.doc-mini{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.doc-mini .k{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.doc-mini .v{font-size:18px;font-weight:800;color:var(--text)}
+.doc-mini .v small{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px}
+.gate-row{display:grid;grid-template-columns:60px 1fr 90px;gap:10px;align-items:center;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px}
+.gate-row .gid{font-size:11px;font-weight:800;color:var(--primary)}
+.gate-row .gname{font-size:12px;font-weight:700}
+.gate-row .gdesc{font-size:11px;color:var(--muted);margin-top:2px}
+@media(max-width:1100px){.doc{grid-template-columns:1fr}}
+
+/* Past months table */
+.past-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+.past-table th,.past-table td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+.past-table th:first-child,.past-table td:first-child{text-align:left}
+.past-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700;background:var(--surface2)}
+.past-table tr.highlight{background:var(--primary-soft)}
+.past-table tr.highlight td{color:var(--text);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ============== TOP BAR ============== -->
+<div class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span>Dr.Felis OGK Console</span>
+    <small>FY26.06 ▸ 27.05</small>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="dash">운영 콘솔</button>
+    <button class="tab" data-tab="doc">전략 문서</button>
+  </div>
+  <div class="top-spacer"></div>
+  <div class="top-actions">
+    <div class="sync-pill local" id="syncPill"><span class="ind"></span><span id="syncText">로컬 저장</span></div>
+    <button class="icon-btn" id="openSettings" title="설정">⚙</button>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ============== DASHBOARD ============== -->
+<div class="tab-pane active" id="pane-dash">
+
+  <!-- KPI strip: 3 cards -->
+  <div class="kpis">
+    <!-- KPI 1: FY26 목표 -->
+    <div class="kpi target">
+      <div class="label">FY26 목표 <small>· 26.06 ▸ 27.05 12개월</small></div>
+      <div class="big mono"><span>120</span><small>억 · 매출</small></div>
+      <div class="sub">
+        <span>공헌이익 <b>36억</b></span>
+        <span>이익률 <b>30%</b></span>
+        <span>월평균 <b>10억</b></span>
+      </div>
+      <div class="progress">
+        <div class="label-row"><span>일평균 필요 매출</span><span class="mono">₩ 32.9백만</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <!-- KPI 2: FY26 현재 진행 (1~5월 페이스 포함) -->
+    <div class="kpi now">
+      <div class="label">FY26 현재 진행 <small>· 누적 + 직전 페이스 비교</small></div>
+      <div class="big mono"><span id="k3Rev">—</span><small>억</small></div>
+      <div class="sub">
+        <span>이익 <b id="k3Profit">—</b></span>
+        <span>진척 <b id="k3Ratio">—</b></span>
+      </div>
+      <div class="progress">
+        <div class="label-row"><span id="k3Ratiolbl">진척률 vs 목표</span><span id="k3Pace">—</span></div>
+        <div class="bar-track"><div class="bar-fill good" id="k3Bar" style="width:0%"></div></div>
+      </div>
+      <div class="sub" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:10px">
+        직전 1~5월 월평균 <b id="k3RecentAvg">—</b> · 이익률 <b id="k3RecentMargin">—</b> · FY26 월목표까지 <b id="k3Gap">—</b>
+      </div>
+    </div>
+    <!-- KPI 4: 남은 목표 -->
+    <div class="kpi left">
+      <div class="label">남은 목표 <small>· FY26 잔여</small></div>
+      <div class="big mono"><span id="k4Rev">120</span><small>억</small></div>
+      <div class="sub">
+        <span>이익 <b id="k4Profit">36억</b></span>
+        <span>잔여 <b id="k4Days">365일</b></span>
+      </div>
+      <div class="progress">
+        <div class="label-row"><span>남은 월평균 필요</span><span id="k4MonthlyNeed">10억</span></div>
+        <div class="bar-track"><div class="bar-fill warn" id="k4Bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Chart + Month signal -->
+  <div class="row r-chart">
+    <div class="card">
+      <div class="section-title">
+        <span class="bar"></span>2026년 월별 매출 + 공헌이익
+        <span class="meta">1~5월 실적 · 6~12월 진행/예정 · 막대 매출 · 선 공헌이익</span>
+      </div>
+      <div class="chart-wrap lg"><canvas id="chartRev"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="bar"></span>이번 달 신호</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px"><span id="curMonthLabel">—</span></div>
+      <div class="big mono" style="font-size:26px;font-weight:800;letter-spacing:-.02em" id="curMonthRev">—</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" id="curMonthSub">월 목표 10억 / 진척률 —</div>
+      <div class="bar-track" style="margin-top:8px"><div class="bar-fill" id="curMonthBar" style="width:0%"></div></div>
+      <div class="plan-signal a" id="planSignal">
+        <span id="planSignalText">Plan A 정상</span>
+        <button class="plan-toggle" id="planToggle">Plan B 적용</button>
+      </div>
+      <div class="hint" style="margin-top:10px">
+        90% 미만이면 경고. 전환은 수동.
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: 4 Gates -->
+  <div class="row r-gates" id="gatesGrid"></div>
+
+  <!-- Row: 2 tracks + Bundle simulator -->
+  <div class="row r-mid">
+    <div class="card track">
+      <div class="track-head">
+        <div class="track-name"><span class="icon">⏸</span>모래 트랙 <span class="tag warn">중단 · 통제 빌드</span></div>
+        <span class="meta muted">SCM 정렬 대기</span>
+      </div>
+      <div class="kv">
+        <div class="ki"><div class="k">Sell Cap (주차)</div><div class="v" id="sandCap">—</div></div>
+        <div class="ki"><div class="k">안전재고일수</div><div class="v" id="sandSafe">—</div></div>
+      </div>
+      <ul class="checks" data-track="sand"></ul>
+    </div>
+    <div class="card track">
+      <div class="track-head">
+        <div class="track-name"><span class="icon">⏸</span>영양 트랙 <span class="tag warn">중단 · 게이트 통과</span></div>
+        <span class="meta muted">7~9월 런칭 큐</span>
+      </div>
+      <div class="kv">
+        <div class="ki"><div class="k">게이트 통과 SKU</div><div class="v" id="nutGate">—</div></div>
+        <div class="ki"><div class="k">런칭 일정 슬라이드</div><div class="v" id="nutSlide">—</div></div>
+      </div>
+      <ul class="checks" data-track="nutrition"></ul>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="card">
+    <div class="cal-head">
+      <div class="cal-title">
+        캠페인 캘린더
+        <span class="tag info" id="calRange">26년 6월 — 27년 5월</span>
+      </div>
+      <div class="cal-legend">
+        <div class="li"><span class="sw" style="background:var(--primary)"></span>공식몰</div>
+        <div class="li"><span class="sw" style="background:#60a5fa"></span>스마트스토어</div>
+        <div class="li"><span class="sw" style="background:#fbbf24"></span>카카오/토스</div>
+        <div class="li"><span class="sw" style="background:#a78bfa"></span>29CM</div>
+        <div class="li"><span class="sw" style="background:#fb7185"></span>B2B</div>
+        <div class="li"><span class="sw" style="background:#9ca3af"></span>이벤트</div>
+      </div>
+      <div class="cal-nav">
+        <button id="calPrev">◀ 이전 6개월</button>
+        <button id="calToday">현재 분기</button>
+        <button id="calNext">다음 6개월 ▶</button>
+      </div>
+    </div>
+    <div class="cal-grid-wrap">
+      <div class="cal-grid" id="calGrid">
+        <div class="cal-hcell">월</div>
+        <div class="cal-hcell">上 (1~10일)</div>
+        <div class="cal-hcell">中 (11~20일)</div>
+        <div class="cal-hcell">下 (21~말일)</div>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:8px">
+      셀의 <span class="kbd">+</span> 로 새 캠페인 추가. 카드 클릭으로 편집, 드래그로 다른 셀로 이동. 좌측 컬러바 = 채널.
+    </div>
+  </div>
+
+</div>
+
+<!-- ============== DOC TAB ============== -->
+<div class="tab-pane" id="pane-doc">
+  <div class="doc">
+    <div class="full card">
+      <h2><span class="num">OGK</span>2026.06 ▸ 2027.05 · 수정 북극성</h2>
+      <p style="font-size:14px;color:#ddd;margin-bottom:14px">
+        매출 <b style="color:var(--primary)">120억</b>과 공헌이익 <b style="color:var(--primary)">36억</b>을 <u>동시</u> 추구하되,
+        SCM 공급 제약을 인정하는 <b>supply-adjusted</b> 계획. 모래·영양은 통제 빌드 중이며,
+        OGK는 분기마다 Gate로 측정하고 미달 시 Plan B(이익 보전 모드) 전환을 허용한다.
+      </p>
+      <div class="doc-grid">
+        <div class="doc-mini"><div class="k">목표 매출</div><div class="v">120<small>억</small></div></div>
+        <div class="doc-mini"><div class="k">목표 공헌이익</div><div class="v">36<small>억</small></div></div>
+        <div class="doc-mini"><div class="k">목표 이익률</div><div class="v">30<small>%</small></div></div>
+        <div class="doc-mini"><div class="k">광고비 상한</div><div class="v">12<small>% / 매출</small></div></div>
+      </div>
+    </div>
+
+    <div class="full card">
+      <h4>FY25 마감 흐름 (참고)</h4>
+      <table class="past-table">
+        <thead><tr><th>월</th><th>매출</th><th>공헌이익</th><th>이익률</th><th>광고비율</th></tr></thead>
+        <tbody id="pastTable"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h4>6개 Gate (분기별 평가)</h4>
+      <div class="gate-row">
+        <span class="gid">G1</span>
+        <div><div class="gname">공헌이익률 ≥ 30%</div>
+        <div class="gdesc">분기 평균 이익률 ≥ 30%. FY26 이익률 목표(30%)와 직결. 자동 계산.</div></div>
+        <span class="tag info">건강성</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G2</span>
+        <div><div class="gname">공식몰 비중 분기 상향</div>
+        <div class="gdesc">분기별 상향 (Q1 70% → Q2 73% → Q3 75% → Q4 77%). 채널 건강성 + 마진 흐림 방지. 자동 계산.</div></div>
+        <span class="tag info">건강성</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G3</span>
+        <div><div class="gname">광고비 / 매출 ≤ 12%</div>
+        <div class="gdesc">12% 상한 초과 시 전환율·소재 효율 점검. 16% 초과는 Plan B 신호. 자동 계산.</div></div>
+        <span class="tag info">효율</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G4</span>
+        <div><div class="gname">브랜드 캠페인 분기 ≥ 2건</div>
+        <div class="gdesc">분기당 브랜드 자산 캠페인 ≥ 2건 (단순 할인 제외, 사은품·콜라보·콘텐츠 포함). 캠페인 체크리스트로 카운트.</div></div>
+        <span class="tag info">브랜드</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G5</span>
+        <div><div class="gname">객단가 (AOV) 상승</div>
+        <div class="gdesc">분기 평균 AOV가 목표값 이상. 번들·업셀로 객단가를 올리는 게 핵심. 분기별 수동 입력.</div></div>
+        <span class="tag primary">신규</span>
+      </div>
+      <div class="gate-row">
+        <span class="gid">G6</span>
+        <div><div class="gname">교차구독자 수 증대</div>
+        <div class="gdesc">모래·영양·트릿 중 둘 이상을 구독하는 고객 수. LTV 핵심 지표. 분기별 수동 입력.</div></div>
+        <span class="tag primary">신규</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Plan A · Plan B 전환 규칙</h4>
+      <p><b>Plan A (기본)</b> — 매출 120 / 이익 36 동시 추구. 광고 정상 운용, 가격 가드 준수.</p>
+      <p><b>Plan B (이익 보전)</b> — 월 런레이트가 목표 대비 부진할 때 발동. 광고비 컷 → 이익률 우선.</p>
+      <ul>
+        <li><b>경고 (자동)</b> · 월 런레이트 ≤ 월 목표 × 90% → 상단 시그널이 노랗게.</li>
+        <li><b>전환 (수동)</b> · 팀이 "이번 달 Plan B 적용" 버튼으로 결정.</li>
+        <li>전환 중에는 신규 광고 캠페인 금지, 사은품·콜라보 위주.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>가격 원칙 (운영 통합)</h4>
+      <ul>
+        <li><b>채널별 마진 밑선</b> · 공식몰 35% · 스마트스토어 25% · 29CM 30% · 카카오/토스 25%</li>
+        <li><b>정가 vs 실판매가 분리</b> · 모든 캠페인은 정가 기준 할인율 명시</li>
+        <li><b>할인 겹침 금지</b> · 채널 동시 진행 시 가장 강한 혜택 하나만 노출</li>
+        <li><b>Sell cap 정렬</b> · 모래·런칭 SKU는 SCM 동의 없이 캠페인 노출 금지</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>모래 트랙 — 통제 빌드</h4>
+      <p>핵심 SKU: 마스터 4.3/8.3kg · 슈퍼볼 4.3/8.3kg · 하드볼 4.3/8.3kg</p>
+      <ul>
+        <li>주차별 sell cap을 SCM과 합의 후 캘린더에 입력</li>
+        <li>구독 보호 레인을 별도 모집 캡으로 운영 (구독자 우선 배정)</li>
+        <li>B2B / 밀크런은 별 트랙으로 분리, 일반 캠페인 cap에서 차감</li>
+        <li>안전재고일수 ≥ 14일 미만 시 신규 캠페인 푸시 금지</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>영양 트랙 — 게이트 통과</h4>
+      <p>핵심 SKU: 퍼펙트 · 세븐플러스 · 올인원 트릿 · 프로바이오틱스 (리뉴얼 대체)</p>
+      <ul>
+        <li>런칭 큐: 케어라인 리뉴얼(7월말) · 카사바(8월) · 프로바이오틱스 리뉴얼(8월) · 오메가3(9월)</li>
+        <li>각 런칭 게이트 통과 = QC + 패키지 + 콘텐츠 + 가격 + 채널 진열 모두 OK</li>
+        <li>일정 슬라이드 발생 시 캘린더에 자동 표시</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /.page -->
+
+<!-- Side panel (campaign editor) -->
+<div class="side" id="sidePanel">
+  <div class="side-head">
+    <h3 id="sideTitle">캠페인 편집</h3>
+    <button class="icon-btn" id="sideClose">✕</button>
+  </div>
+  <div class="side-body">
+    <div class="group"><label>캠페인 이름</label><input type="text" id="fName" placeholder="예: 3주년 세일 — 영양 본품 +체험팩"></div>
+    <div class="row3">
+      <div class="group"><label>채널</label><select id="fChannel">
+        <option value="official">공식몰</option>
+        <option value="smart">스마트스토어</option>
+        <option value="kakao">카카오/토스</option>
+        <option value="29cm">29CM</option>
+        <option value="coupang">쿠팡</option>
+        <option value="b2b">B2B</option>
+        <option value="event">이벤트(공통)</option>
+      </select></div>
+      <div class="group"><label>월</label><select id="fMonth"></select></div>
+      <div class="group"><label>주차</label><select id="fWeek">
+        <option value="0">上 (1~10)</option>
+        <option value="1">中 (11~20)</option>
+        <option value="2">下 (21~말)</option>
+      </select></div>
+    </div>
+    <div class="row2">
+      <div class="group"><label>예상 매출 ₩</label><input type="number" id="fRev" value="0" min="0"></div>
+      <div class="group"><label>예상 광고비 ₩</label><input type="number" id="fAd" value="0" min="0"></div>
+    </div>
+    <div class="group"><label>메모</label><textarea id="fMemo" placeholder="목적·메인 후크·우려사항"></textarea></div>
+    <div class="group">
+      <label>운영 체크리스트 (모두 OK → Gate 1 카운트)</label>
+      <div class="check-list">
+        <label class="ci"><input type="checkbox" id="fChkCap"> Sell cap 정렬 (SCM 합의)</label>
+        <label class="ci"><input type="checkbox" id="fChkPrice"> 가격 밑선 사수 (채널 마진 밑선 위)</label>
+        <label class="ci"><input type="checkbox" id="fChkOverlap"> 할인 겹침 없음 (단일 혜택)</label>
+        <label class="ci"><input type="checkbox" id="fChkBrand"> 브랜드 캠페인 카운트 (Gate 4)</label>
+      </div>
+    </div>
+  </div>
+  <div class="side-foot">
+    <button class="btn danger" id="sideDelete">삭제</button>
+    <button class="btn ghost" id="sideCancel">취소</button>
+    <button class="btn primary" id="sideSave" style="margin-left:auto">저장</button>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="backdrop" id="backdrop"></div>
+<div class="modal" id="settingsModal">
+  <div class="modal-head"><h3>설정</h3><button class="icon-btn" id="settingsClose">✕</button></div>
+  <div class="modal-body">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Firebase config를 입력하면 팀과 실시간 공유됩니다. 비워두면 이 브라우저에만 저장됩니다.
+    </p>
+    <div class="group">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px;display:block">Firebase Config (JSON)</label>
+      <textarea id="fbConfig" style="width:100%;min-height:140px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--text);resize:vertical" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://xxx.firebaseio.com","projectId":"..."}'></textarea>
+    </div>
+    <div class="group">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:4px;display:block">데이터 노드 경로</label>
+      <input type="text" id="fbPath" value="ogk_console_v3" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px">
+    </div>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="exportData">내보내기 (JSON)</button>
+      <button class="btn" id="importData">가져오기</button>
+      <button class="btn" id="resetSeed">시드 초기화</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn ghost" id="settingsCancel">닫기</button>
+    <button class="btn primary" id="settingsSave">저장 + 연결</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+/* ============================================================
+   Dr.Felis OGK Console — single-file app
+   ============================================================ */
+
+/* ---------- Utils ---------- */
+const fmtKRW = n => {
+  if (n == null || isNaN(n)) return '—';
+  const v = Math.round(n);
+  if (Math.abs(v) >= 1e8) return '₩' + (v/1e8).toFixed(2) + '억';
+  if (Math.abs(v) >= 1e4) return '₩' + (v/1e4).toFixed(0) + '만';
+  return '₩' + v.toLocaleString('ko-KR');
+};
+const fmtEok = (n, digits=2) => (n == null || isNaN(n)) ? '—' : (n/1e8).toFixed(digits);
+const fmtPct = (n, digits=1) => (n == null || isNaN(n)) ? '—' : (n*100).toFixed(digits) + '%';
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const uid = () => 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function toast(msg, kind='') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = 'toast ' + kind, 2400);
+}
+
+/* ---------- Constants ---------- */
+const FY_MONTHS = [
+  { y:2026, m:6 }, { y:2026, m:7 }, { y:2026, m:8 },
+  { y:2026, m:9 }, { y:2026, m:10 }, { y:2026, m:11 },
+  { y:2026, m:12 }, { y:2027, m:1 }, { y:2027, m:2 },
+  { y:2027, m:3 }, { y:2027, m:4 }, { y:2027, m:5 },
+];
+const MONTH_KEY = ({y,m}) => `${y}-${String(m).padStart(2,'0')}`;
+const MONTH_LABEL = ({y,m}) => `${String(y).slice(2)}년 ${m}월`;
+
+const Q_TARGETS = [
+  { id:'Q1', label:'Q1 (6~8월)', months:[0,1,2],  rev: 3_000_000_000, profit: 900_000_000, official: 0.70 },
+  { id:'Q2', label:'Q2 (9~11월)', months:[3,4,5], rev: 3_000_000_000, profit: 900_000_000, official: 0.73 },
+  { id:'Q3', label:'Q3 (12~2월)', months:[6,7,8], rev: 3_000_000_000, profit: 900_000_000, official: 0.75 },
+  { id:'Q4', label:'Q4 (3~5월)',  months:[9,10,11],rev: 3_000_000_000, profit: 900_000_000, official: 0.77 },
+];
+
+// 11개월 실적 (FY25 후반): 25/7 ~ 26/5
+const PREV_ACTUALS = [
+  { ym:'25-07', label:'25.07', rev:692782613,  profit:184946338, marginPct:26.7, adPct:11.7 },
+  { ym:'25-08', label:'25.08', rev:845948739,  profit:256759488, marginPct:30.4, adPct:10.2 },
+  { ym:'25-09', label:'25.09', rev:906540685,  profit:273746102, marginPct:30.2, adPct:11.1 },
+  { ym:'25-10', label:'25.10', rev:727160970,  profit:218250164, marginPct:30.0, adPct:10.6 },
+  { ym:'25-11', label:'25.11', rev:949886973,  profit:282286453, marginPct:29.7, adPct:11.3 },
+  { ym:'25-12', label:'25.12', rev:942710945,  profit:275885120, marginPct:29.3, adPct: 9.8 },
+  { ym:'26-01', label:'26.01', rev:820497403,  profit:224647320, marginPct:27.4, adPct:12.8, recent:true },
+  { ym:'26-02', label:'26.02', rev:776368809,  profit:212103294, marginPct:27.3, adPct:10.8, recent:true },
+  { ym:'26-03', label:'26.03', rev:765111315,  profit:234499648, marginPct:30.6, adPct:12.3, recent:true },
+  { ym:'26-04', label:'26.04', rev:817941362,  profit:264084072, marginPct:32.3, adPct:11.3, recent:true },
+  { ym:'26-05', label:'26.05', rev:836134235,  profit:262398458, marginPct:31.4, adPct: 9.9, recent:true },
+];
+
+// 채널 정의 (수수료율 포함)
+const CHANNELS = [
+  { id:'official', name:'공식몰',         feeRate:0.08, floor:0.35 },
+  { id:'smart',    name:'스마트스토어',   feeRate:0.13, floor:0.25 },
+  { id:'kakao',    name:'카카오/토스',    feeRate:0.15, floor:0.25 },
+  { id:'29cm',     name:'29CM',           feeRate:0.20, floor:0.30 },
+  { id:'coupang',  name:'쿠팡',           feeRate:0.22, floor:0.20 },
+  { id:'b2b',      name:'B2B',            feeRate:0.00, floor:0.25 },
+  { id:'event',    name:'이벤트(공통)',   feeRate:0.10, floor:0.25 },
+];
+
+const SKUS = [
+  { id:'sand-master43', name:'마스터 4.3kg',     track:'sand', price:19900, cost:8900 },
+  { id:'sand-master83', name:'마스터 8.3kg',     track:'sand', price:34900, cost:15600 },
+  { id:'sand-super43',  name:'슈퍼볼 4.3kg',     track:'sand', price:21900, cost:9800 },
+  { id:'sand-super83',  name:'슈퍼볼 8.3kg',     track:'sand', price:38900, cost:17300 },
+  { id:'sand-hard43',   name:'하드볼 4.3kg',     track:'sand', price:22900, cost:10200 },
+  { id:'sand-hard83',   name:'하드볼 8.3kg',     track:'sand', price:39900, cost:17800 },
+  { id:'nut-perfect',   name:'퍼펙트',           track:'nutrition', price:49000, cost:14200 },
+  { id:'nut-seven',     name:'세븐플러스',       track:'nutrition', price:55000, cost:16500 },
+  { id:'nut-treat',     name:'올인원 트릿',       track:'nutrition', price:18000, cost:5800 },
+  { id:'nut-probio',    name:'프로바이오틱스',   track:'nutrition', price:42000, cost:12500 },
+  { id:'nut-cassava',   name:'카사바 (8월 런칭)', track:'nutrition', price:45000, cost:14000, slot:true },
+  { id:'nut-probio2',   name:'프로바이오틱스 리뉴얼 (8월)', track:'nutrition', price:46000, cost:13800, slot:true },
+  { id:'nut-careline',  name:'케어라인 리뉴얼 (7월말)', track:'nutrition', price:38000, cost:11000, slot:true },
+  { id:'nut-omega3',    name:'오메가3 (9월 런칭)', track:'nutrition', price:48000, cost:14500, slot:true },
+];
+
+const SAND_CHECKS = [
+  { id:'sc1', text:'주차별 sell cap을 SCM과 합의', done:false },
+  { id:'sc2', text:'구독 보호 레인 별도 모집 캡 설정', done:false },
+  { id:'sc3', text:'B2B/밀크런 분리 트랙 정의', done:false },
+  { id:'sc4', text:'안전재고일수 모니터링 자동화', done:false },
+  { id:'sc5', text:'6월 sell cap을 캘린더에 반영', done:false },
+];
+const NUT_CHECKS = [
+  { id:'nc1', text:'케어라인 리뉴얼 게이트 통과 (7월말)', done:false },
+  { id:'nc2', text:'카사바 런칭 게이트 통과 (8월)', done:false },
+  { id:'nc3', text:'프로바이오틱스 리뉴얼 → 본품 대체 안내', done:false },
+  { id:'nc4', text:'오메가3 런칭 게이트 통과 (9월)', done:false },
+  { id:'nc5', text:'런칭별 콘텐츠·CRM 세트 준비', done:false },
+];
+
+/* ---------- State ---------- */
+function defaultState() {
+  return {
+    settings: {
+      monthRevTarget: 1_000_000_000,
+      monthProfitTarget: 300_000_000,
+      warnThreshold: 0.90,
+      currentMonthIdx: 0,
+      planBOverride: {},
+    },
+    sandKv: { cap:'주차 미정', safe:'데이터 입력 대기' },
+    nutKv:  { gate:'0 / 4', slide:'정상' },
+    checks: { sand: SAND_CHECKS, nutrition: NUT_CHECKS },
+    campaigns: defaultCampaigns(),
+    actuals: {},
+    gateInputs: {
+      aov: { current: 0, target: 0 },
+      crossSub: { current: 0, target: 0 },
+    },
+    fb: { config:'', path:'ogk_console_v3' },
+    _seedVer: 'notion_2026_v2',
+  };
+}
+function defaultCampaigns() {
+  const mk = (name, channel, month, week, memo, brand=false) => ({
+    id: uid(), name, channel, month, week, bundle:null, rev:0, ad:0, memo,
+    checks: { cap:false, price:false, overlap:false, brand }
+  });
+  // FY26 month index: 0=26.06, 1=26.07, ..., 6=26.12, 7=27.01, ..., 11=27.05
+  return [
+    // 26.06 (month=0) — 현재 진행 중
+    mk('BetterHabits 토탈케어 (퍼펙트+세플)', 'official', 0, 0, '6/8~14 · SALES + BRANDING', true),
+    mk('모래 정기구독 부스트업 (아이디어)', 'official', 0, 1, 'SALES · 쿠폰 이슈 확인 필요'),
+    mk('넾다세일 (상반기)', 'smart', 0, 2, '6/22~7/5 · SALES'),
+    mk('브랜드데이 (타임특가 + 라이브방송)', 'official', 0, 2, '6/25 · SALES + 라이브'),
+    // 26.07 (month=1)
+    mk('넾다세일 (계속)', 'smart', 1, 0, '6/22~7/5 · SALES'),
+    mk('포캣체크', 'official', 1, 1, 'BRANDING', true),
+    mk('케어라인 리뉴얼', 'official', 1, 2, 'RENEWAL'),
+    mk('첫구매: 퀴즈', 'official', 1, 2, 'BRANDING', true),
+    // 26.08 (month=2)
+    mk('(네이버) 고양이의날 메가위크', 'smart', 2, 0, '8/3~9 · SALES'),
+    mk('세계고양이의날', 'event', 2, 0, '8/8 · BRANDING · 고양이 부루마블 카페트', true),
+    mk('워터밤', 'official', 2, 1, 'SALES'),
+    mk('카사바 런칭', 'official', 2, 1, '8/17~ · NEW · 마스킹 테이프'),
+    mk('유산균 리뉴얼', 'official', 2, 2, 'RENEWAL'),
+    // 26.09 (month=3)
+    mk('한국고양이의날', 'event', 3, 0, '8/31, 9/1~ · SALES'),
+    mk('추석 맞이', 'event', 3, 1, '9/17~21 · SALES'),
+    mk('오메가3 런칭', 'official', 3, 2, 'NEW'),
+    // 26.10 (month=4)
+    mk('닥터펠리스 4주년', 'official', 4, 0, '10/12~18 · 컨셉: 궁합 · SALES + BRANDING', true),
+    // 26.11 (month=5)
+    mk('Black Friday', 'event', 5, 0, 'SALES'),
+    mk('붕어빵 캣닢 쿠션', 'official', 5, 1, 'BRANDING', true),
+    mk('식기 출시', 'official', 5, 2, 'NEW'),
+    // 26.12 (month=6)
+    mk('홀리데이 / 크리스마스', 'official', 6, 0, 'BRANDING', true),
+    mk('멤버스위크', 'official', 6, 2, 'SALES'),
+  ];
+}
+const LS_KEY = 'ogk_console_v3_state';
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const merged = { ...defaultState(), ...parsed };
+    // Migration: 노션 캠페인 시드를 한 번만 적용
+    if (merged._seedVer !== 'notion_2026_v2') {
+      merged.campaigns = defaultCampaigns();
+      merged._seedVer = 'notion_2026_v2';
+    }
+    return merged;
+  } catch (e) { return defaultState(); }
+}
+function saveState() {
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+  syncToFirebase();
+}
+
+/* ---------- Firebase ---------- */
+let fbDb = null, fbRef = null, fbConnected = false, fbSuppress = false;
+function initFirebase() {
+  const cfgStr = (state.fb && state.fb.config || '').trim();
+  if (!cfgStr) { setSyncIndicator('local'); return; }
+  try {
+    const cfg = JSON.parse(cfgStr);
+    if (firebase.apps && firebase.apps.length) firebase.app().delete();
+    firebase.initializeApp(cfg);
+    fbDb = firebase.database();
+    fbRef = fbDb.ref(state.fb.path || 'ogk_console_v3');
+    fbRef.on('value', snap => {
+      if (fbSuppress) return;
+      const data = snap.val();
+      if (data && data._ts && data._ts !== state._ts) {
+        const incoming = { ...data };
+        delete incoming._ts;
+        Object.assign(state, incoming);
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+        renderAll();
+        setSyncIndicator('on', '동기화됨');
+      }
+    });
+    fbConnected = true;
+    setSyncIndicator('on', '동기화됨');
+    syncToFirebase();
+  } catch (e) {
+    fbConnected = false;
+    setSyncIndicator('local', '로컬 저장');
+    toast('Firebase 설정 오류: ' + e.message, 'error');
+  }
+}
+function syncToFirebase() {
+  if (!fbConnected || !fbRef) return;
+  fbSuppress = true;
+  state._ts = Date.now();
+  fbRef.set(state).finally(() => { setTimeout(() => fbSuppress = false, 200); });
+}
+function setSyncIndicator(mode, text) {
+  const pill = $('#syncPill');
+  pill.classList.remove('on','local');
+  pill.classList.add(mode);
+  $('#syncText').textContent = text || (mode === 'on' ? '동기화됨' : '로컬 저장');
+}
+
+/* ---------- Tabs ---------- */
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  const tab = t.dataset.tab;
+  $$('.tab-pane').forEach(p => p.classList.remove('active'));
+  $('#pane-' + tab).classList.add('active');
+}));
+
+/* ---------- Compute ---------- */
+function getMonthActual(idx) {
+  const key = MONTH_KEY(FY_MONTHS[idx]);
+  if (state.actuals[key]) return state.actuals[key];
+  const cmps = state.campaigns.filter(c => c.month === idx);
+  const rev = cmps.reduce((s,c) => s + (Number(c.rev)||0), 0);
+  const ad = cmps.reduce((s,c) => s + (Number(c.ad)||0), 0);
+  const profit = Math.max(0, rev * 0.30 - ad);
+  return { rev, profit, planned:true };
+}
+
+/* ---------- KPI rendering ---------- */
+function renderKPIs() {
+  // 1~5월 페이스 (현재 진행 카드에 녹임)
+  const recent = PREV_ACTUALS.filter(a => a.recent);
+  const recentSumRev = recent.reduce((s,a) => s + a.rev, 0);
+  const recentSumProfit = recent.reduce((s,a) => s + a.profit, 0);
+  const recentAvgMonth = recentSumRev / recent.length;
+  const recentMargin = recentSumRev > 0 ? recentSumProfit / recentSumRev : 0;
+  const gapToTarget = state.settings.monthRevTarget - recentAvgMonth;
+  $('#k3RecentAvg').textContent = '₩ ' + (recentAvgMonth/1e8).toFixed(2) + '억';
+  $('#k3RecentMargin').textContent = (recentMargin*100).toFixed(1) + '%';
+  $('#k3Gap').textContent = (gapToTarget >= 0 ? '+₩ ' : '−₩ ') + (Math.abs(gapToTarget)/1e8).toFixed(2) + '억 필요';
+
+  // KPI 2: 현재 진행
+  const idx = state.settings.currentMonthIdx;
+  let cumRev = 0, cumProfit = 0;
+  for (let i = 0; i <= idx; i++) {
+    const a = getMonthActual(i);
+    cumRev += a.rev || 0;
+    cumProfit += a.profit || 0;
+  }
+  const fyTarget = state.settings.monthRevTarget * 12;
+  const fyProfitTarget = state.settings.monthProfitTarget * 12;
+  const ratio = cumRev / fyTarget;
+  const expectedRatio = (idx + 1) / 12;
+  $('#k3Rev').textContent = fmtEok(cumRev);
+  $('#k3Profit').textContent = fmtEok(cumProfit) + '억';
+  $('#k3Ratio').textContent = (ratio*100).toFixed(1) + '%';
+  $('#k3Pace').textContent = expectedRatio > 0 ? (ratio >= expectedRatio ? '+' : '') + ((ratio - expectedRatio)*100).toFixed(1) + '%p vs 페이스' : '—';
+  $('#k3Bar').style.width = clamp(ratio*100, 0, 100) + '%';
+  $('#k3Bar').className = 'bar-fill ' + (ratio >= expectedRatio ? 'good' : ratio >= expectedRatio*0.9 ? 'warn' : 'bad');
+
+  // KPI 4: 남은
+  const remainingRev = Math.max(0, fyTarget - cumRev);
+  const remainingProfit = Math.max(0, fyProfitTarget - cumProfit);
+  const monthsLeft = 12 - (idx + 1);
+  // Days left: approximate from FY end
+  const today = new Date();
+  const fyEnd = new Date(2027, 5, 1); // 2027-06-01 (FY ends May 31)
+  const daysLeft = Math.max(0, Math.ceil((fyEnd - today) / 86400000));
+  $('#k4Rev').textContent = fmtEok(remainingRev);
+  $('#k4Profit').textContent = fmtEok(remainingProfit) + '억';
+  $('#k4Days').textContent = daysLeft + '일';
+  $('#k4MonthlyNeed').textContent = monthsLeft > 0 ? '₩ ' + (remainingRev/1e8/monthsLeft).toFixed(2) + '억/월' : '—';
+  $('#k4Bar').style.width = clamp((remainingRev/fyTarget)*100, 0, 100) + '%';
+
+  // Current month signal
+  const cur = getMonthActual(idx);
+  const monthRatio = cur.rev / state.settings.monthRevTarget;
+  $('#curMonthLabel').textContent = MONTH_LABEL(FY_MONTHS[idx]) + ' (현재 진행 월)';
+  $('#curMonthRev').innerHTML = fmtKRW(cur.rev) + (cur.planned ? ' <small style="font-size:12px;color:var(--muted);font-weight:600">예정</small>' : '');
+  $('#curMonthSub').textContent = `월 목표 ₩ ${fmtEok(state.settings.monthRevTarget)}억 · 진척률 ${(monthRatio*100).toFixed(1)}%`;
+  const cmBar = $('#curMonthBar');
+  cmBar.style.width = clamp(monthRatio*100, 0, 100) + '%';
+  cmBar.className = 'bar-fill ' + (monthRatio >= 1 ? 'good' : monthRatio >= state.settings.warnThreshold ? '' : 'bad');
+
+  // Plan signal
+  const ymKey = MONTH_KEY(FY_MONTHS[idx]);
+  const isB = !!state.settings.planBOverride[ymKey];
+  const signal = $('#planSignal'), text = $('#planSignalText');
+  signal.classList.remove('a','warn','b');
+  if (isB) {
+    signal.classList.add('b');
+    text.textContent = `Plan B 적용 (${ymKey}) — 광고비 컷`;
+  } else if (monthRatio < state.settings.warnThreshold) {
+    signal.classList.add('warn');
+    text.textContent = `경고: 런레이트 ${(monthRatio*100).toFixed(0)}% — Plan B 검토`;
+  } else {
+    signal.classList.add('a');
+    text.textContent = `Plan A 정상 — 광고 정상 운용`;
+  }
+  const toggle = $('#planToggle');
+  toggle.textContent = isB ? `Plan B 해제` : `Plan B 적용`;
+  toggle.classList.toggle('active', isB);
+}
+
+/* ---------- Gates ---------- */
+function renderGates() {
+  const idx = state.settings.currentMonthIdx;
+  const qIdx = Math.floor(idx / 3);
+  const q = Q_TARGETS[qIdx];
+  let qRev = 0, qProfit = 0, qOfficialRev = 0, qAd = 0;
+  q.months.forEach(mi => {
+    if (mi <= idx) {
+      const a = getMonthActual(mi);
+      qRev += a.rev || 0;
+      qProfit += a.profit || 0;
+      const cmps = state.campaigns.filter(c => c.month === mi);
+      const officialRev = cmps.filter(c => c.channel === 'official').reduce((s,c) => s + (c.rev||0), 0);
+      qOfficialRev += officialRev;
+      qAd += cmps.reduce((s,c) => s + (c.ad||0), 0);
+    }
+  });
+  const officialShare = qRev > 0 ? qOfficialRev / qRev : 0;
+  const marginRate = qRev > 0 ? qProfit / qRev : 0;
+  const adRate = qRev > 0 ? qAd / qRev : 0;
+  const brandCount = state.campaigns.filter(c => q.months.includes(c.month) && c.checks && c.checks.brand).length;
+
+  const aov = state.gateInputs.aov;
+  const aovStatus = (aov.current > 0 && aov.target > 0)
+    ? (aov.current >= aov.target ? 'pass' : aov.current >= aov.target * 0.95 ? 'warn' : 'fail')
+    : 'warn';
+  const aovPct = aov.target > 0 ? clamp(aov.current / aov.target, 0, 1) : 0;
+
+  const cs = state.gateInputs.crossSub;
+  const csStatus = (cs.current > 0 && cs.target > 0)
+    ? (cs.current >= cs.target ? 'pass' : cs.current >= cs.target * 0.9 ? 'warn' : 'fail')
+    : 'warn';
+  const csPct = cs.target > 0 ? clamp(cs.current / cs.target, 0, 1) : 0;
+
+  const gates = [
+    { id:'G1', label:'공헌이익률', val:`${(marginRate*100).toFixed(1)}%`, target:'≥ 30%',
+      pct: clamp(marginRate / 0.30, 0, 1),
+      status: qRev === 0 ? 'warn' : marginRate >= 0.30 ? 'pass' : marginRate >= 0.28 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G2', label:'공식몰 비중', val:`${(officialShare*100).toFixed(0)}%`, target:`≥ ${(q.official*100).toFixed(0)}% (${q.id})`,
+      pct: clamp(officialShare / q.official, 0, 1),
+      status: qRev === 0 ? 'warn' : officialShare >= q.official ? 'pass' : officialShare >= q.official * 0.9 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G3', label:'광고비 / 매출', val:`${(adRate*100).toFixed(1)}%`, target:'≤ 12%',
+      pct: clamp(1 - adRate / 0.12, 0, 1),
+      status: qRev === 0 ? 'warn' : adRate <= 0.12 ? 'pass' : adRate <= 0.16 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G4', label:'브랜드 캠페인', val:`${brandCount} 건`, target:'분기 ≥ 2건',
+      pct: clamp(brandCount / 2, 0, 1),
+      status: brandCount >= 2 ? 'pass' : brandCount >= 1 ? 'warn' : 'fail',
+      auto: true },
+    { id:'G5', label:'객단가 (AOV)', val:null, target:'분기 목표 입력',
+      pct: aovPct, status: aovStatus, manual: 'aov' },
+    { id:'G6', label:'교차구독자 수', val:null, target:'분기 목표 입력',
+      pct: csPct, status: csStatus, manual: 'crossSub' },
+  ];
+
+  const grid = $('#gatesGrid');
+  grid.innerHTML = gates.map(g => {
+    const valHtml = g.manual
+      ? `<div class="gate-inputs">
+           <div class="gate-input-row">현재 <input type="number" class="gate-input" data-g="${g.manual}" data-k="current" value="${state.gateInputs[g.manual].current || 0}" placeholder="0"></div>
+           <div class="gate-input-row">목표 <input type="number" class="gate-input" data-g="${g.manual}" data-k="target" value="${state.gateInputs[g.manual].target || 0}" placeholder="0"></div>
+         </div>`
+      : `<div class="gv">${g.val}</div>`;
+    return `
+      <div class="gate">
+        <div class="gh"><span class="gn">${g.id} · ${q.id}${g.manual?' · 수동':''}</span><span class="tag ${g.status}">${g.status === 'pass' ? 'PASS' : g.status === 'warn' ? 'WATCH' : 'FAIL'}</span></div>
+        ${valHtml}
+        <div class="gt">${g.label} · ${g.target}</div>
+        <div class="gprog"><div class="gpf" style="width:${g.pct*100}%;background:var(--${g.status === 'pass' ? 'success' : g.status === 'warn' ? 'warning' : 'danger'})"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind manual gate inputs
+  grid.querySelectorAll('.gate-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const g = inp.dataset.g, k = inp.dataset.k;
+      state.gateInputs[g][k] = Number(inp.value) || 0;
+    });
+    inp.addEventListener('change', () => {
+      saveState();
+      renderGates();
+    });
+  });
+}
+
+/* ---------- Tracks ---------- */
+function renderTracks() {
+  $('#sandCap').textContent = state.sandKv.cap;
+  $('#sandSafe').textContent = state.sandKv.safe;
+  $('#nutGate').textContent = state.nutKv.gate;
+  $('#nutSlide').textContent = state.nutKv.slide;
+  renderChecks('sand');
+  renderChecks('nutrition');
+}
+function renderChecks(track) {
+  const ul = document.querySelector(`ul.checks[data-track="${track}"]`);
+  const list = state.checks[track] || [];
+  ul.innerHTML = list.map(c => `
+    <li>
+      <span class="check-box ${c.done?'on':''}" data-track="${track}" data-id="${c.id}">${c.done?'✓':''}</span>
+      <span class="check-text ${c.done?'done':''}">${c.text}</span>
+    </li>
+  `).join('');
+  ul.querySelectorAll('.check-box').forEach(box => {
+    box.addEventListener('click', () => {
+      const item = state.checks[box.dataset.track].find(c => c.id === box.dataset.id);
+      item.done = !item.done;
+      saveState();
+      renderChecks(box.dataset.track);
+    });
+  });
+}
+
+/* ---------- Calendar ---------- */
+let calStartIdx = 0;
+const CAL_WINDOW = 6;
+function renderCalendar() {
+  const grid = $('#calGrid');
+  grid.querySelectorAll('.cal-month-label, .cal-cell').forEach(el => el.remove());
+  const end = Math.min(calStartIdx + CAL_WINDOW, 12);
+  $('#calRange').textContent = `${MONTH_LABEL(FY_MONTHS[calStartIdx])} — ${MONTH_LABEL(FY_MONTHS[end-1])}`;
+  for (let i = calStartIdx; i < end; i++) {
+    const m = FY_MONTHS[i];
+    const label = document.createElement('div');
+    label.className = 'cal-month-label';
+    const isCurrent = i === state.settings.currentMonthIdx;
+    label.innerHTML = `${MONTH_LABEL(m)}${isCurrent ? '<small style="color:var(--primary)">● 현재</small>' : ''}`;
+    grid.appendChild(label);
+    for (let w = 0; w < 3; w++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      cell.dataset.month = i;
+      cell.dataset.week = w;
+      cell.innerHTML = `<button class="add-btn" title="새 캠페인 추가">+</button>`;
+      const cmps = state.campaigns.filter(c => c.month === i && c.week === w);
+      cmps.forEach(c => cell.appendChild(buildCampaignChip(c)));
+      cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+      cell.addEventListener('drop', e => {
+        e.preventDefault();
+        cell.classList.remove('drag-over');
+        const id = e.dataTransfer.getData('text/plain');
+        const cmp = state.campaigns.find(x => x.id === id);
+        if (!cmp) return;
+        cmp.month = i; cmp.week = w;
+        saveState();
+        renderCalendar();
+        renderAll();
+      });
+      cell.querySelector('.add-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        openSidePanel({ id:null, month:i, week:w });
+      });
+      grid.appendChild(cell);
+    }
+  }
+}
+function buildCampaignChip(c) {
+  const el = document.createElement('div');
+  el.className = `cmp ch-${c.channel}`;
+  el.draggable = true;
+  el.dataset.id = c.id;
+  el.innerHTML = `
+    <div class="cmp-name">${c.name}</div>
+    <div class="cmp-meta">${c.memo ? c.memo.split('·')[0].trim() : ''} ${c.rev ? '· ' + fmtKRW(c.rev) : ''}</div>
+    <div class="dots">
+      <span class="dot ${c.checks && c.checks.cap?'pass':'fail'}" title="Sell cap"></span>
+      <span class="dot ${c.checks && c.checks.price?'pass':'fail'}" title="가격 가드"></span>
+      <span class="dot ${c.checks && c.checks.overlap?'pass':'fail'}" title="할인 겹침"></span>
+      <span class="dot ${c.checks && c.checks.brand?'pass':''}" title="브랜드 캠페인"></span>
+    </div>
+  `;
+  el.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', c.id);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('click', () => openSidePanel(c));
+  return el;
+}
+
+/* ---------- Side panel ---------- */
+let editingId = null;
+function openSidePanel(c) {
+  editingId = c.id || null;
+  $('#sideTitle').textContent = c.id ? '캠페인 편집' : '새 캠페인';
+  $('#fMonth').innerHTML = FY_MONTHS.map((m,i) => `<option value="${i}">${MONTH_LABEL(m)}</option>`).join('');
+  $('#fName').value = c.name || '';
+  $('#fChannel').value = c.channel || 'official';
+  $('#fMonth').value = c.month != null ? c.month : 0;
+  $('#fWeek').value = c.week != null ? c.week : 0;
+  $('#fRev').value = c.rev || 0;
+  $('#fAd').value = c.ad || 0;
+  $('#fMemo').value = c.memo || '';
+  $('#fChkCap').checked = !!(c.checks && c.checks.cap);
+  $('#fChkPrice').checked = !!(c.checks && c.checks.price);
+  $('#fChkOverlap').checked = !!(c.checks && c.checks.overlap);
+  $('#fChkBrand').checked = !!(c.checks && c.checks.brand);
+  $('#sideDelete').style.display = c.id ? '' : 'none';
+  $('#sidePanel').classList.add('open');
+}
+function closeSidePanel() {
+  $('#sidePanel').classList.remove('open');
+  editingId = null;
+}
+$('#sideClose').addEventListener('click', closeSidePanel);
+$('#sideCancel').addEventListener('click', closeSidePanel);
+$('#sideSave').addEventListener('click', () => {
+  const data = {
+    name: $('#fName').value.trim() || '(이름 없음)',
+    channel: $('#fChannel').value,
+    month: Number($('#fMonth').value),
+    week: Number($('#fWeek').value),
+    rev: Number($('#fRev').value) || 0,
+    ad: Number($('#fAd').value) || 0,
+    memo: $('#fMemo').value,
+    checks: {
+      cap: $('#fChkCap').checked, price: $('#fChkPrice').checked,
+      overlap: $('#fChkOverlap').checked, brand: $('#fChkBrand').checked,
+    },
+  };
+  if (editingId) {
+    const cmp = state.campaigns.find(c => c.id === editingId);
+    Object.assign(cmp, data);
+  } else {
+    state.campaigns.push({ id: uid(), ...data });
+  }
+  saveState();
+  closeSidePanel();
+  renderAll();
+  toast('캠페인 저장됨', 'success');
+});
+$('#sideDelete').addEventListener('click', () => {
+  if (!editingId || !confirm('이 캠페인을 삭제할까요?')) return;
+  state.campaigns = state.campaigns.filter(c => c.id !== editingId);
+  saveState();
+  closeSidePanel();
+  renderAll();
+  toast('삭제됨', 'warn');
+});
+
+/* ---------- Calendar nav ---------- */
+$('#calPrev').addEventListener('click', () => { calStartIdx = Math.max(0, calStartIdx - CAL_WINDOW); renderCalendar(); });
+$('#calNext').addEventListener('click', () => { calStartIdx = Math.min(12 - CAL_WINDOW, calStartIdx + CAL_WINDOW); renderCalendar(); });
+$('#calToday').addEventListener('click', () => {
+  const qStart = Math.floor(state.settings.currentMonthIdx / 3) * 3;
+  calStartIdx = clamp(qStart, 0, 12 - CAL_WINDOW);
+  renderCalendar();
+});
+
+/* ---------- Plan B toggle ---------- */
+$('#planToggle').addEventListener('click', () => {
+  const k = MONTH_KEY(FY_MONTHS[state.settings.currentMonthIdx]);
+  if (state.settings.planBOverride[k]) {
+    delete state.settings.planBOverride[k];
+    toast('Plan A로 복귀', 'success');
+  } else {
+    state.settings.planBOverride[k] = true;
+    toast('Plan B 적용', 'warn');
+  }
+  saveState();
+  renderKPIs();
+});
+
+/* ---------- Settings ---------- */
+function openSettings() {
+  $('#fbConfig').value = state.fb.config || '';
+  $('#fbPath').value = state.fb.path || 'ogk_console_v3';
+  $('#backdrop').classList.add('show');
+  $('#settingsModal').classList.add('show');
+}
+function closeSettings() {
+  $('#backdrop').classList.remove('show');
+  $('#settingsModal').classList.remove('show');
+}
+$('#openSettings').addEventListener('click', openSettings);
+$('#settingsClose').addEventListener('click', closeSettings);
+$('#settingsCancel').addEventListener('click', closeSettings);
+$('#backdrop').addEventListener('click', closeSettings);
+$('#settingsSave').addEventListener('click', () => {
+  state.fb.config = $('#fbConfig').value.trim();
+  state.fb.path = $('#fbPath').value.trim() || 'ogk_console_v3';
+  saveState();
+  initFirebase();
+  closeSettings();
+});
+$('#exportData').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ogk_console_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+});
+$('#importData').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      state = { ...defaultState(), ...parsed };
+      saveState();
+      renderAll();
+      toast('가져오기 완료', 'success');
+      closeSettings();
+    } catch (err) { toast('파일 파싱 실패', 'error'); }
+  };
+  reader.readAsText(f);
+});
+$('#resetSeed').addEventListener('click', () => {
+  if (!confirm('시드 데이터로 초기화할까요? (Firebase 노드도 덮어씁니다)')) return;
+  state = defaultState();
+  state.fb = { config: $('#fbConfig').value.trim(), path: $('#fbPath').value.trim() || 'ogk_console_v3' };
+  saveState();
+  currentBundleId = state.bundles[0] ? state.bundles[0].id : null;
+  renderAll();
+  toast('시드로 초기화됨', 'success');
+});
+
+/* ---------- Past months table ---------- */
+function renderPastTable() {
+  const tbody = $('#pastTable');
+  if (!tbody) return;
+  tbody.innerHTML = PREV_ACTUALS.map(a => `
+    <tr class="${a.recent ? 'highlight':''}">
+      <td>${a.label}${a.recent?' <span class="tag info" style="font-size:9px">올해</span>':''}</td>
+      <td class="mono">₩ ${(a.rev/1e8).toFixed(2)}억</td>
+      <td class="mono">₩ ${(a.profit/1e8).toFixed(2)}억</td>
+      <td class="mono">${a.marginPct.toFixed(1)}%</td>
+      <td class="mono">${a.adPct.toFixed(1)}%</td>
+    </tr>
+  `).join('') + (() => {
+    const recent = PREV_ACTUALS.filter(a => a.recent);
+    const sumRev = recent.reduce((s,a) => s + a.rev, 0);
+    const sumProfit = recent.reduce((s,a) => s + a.profit, 0);
+    return `<tr style="border-top:2px solid var(--primary);background:var(--primary-soft);font-weight:700">
+      <td>1~5월 합계 (올해)</td>
+      <td class="mono">₩ ${(sumRev/1e8).toFixed(2)}억</td>
+      <td class="mono">₩ ${(sumProfit/1e8).toFixed(2)}억</td>
+      <td class="mono">${(sumProfit/sumRev*100).toFixed(1)}%</td>
+      <td>—</td>
+    </tr>`;
+  })();
+}
+
+/* ---------- Charts ---------- */
+let chartRev = null;
+function drawRevChart() {
+  const ctx = $('#chartRev').getContext('2d');
+  // 2026년 1월 ~ 12월 (calendar year)
+  // 1~5월: PREV_ACTUALS의 recent
+  // 6~12월: FY_MONTHS의 0~6 (FY26.06 ~ FY26.12)
+  const labels = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const recent = PREV_ACTUALS.filter(a => a.recent); // 26-01 ~ 26-05
+  const revBars = [];
+  const profitLine = [];
+  const isPlanned = [];
+
+  // 1~5월
+  recent.forEach(a => {
+    revBars.push(a.rev);
+    profitLine.push(a.profit);
+    isPlanned.push(false);
+  });
+  // 6~12월 (FY26 인덱스 0~6)
+  for (let i = 0; i <= 6; i++) {
+    const a = getMonthActual(i);
+    revBars.push(a.rev || 0);
+    profitLine.push(a.profit || 0);
+    isPlanned.push(i > state.settings.currentMonthIdx);
+  }
+
+  // 매출 막대 색상: 실측은 짙은 오렌지, 예정은 옅은
+  const barColors = isPlanned.map(p => p ? 'rgba(255,77,0,.25)' : 'rgba(255,77,0,.75)');
+  const barBorders = isPlanned.map(p => p ? 'rgba(255,77,0,.5)' : 'rgba(255,77,0,1)');
+
+  const monthRevTarget = state.settings.monthRevTarget;
+  const monthProfitTarget = state.settings.monthProfitTarget;
+  const revTargetLine = labels.map(() => monthRevTarget);
+  const profitTargetLine = labels.map(() => monthProfitTarget);
+
+  if (chartRev) chartRev.destroy();
+  chartRev = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label:'월 매출', data: revBars,
+          backgroundColor: barColors, borderColor: barBorders, borderWidth:1,
+          borderRadius:4, barThickness:18, yAxisID:'y',
+          order:3 },
+        { type:'line', label:'공헌이익', data: profitLine,
+          borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,.15)',
+          borderWidth:2.5, tension:.3, pointRadius:4, pointBackgroundColor:'#4ade80',
+          fill:false, yAxisID:'y', order:1 },
+        { type:'line', label:'월 매출 목표 (10억)', data: revTargetLine,
+          borderColor:'rgba(255,77,0,.5)', borderDash:[4,4], borderWidth:1.5,
+          pointRadius:0, fill:false, yAxisID:'y', order:2 },
+        { type:'line', label:'월 공헌이익 목표 (3억)', data: profitTargetLine,
+          borderColor:'rgba(74,222,128,.5)', borderDash:[4,4], borderWidth:1.5,
+          pointRadius:0, fill:false, yAxisID:'y', order:2 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { labels: { color:'#a0a0a8', font:{size:10}, boxWidth:10, usePointStyle:true } },
+        tooltip: { backgroundColor:'#1e1e24', borderColor:'#333340', borderWidth:1, titleColor:'#fff', bodyColor:'#ccc',
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.raw == null ? '—' : fmtKRW(ctx.raw)),
+            afterBody: items => {
+              const i = items[0].dataIndex;
+              return isPlanned[i] ? '(예정/계획)' : '(실측)';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks:{color:'#a0a0a8', font:{size:10}, maxRotation:0}, grid:{display:false} },
+        y: { ticks:{color:'#777', font:{size:9}, callback: v => (v/1e8).toFixed(1)+'억'}, grid:{color:'rgba(255,255,255,.04)'},
+             beginAtZero:true }
+      }
+    }
+  });
+}
+
+/* ---------- Render all ---------- */
+function renderAll() {
+  renderKPIs();
+  renderGates();
+  renderTracks();
+  renderCalendar();
+  renderPastTable();
+  drawRevChart();
+}
+
+/* ---------- Init ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  initFirebase();
+});
+</script>
+</body>
+</html>
