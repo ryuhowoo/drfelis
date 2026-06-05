@@ -1712,7 +1712,8 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   const PHASE_INFO = {Q1:{label:'Q1',desc:'1~3월 · 실적 확정',color:'var(--txt-400)'},P1:{label:'Phase 1',desc:'4~6월 · 바닥 다지기 + 구독 구조 심기',color:'var(--accent)'},P2:{label:'Phase 2',desc:'7~9월 · 구독 엔진 점화 + 팬덤 확장',color:'var(--navy)'},P3:{label:'Phase 3',desc:'10~12월 · 연간 수확 + 브랜드 자산 증명',color:'var(--teal)'}};
   const REV_TARGET = {'2026-01':8.20,'2026-02':7.76,'2026-03':7.65,'2026-04':8.30,'2026-05':9.77,'2026-06':9.56,'2026-07':11.91,'2026-08':13.48,'2026-09':10.25,'2026-10':13.78,'2026-11':12.21,'2026-12':7.23};
   const AD_TARGET  = {'2026-01':12,'2026-02':12,'2026-03':12,'2026-04':12,'2026-05':12,'2026-06':12,'2026-07':12,'2026-08':12,'2026-09':12,'2026-10':12,'2026-11':12,'2026-12':12};
-  const SUBS_GOAL  = {'2026-03':2585,'2026-06':2800,'2026-09':3000,'2026-12':3430};
+  // 구독자 '수' 목표는 6월 내 달성 → 종료. 이제는 교차구독(질)을 본다. 분기말 '수' 목표 표기 제거.
+  const SUBS_GOAL  = {};
   const QUARTERS   = ['Q2','Q3','Q4'];
   const GATE_DEFS  = [
     {id:'g1',label:'공헌이익액 + 30% 방어',Q2:'30% + 37%',Q3:'30% + 38%',Q4:'30% + 40%'},
@@ -2088,7 +2089,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       <th>월</th><th>Phase</th><th>매출 목표</th>
       <th>매출 실적<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
       <th>공헌이익률<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 30%)</small></th>
-      <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(명)</small></th>
+      <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(6월 '수' 목표 달성 · 이제 교차구독)</small></th>
       <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
       <th>상태</th>
     </tr></thead>
