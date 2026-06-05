@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --bg:#F5F0EA;--bg-w:#FFFFFF;--bg-card:#FFFFFF;--bg-alt:#F9F6F2;
@@ -517,19 +516,6 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 </style>
 </head>
 <body>
-<!-- ─── 로그인 게이트 (구글 / @drfelis.com 전용) ─── -->
-<div id="authGate" aria-modal="true" role="dialog" style="position:fixed;inset:0;z-index:2147483600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#2C241D;color:#F0EBE5;font-family:'Pretendard',-apple-system,sans-serif;text-align:center;padding:24px;">
-  <style>@keyframes authSpin{to{transform:rotate(360deg)}}#authGoogleBtn:hover{box-shadow:0 4px 14px rgba(0,0,0,.25);transform:translateY(-1px)}#authGoogleBtn:active{transform:translateY(0)}</style>
-  <div style="font-size:13px;letter-spacing:3px;color:#B85C38;font-weight:700">DR. FELIS</div>
-  <div style="font-size:22px;font-weight:800;line-height:1.4">2026 하반기 전략 — OGK 재설계</div>
-  <div id="authGateSpin" style="width:34px;height:34px;border:3px solid rgba(240,235,229,.18);border-top-color:#B85C38;border-radius:50%;animation:authSpin .8s linear infinite"></div>
-  <div id="authGateMsg" style="font-size:14px;color:#D4CCC3;max-width:340px;line-height:1.6">접근 권한 확인 중…</div>
-  <button id="authGoogleBtn" type="button" style="display:none;align-items:center;gap:10px;background:#fff;color:#2C241D;border:none;border-radius:10px;padding:12px 22px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:.15s box-shadow,.15s transform;box-shadow:0 2px 8px rgba(0,0,0,.2)">
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.6 5.6C41.7 36.1 44 30.6 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
-    <span>Google로 로그인</span>
-  </button>
-  <div id="authGateSub" style="font-size:12px;color:#9E9488;max-width:340px;line-height:1.6">@drfelis.com 회사 계정만 접근할 수 있습니다.</div>
-</div>
 <div class="top-tab-bar">
   <button class="tab-btn active" data-tab="strategy">전략 문서</button>
   <button class="tab-btn" data-tab="tracker">2026 트래커</button>
@@ -2215,85 +2201,6 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     } catch(e){ console.warn('Firebase init 실패:',e); setSyncBadge('offline'); }
   }
 
-  /* ─── 구글 로그인 게이트 (@drfelis.com 전용) ─── */
-  const ALLOWED_DOMAIN = 'drfelis.com';
-  let fbAuth = null, _denyMsg = '';
-  function _gateEl(id){ return document.getElementById(id); }
-  function setGate(state, opt){
-    opt = opt || {};
-    const gate=_gateEl('authGate'), spin=_gateEl('authGateSpin'),
-          msg=_gateEl('authGateMsg'), btn=_gateEl('authGoogleBtn'), sub=_gateEl('authGateSub');
-    if(!gate) return;
-    if(state==='authed'){
-      gate.style.display='none';
-      document.documentElement.style.overflow=''; document.body.style.overflow='';
-      return;
-    }
-    gate.style.display='flex';
-    document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden';
-    const defSub='@drfelis.com 회사 계정만 접근할 수 있습니다.';
-    if(state==='checking'){
-      spin.style.display=''; btn.style.display='none';
-      msg.textContent='접근 권한 확인 중…'; sub.textContent=defSub;
-    } else if(state==='signin'){
-      spin.style.display='none'; btn.style.display='inline-flex';
-      msg.innerHTML=opt.msg||'회사 구글 계정으로 로그인하세요.'; sub.textContent=defSub;
-    } else if(state==='error'){
-      spin.style.display='none'; btn.style.display='inline-flex';
-      msg.innerHTML=opt.msg||'로그인 중 오류가 발생했습니다.'; sub.textContent=opt.sub||defSub;
-    }
-  }
-  function googleLogin(){
-    if(!fbAuth) return;
-    const provider=new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ hd:ALLOWED_DOMAIN, prompt:'select_account' });
-    setGate('checking');
-    fbAuth.signInWithPopup(provider).catch(err=>{
-      const code=(err&&err.code)||'';
-      if(code==='auth/popup-closed-by-user'||code==='auth/cancelled-popup-request'){
-        setGate('signin');
-      } else if(code==='auth/unauthorized-domain'){
-        setGate('error',{ msg:'이 도메인은 Firebase 승인 목록에 없습니다.', sub:'Firebase 콘솔 → Authentication → Settings → 승인된 도메인에 현재 주소를 추가하세요.' });
-      } else if(code==='auth/operation-not-allowed'){
-        setGate('error',{ msg:'Google 로그인이 비활성화되어 있습니다.', sub:'Firebase 콘솔 → Authentication → 로그인 방법에서 Google을 사용 설정하세요.' });
-      } else if(code==='auth/popup-blocked'){
-        setGate('error',{ msg:'팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.' });
-      } else {
-        setGate('error',{ msg:'로그인 실패: '+((err&&err.message)||code||'알 수 없는 오류') });
-      }
-    });
-  }
-  function initAuth(){
-    if(typeof firebase==='undefined' || !firebase.auth){
-      setGate('error',{ msg:'인증 모듈을 불러오지 못했습니다.', sub:'네트워크 연결을 확인하고 새로고침하세요.' });
-      return;
-    }
-    try {
-      if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
-      fbAuth = firebase.auth();
-      const btn=_gateEl('authGoogleBtn'); if(btn) btn.addEventListener('click', googleLogin);
-      setGate('checking');
-      fbAuth.onAuthStateChanged(function(user){
-        if(user){
-          const email=(user.email||'').toLowerCase();
-          if(email.slice(-(ALLOWED_DOMAIN.length+1))==='@'+ALLOWED_DOMAIN){
-            setGate('authed');
-          } else {
-            _denyMsg=((user.email||'이 계정'))+' 은(는) 허용되지 않은 계정입니다.<br>@'+ALLOWED_DOMAIN+' 계정으로 로그인하세요.';
-            fbAuth.signOut();   // → 아래 null 분기로 이어짐
-          }
-        } else {
-          if(_denyMsg){ setGate('signin',{ msg:_denyMsg }); _denyMsg=''; }
-          else setGate('signin');
-        }
-      }, function(err){
-        setGate('error',{ msg:'인증 상태 확인 실패: '+((err&&err.message)||'') });
-      });
-    } catch(e){
-      setGate('error',{ msg:'인증 초기화 실패: '+((e&&e.message)||'') });
-    }
-  }
-
   /* ─── Tab switching ─── */
   const strategyWrap = document.getElementById('strategy-wrap');
   const trackerWrap  = document.getElementById('tracker-wrap');
@@ -2899,7 +2806,6 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 
   /* Firebase 초기화 (스크립트 로드 후 즉시) */
   initFirebase();
-  initAuth();   // 구글 로그인 게이트 (@drfelis.com 전용)
 
 })(); /* END TRACKER */
 </script>
