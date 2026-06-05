@@ -180,7 +180,7 @@ create table promo.campaign_price_guides (
 
 ## 10. 빠르게 시작하기 (새 채팅 세션 가이드)
 
-1. 이 파일 + `SPEC.md` + `AGENTS.md`를 첨부
+1. 이 파일 + `SPEC.md` + `AGENTS.md` + `S0_로드맵_아키텍처_마스터.md`를 첨부 (가격 가이드/달성률/목적 슬라이스 로드맵은 S0가 마스터)
 2. 디렉토리: 모든 코드는 `promo-analytics/` 아래
 3. DB 작업은 Supabase MCP의 `apply_migration` 또는 SQL Editor
 4. 코드 컨벤션: `AGENTS.md`("This is NOT the Next.js you know")를 우선 참조
