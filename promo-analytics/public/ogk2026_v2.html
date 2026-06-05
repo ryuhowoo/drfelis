@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Felis 2026 — 하반기 OGK 재설계 (v4)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --bg:#F5F0EA;--bg-w:#FFFFFF;--bg-card:#FFFFFF;--bg-alt:#F9F6F2;
+  --txt-900:#2C241D;--txt-700:#4A4037;--txt-500:#7A7068;--txt-300:#A89E94;
+  --accent:#B85C38;--accent-lt:#F5EBE5;--accent-md:#C97555;
+  --clay:#9A6A4A;--clay-lt:#F0E7DE;--gold:#A8803C;--gold-lt:#F6EFE2;
+  --teal:#9A6A4A;--teal-lt:#F0E7DE;
+  --navy:#9A6A4A;--navy-lt:#F0E7DE;
+  --burgundy:#9A6A4A;--burgundy-lt:#F0E7DE;
+  --amber:#A8803C;--amber-lt:#F6EFE2;
+  --border:#DDD7CF;--border-md:#C5BDB3;
+  --cover-bg:#2C241D;
+  --ff:'Pretendard',-apple-system,sans-serif;
+  --radius:14px;
+  --shadow:0 1px 4px rgba(44,36,29,.06),0 4px 16px rgba(44,36,29,.05);
+  --shadow-h:0 4px 16px rgba(44,36,29,.10),0 8px 32px rgba(44,36,29,.07);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1A1714;--bg-w:#232019;--bg-card:#2A2622;--bg-alt:#302C27;
+    --txt-900:#F0EBE5;--txt-700:#D4CCC3;--txt-500:#9E9488;--txt-300:#6E645A;
+    --accent:#D4845A;--accent-lt:#3A2A20;--accent-md:#E09B74;
+    --clay:#C19A7C;--clay-lt:#2E241C;--gold:#C6A24E;--gold-lt:#332B1A;
+    --teal:#C19A7C;--teal-lt:#2E241C;
+    --navy:#C19A7C;--navy-lt:#2E241C;
+    --burgundy:#C19A7C;--burgundy-lt:#2E241C;
+    --amber:#C6A24E;--amber-lt:#332B1A;
+    --border:#3A3530;--border-md:#4A443E;
+    --cover-bg:#12100D;
+    --shadow:0 1px 4px rgba(0,0,0,.2),0 4px 16px rgba(0,0,0,.15);
+    --shadow-h:0 4px 16px rgba(0,0,0,.25),0 8px 32px rgba(0,0,0,.2);
+  }
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--txt-900);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+h1{font-size:clamp(32px,5.5vw,64px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+h2{font-size:clamp(22px,3vw,38px);font-weight:700;letter-spacing:-.015em;line-height:1.2}
+h3{font-size:clamp(16px,1.8vw,20px);font-weight:700;letter-spacing:-.01em}
+h4{font-size:14px;font-weight:600}
+.label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-300);margin-bottom:6px;display:block}
+.big-num{font-size:clamp(28px,3.5vw,44px);font-weight:800;letter-spacing:-.02em;color:var(--txt-900);line-height:1}
+.unit-sm{font-size:.45em;font-weight:500;color:var(--txt-500);margin-left:3px}
+
+/* NAV */
+.side-nav{position:fixed;left:0;top:0;width:48px;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:500;background:var(--bg);backdrop-filter:blur(10px);border-right:1px solid var(--border)}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--border-md);cursor:pointer;transition:all .3s;position:relative}
+.nav-dot.active{background:var(--accent);width:9px;height:9px}
+.nav-dot:hover{background:var(--accent-md)}
+.nav-tooltip{position:absolute;left:20px;top:50%;transform:translateY(-50%);background:var(--cover-bg);color:#fff;font-size:11px;font-weight:500;padding:4px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+.nav-dot:hover .nav-tooltip{opacity:1}
+
+/* SECTIONS */
+section{padding:72px 64px 72px 76px;min-height:100vh;opacity:0;transform:translateY(40px)}
+section.visible{animation:fadeUp .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.section-eye{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.section-heading{margin-bottom:36px}
+.section-heading em{color:var(--accent);font-style:normal}
+
+/* COVER */
+#cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--cover-bg);color:#fff;padding:80px 40px;position:relative}
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.4);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:10px;letter-spacing:2px}
+
+/* BENTO */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.b-3{grid-column:span 3}.b-4{grid-column:span 4}.b-5{grid-column:span 5}.b-6{grid-column:span 6}
+.b-7{grid-column:span 7}.b-8{grid-column:span 8}.b-12{grid-column:span 12}
+
+/* CARD */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:box-shadow .25s,transform .25s;opacity:0;transform:translateY(20px)}
+section.visible .card{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
+section.visible .card:nth-child(1){animation-delay:.08s}
+section.visible .card:nth-child(2){animation-delay:.14s}
+section.visible .card:nth-child(3){animation-delay:.20s}
+section.visible .card:nth-child(4){animation-delay:.26s}
+section.visible .card:nth-child(5){animation-delay:.32s}
+section.visible .card:nth-child(6){animation-delay:.38s}
+section.visible .card:nth-child(7){animation-delay:.44s}
+section.visible .card:nth-child(8){animation-delay:.50s}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-2px)}
+
+/* KPI */
+.kpi-card{text-align:left}
+.kpi-delta{font-size:12px;font-weight:600;margin-top:4px}
+.kpi-delta.up{color:var(--teal)}.kpi-delta.down{color:var(--burgundy)}.kpi-delta.warn{color:var(--amber)}
+.kpi-sub{font-size:12px;color:var(--txt-500);margin-top:4px}
+
+/* QUOTE */
+.quote{border-left:1.5px solid var(--accent);padding:16px 20px;margin-bottom:28px;background:var(--accent-lt);border-radius:0 8px 8px 0}
+.quote p{font-size:clamp(14px,1.8vw,16px);color:var(--txt-700);line-height:1.8;font-weight:500}
+
+/* INSIGHT BOX */
+.insight{border-left:1.5px solid var(--navy);padding:16px 20px;margin:20px 0;background:var(--navy-lt);border-radius:0 8px 8px 0}
+.insight p{font-size:14px;color:var(--txt-700);line-height:1.8}
+.insight .tag{font-size:10px;font-weight:700;color:var(--navy);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+
+.warn-box{border-left:1.5px solid var(--amber);padding:16px 20px;margin:20px 0;background:var(--amber-lt);border-radius:0 8px 8px 0}
+.warn-box p{font-size:14px;color:var(--txt-700);line-height:1.8}
+.warn-box .tag{font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:var(--bg-alt);color:var(--txt-500);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;color:var(--txt-700);border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none;font-weight:700;color:var(--txt-900)}
+.tbl .hl{color:var(--accent);font-weight:700}
+.tbl .neg{color:var(--burgundy);font-weight:600}
+
+/* CHIPS */
+.chip{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.chip-o{background:var(--accent-lt);color:var(--accent)}
+.chip-b{background:var(--navy-lt);color:var(--navy)}
+.chip-g{background:var(--teal-lt);color:var(--teal)}
+.chip-r{background:var(--burgundy-lt);color:var(--burgundy)}
+.chip-a{background:var(--amber-lt);color:var(--amber)}
+
+/* PHASE CARD */
+.phase-card{position:relative;overflow:hidden}
+.phase-card .phase-tag{position:absolute;top:0;right:0;padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:0 14px 0 10px}
+.phase-tag.p1{background:var(--accent);color:#fff}
+.phase-tag.p2{background:var(--clay);color:#fff}
+.phase-tag.p3{background:var(--gold);color:#fff}
+
+/* GATE CARD */
+.gate-card{border-top:1.5px solid var(--accent);position:relative}
+.gate-card.g2{border-top-color:var(--navy)}
+.gate-card.g3{border-top-color:var(--teal)}
+.gate-card.g4{border-top-color:var(--amber)}
+.gate-no{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;display:block}
+.gate-card.g2 .gate-no{color:var(--navy)}
+.gate-card.g3 .gate-no{color:var(--teal)}
+.gate-card.g4 .gate-no{color:var(--amber)}
+
+/* TIMELINE */
+.timeline{padding-left:28px;position:relative}
+.timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:0;width:1px;background:linear-gradient(to bottom,var(--accent),var(--border))}
+.tl-item{position:relative;padding-bottom:24px}
+.tl-dot{position:absolute;left:-28px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--bg-card);border:1px solid var(--accent);transition:all .2s}
+.tl-item:hover .tl-dot{background:var(--accent)}
+.tl-mo{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.tl-title{font-size:14px;font-weight:700;color:var(--txt-900);margin-bottom:3px}
+.tl-desc{font-size:12px;color:var(--txt-500)}
+
+/* ACCORDION */
+.acc-item{border-bottom:1px solid var(--border)}
+.acc-head{display:flex;justify-content:space-between;align-items:center;padding:14px 0;cursor:pointer;font-weight:600;font-size:14px;color:var(--txt-700);transition:color .2s;gap:12px}
+.acc-head:hover{color:var(--accent)}
+.acc-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.acc-arrow{font-size:11px;color:var(--txt-300);transition:transform .3s;flex-shrink:0}
+.acc-item.open .acc-arrow{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.16,1,.3,1)}
+.acc-inner{padding:0 0 14px;font-size:13px;color:var(--txt-500);line-height:1.8}
+
+/* FLOW */
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-node{background:var(--bg-alt);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;text-align:center;flex-shrink:0}
+.flow-node.accent{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.flow-arr{color:var(--txt-300);font-size:14px}
+
+/* OWNER TAG */
+.owner{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--txt-500);background:var(--bg-alt);padding:2px 8px;border-radius:4px}
+
+/* SLIDER */
+.sl-group{margin:14px 0}
+.sl-label{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-500);margin-bottom:6px;font-weight:500}
+.sl-label strong{color:var(--accent);font-size:14px}
+input[type="range"]{width:100%;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;cursor:pointer;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:1px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:20px 0}
+
+/* RISK GRID */
+.risk-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:13px;margin-top:12px}
+.risk-icon{font-size:16px;line-height:1.4}
+.risk-txt{color:var(--txt-700);line-height:1.6}
+
+/* GUARDRAIL */
+.guard-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:14px}
+.guard-item{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.6;border:1px solid var(--border)}
+.guard-item.ok{background:var(--teal-lt);border-color:var(--teal);color:var(--txt-700)}
+.guard-item.no{background:var(--burgundy-lt);border-color:var(--burgundy);color:var(--txt-700)}
+
+/* SCROLL PROGRESS */
+.scroll-progress{position:fixed;top:0;left:0;width:0;height:3px;background:var(--accent);z-index:600;transition:width .1s linear}
+
+/* HIGHLIGHT NUMBER GLOW */
+.big-num{transition:color .3s}
+.num-glow{animation:numPulse .8s cubic-bezier(.16,1,.3,1)}
+@keyframes numPulse{
+  0%{opacity:.5;transform:scale(.95)}
+  50%{text-shadow:0 0 20px rgba(184,92,56,.25)}
+  100%{opacity:1;transform:scale(1);text-shadow:none}
+}
+
+/* CARD 3D DEPTH */
+.card{transform-style:preserve-3d;perspective:800px}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-3px) rotateX(1deg)}
+
+/* SECTION TRANSITIONS — alternating tint */
+section:nth-child(odd){background:var(--bg)}
+section:nth-child(even){background:var(--bg-alt)}
+#cover{background:var(--cover-bg) !important}
+
+/* FLOW NODE entrance */
+section.visible .flow-node{animation:slideRight .5s cubic-bezier(.16,1,.3,1) both}
+section.visible .flow-node:nth-child(1){animation-delay:.1s}
+section.visible .flow-node:nth-child(3){animation-delay:.2s}
+section.visible .flow-node:nth-child(5){animation-delay:.3s}
+section.visible .flow-node:nth-child(7){animation-delay:.4s}
+section.visible .flow-node:nth-child(9){animation-delay:.5s}
+@keyframes slideRight{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
+
+/* TIMELINE DOT PULSE on visible */
+section.visible .tl-dot{animation:dotPop .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .tl-item:nth-child(1) .tl-dot{animation-delay:.1s}
+section.visible .tl-item:nth-child(2) .tl-dot{animation-delay:.2s}
+section.visible .tl-item:nth-child(3) .tl-dot{animation-delay:.3s}
+section.visible .tl-item:nth-child(4) .tl-dot{animation-delay:.4s}
+section.visible .tl-item:nth-child(5) .tl-dot{animation-delay:.5s}
+@keyframes dotPop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* QUOTE slide-in */
+section.visible .quote,section.visible .insight,section.visible .warn-box{animation:slideIn .6s cubic-bezier(.16,1,.3,1) both;animation-delay:.2s}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+/* PHASE TAG shimmer */
+.phase-tag{overflow:hidden;position:relative}
+.phase-tag::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shimmer 3s infinite}
+@keyframes shimmer{0%{left:-100%}50%{left:100%}100%{left:100%}}
+
+/* TABLE ROW fade-in */
+section.visible .tbl tbody tr{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .tbl tbody tr:nth-child(1){animation-delay:.1s}
+section.visible .tbl tbody tr:nth-child(2){animation-delay:.15s}
+section.visible .tbl tbody tr:nth-child(3){animation-delay:.2s}
+section.visible .tbl tbody tr:nth-child(4){animation-delay:.25s}
+section.visible .tbl tbody tr:nth-child(5){animation-delay:.3s}
+section.visible .tbl tbody tr:nth-child(6){animation-delay:.35s}
+section.visible .tbl tbody tr:nth-child(7){animation-delay:.4s}
+
+/* RISK GRID stagger */
+section.visible .risk-grid .risk-txt{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .risk-grid .risk-txt:nth-child(2){animation-delay:.08s}
+section.visible .risk-grid .risk-txt:nth-child(4){animation-delay:.16s}
+section.visible .risk-grid .risk-txt:nth-child(6){animation-delay:.24s}
+section.visible .risk-grid .risk-txt:nth-child(8){animation-delay:.32s}
+section.visible .risk-grid .risk-txt:nth-child(10){animation-delay:.40s}
+section.visible .risk-grid .risk-txt:nth-child(12){animation-delay:.48s}
+
+/* REDUCE MOTION */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .scroll-progress{display:none}
+}
+
+@media(max-width:768px){
+  section{padding:48px 16px}
+  .side-nav{display:none}
+  .bento{grid-template-columns:1fr;gap:12px}
+  [class*="b-"]{grid-column:span 1}
+  .scroll-progress{height:2px}
+}
+
+/* ═══ TOP TAB BAR ═══ */
+.top-tab-bar{position:fixed;top:0;left:0;right:0;height:44px;background:var(--bg-w);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px 0 20px;gap:4px;z-index:700;box-shadow:0 1px 8px rgba(44,36,29,.06)}
+.tab-btn{padding:5px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--txt-500);transition:all .2s;font-family:var(--ff)}
+.tab-btn:hover{color:var(--accent)}
+.tab-btn.active{background:var(--accent);color:#fff}
+.side-nav{top:44px!important;height:calc(100vh - 44px)!important}
+#strategy-wrap section{scroll-margin-top:44px}
+#strategy-wrap #cover{padding-top:120px}
+
+/* ═══ TRACKER ═══ */
+#tracker-wrap{display:none;padding:56px 64px 80px 76px;min-height:100vh}
+#tracker-wrap.t-active{display:block}
+.tr-section{margin-bottom:48px}
+.tr-sec-title{font-size:18px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ts-eye{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-lt);padding:3px 8px;border-radius:4px}
+.ts-hint{font-size:11px;font-weight:400;color:var(--txt-300);margin-left:4px}
+.t-progress-track{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin:10px 0 6px}
+.t-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-md));border-radius:6px;transition:width .6s cubic-bezier(.16,1,.3,1);min-width:0}
+.t-gate-cell{cursor:pointer;padding:12px 10px;border-radius:10px;transition:all .2s;border:1px solid var(--border);text-align:center;user-select:none;margin-bottom:8px}
+.t-gate-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-h)}
+.t-gate-cell[data-state="pending"]{background:var(--bg-alt);border-color:var(--border-md)}
+.t-gate-cell[data-state="pass"]{background:var(--teal-lt);border-color:var(--teal)}
+.t-gate-cell[data-state="fail"]{background:var(--burgundy-lt);border-color:var(--burgundy)}
+td.t-editable,span.t-editable{cursor:pointer;color:var(--txt-300);font-style:italic;font-size:12px;transition:color .2s}
+td.t-editable:hover,span.t-editable:hover,td.t-has-val:hover,span.t-has-val:hover{color:var(--accent)}
+td.t-has-val,span.t-has-val{cursor:pointer;font-weight:700}
+.t-sc{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.t-sc-ok{background:var(--teal-lt);color:var(--teal)}
+.t-sc-warn{background:var(--amber-lt);color:var(--amber)}
+.t-sc-fail{background:var(--burgundy-lt);color:var(--burgundy)}
+.t-sc-none{background:var(--bg-alt);color:var(--txt-300)}
+.t-qend-chip{font-size:9px;color:var(--txt-300);display:block;margin-top:2px;font-style:italic}
+.t-part-tabs,.t-month-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.t-ptab,.t-mtab{padding:4px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--txt-500);font-family:var(--ff);transition:all .2s}
+.t-ptab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.t-mtab.active{background:var(--accent-lt);color:var(--accent);border-color:var(--accent)}
+.t-task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg-alt);font-size:13px;color:var(--txt-700);line-height:1.6;cursor:pointer;transition:all .2s;margin-bottom:6px;border:1px solid transparent}
+.t-task-item:hover{background:var(--accent-lt);border-color:var(--accent)}
+.t-task-item.done>span{text-decoration:line-through;color:var(--txt-300)}
+.t-task-cb{width:16px;height:16px;border-radius:4px;border:1px solid var(--border-md);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s}
+.t-task-item.done .t-task-cb{background:var(--teal);border-color:var(--teal);color:#fff}
+.t-issue-item{display:flex;gap:12px;padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.t-issue-del{margin-left:auto;font-size:12px;color:var(--txt-300);cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .2s;flex-shrink:0;background:transparent;border:none;font-family:var(--ff)}
+.t-issue-del:hover{color:var(--burgundy);background:var(--burgundy-lt)}
+.t-btn-add{padding:7px 14px;border-radius:8px;border:2px dashed var(--accent);background:var(--accent-lt);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--ff);transition:all .2s}
+.t-btn-add:hover{background:var(--accent);color:#fff}
+.t-btn-save{padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--ff);transition:opacity .2s}
+.t-btn-save:hover{opacity:.9}
+.t-btn-cancel{padding:8px 18px;border-radius:8px;border:1px solid var(--border-md);background:var(--bg-alt);color:var(--txt-500);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--ff)}
+#t-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;display:flex;align-items:center;justify-content:center}
+#t-modal{background:var(--bg-card);border-radius:var(--radius);padding:28px;width:min(480px,92vw);box-shadow:var(--shadow-h);border:1px solid var(--border)}
+.t-field{margin-bottom:14px}
+.t-field label{display:block;font-size:11px;font-weight:600;color:var(--txt-300);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.t-field input,.t-field select,.t-field textarea{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:8px;background:var(--bg);color:var(--txt-900);font-size:13px;font-family:var(--ff);outline:none;transition:border .2s}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus{border-color:var(--accent)}
+.t-field textarea{resize:vertical}
+#t-popover{position:fixed;background:var(--bg-card);border:1px solid var(--border-md);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-h);z-index:800;min-width:180px}
+#t-popover-input{width:100%;padding:8px 10px;border:1px solid var(--border-md);border-radius:6px;background:var(--bg);color:var(--txt-900);font-size:16px;font-weight:700;font-family:var(--ff);outline:none;transition:border .2s}
+#t-popover-input:focus{border-color:var(--accent)}
+.t-pop-label{font-size:10px;color:var(--txt-300);margin-bottom:6px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+/* 트래커 내 카드는 section.visible 조건 없이 바로 표시 */
+#tracker-wrap .card{opacity:1!important;transform:none!important;animation:none!important}
+#tracker-wrap .bento{opacity:1!important}
+/* TIMELINE */
+#tl-outer{overflow-x:auto;overflow-y:visible;padding-bottom:6px;cursor:grab;user-select:none;border:1px solid var(--card-border);border-radius:10px;background:var(--bg-card)}
+#tl-outer.dragging{cursor:grabbing}
+#tl-inner{position:relative;height:200px}
+@media(max-width:768px){#tracker-wrap{padding:56px 16px 48px}.top-tab-bar{padding-left:12px}}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     NEUMORPHISM THEME (Apple › Stripe › Flow Ninja)
+     - 단일 웜뉴트럴 표면 위에 듀얼 섀도(좌상 라이트 / 우하 웜다크)로 깊이 표현
+     - 텍스트는 고대비 유지(가독성 우선) · 깊이는 섀도가 담당
+     - 콘텐츠 카드: 호버 시 살짝 떠오름(Stripe 마이크로 리프트)
+     - 컨트롤(버튼·탭·게이트·태스크·네비): 클릭 시 안으로 눌림(Flow Ninja 택타일)
+     - 강조 헤딩/숫자: 브랜드 오렌지→코랄 그라데이션(Stripe)
+     ═══════════════════════════════════════════════════════════════ -->
+<style id="neu-theme">
+:root{
+  /* 표면 — 카드 = 배경 동일색(뉴모피즘 핵심) */
+  --bg:#ECE8E2; --bg-w:#ECE8E2; --bg-card:#ECE8E2; --bg-alt:#E4DED5;
+  /* 텍스트 — 고대비(가독성) */
+  --txt-900:#2F2B26; --txt-700:#4C463E; --txt-500:#7C746A; --txt-400:#938A7E; --txt-300:#A89E92; --txt-200:#CFC8BD;
+  /* 브랜드 액센트 + 보조색(웜뉴트럴 틴트로 순화) */
+  --accent:#BC5A35; --accent-md:#D6794E; --accent-lt:#E4D8CC;
+  --clay:#9A6A4A; --clay-lt:#EBE2D8; --gold:#A8803C; --gold-lt:#EFE7D6;
+  --teal:#9A6A4A; --teal-lt:#EBE2D8;
+  --navy:#9A6A4A; --navy-lt:#EBE2D8;
+  --burgundy:#9A6A4A; --burgundy-lt:#EBE2D8;
+  --amber:#A8803C; --amber-lt:#EFE7D6;
+  --border:#DAD3C9; --border-md:#CDC5B9; --card-border:#DAD3C9;
+  --cover-bg:#262320;
+  --radius:22px;
+  /* 듀얼 섀도 토큰 (광원 = 좌상단) */
+  --nu-light:rgba(255,255,255,.92);
+  --nu-dark:rgba(70,58,44,.18);
+  --shadow:-6px -6px 14px var(--nu-light), 7px 7px 18px var(--nu-dark);
+  --shadow-h:-9px -9px 22px var(--nu-light), 12px 12px 28px var(--nu-dark);
+  --shadow-sm:-3px -3px 7px var(--nu-light), 4px 4px 10px var(--nu-dark);
+  --shadow-in:inset 4px 4px 9px var(--nu-dark), inset -4px -4px 9px var(--nu-light);
+  --shadow-in-sm:inset 2px 2px 5px var(--nu-dark), inset -2px -2px 5px var(--nu-light);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#2A2724; --bg-w:#2A2724; --bg-card:#2A2724; --bg-alt:#232019;
+    --txt-900:#EEEAE3; --txt-700:#D3CCC2; --txt-500:#9C9387; --txt-400:#857C70; --txt-300:#6E6559; --txt-200:#4A443C;
+    --accent:#D9855C; --accent-md:#E6A079; --accent-lt:#3C2E24;
+    --clay:#C19A7C; --clay-lt:#322820; --gold:#C6A24E; --gold-lt:#352C1C;
+    --teal:#C19A7C; --teal-lt:#322820;
+    --navy:#C19A7C; --navy-lt:#322820;
+    --burgundy:#C19A7C; --burgundy-lt:#322820;
+    --amber:#C6A24E; --amber-lt:#352C1C;
+    --border:#3A352F; --border-md:#4A443C; --card-border:#3A352F;
+    --cover-bg:#15130F;
+    --nu-light:rgba(255,255,255,.05);
+    --nu-dark:rgba(0,0,0,.55);
+    --shadow:-6px -6px 14px var(--nu-light), 7px 7px 18px var(--nu-dark);
+    --shadow-h:-9px -9px 22px var(--nu-light), 12px 12px 28px var(--nu-dark);
+    --shadow-sm:-3px -3px 7px var(--nu-light), 4px 4px 10px var(--nu-dark);
+    --shadow-in:inset 4px 4px 9px var(--nu-dark), inset -4px -4px 9px var(--nu-light);
+    --shadow-in-sm:inset 2px 2px 5px var(--nu-dark), inset -2px -2px 5px var(--nu-light);
+  }
+}
+
+/* ── 타이포 (Apple: 크고 또렷, 타이트한 자간, 넉넉한 행간) ── */
+body{background:var(--bg);letter-spacing:-.003em}
+h1{letter-spacing:-.035em}
+h2{letter-spacing:-.025em}
+.section-eye{font-weight:700;letter-spacing:3.5px}
+.section-heading{margin-bottom:44px}
+/* 강조 헤딩 — Stripe식 그라데이션 텍스트 */
+.section-heading em{
+  background:linear-gradient(120deg,var(--accent-md),var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)
+}
+
+/* ── 표면 통일 (뉴모피즘: 섹션·카드 동일색) ── */
+section:nth-child(odd),section:nth-child(even){background:var(--bg)}
+#cover{background:var(--cover-bg)!important}
+
+/* ── 카드 — 같은 색에서 솟아오른 입체 ── */
+.card{
+  background:var(--bg);border:none;border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  transition:box-shadow .35s cubic-bezier(.16,1,.3,1), transform .35s cubic-bezier(.16,1,.3,1)
+}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-4px)}
+
+/* ── 상단 탭바 / 좌측 네비 — 경계선 대신 부드러운 섀도 ── */
+.top-tab-bar{background:var(--bg);border-bottom:none;box-shadow:0 6px 18px var(--nu-dark)}
+.side-nav{background:var(--bg);border-right:none;box-shadow:6px 0 18px -8px var(--nu-dark)}
+
+/* 네비 점 — 작은 눌린 점, 활성 시 액센트 + 솟음 */
+.nav-dot{background:var(--bg);box-shadow:var(--shadow-in-sm);transition:all .3s cubic-bezier(.16,1,.3,1)}
+.nav-dot.active{background:var(--accent);box-shadow:var(--shadow-sm);width:11px;height:11px}
+.nav-dot:hover{background:var(--accent-md)}
+
+/* ── 탭 버튼 — 평소 솟음, 활성 시 안으로 눌림(택타일) ── */
+.tab-btn{background:var(--bg);box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.tab-btn:hover{color:var(--accent);transform:translateY(-1px)}
+.tab-btn.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.tab-btn:active{box-shadow:var(--shadow-in)}
+
+/* ── KPI 핵심 숫자 — 솔리드 유지(색 코딩·가독성 보존, Apple식) + 타이트한 자간 ── */
+.big-num{letter-spacing:-.03em}
+
+/* ── 강조/인용/경고 박스 — 표면에 박힌 패널(inset) ── */
+.quote,.insight,.warn-box{box-shadow:var(--shadow-in);border-radius:14px;border-left:none}
+.quote{background:var(--accent-lt)}
+.insight{background:var(--navy-lt)}
+.warn-box{background:var(--amber-lt)}
+
+/* ── 가드/플로우/오너 칩 — 살짝 솟은 타일 ── */
+.guard-item{border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.guard-item:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.flow-node:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node.accent{box-shadow:var(--shadow-sm),inset 0 0 0 1.5px var(--accent)}
+.owner{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.chip{box-shadow:var(--shadow-sm)}
+
+/* ── 칩/배지 컬러 틴트는 유지하되 경계선 제거 ── */
+.gate-card{border-top:1.5px solid var(--accent)}
+
+/* ── 표 — 경계선 최소화 ── */
+.tbl th{background:transparent;border-bottom:1px solid var(--border)}
+.tbl td{border-bottom:1px solid var(--border)}
+
+/* ── 슬라이더 — 눌린 트랙 + 솟은 thumb ── */
+input[type="range"]{background:var(--bg);box-shadow:var(--shadow-in-sm);height:8px;border-radius:8px}
+input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-light),3px 3px 7px var(--nu-dark)}
+
+/* ════════ 트래커 컨트롤 ════════ */
+/* 입력 필드 — 눌린 면 */
+.t-field input,.t-field select,.t-field textarea,#t-popover-input{
+  background:var(--bg);border:none;box-shadow:var(--shadow-in-sm)
+}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus,#t-popover-input:focus{
+  box-shadow:var(--shadow-in-sm),0 0 0 2px var(--accent)
+}
+/* 버튼류 — 솟음 → 클릭 시 눌림 */
+.t-btn-add,.t-btn-save,.t-btn-cancel{border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.t-btn-add:active,.t-btn-save:active,.t-btn-cancel:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-btn-save{background:var(--bg);color:var(--accent)}
+.t-btn-add{background:var(--bg)}
+/* 파트/월 탭 — 솟음, 활성 시 눌림 */
+.t-ptab,.t-mtab{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-ptab:hover,.t-mtab:hover{transform:translateY(-1px)}
+.t-ptab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.t-mtab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+/* 게이트 셀 — 솟은 타일, 클릭 시 눌림, 상태색 유지 */
+.t-gate-cell{border:none;box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.t-gate-cell:hover{transform:translateY(-3px);box-shadow:var(--shadow-h)}
+.t-gate-cell:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-gate-cell[data-state="pass"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--teal)}
+.t-gate-cell[data-state="fail"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--burgundy)}
+/* 태스크 항목 — 표면에 살짝 박힌 행, 호버 시 솟음 */
+.t-task-item{background:var(--bg);border:none;box-shadow:var(--shadow-in-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-task-item:hover{background:var(--bg);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.t-task-cb{border:none;box-shadow:var(--shadow-in-sm)}
+.t-issue-item{background:var(--bg);border:none;box-shadow:var(--shadow-sm)}
+/* 진행바 — 눌린 트랙 + 솟은 그라데이션 채움 */
+.t-progress-track{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.t-progress-fill{background:linear-gradient(90deg,var(--accent-md),var(--accent));box-shadow:1px 1px 3px var(--nu-dark)}
+/* 모달/팝오버 — 경계선 없이 깊게 솟음 */
+#t-modal,#t-task-modal,#t-tl-modal,#t-popover{border:none;box-shadow:var(--shadow-h)}
+.ts-eye{box-shadow:var(--shadow-in-sm)}
+.t-sc{box-shadow:var(--shadow-sm)}
+
+/* ── 스크롤 진행바 — 그라데이션 ── */
+.scroll-progress{background:linear-gradient(90deg,var(--accent-md),var(--accent))}
+
+/* ── 동작 줄이기 설정 존중 ── */
+@media(prefers-reduced-motion:reduce){
+  .card:hover,.t-gate-cell:hover,.guard-item:hover,.flow-node:hover,.t-task-item:hover,
+  .tab-btn:hover,.t-ptab:hover,.t-mtab:hover,.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:none}
+}
+@media(max-width:768px){
+  .card{border-radius:18px}
+  .card:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="top-tab-bar">
+  <button class="tab-btn active" data-tab="strategy">전략 문서</button>
+  <button class="tab-btn" data-tab="tracker">2026 트래커</button>
+  <span id="t-sync-badge" style="margin-left:auto;font-size:11px;font-weight:600;color:#888;letter-spacing:.2px">불러오는 중…</span>
+</div>
+<div class="scroll-progress" id="scroll-prog"></div>
+
+<!-- NAV -->
+<nav class="side-nav">
+  <div class="nav-dot active" data-section="cover"><div class="nav-tooltip">커버</div></div>
+  <div class="nav-dot" data-section="s1"><div class="nav-tooltip">상반기 진단</div></div>
+  <div class="nav-dot" data-section="s2"><div class="nav-tooltip">120억 경로</div></div>
+  <div class="nav-dot" data-section="s3"><div class="nav-tooltip">정기구독</div></div>
+  <div class="nav-dot" data-section="s4"><div class="nav-tooltip">게이트 재설계</div></div>
+  <div class="nav-dot" data-section="align"><div class="nav-tooltip">같이 가는 법</div></div>
+  <div class="nav-dot" data-section="s5"><div class="nav-tooltip">3-Phase</div></div>
+  <div class="nav-dot" data-section="s6"><div class="nav-tooltip">2단계 세부</div></div>
+  <div class="nav-dot" data-section="s7"><div class="nav-tooltip">파트별 하반기 액션</div></div>
+  <div class="nav-dot" data-section="s8"><div class="nav-tooltip">리스크·센서</div></div>
+  <div class="nav-dot" data-section="s9"><div class="nav-tooltip">다음 스텝</div></div>
+</nav>
+
+<div id="strategy-wrap">
+
+<!-- ═══ COVER ═══ -->
+<section id="cover">
+  <p style="font-size:11px;font-weight:700;letter-spacing:5px;text-transform:uppercase;color:var(--accent);margin-bottom:20px;">Dr. Felis 2026</p>
+  <h1 style="margin-bottom:16px;">하반기,<br><span style="color:var(--accent);">같이 가는 법</span></h1>
+  <p style="font-size:clamp(14px,2vw,18px);color:rgba(255,255,255,.6);margin-bottom:4px;">5월 실측 진단 → 게이트 재설계 → 3·4분기 OGK → 같이 책임지는 법</p>
+  <p style="font-size:13px;color:rgba(255,255,255,.35);letter-spacing:2px;margin-top:12px;">2026. 06 — 브랜드팀 · <span style="color:var(--accent)">v3 게이트 재설계</span></p>
+  <p style="font-size:12px;color:rgba(255,255,255,.45);margin-top:18px;max-width:520px;line-height:1.7;">제품이 없어서 못 파는 상황까지 계산에 넣었다. 매출 절대액 대신 <strong style="color:rgba(255,255,255,.7)">"지킬 이익액 + 같이 합의한 신호"</strong>로 게이트를 다시 짠다.</p>
+  <div class="scroll-hint">
+    <svg width="20" height="32" viewBox="0 0 24 36"><rect x="1" y="1" width="22" height="34" rx="11" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="12" cy="10" r="2" fill="currentColor"><animate attributeName="cy" values="10;20;10" dur="1.6s" repeatCount="indefinite"/></circle></svg>
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<!-- ═══ S1: 현재 위치 ═══ -->
+<section id="s1">
+  <p class="section-eye">Section 01</p>
+  <h2 class="section-heading">상반기(1~5월), 우리는 <em>어디에 있나</em></h2>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-3 kpi-card">
+      <span class="label">1~5월 누적 매출</span>
+      <div class="big-num"><span id="v-rev">0</span><span class="unit-sm">억 원</span></div>
+      <div class="kpi-sub">월평균 8.0억</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">1~5월 평균 이익률</span>
+      <div class="big-num"><span id="v-mg">0</span><span class="unit-sm">%</span></div>
+      <div class="kpi-delta warn">목표선(이익률 30%)에 거의 도달</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">5월 이익률</span>
+      <div class="big-num" style="color:var(--teal)"><span id="v-mg3">0</span><span class="unit-sm">%</span></div>
+      <div class="kpi-delta up">광고비를 줄여도 이익률 지킴</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">5월 매출</span>
+      <div class="big-num"><span id="v-apr">0</span><span class="unit-sm">억 원</span></div>
+      <div class="kpi-delta warn">목표(9.77억)의 86%</div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-7">
+      <span class="label">1~5월 월별 성과</span>
+      <table class="tbl" style="margin-top:12px;">
+        <thead><tr><th>월</th><th>B2C 매출</th><th>공식몰</th><th>스스</th><th>이익률</th><th>시그널</th></tr></thead>
+        <tbody>
+          <tr><td>1월</td><td>8.21억</td><td>2.92억</td><td>5.22억</td><td>27.7%</td><td class="neg">수수료 급등</td></tr>
+          <tr><td>2월</td><td>7.78억</td><td>2.58억</td><td>4.79억</td><td>27.3%</td><td class="neg">스스 수수료 16.9%</td></tr>
+          <tr><td>3월</td><td>7.65억</td><td>2.81억</td><td>4.71억</td><td class="hl">30.8%</td><td style="color:var(--teal);font-weight:600">교정 효과</td></tr>
+          <tr><td>4월</td><td>8.18억</td><td>3.70억</td><td>4.40억</td><td class="hl">32.3%</td><td style="color:var(--teal);font-weight:600">광고 효율 개선</td></tr>
+          <tr><td>5월</td><td>8.36억</td><td>4.17억</td><td>4.13억</td><td class="hl">31.4%</td><td style="color:var(--teal);font-weight:600">광고비 줄여도 이익률 지킴</td></tr>
+          <tr><td>1~5월</td><td>40.15억</td><td>—</td><td>—</td><td>29.8%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card b-5">
+      <span class="label">왜 3월에 회복됐나</span>
+      <div style="margin-top:12px;">
+        <div class="insight" style="margin:0 0 12px">
+          <span class="tag">채널 비중이 이익률을 결정한다</span>
+          <p>1~2월은 스스 매출 비중이 크게 높아지면서 혜택 중첩(펫바우처 적립, 카드사할인 등)이 수수료율을 끌어올렸다. 3월에 공식몰 비중이 회복되면서 자연 개선. 카드사할인·슈퍼적립 제외는 4월부터 적용.</p>
+        </div>
+        <p style="font-size:13px;color:var(--txt-500);line-height:1.8"><strong>3월의 30.8%가 공식몰 비중 회복 시의 실질 체력</strong>이다. 이 상태를 유지하는 것이 1단계의 첫 과제.</p>
+        <p style="font-size:13px;color:var(--txt-500);line-height:1.8;margin-top:10px">4·5월에도 이익률 30%대를 지켰다(32.3%, 31.4%). 다만 5월 매출은 목표의 86%로, <strong>물건이 부족해 매출이 목표에 못 미치기 시작했다.</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-12">
+      <span class="label">B2C 매출 — 전년 동월 대비 (채널 합산)</span>
+      <table class="tbl" style="margin-top:12px;">
+        <thead><tr><th>월</th><th>2025 매출</th><th>2026 매출</th><th>전년 동월 대비</th></tr></thead>
+        <tbody>
+          <tr><td>1월</td><td>5.81억</td><td>8.20억</td><td style="color:var(--teal);font-weight:700">+41.1%</td></tr>
+          <tr><td>2월</td><td>6.82억</td><td>7.76억</td><td style="color:var(--teal);font-weight:700">+13.8%</td></tr>
+          <tr><td>3월</td><td>6.01억</td><td>7.65억</td><td style="color:var(--teal);font-weight:700">+27.3%</td></tr>
+          <tr><td>4월</td><td>6.55억</td><td>8.18억</td><td style="color:var(--teal);font-weight:700">+24.9%</td></tr>
+          <tr><td>5월</td><td>5.68억</td><td>8.36억</td><td style="color:var(--teal);font-weight:700">+47.2%</td></tr>
+          <tr><td>1~5월</td><td>30.87억</td><td>40.15억</td><td class="hl">+30.1%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:var(--txt-300);margin-top:8px">* B2C 전체(채널 구분 없음). 1~5월 누적 매출이 전년 동기 대비 30.1% 성장.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S2: 120억 달성 경로 ═══ -->
+<section id="s2">
+  <p class="section-eye">Section 02</p>
+  <h2 class="section-heading">120억, <em>어떻게 도달하나</em></h2>
+
+  <div class="warn-box" style="margin-bottom:24px">
+    <span class="tag">조건부 목표</span>
+    <p>아래 120억 경로는 <strong>하반기 신제품(카사바·오메가3·유산균)이 제때 들어온다는 전제</strong> 위에 있다. 5월까지 월평균 8.0억으로, 120억은 하반기 월 11.5억 안팎을 요구한다(작년 최고월 9.5억). 물건이 늦으면 매출은 "준비된 물량을 얼마나 팔았는지(판매율)"로, 1차 목표는 <strong>남는 돈(이익액 36억) + 교차구독(모래만 구독하던 고객이 영양제도 함께 구독하는 것)</strong>으로 전환된다. → 자세한 전환 신호는 <em>게이트 재설계</em> 섹션.</p>
+  </div>
+
+  <div class="quote">
+    <p>25년 89억도 그냥 온 게 아니다. 슈퍼볼 런칭, 프로바이오 런칭, 각종 프로모션이 만든 결과.<br><strong>26년 120억도 마찬가지 — 작년 동일 성장 시 예상 매출과 추가 증분의 합이다.</strong></p>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-4 kpi-card">
+      <span class="label">작년 동일 성장 시 예상 매출</span>
+      <div class="big-num"><span id="v-base">0</span><span class="unit-sm">억</span></div>
+      <div class="kpi-sub">25년 월별 실적 × 1.15<br>(별도 액션 없이 도달)</div>
+    </div>
+    <div class="card b-4 kpi-card">
+      <span class="label">추가 증분 기대</span>
+      <div class="big-num" style="color:var(--accent)">15~20<span class="unit-sm">억</span></div>
+      <div class="kpi-sub">신제품 + 프로모션 + 구독 성장<br>+ 전환율 개선 + 네이버 수혜</div>
+    </div>
+    <div class="card b-4 kpi-card">
+      <span class="label">합계 → 목표</span>
+      <div class="big-num" style="color:var(--teal)">120<span class="unit-sm">억</span></div>
+      <div class="kpi-sub">~103 + 15~20 = 달성 경로 존재</div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-7">
+      <span class="label">분기별 빌드업 — 작년 동일 성장 시 예상 매출 + 추가 증분 기대</span>
+      <div style="height:320px;margin-top:12px;"><canvas id="buildup-chart"></canvas></div>
+      <p style="font-size:11px;color:var(--txt-300);margin-top:8px">* 작년 동일 성장 시 예상 매출 = 25년 월별 실적 × 보수 성장률(15%). 추가 증분 기대 = 신제품·프로모션·구독 성장 등</p>
+    </div>
+    <div class="card b-5">
+      <span class="label">작년 동일 성장 시 예상 매출 산출 근거</span>
+      <table class="tbl" style="margin-top:12px;font-size:12px;">
+        <thead><tr><th>분기</th><th>25년 실적</th><th>기본 ×1.15</th><th>+추가 증분</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>18.64억</td><td>21.44억</td><td>+2.18억<br><span style="font-size:10px;color:var(--txt-300)">실적 23.62</span></td></tr>
+          <tr><td>Q2</td><td>20.03억</td><td>23.03억</td><td>+4.60억<br><span style="font-size:10px;color:var(--txt-300)">슈퍼볼NEW+넵다+벌크+케어라인(이월)</span><br><span style="font-size:10px;color:var(--accent);font-weight:700">목표 27.6억 / 실측(4·5월) 16.5억, 6월 진행 중</span></td></tr>
+          <tr><td>Q3</td><td>24.46억</td><td>28.13억</td><td>+7.51억<br><span style="font-size:10px;color:var(--txt-300)">카사바NEW+유산균RN+오메가3NEW+Naver</span></td></tr>
+          <tr><td>Q4</td><td>26.20억</td><td>30.13억</td><td>+3.09억<br><span style="font-size:10px;color:var(--txt-300)">4주년+블프+식기NEW / 12월 BRAND</span></td></tr>
+          <tr><td>합계</td><td>89.33억</td><td class="hl">102.7억</td><td class="hl">+17.4억 → 120.1억</td></tr>
+        </tbody>
+      </table>
+      <div class="insight" style="margin:14px 0 0">
+        <span class="tag">검증</span>
+        <p>1분기는 계획대로(23.6억) 됐다. 하지만 4·5월은 목표에 못 미쳤다(4월 98%, 5월 86%). <strong>이유는 우리가 못 팔아서가 아니라, 팔 물건(신제품·재고)이 부족해서다.</strong> 그래서 120억은 "되면 좋은 목표"가 아니라 <strong>"하반기 신제품(카사바·오메가3·유산균)이 제때 들어와야만 닿는 목표"</strong>다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12">
+      <span class="label">레버별 기대 증분 — "이 액션이 얼마짜리인가"</span>
+      <div style="height:240px;margin-top:12px;"><canvas id="lever-chart"></canvas></div>
+      <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:var(--txt-500);line-height:1.7">
+        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">프로모션·캠페인</strong><br>넵다세일, 멤버스위크, 4주년, 블프. 25년에도 행사가 비행사 대비 +30~50% 매출 생성.</div>
+        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">신제품</strong><br>카사바(7월, 런칭 30일 1억), 오메가3(9월). 25년 슈퍼볼·프로바이오 역할.</div>
+        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">구독·전환 구조</strong><br>구독 월매출 1.13→1.5억(+4.8억/연). 퀴즈+상품페이지 정기구독 버튼으로 전환율 개선.</div>
+        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">네이버 하반기 수혜</strong><br>펫바우처+N배송 확대 (펫사업팀 전체 투자, 닥터펠리스 전용 아님). 스스 볼륨 간접 확대.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-12">
+      <span class="label">채널 전략 프레임 — 수의사의 처방전</span>
+      <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:280px;padding:24px;background:var(--accent-lt);border-radius:12px;border:1px solid var(--accent);">
+          <h3 style="color:var(--accent);">공식몰 = 진료실</h3>
+          <p style="font-size:13px;color:var(--txt-700);margin-top:10px;line-height:1.8">
+            <strong>브랜딩 + 구독 + 처방 경험.</strong><br>
+            퀴즈로 진단하고, 수의사가 처방하고, 구독으로 관리한다. 가격이 아니라 <strong>경험으로 고객을 잡는 채널</strong>.
+          </p>
+          <div style="margin-top:14px;font-size:12px;color:var(--txt-500)">목표 비중 40%+ · 이익률 35% · 구독 전환 12%</div>
+        </div>
+        <div style="flex:1;min-width:280px;padding:24px;background:var(--navy-lt);border-radius:12px;border:1px solid var(--navy);">
+          <h3 style="color:var(--navy);">스마트스토어 = 약국</h3>
+          <p style="font-size:13px;color:var(--txt-700);margin-top:10px;line-height:1.8">
+            <strong>세일즈 + 볼륨 + 발견.</strong><br>
+            검색으로 유입되고, 행사로 구매하고, 재구매로 정착한다. 네이버 하반기 수혜를 극대화하는 <strong>볼륨 엔진</strong>.
+          </p>
+          <div style="margin-top:14px;font-size:12px;color:var(--txt-500)">목표 비중 50~55% · 이익률 28%+ · 영양 비중 35%</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="flow">
+          <div class="flow-node">신규 고객<br><span style="font-size:10px;color:var(--txt-300)">스스/펫바우처 유입</span></div>
+          <div class="flow-arr">→</div>
+          <div class="flow-node" style="border-color:var(--navy);color:var(--navy);background:var(--navy-lt)">약국에서 첫 구매<br><span style="font-size:10px">검색 → 체험</span></div>
+          <div class="flow-arr">→</div>
+          <div class="flow-node accent">진료실로 이동<br><span style="font-size:10px">퀴즈 → 처방</span></div>
+          <div class="flow-arr">→</div>
+          <div class="flow-node accent">정기구독<br><span style="font-size:10px">매달 쌓이는 매출</span></div>
+          <div class="flow-arr">→</div>
+          <div class="flow-node">LTV 극대화</div>
+        </div>
+      </div>
+      <div class="insight" style="margin:16px 0 0">
+        <span class="tag">레퍼런스</span>
+        <p>Aesop처럼 적은 SKU에 깊은 스토리를 입히고, 교육이 프리미엄을 보호하는 구조. 미야옹철 IP = Aesop의 아포테카리 스타일 대응 자산. 세일즈향 광고는 약국(스스), 브랜딩 캠페인은 진료실(공식몰) D2C 광고로 분리.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-top:16px;">
+    <div class="card b-12" style="border-left:1.5px solid var(--accent);background:var(--accent-lt)">
+      <span class="label" style="color:var(--accent)">결론 — 두 갈래</span>
+      <p style="font-size:14px;color:var(--txt-700);line-height:1.9;margin-top:8px">
+        신제품이 제때 들어오면 → 매출 끝까지 밀어 <strong>120억에 도전</strong>한다.<br>
+        신제품이 늦으면 → 매출 욕심을 내려놓고, <strong>남는 돈(이익액 36억)과 교차구독</strong>을 지킨다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S3: 정기구독 ═══ -->
+<section id="s3">
+  <p class="section-eye">Section 03</p>
+  <h2 class="section-heading">정기구독, <em>진짜 숫자</em></h2>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-3 kpi-card">
+      <span class="label">이용중 구독자</span>
+      <div class="big-num"><span id="v-subs">0</span><span class="unit-sm">명</span></div>
+      <div class="kpi-sub">결제중 2,991 + 일시정지 366 · Q2 목표 2,800명 120%</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">구독 1회 평균 결제액</span>
+      <div class="big-num">~41,900<span class="unit-sm">원</span></div>
+      <div class="kpi-sub">3/7~6/3 평균</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">매달 들어오는 구독 매출(추정)</span>
+      <div class="big-num">~1.40<span class="unit-sm">억/월</span></div>
+      <div class="kpi-sub">결제중 2,991명 기준 (4·5월 실측)</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">공식몰 매출 중 구독 비중</span>
+      <div class="big-num">43<span class="unit-sm">%</span></div>
+      <div class="kpi-sub">3월 기준</div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12" style="border-top:1.5px solid var(--accent)">
+      <span class="label" style="color:var(--accent)">구독자 구성 — 영양으로 넘어올 사람이 보인다</span>
+      <p style="font-size:12px;color:var(--txt-500);margin:4px 0 12px">결제 진행 중인 구독자 2,991명 기준 (일시정지 포함 누적 3,357명)</p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1;min-width:280px;">
+          <table class="tbl">
+            <thead><tr><th>어떤 구독자인가</th><th>인원</th><th>비율</th></tr></thead>
+            <tbody>
+              <tr><td>모래만 구독</td><td>2,033명</td><td class="hl">68.0%</td></tr>
+              <tr><td>모래 + 영양 함께 구독</td><td>273명</td><td>9.1%</td></tr>
+              <tr><td>영양만 구독</td><td>685명</td><td>22.9%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="flex:1;min-width:280px;">
+          <p style="font-size:13px;color:var(--txt-700);line-height:1.85">
+            <strong>모래만 구독하는 2,033명은 아직 영양제를 안 쓴다 = 영양도 같이 구독하게 만들 가장 큰 기회.</strong> 이 중 10%(약 200명)만 영양을 추가해도 1년에 약 <strong>5,500만원</strong>이 더 남는다(영양은 모래보다 남는 비율이 1.8배 높다).
+          </p>
+          <p style="font-size:13px;color:var(--txt-700);line-height:1.85;margin-top:10px">
+            반대로 영양만 구독하는 685명에게는 모래를 권한다 — 모래가 더 오래 계속 쓰게 만들어서, 구독 해지를 막아준다.
+          </p>
+        </div>
+      </div>
+      <div class="insight" style="margin:16px 0 0">
+        <span class="tag">수 → 질</span>
+        <p>구독자 <strong>'수'</strong> 목표(올해 3,430명)는 6월 안에 채운다. 이제부터는 '몇 명이냐'가 아니라 <strong>'한 명이 얼마나 깊게 쓰느냐(질)'</strong>가 목표다. 그 핵심이 위의 교차구독 — 모래만 구독하던 고객이 영양제도 함께 구독하는 것이다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12" style="border-top:1.5px solid var(--teal)">
+      <span class="label" style="color:var(--teal)">구독 = 마진 엔진 — 고마진 포켓</span>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">
+        <div style="flex:1;min-width:280px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:var(--teal-lt);border-radius:10px">
+              <div style="font-size:24px;font-weight:800;color:var(--teal)">~37%</div>
+              <div style="font-size:11px;color:var(--txt-500);margin-top:4px">구독 가중평균 마진<br><span style="font-size:10px">(광고비 포함)</span></div>
+            </div>
+            <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:var(--bg-alt);border-radius:10px">
+              <div style="font-size:24px;font-weight:800;color:var(--txt-700)">31%</div>
+              <div style="font-size:11px;color:var(--txt-500);margin-top:4px">B2C 평균 마진<br><span style="font-size:10px">(스스·비구독이 끌어내림)</span></div>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>구독 풀은 회사에서 가장 남는 돈이 많은 포켓.</strong> 영양 마진(55.3%)이 모래(30.9%)의 1.8배 → <strong>구독 안 영양 비중↑ = 구독 마진↑</strong>(영양 26%→30% 시 구독 풀 +2.2%p).</p>
+        </div>
+        <div style="flex:1;min-width:280px;">
+          <div class="warn-box" style="margin:0 0 12px">
+            <span class="tag">균형 경고</span>
+            <p><strong>영양은 '계속 쓰게 만드는 힘(재구매가 강한 정도)'이 약하다</strong>(영양 90% vs 모래 93.2%). 영양만 단독으로 밀면 마진은 오르지만 <strong>구독 해지가 늘어 OGK 해지율 5% 목표와 충돌</strong> → 반드시 모래와 묶어 '계속 쓰게 만드는 힘'을 보강한다.</p>
+          </div>
+          <div class="insight" style="margin:0">
+            <span class="tag">숨은 기회</span>
+            <p>영양은 <strong>인원 도달 32.5% vs 매출 비중 26%</strong> → 1회 결제액이 낮다(번들로 메울 여지). 영양만 구독하는 685명은 모래 보호가 없는 <strong>'해지 취약 고마진 풀'</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12">
+      <span class="label">구독자 2가지 뷰</span>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:260px;padding:16px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--accent);">
+          <h4 style="color:var(--accent);">이용중 구독자 (서비스 기준)</h4>
+          <p style="font-size:13px;color:var(--txt-700);margin-top:8px;line-height:1.8">
+            총 <strong>3,357명</strong>
+          </p>
+          <p style="font-size:11px;color:var(--txt-500);margin-top:6px">카페24 정기배송 → 신청 내역 → "이용중" 기준. 회차별 결제일이 달라 이 수치가 실질 구독 풀.</p>
+        </div>
+        <div style="flex:1;min-width:260px;padding:16px;background:var(--bg-alt);border-radius:10px;border:1px solid var(--border);">
+          <h4>월간 결제 완료 (실적 기준)</h4>
+          <p style="font-size:13px;color:var(--txt-700);margin-top:8px;line-height:1.8">
+            3월 결제 건수 <strong>2,671건</strong>
+          </p>
+          <p style="font-size:11px;color:var(--txt-500);margin-top:6px">라플라스 기준. 구독 해지율·실매출 추적에는 이 데이터를 사용.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-6">
+      <span class="label">구독 해지율 추이 — 가장 좋은 뉴스</span>
+      <div style="height:240px;margin-top:12px;"><canvas id="churn-chart"></canvas></div>
+      <div class="insight" style="margin:16px 0 0">
+        <span class="tag">핵심 발견</span>
+        <p>구독 해지율이 14% → 5.3%로 급감. 특히 <strong>모래 해지율(16.5% → 5.1%)</strong>이 극적으로 개선. 이 추세가 유지되면 정기구독 매출이 매달 자동으로 쌓이는 구조가 완성된다.</p>
+      </div>
+    </div>
+    <div class="card b-6">
+      <span class="label">교차구독 월매출 시뮬레이터</span>
+      <div style="height:220px;margin-top:12px;"><canvas id="mrr-chart"></canvas></div>
+      <div class="sl-group">
+        <div class="sl-label">모래 단독 → 영양 추가 전환 인원 <strong id="cx-v">0</strong>명</div>
+        <input type="range" id="cx" min="0" max="600" step="10" value="0">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt-300);margin-top:2px"><span>현재 동시구독 273명</span><span style="color:var(--accent);font-weight:600">목표: 영양 비중 30% ≈ +228명</span></div>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;">
+        <div><span class="label">영양 매출 비중</span><div class="big-num" style="font-size:24px"><span id="cx-share">26.0</span><span class="unit-sm">%</span></div><div class="kpi-sub">현재 26% → 목표 30%</div></div>
+        <div><span class="label">추가 월 공헌이익</span><div class="big-num" style="font-size:24px">+<span id="cx-cm">0</span><span class="unit-sm">만원</span></div></div>
+        <div><span class="label">연 환산</span><div class="big-num" style="font-size:24px">+<span id="cx-cmy">0</span><span class="unit-sm">억</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-12">
+      <span class="label">구독 SKU 구조 — 개선 여지</span>
+      <div style="display:flex;gap:32px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="height:200px;"><canvas id="sku-pie"></canvas></div>
+        </div>
+        <div style="flex:2;min-width:300px;">
+          <div class="warn-box" style="margin:0">
+            <span class="tag">구조적 과제</span>
+            <p><strong>모래 74% (₩157,862,900) : 영양 26% (₩55,793,200).</strong> 모래는 원가율이 높고(35~43%) 영양은 낮다(26~32%). 구독 내 영양 비중을 30%로 올리면 구독 전체 마진이 개선된다. <strong>MD와 CRM이 함께 풀어야 할 공동 과제.</strong><br>구독 안에서 영양이 차지하는 비율을 26% → 30%로 올리면 구독 전체에 남는 돈이 늘어난다. 이게 위에서 말한 교차구독과 같은 방향이다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12" style="border-top:1.5px solid var(--navy)">
+      <span class="label" style="color:var(--navy)">이익률을 실제로 올린다면 — 구조 전환 (우리가 직접 할 수 있는 일: 판매·구독·채널)</span>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">
+        <div style="flex:1.4;min-width:320px">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>현재→목표</th><th>근거</th><th>기여</th></tr></thead>
+            <tbody>
+              <tr><td>공식몰 매출 비중↑</td><td>37% → 45%</td><td>공식몰이 스스보다 이익률 10.5%p 높음</td><td class="hl">+0.8%p</td></tr>
+              <tr><td>구독 매출 비중↑</td><td>17% → 28%</td><td>구독이 일반보다 이익률 7.1%p 높음</td><td class="hl">+0.8%p</td></tr>
+              <tr><td>구독 내 영양 비중↑</td><td>26% → 35%</td><td>영양 55.3% vs 모래 30.9% → 구독 +2.2%p</td><td class="hl">+0.6%p</td></tr>
+              <tr><td>광고비 절감</td><td>12% → 11%</td><td>광고비 1%p↓ ≈ 이익률 +1%p(80% 반영)</td><td class="hl">+0.8%p</td></tr>
+              <tr><td>합계</td><td>현재 31.4% 기준</td><td>+3.0%p</td><td class="hl">→ 34.4%</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:8px">안정적으로 기대할 선은 <strong>34% 초반</strong>. <strong>40% 영업이익률</strong>은 원가·주력 제품 가격이 막힌 상태에선 현실적으로 불가.</p>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <div class="warn-box" style="margin:0">
+            <span class="tag">기회비용 — 꼭 같이 본다</span>
+            <p>고마진 방식(구독·영양·공식몰)은 <strong>성장 속도가 느리다</strong>(복귀 수요 소진 · 새 고객 1명 데려오는 광고비 발생). 이익률을 올리는 건 <strong>매출 총량 성장 둔화를 감수 = 지금의 이익액 성장을 일부 반납</strong>한다는 뜻.</p>
+          </div>
+          <div class="insight" style="margin:12px 0 0">
+            <span class="tag">그래서 기본은</span>
+            <p>이익률 <strong>30%는 마지노선</strong>, 진짜 목표는 <strong>이익액 36억</strong>. 35%는 '물건이 부족해 매출을 못 밀 때' 택하는 <strong>구조 전환 옵션</strong>이다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12">
+      <span class="label">이익률 상승 실행 로드맵</span>
+      <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>#</th><th>실행</th><th>목적</th><th>KPI</th><th>담당</th></tr></thead>
+        <tbody>
+          <tr><td>①</td><td>영양 해지 방어 (효능 리마인드형 CRM)</td><td>영양 고마진 풀 누수 차단</td><td>영양 3개월 해지율 10.3%→7%</td><td>유니·로지</td></tr>
+          <tr><td>②</td><td>모래↔영양 교차구독 (양방향)</td><td>마진 업셀 + 계속 쓰게 만드는 힘 보강</td><td>영양 매출 비중 26%→30%</td><td>마틸다·유니</td></tr>
+          <tr><td>③</td><td>영양 객단가 번들</td><td>직접 인상 없이 실효단가↑</td><td>영양 매출 비중 26%→35%</td><td>마틸다</td></tr>
+          <tr><td>④</td><td>카사바·오메가3 영양 구독 SKU 런칭</td><td>고마진 구독 풀 확장(질+양)</td><td>신제품 구독 전환</td><td>전체</td></tr>
+          <tr><td>⑤</td><td>공식몰 비중 확대</td><td>혼합 마진 견인</td><td>공식몰 비중 51%→60%+</td><td>전체</td></tr>
+        </tbody>
+      </table>
+      <div class="insight" style="margin:14px 0 0">
+        <span class="tag">OGK와의 관계</span>
+        <p>모든 실행은 기존 OGK Gate(공헌이익률 30% · 구독 · 해지율 · 캠페인)에 연결된다. <strong>이 마진 엔진 전략은 OGK의 하위 실행 엔진</strong>으로 쓴다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S4: OGK 4 GATE ═══ -->
+<section id="s4">
+  <p class="section-eye">Section 04</p>
+  <h2 class="section-heading">하반기 게이트 재설계 — <em>무엇이, 왜 바뀌나</em></h2>
+
+  <div class="quote">
+    <p>게이트는 개인을 줄 세우는 점수표가 아니다. <strong>"회사가 지금 건강한가"를 우리 모두가 같은 기준으로 읽기 위한 신호</strong>다. 5월 실측과 재고 현실을 반영해, 같은 결과면 누가 봐도 같은 판정이 나오도록 다시 짰다.</p>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12" style="border-top:1.5px solid var(--accent)">
+      <span class="label" style="color:var(--accent)">v2 → v3 · 무엇이 바뀌었나</span>
+      <table class="tbl" style="font-size:12.5px;margin-top:12px;">
+        <thead><tr><th>게이트</th><th>v2 (4월)</th><th>v3 (하반기)</th><th>왜</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>구독자 수</strong></td>
+            <td>구독자 수 목표</td>
+            <td><span class="chip" style="background:var(--teal-lt);color:var(--teal)">달성 클리어</span></td>
+            <td>6월 내 4Q 목표 조기 달성 예상 → "수"는 끝. 이제 "질"</td>
+          </tr>
+          <tr>
+            <td><strong>(신규) 교차구독</strong></td>
+            <td>—</td>
+            <td class="hl">영양 매출 비중 26%→28%→30%</td>
+            <td>매출과 공헌이익률을 <strong>동시에</strong> 올리는 유일한 레버. 공급과 무관하게 지금 실행 가능</td>
+          </tr>
+          <tr>
+            <td><strong>매출</strong></td>
+            <td>절대액 120억 (고정)</td>
+            <td class="hl">신제품이 제때 들어오는지 조건부 + 판매율</td>
+            <td>120억은 하반기 신제품이 제때 들어오느냐가 쥐고 있다. 못 판 것과 팔 게 없던 것을 분리</td>
+          </tr>
+          <tr>
+            <td><strong>공헌이익</strong></td>
+            <td>이익률 30% (방어선)</td>
+            <td class="hl">이익액 36억(목표) + 30%(방어선)</td>
+            <td>이익률만 보면 매출을 줄여도 오른다. 진짜 목표는 <strong>이익액</strong>, 30%는 마지노선</td>
+          </tr>
+          <tr>
+            <td>광고비/매출 · 브랜드 캠페인</td>
+            <td colspan="3" style="color:var(--txt-500)">유지 (단, 공급 제약 시 광고 효율의 의미는 "살 수 있는 만큼만" 기준으로 재해석)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <!-- Gate 1 : 공헌이익 -->
+    <div class="card b-3 gate-card">
+      <span class="gate-no">Gate 01 · 목표</span>
+      <h3>공헌이익액 + 30% 방어</h3>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px;font-style:italic">"이익률은 지키고, 이익액은 키우고 있나"</p>
+      <table class="tbl" style="font-size:12px;">
+        <thead><tr><th>분기</th><th>이익률·공식몰</th></tr></thead>
+        <tbody>
+          <tr><td>2Q</td><td class="hl">30% + 37%</td></tr>
+          <tr><td>3Q</td><td class="hl">30% + 38%</td></tr>
+          <tr><td>4Q</td><td class="hl">30% + 40%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg-alt);border-radius:8px;font-size:12px;color:var(--txt-700)">
+        <strong>현재(5월):</strong> 이익률 31.4% · 공식몰 비중 약 51%
+      </div>
+      <div style="margin-top:10px;padding:10px 12px;background:var(--accent-lt);border-radius:8px;font-size:12px;color:var(--txt-700)">
+        <strong style="color:var(--accent)">연 목표 이익액 36억</strong> (=30%×120억)<br><span style="font-size:10px;color:var(--txt-500)">이익률 30% = 마지노선 · 이익액 = 진짜 목표</span>
+      </div>
+    </div>
+    <!-- Gate 2 : 교차구독 (신규) -->
+    <div class="card b-3 gate-card g2">
+      <span class="gate-no">Gate 02 · 신규</span>
+      <h3>영양 매출 비중</h3>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px;font-style:italic">"모래 구독자가 영양으로 넘어오고 있나"</p>
+      <table class="tbl" style="font-size:12px;">
+        <thead><tr><th>분기</th><th>모래→영양</th></tr></thead>
+        <tbody>
+          <tr><td>2Q</td><td class="hl">26% (기준)</td></tr>
+          <tr><td>3Q</td><td class="hl">28%</td></tr>
+          <tr><td>4Q</td><td class="hl">30%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg-alt);border-radius:8px;font-size:12px;color:var(--txt-700)">
+        <strong>현재:</strong> 26%<br><span style="font-size:10px;color:var(--txt-300)">모래단독 2,033명 = 미개척 풀 · 영양마진 55%</span>
+      </div>
+    </div>
+    <!-- Gate 3 : 광고비 (유지) -->
+    <div class="card b-3 gate-card g3">
+      <span class="gate-no">Gate 03 · 유지</span>
+      <h3>매출 대비 광고비</h3>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px;font-style:italic">"효율이 매출 성장을 따라가고 있나"</p>
+      <table class="tbl" style="font-size:12px;">
+        <thead><tr><th>분기</th><th>기준</th></tr></thead>
+        <tbody>
+          <tr><td>2Q</td><td class="hl">12% 이하</td></tr>
+          <tr><td>3Q</td><td class="hl">12% 이하</td></tr>
+          <tr><td>4Q</td><td class="hl">12% 이하</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--bg-alt);border-radius:8px;font-size:12px;color:var(--txt-700)">
+        <strong>현재:</strong> 12% 고정<br><span style="font-size:10px;color:var(--txt-300)">공급 제약 시 "살 수 있는 만큼만" 기준 효율</span>
+      </div>
+    </div>
+    <!-- Gate 4 : 브랜드 캠페인 (유지) -->
+    <div class="card b-3 gate-card g4">
+      <span class="gate-no">Gate 04 · 유지</span>
+      <h3>브랜드 캠페인</h3>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px;font-style:italic">"고객이 자발적으로 이야기하고 있나"</p>
+      <table class="tbl" style="font-size:12px;">
+        <thead><tr><th>분기</th><th>기준</th></tr></thead>
+        <tbody>
+          <tr><td>2Q</td><td class="hl">캠페인 1회</td></tr>
+          <tr><td>3Q</td><td class="hl">누적 2회</td></tr>
+          <tr><td>4Q</td><td class="hl">누적 3회</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--teal-lt);border-radius:8px;font-size:12px;color:var(--txt-700);border:1px solid var(--teal)">
+        <strong style="color:var(--teal)">실행:</strong> 만우절 "포캣츄 도난사건"<br><span style="font-size:10px;color:var(--txt-500)">좋아요 730~2,466</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 매출 = 신제품이 제때 들어오는지 조건부 -->
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12" style="border-left:1.5px solid var(--navy);background:var(--navy-lt)">
+      <span class="label" style="color:var(--navy)">매출 게이트는 "신제품이 제때 들어오는지"가 결정한다 — 운영 방식 전환 신호</span>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.85;margin-top:10px">
+        120억은 우리가 게을러서가 아니라 <strong>하반기 증분의 큰 축(카사바·오메가3·유산균)이 제때 들어오느냐</strong>에 달렸다. 그래서 매출은 절대액 대신 아래 두 신호로 본다 — 같은 상황이면 누가 봐도 같은 판정.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px">
+        <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px">성장 방식 유지</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">카사바(7월)·오메가3(9월)·유산균 리뉴얼이 각 <strong>출시 30일 전에 입고·재고 확정</strong> → 매출 풀스윙. 평가 기준은 절대액 페이스.</p>
+        </div>
+        <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:6px">이익 지키기 방식 자동 전환</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">출시 30일 전에 입고 미확정 → 그 분기 1차 게이트를 <strong>공헌이익액 + 교차구독</strong>으로 자동 전환. 매출은 "준비된 물량을 얼마나 팔았는지(판매율)"로 평가.</p>
+        </div>
+      </div>
+      <div class="insight" style="margin:14px 0 0">
+        <span class="tag">왜 이렇게</span>
+        <p>"안 판 것(우리 책임)"과 "팔 게 없던 것(공급 책임)"을 분리해야, 공급 사고가 우리 성과를 오염시키지 않는다. 모래·퍼펙트·프로바이오틱스는 공급 가능 → 교차구독은 어느 방식에서도 계속 민다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12">
+      <span class="label">브랜드 가드레일 — 전 분기 적용</span>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 4px">Gate 4(브랜드 캠페인)가 YES로 인정받기 위한 조건. 캠페인 형태와 무관하게 전 분기 콘텐츠에 공통 적용.</p>
+      <div class="guard-list">
+        <div class="guard-item ok"><strong>브랜드 톤 유지</strong> — 따뜻하지만 전문적, "수의사의 처방전" 결</div>
+        <div class="guard-item ok"><strong>미야옹철 전문가 포지션 보호</strong> — IP 훼손 금지</div>
+        <div class="guard-item no"><strong>공포 소구 / 긴급성 과장</strong> 메시지 금지</div>
+        <div class="guard-item no"><strong>할인율 전면 노출</strong>이 메인 훅인 상시 광고 콘텐츠 비중 50% 이상 금지</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-7">
+      <span class="label">KPI → 공헌이익 임팩트</span>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px">"내 KPI 1단위 개선이 전체에 얼마짜리인가"</p>
+      <table class="tbl" style="font-size:12px;">
+        <thead><tr><th>KPI</th><th>개선폭</th><th>연간 공헌이익 임팩트</th></tr></thead>
+        <tbody>
+          <tr><td>광고비 / 매출 비율</td><td>-1%p</td><td><span class="hl">+약 1.2억</span></td></tr>
+          <tr><td>구독 전환율</td><td>+1%p</td><td><span class="hl">+약 0.98억</span></td></tr>
+          <tr><td>공식몰 매출 비중</td><td>+5%p</td><td><span class="hl">+약 0.84억</span></td></tr>
+          <tr><td>스스 영양 SKU 비중</td><td>+5%p</td><td><span class="hl">+약 0.66억</span></td></tr>
+          <tr><td>상품페이지 정기구독 버튼 전환</td><td>+0.5%p</td><td><span class="hl">+약 0.49억</span></td></tr>
+          <tr><td>구독 해지율</td><td>-1%p</td><td><span class="hl">+약 0.13억</span></td></tr>
+        </tbody>
+      </table>
+      <div class="insight" style="margin:14px 0 0">
+        <span class="tag">읽는 법</span>
+        <p>광고비 1%p 절감과 구독 전환율 1%p 상승이 <strong>거의 같은 무게</strong>다. 퍼포먼스와 CRM이 동시에 작동해야 갭이 닫힌다. 어느 한쪽만으로는 부족하다.</p>
+      </div>
+    </div>
+    <div class="card b-5" style="border:1px solid var(--burgundy);background:var(--burgundy-lt)">
+      <span class="label" style="color:var(--burgundy)">미해결 구조 — 공식몰→스스 역유출</span>
+      <div style="margin-top:12px;">
+        <div style="display:flex;gap:12px;margin-bottom:14px;">
+          <div style="flex:1;text-align:center;padding:14px;background:var(--bg-card);border-radius:8px;">
+            <div style="font-size:22px;font-weight:800;color:var(--burgundy)">4.67%</div>
+            <div style="font-size:11px;color:var(--txt-500);margin-top:4px">공식몰 → 스스 이탈</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:14px;background:var(--bg-card);border-radius:8px;">
+            <div style="font-size:22px;font-weight:800;color:var(--teal)">2.11%</div>
+            <div style="font-size:11px;color:var(--txt-500);margin-top:4px">스스 → 공식몰 유입</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--txt-700);line-height:1.8">공식몰 D2C 광고비가 스스 매출을 키우는 구조. 역유출이 해소되지 않으면 공식몰 비중 40% 달성은 구조적으로 어렵다.</p>
+        <p style="font-size:12px;color:var(--txt-500);margin-top:12px;line-height:1.8"><strong>대응:</strong> 번들 공식몰 전용 + 퀴즈 경험 차별화 + <strong>역유출 고객 구매 패턴 분석(5월까지)</strong> → 번들 전략 조정 근거로 활용.</p>
+        <p style="font-size:12px;color:var(--txt-500);margin-top:8px"><strong>모니터링:</strong> 월간 역유출률 추적.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ALIGN: 같이 가는 법 ═══ -->
+<section id="align">
+  <p class="section-eye">Alignment</p>
+  <h2 class="section-heading">같이 가는 법 — <em>우리가 합의한 것</em></h2>
+
+  <div class="quote">
+    <p>게이트를 바꾼 진짜 이유는 숫자가 아니라 <strong>우리다.</strong> Align이 어긋나면 불평과 의욕 저하가 퍼포먼스로 번진다. 그래서 합의하고 간다 — 잘되면 같이 잘되고, 안 되더라도 흩어져 변명하지 말고 <strong>같은 기준으로 장렬하게 같이 실패하자.</strong> 그래야 다음에 같이 이긴다.</p>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-4" style="border-top:1.5px solid var(--teal)">
+      <span class="gate-no" style="color:var(--teal)">지향 · 우리가 향하는 곳</span>
+      <div class="guard-list" style="margin-top:12px">
+        <div class="guard-item ok"><strong>이익률은 지키고(30%), 이익액 36억을 만든다.</strong> 매출 절대치에 목매지 않는다.</div>
+        <div class="guard-item ok"><strong>"수 → 질" 전환.</strong> 구독자 수는 채웠다. 이제 한 명을 더 깊게 — 교차구독.</div>
+        <div class="guard-item ok"><strong>공급이 막혀도 마진은 우리가 만든다.</strong> 고마진 믹스(영양·구독·공식몰)로 체력을 지킨다.</div>
+      </div>
+    </div>
+    <div class="card b-4" style="border-top:1.5px solid var(--amber)">
+      <span class="gate-no" style="color:var(--amber)">주의 · 우리가 조심할 것</span>
+      <div class="guard-list" style="margin-top:12px">
+        <div class="guard-item no"><strong>공급이 최대 변수다.</strong> 품절·신제품 지연은 우리 잘못이 아니지만, 핑계로 멈추지도 않는다.</div>
+        <div class="guard-item no"><strong>못 판 것 ≠ 팔 게 없던 것.</strong> 정직하게 구분한다. 서로 탓하지 않기 위한 규칙이다.</div>
+        <div class="guard-item no"><strong>첫구매에 무리한 광고를 쏟지 않는다.</strong> 살 게 모래뿐인 카탈로그로 신규를 끌면 저마진·낮은 만족으로 샌다.</div>
+        <div class="guard-item no"><strong>가설은 가설일 뿐.</strong> 숫자로 검증하고 움직인다. 안 되는 가설은 미련 없이 바꾼다.</div>
+      </div>
+    </div>
+    <div class="card b-4" style="border-top:1.5px solid var(--accent)">
+      <span class="gate-no" style="color:var(--accent)">약속 · 같이 책임지는 법</span>
+      <div class="guard-list" style="margin-top:12px">
+        <div class="guard-item ok"><strong>게이트는 줄세우기가 아니다.</strong> YES/NO는 회사의 상태지 개인의 점수가 아니다.</div>
+        <div class="guard-item ok"><strong>결정은 함께, 책임도 함께.</strong> 한 파트의 미달을 다른 파트가 메운다.</div>
+        <div class="guard-item ok"><strong>같은 결과엔 같은 판정.</strong> 주관 해석을 빼서, 누구도 억울하지 않게 한다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-12" style="background:var(--cover-bg);border:none;text-align:center;padding:36px 28px">
+      <p style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px">Our Pledge</p>
+      <p style="font-size:clamp(17px,2.4vw,26px);font-weight:700;color:#fff;line-height:1.45">우리가 깊게 합의할수록, <span style="color:var(--accent-md)">흔들릴 때 덜 흔들린다.</span><br>각자 잘하는 것 말고, <span style="color:var(--accent-md)">같은 방향으로</span> 잘하자.</p>
+    </div>
+  </div>
+</section>
+<section id="s5">
+  <p class="section-eye">Section 05</p>
+  <h2 class="section-heading">9개월, <em>3개의 Phase</em> <span style="font-size:.55em;color:var(--txt-500);font-weight:500">(= 3개 분기 OGK)</span></h2>
+
+  <div class="quote">
+    <p>작년 동일 성장 시 예상 매출 ~103억 위에 <strong>약 17억을 추가 증분으로 쌓는다.</strong> 상반기는 전환 구조를 완성하고, 하반기에 신제품·프로모션·네이버 수혜로 수확한다.</p>
+  </div>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-4 phase-card">
+      <div class="phase-tag p1">PHASE 1 · 1단계</div>
+      <h3 style="margin-top:8px">바닥 다지기 + 구독 구조 심기</h3>
+      <p style="font-size:20px;font-weight:800;color:var(--accent);margin:8px 0">4~6월</p>
+      <div class="big-num" style="font-size:32px">27.63<span class="unit-sm">억 원</span></div>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 9.2억 평균</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <div class="div"></div>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>상반기는 구독 구조를 만드는 기간이었다.</strong> 구독 해지율을 크게 낮췄고(14% → 5%대), 구독자 수 목표도 6월에 채운다. 다만 4·5월 매출은 물건 부족으로 목표에 못 미쳤다.</p>
+      <div style="margin-top:12px;padding:12px;background:var(--accent-lt);border-radius:8px;border:1px solid var(--accent)">
+        <span style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase">1단계 Gate</span>
+        <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
+          <li>• 이익률 30% + 공식몰 비중 37%</li>
+          <li>• 영양 매출 비중 26% (기준점)</li>
+          <li>• 광고비/매출 12%</li>
+          <li>• 브랜드 캠페인 1회</li>
+        </ul>
+      </div>
+      <p style="font-size:11px;color:var(--txt-300);margin-top:8px;line-height:1.6">구독자 수 목표(3,430명)는 6월 안에 달성 → 종료. 이제는 '수'가 아니라 교차구독(질)을 본다.</p>
+    </div>
+    <div class="card b-4 phase-card">
+      <div class="phase-tag p2">PHASE 2 · 2단계</div>
+      <h3 style="margin-top:8px">불 붙은 구독 + 팬덤 확장</h3>
+      <p style="font-size:20px;font-weight:800;color:var(--navy);margin:8px 0">7~9월</p>
+      <div class="big-num" style="font-size:32px">35.64<span class="unit-sm">억 원</span></div>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 11.9억 평균</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <div class="div"></div>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>신제품 + 구독 엔진 점화.</strong> 카사바(7/21~27), 유산균 리뉴얼(8/11~17), 오메가3(9/10~16) 런칭. 구독 영양 비중 30%. 브랜드 캠페인 누적 2회.</p>
+      <div style="margin-top:12px;padding:12px;background:var(--navy-lt);border-radius:8px;border:1px solid var(--navy)">
+        <span style="font-size:10px;font-weight:700;color:var(--navy);letter-spacing:1px;text-transform:uppercase">2단계 Gate</span>
+        <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
+          <li>• 이익률 30% + 공식몰 비중 38%</li>
+          <li>• 영양 매출 비중 28%</li>
+          <li>• 광고비/매출 12%</li>
+          <li>• 브랜드 캠페인 누적 2회</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card b-4 phase-card">
+      <div class="phase-tag p3">PHASE 3 · 3단계</div>
+      <h3 style="margin-top:8px">연간 수확 + 브랜드 자산 증명</h3>
+      <p style="font-size:20px;font-weight:800;color:var(--teal);margin:8px 0">10~12월</p>
+      <div class="big-num" style="font-size:32px">33.22<span class="unit-sm">억 원</span></div>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 11.1억 평균</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <div class="div"></div>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>성수기 극대화.</strong> 4주년(10/12~18), 블프+식기(11월), 홀리데이 BRAND(12월·매출 기여↓). 매달 들어오는 구독 매출 1.5억. 브랜드 캠페인 3회 완료.</p>
+      <div style="margin-top:12px;padding:12px;background:var(--teal-lt);border-radius:8px;border:1px solid var(--teal)">
+        <span style="font-size:10px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase">3단계 Gate</span>
+        <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
+          <li>• 이익률 30% + 공식몰 비중 40%</li>
+          <li>• 영양 매출 비중 30%</li>
+          <li>• 광고비/매출 12%</li>
+          <li>• 브랜드 캠페인 누적 3회</li>
+        </ul>
+      </div>
+      <div style="margin-top:10px;padding:10px;background:var(--bg-alt);border-radius:8px;font-size:11px;color:var(--txt-500);line-height:1.7">
+        <strong>근거:</strong> 25년 하반기 월평균 8.44억(상반기 대비 +31%). 10~12월 평균 8.73억. YoY 28% 적용 시 ~11.2억/월.
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-12">
+      <span class="label">누적 달성 경로</span>
+      <div style="height:260px;margin-top:12px;"><canvas id="cum-chart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S6: 2단계 세부 ═══ -->
+<section id="s6">
+  <p class="section-eye">Section 06</p>
+  <h2 class="section-heading">2단계 <em>(7~9월) 세부 계획</em></h2>
+
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-12">
+      <span class="label">캠페인 타임라인</span>
+      <div class="timeline" style="margin-top:16px;">
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">7월</div><div class="tl-title">카사바 영양 신제품 출시(공장 입고 확정 시) + 교차구독 캠페인 시작</div><div class="tl-desc">모래만 구독하는 고객에게 "영양 첫 구독 혜택" 제안</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">8월</div><div class="tl-title">유산균 리뉴얼 출시 + 세계 고양이의 날(8/8) 브랜드 캠페인 <span class="chip chip-b">BRANDING</span></div><div class="tl-desc">브랜드 캠페인 누적 2회 지점</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">9월</div><div class="tl-title">오메가3 영양 신제품 출시 + 가을 시즌 묶음(모래+영양) 구독 밀기</div><div class="tl-desc">묶음 구독으로 영양 매출 비중 28% 도달</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="card b-6">
+      <span class="label">핵심 결정 사항</span>
+      <div style="margin-top:12px;font-size:13px;color:var(--txt-700);line-height:2;">
+        <p>신제품은 <strong>출시 30일 전까지 공장 입고가 확정</strong>돼야 일정대로 간다. 안 되면 그 달은 매출 욕심 대신 <strong>이익 지키기 + 교차구독</strong>에 집중.</p>
+        <p>하반기 1순위 = <strong>교차구독</strong>(모래 구독자 → 영양 추가).</p>
+        <p>영양만 구독하는 고객에게는 <strong>모래를 권해 해지를 막는다.</strong></p>
+      </div>
+    </div>
+    <div class="card b-6">
+      <span class="label">두 트랙 병렬 운영</span>
+      <div style="margin-top:16px;">
+        <div style="display:flex;gap:12px;">
+          <div style="flex:1;padding:16px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--accent);">
+            <h4 style="color:var(--accent)">트랙 A — 교차구독 늘리기 (유니·마틸다)</h4>
+            <p style="font-size:12px;color:var(--txt-700);margin-top:8px;line-height:1.7">모래 구독자에게 영양 첫 구독 혜택<br>영양 신제품을 구독 상품으로 등록</p>
+          </div>
+          <div style="flex:1;padding:16px;background:var(--navy-lt);border-radius:10px;border:1px solid var(--navy);">
+            <h4 style="color:var(--navy)">트랙 B — 공식몰 비중 늘리기 (몰갱·브라운)</h4>
+            <p style="font-size:12px;color:var(--txt-700);margin-top:8px;line-height:1.7">묶음 구독 신청을 쉽게<br>공식몰 광고 비중 확대</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S7: 파트별 하반기 액션 ═══ -->
+<section id="s7">
+  <p class="section-eye">Section 07</p>
+  <h2 class="section-heading">파트별 <em>하반기 액션</em></h2>
+
+  <div class="bento">
+    <div class="card b-12">
+      <div style="margin-bottom:8px;">
+        <span style="font-size:12px;color:var(--txt-300);">각 파트 클릭하여 세부 내용 확인 · 핵심 KPI는 OGK Gate 기준</span>
+      </div>
+
+      <!-- 브라운 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">브라운 — 퍼포먼스 <span class="owner">광고비/매출 12% 유지 + 공식몰 매출 비중 늘리기</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 공식몰 광고 비중을 늘려 공식몰 매출 비중을 끌어올린다. 신제품 출시하는 달엔 광고를 집중하고, <strong>물건이 부족하거나 출시가 밀린 달엔 광고를 줄여 효율을 지킨다.</strong><br>
+          <strong>점검 신호:</strong> 광고비/매출 13%가 2주 이어지면 즉시 재배분.
+        </div></div>
+      </div>
+
+      <!-- 유니 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">유니 — CRM <span class="owner">영양 매출 비중 28%(3분기) + 구독 해지율 5% 이하</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 핵심은 교차구독. 모래만 구독하는 2,033명에게 <strong>'영양 첫 구독 혜택' 메시지</strong>를 보낸다. 영양만 구독하는 685명에겐 모래를 권해 해지를 막는다.<br>
+          <strong>점검 신호:</strong> 구독 해지율 7%가 2개월 이어지면 긴급 조사.
+        </div></div>
+      </div>
+
+      <!-- 노바·제인 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">노바·제인 — 콘텐츠 <span class="owner">교차구독·캠페인을 돕는 콘텐츠</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> "영양제를 왜 같이 먹여야 하는지"를 알려주는 콘텐츠 3종. 신제품(카사바·오메가3) 소개. 세계 고양이의 날(8/8) 캠페인.<br>
+          <strong>점검 신호:</strong> 영상 조회 1만 미만이면 제목·썸네일 다시.
+        </div></div>
+      </div>
+
+      <!-- 마틸다 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">마틸다 — MD <span class="owner">구독 안 영양 비중 30% + 신제품 입고 일정 점검</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 영양 비중을 26% → 35%로. 영양 신제품을 구독 상품으로 등록. <strong>매주 공장 입고 일정을 점검해, 출시가 밀릴 것 같으면 가장 먼저 알린다.</strong> 채널별 이익률 마지노선 가격 가이드 유지.<br>
+          <strong>점검 신호:</strong> 영양 비중 27% 미만이 3개월 이어지면 노출 전략 재검토.
+        </div></div>
+      </div>
+
+      <!-- 몰갱 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">몰갱 — UX/UI <span class="owner">모래+영양 묶음 구독 신청을 쉽게</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 상품페이지·구독 랜딩에서 <strong>모래와 영양을 한 번에 구독 신청</strong>할 수 있게 만든다. 공식몰 구독 화면을 더 쉽게.<br>
+          <strong>점검 신호:</strong> 묶음 구독 신청 화면 이탈이 크면 단계 줄이기.
+        </div></div>
+      </div>
+
+      <!-- 니나 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">니나 — 디자인 <span class="owner">신제품·교차구독 비주얼</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 신제품(카사바·오메가3) 패키지와 런칭 페이지. 교차구독 혜택 배너. 세계 고양이의 날 캠페인 비주얼. "따뜻하지만 전문적인" 톤 유지.
+        </div></div>
+      </div>
+
+      <!-- 로지 -->
+      <div class="acc-item">
+        <div class="acc-head">
+          <div class="acc-head-left">로지 — CX <span class="owner">신제품 문의 대응 + 해지 신호 조기 발견</span></div>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <strong>7~9월:</strong> 신제품·리뉴얼 관련 문의 응대 스크립트 준비. <strong>구독 해지 사유를 모니터링해, 영양 해지 신호를 일찍 잡아 유니·마틸다에 전달.</strong><br>
+          <strong>점검 신호:</strong> 특정 제품 불만이 주 20건 넘으면 긴급 전달.
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S8: 리스크 + OGK 센서 ═══ -->
+<section id="s8">
+  <p class="section-eye">Section 08</p>
+  <h2 class="section-heading">리스크 레이더 + <em>OGK 센서</em></h2>
+
+  <div class="bento">
+    <div class="card b-6">
+      <span class="label">구조적 리스크</span>
+      <div class="risk-grid" style="margin-top:12px;">
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>신제품·재고가 제때 안 들어온다(가장 큰 위험).</strong> 지금도 영양·간식 여러 개가 품절. 하반기 매출은 카사바·오메가3·유산균이 제때 들어오느냐에 달렸다.</div>
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>하반기 시즈널리티 의존.</strong> 갭의 40%가 10~12월에 집중. 성수기 부진 시 목표 미달.</div>
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>스스 수수료 재상승.</strong> 네이버 펫바우처 하반기 5% 추가 과금. 이익률 30% 방어선 위협.</div>
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>공식몰→스스 역유출(4.67%).</strong> 공식몰 광고비가 스스 매출로 흐르는 구조. 원인 분석(5월) 전까지 번들·퀴즈로 방어.</div>
+        <div class="risk-icon" style="color:var(--amber)">●</div><div class="risk-txt"><strong>구독 해지 반등.</strong> 3월 5.3%는 아직 3개월 데이터. 모래 해지가 다시 올라가면 구독 매출 성장 둔화.</div>
+        <div class="risk-icon" style="color:var(--amber)">●</div><div class="risk-txt"><strong>마틸다 1인 체제.</strong> 5월 번들+벌크+넵다 동시 집중. 우선순위 관리 필수.</div>
+        <div class="risk-icon" style="color:var(--teal)">●</div><div class="risk-txt"><strong>3월 이익률 30.8%.</strong> 교정이 작동한다는 실증. 유지만 하면 연간 30% 달성 가능.</div>
+      </div>
+    </div>
+    <div class="card b-6">
+      <span class="label">OGK 센서 — 언제 개입할 것인가</span>
+      <table class="tbl" style="margin-top:12px;font-size:12px;">
+        <thead><tr><th>센서</th><th>기준</th><th>대응</th></tr></thead>
+        <tbody>
+          <tr><td>신제품 공장 입고</td><td class="neg">출시 30일 전까지 입고 확정 안 됨</td><td>그 달 매출 목표를 내리고, <strong>이익 지키기 + 교차구독</strong>으로 전환</td></tr>
+          <tr><td>광고비/매출</td><td class="neg">13% 2주 연속</td><td>즉시 채널별 재배분</td></tr>
+          <tr><td>해지 고객 수</td><td class="neg">전월 대비 +20%</td><td>세그먼트 분석 + 이탈 방어 CRM</td></tr>
+          <tr><td>신규 구독 신청</td><td style="color:var(--amber)">전월 대비 -15% 2주</td><td>퀴즈·상품페이지·웰컴 점검</td></tr>
+          <tr><td>구독 1회 평균 결제액</td><td style="color:var(--amber)">3개월 연속 하락</td><td>구독 상품 구성 리뷰</td></tr>
+          <tr><td>캠페인 가드레일</td><td class="neg">공포소구·할인 전면 노출</td><td>전면 수정 / Gate 4 불인정</td></tr>
+          <tr><td>퀴즈 완료율</td><td style="color:var(--amber)">30% 미만</td><td>질문 수 축소 + UI 간소화</td></tr>
+          <tr><td>제품 불만 VOC</td><td class="neg">해지 사유 중 30% 초과</td><td>응대 가이드 업데이트 + 파트 전달</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-top:16px;">
+    <div class="card b-12" style="border:1px solid var(--navy);background:var(--navy-lt);">
+      <span class="label" style="color:var(--navy)">운영 방식 두 가지 — 매달 1일에 정한다</span>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.85;margin-top:10px">
+        매달 1일, <strong>"이번 달 팔 수 있는 물량이 충분한가"</strong>를 보고 둘 중 하나로 운영한다. 같은 상황이면 누가 봐도 같은 판단이 나오게 한다.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px">
+        <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px">① 성장 방식 (팔 물건이 충분할 때)</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">신제품이 제때 들어옴 → 매출을 끝까지 민다. 평가는 매출 목표 대비.</p>
+        </div>
+        <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:6px">② 이익 지키기 방식 (팔 물건이 부족할 때)</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">품절·출시 지연 → 매출 욕심을 내려놓고, <strong>남는 돈(이익액 36억)과 교차구독</strong>을 지킨다. 매출은 "준비된 물량을 얼마나 팔았는지(판매율)"로 평가한다.</p>
+        </div>
+      </div>
+      <div class="insight" style="margin:14px 0 0">
+        <span class="tag">왜 이렇게 나누나</span>
+        <p><strong>"안 판 것(우리 책임)"과 "팔 게 없던 것(공장·재고 책임)"을 섞지 않기 위해서다.</strong> 모래·퍼펙트(치킨/연어)·프로바이오틱스는 공급이 되니, 어느 방식이든 교차구독은 계속 민다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S9: 다음 스텝 ═══ -->
+<section id="s9">
+  <p class="section-eye">Section 09</p>
+  <h2 class="section-heading">다음 <em>스텝</em></h2>
+
+  <div class="bento">
+    <div class="card b-8">
+      <span class="label">이번 주부터 시작</span>
+      <div style="margin-top:16px;">
+        <div style="display:grid;gap:12px;">
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">1</span>
+            <div><strong>마틸다:</strong> 카사바·오메가3·유산균 <strong>공장 입고 일정 확인</strong> (제일 급함)</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">2</span>
+            <div><strong>유니:</strong> 모래만 구독하는 고객에게 보낼 <strong>'영양 첫 구독 혜택' 메시지</strong> 설계</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">3</span>
+            <div><strong>몰갱:</strong> <strong>모래+영양 묶음 구독 신청 화면</strong> 만들기</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">4</span>
+            <div><strong>노바·제인:</strong> '영양제 왜 같이 먹이나' <strong>콘텐츠 3종</strong></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">5</span>
+            <div><strong>니나:</strong> 신제품 패키지 + <strong>교차구독 혜택 배너</strong></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">6</span>
+            <div><strong>브라운:</strong> <strong>공식몰 광고 비중 늘리는 예산안</strong></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
+            <span style="font-size:18px;color:var(--accent);font-weight:800">7</span>
+            <div><strong>호우:</strong> 게이트 점검표(트래커)에 1~5월 채우고 6월부터 매달 운영</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card b-4">
+      <span class="label">리뷰 주기</span>
+      <div style="margin-top:16px;font-size:13px;color:var(--txt-700);line-height:2;">
+        <p><strong>주간:</strong> 매출 속도 + 광고비 비율<br><span style="font-size:11px;color:var(--txt-500)">(라플라스)</span></p>
+        <p style="margin-top:12px"><strong>격주:</strong> 구독 해지율 + 전환율</p>
+        <p style="margin-top:12px"><strong>월간:</strong> Phase KPI + 수정 트리거 판정</p>
+        <p style="margin-top:12px"><strong>매달 1일:</strong> 이번 달 팔 수 있는 물량 점검 → 성장 방식 / 이익 지키기 방식 결정</p>
+        <p style="margin-top:12px"><strong>Phase 전환점:</strong> 6월 말 리뷰</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-top:16px;">
+    <div class="card b-12" style="border-top:1.5px solid var(--accent)">
+      <span class="label" style="color:var(--accent)">추가 아이디어 — 진료실, 퀴즈 그 너머</span>
+      <div class="quote" style="margin-bottom:20px;margin-top:12px">
+        <p>퀴즈 MVP는 진료실의 '접수 창구'다. 아래는 공식몰을 진짜 진료실로 만들기 위한 아이디어 모음. 당장 가능한 것도, 먼 미래의 것도 섞여 있다. <strong>가능성을 열어두는 차원에서.</strong></p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+        <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
+          <h4>미야옹철 처방 카드</h4>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">공식몰 주문 시 동봉되는 "이 제품을 처방한 이유" 카드. 수의사가 왜 이 성분을 선택했는지 한 장으로. <strong>스스에서는 받을 수 없는 경험.</strong></p>
+        </div>
+        <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
+          <h4>계절별 건강 가이드</h4>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">계절·연령·질환별 케어 가이드. 구독자에게 매달 발송. "이 시기에 이 제품이 필요한 이유"로 추가 구매 연결.</p>
+        </div>
+        <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
+          <h4>구독자 전용 선체험</h4>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">신제품 정식 출시 전 구독자 대상 선체험. "진료실 환자만 먼저 받는 처방". 구독 유지 인센티브 + UGC 확보.</p>
+        </div>
+        <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
+          <h4>1:1 고양이 건강 상담</h4>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">카카오 친구톡 기반 건강 고민 접수 → 미야옹철 감수 답변. <strong>약국(스스)에서는 절대 제공할 수 없는 가치.</strong></p>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--txt-300);margin-top:14px;text-align:center">* 위 아이디어는 가능성 차원의 리스트입니다. 실현 여부와 우선순위는 팀 논의를 통해 결정합니다.</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:48px;padding:40px;background:var(--cover-bg);border-radius:var(--radius);">
+    <p style="font-size:13px;color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px">Dr. Felis Brand Team</p>
+    <p style="font-size:clamp(18px,2.5vw,28px);font-weight:700;color:#fff;line-height:1.4">하던 대로 하면 100억. <span style="color:var(--accent)">같이 한 방향으로 가면</span> 120억.<br>안 되더라도, <span style="color:var(--accent)">같이.</span></p>
+  </div>
+</section>
+
+</div><!-- /#strategy-wrap -->
+
+<!-- ═══ TRACKER ═══ -->
+<div id="tracker-wrap">
+  <div id="t-block-a"></div>
+  <div id="t-block-b" class="tr-section"></div>
+  <div id="t-block-c" class="tr-section"></div>
+  <div id="t-block-d" class="tr-section"></div>
+  <div id="t-block-timeline" class="tr-section"></div>
+  <div id="t-block-e" class="tr-section"></div>
+</div>
+
+<!-- Issue Modal -->
+<div id="t-modal-overlay" style="display:none">
+  <div id="t-modal">
+    <h4 style="margin-bottom:16px;font-size:16px">이슈 / 변경 사항 기록</h4>
+    <div class="t-field"><label>유형</label>
+      <select id="t-modal-type">
+        <option value="issue">이슈 발생</option>
+        <option value="change">계획 변경</option>
+        <option value="done">완료 보고</option>
+      </select>
+    </div>
+    <div class="t-field"><label>파트</label>
+      <select id="t-modal-part">
+        <option>브라운 (퍼포먼스)</option><option>유니 (CRM)</option>
+        <option>노바·제인 (콘텐츠)</option><option>마틸다 (MD)</option>
+        <option>몰갱 (UX/UI)</option><option>니나 (디자인)</option>
+        <option>로지 (CX)</option><option>호우 (퀴즈 PO)</option>
+        <option>브랜드팀 전체</option>
+      </select>
+    </div>
+    <div class="t-field"><label>제목</label>
+      <input type="text" id="t-modal-title" placeholder="한 줄 요약">
+    </div>
+    <div class="t-field"><label>내용 (선택)</label>
+      <textarea id="t-modal-desc" rows="3" placeholder="상세 내용을 입력하세요"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="t-btn-cancel" id="t-modal-cancel">취소</button>
+      <button class="t-btn-save" id="t-modal-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Inline Popover -->
+<div id="t-popover" style="display:none">
+  <div class="t-pop-label" id="t-pop-label">값 입력</div>
+  <input type="number" id="t-popover-input" step="0.01" placeholder="0">
+  <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+    <button class="t-btn-cancel t-pop-cancel">취소</button>
+    <button class="t-btn-save t-pop-save">확인</button>
+  </div>
+</div>
+
+<!-- Task add/edit Modal -->
+<div id="t-task-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:910;align-items:center;justify-content:center">
+  <div id="t-task-modal" style="background:var(--bg-card);border-radius:var(--radius);padding:24px;width:min(440px,92vw);box-shadow:var(--shadow-h);border:1px solid var(--border)">
+    <h4 id="t-task-modal-h" style="margin-bottom:16px;font-size:16px">태스크 추가</h4>
+    <div class="t-field"><label id="t-task-modal-sub">담당</label>
+      <textarea id="t-task-modal-text" rows="2" placeholder="태스크 내용을 입력하세요"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="t-btn-cancel" id="t-task-modal-del" style="color:var(--burgundy);visibility:hidden">삭제</button>
+      <div style="display:flex;gap:8px">
+        <button class="t-btn-cancel" id="t-task-modal-cancel">취소</button>
+        <button class="t-btn-save" id="t-task-modal-save">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline event add/edit Modal -->
+<div id="t-tl-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:910;align-items:center;justify-content:center">
+  <div id="t-tl-modal" style="background:var(--bg-card);border-radius:var(--radius);padding:24px;width:min(460px,92vw);box-shadow:var(--shadow-h);border:1px solid var(--border)">
+    <h4 id="t-tl-modal-h" style="margin-bottom:16px;font-size:16px">캠페인 추가</h4>
+    <div class="t-field"><label>캠페인명</label>
+      <input type="text" id="t-tl-label" placeholder="예: 넵다세일">
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="t-field" style="flex:1"><label>시작일</label>
+        <input type="date" id="t-tl-start" min="2026-01-01" max="2026-12-31" value="2026-01-01">
+      </div>
+      <div class="t-field" style="flex:1"><label>종료일</label>
+        <input type="date" id="t-tl-end" min="2026-01-01" max="2026-12-31" value="2026-01-01">
+      </div>
+    </div>
+    <div class="t-field"><label>레인 (위치)</label>
+      <select id="t-tl-lane">
+        <option value="brand">브랜드 캠페인 (축 위)</option>
+        <option value="naver">Naver 이벤트 (축 아래)</option>
+      </select>
+    </div>
+    <div class="t-field"><label>컬러</label>
+      <div id="t-tl-swatches" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <input type="color" id="t-tl-color" value="#B85C38" style="width:54px;height:32px;padding:2px;border:1px solid var(--border-md);border-radius:6px;background:var(--bg);cursor:pointer">
+      <span style="font-size:11px;color:var(--txt-300);margin-left:8px">프리셋 클릭 또는 직접 선택</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="t-btn-cancel" id="t-tl-del" style="color:var(--burgundy);visibility:hidden">삭제</button>
+      <div style="display:flex;gap:8px">
+        <button class="t-btn-cancel" id="t-tl-cancel">취소</button>
+        <button class="t-btn-save" id="t-tl-save">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Observer ─── */
+const sections = document.querySelectorAll('section');
+const dots = document.querySelectorAll('.nav-dot');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      dots.forEach(d => d.classList.toggle('active', d.dataset.section === e.target.id));
+    }
+  });
+}, { threshold: 0.15 });
+sections.forEach(s => obs.observe(s));
+dots.forEach(d => d.addEventListener('click', () => document.getElementById(d.dataset.section)?.scrollIntoView({ behavior:'smooth' })));
+
+/* ─── Counter ─── */
+function count(el, target, decimals, comma) {
+  let cur = 0; const step = target / 40;
+  const t = setInterval(() => {
+    cur += step; if (cur >= target) { cur = target; clearInterval(t); }
+    const v = cur.toFixed(decimals);
+    el.textContent = comma ? Number(v).toLocaleString() : v;
+  }, 25);
+}
+
+/* S1 KPIs */
+const s1obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !s1obs._d) {
+    s1obs._d = true;
+    count(document.getElementById('v-rev'), 40.15, 2);
+    count(document.getElementById('v-mg'), 29.8, 1);
+    count(document.getElementById('v-mg3'), 31.4, 1);
+    count(document.getElementById('v-apr'), 8.36, 2);
+  }
+}, { threshold: 0.3 });
+s1obs.observe(document.getElementById('s1'));
+
+/* S2 Counter */
+const s2obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !s2obs._d) {
+    s2obs._d = true;
+    count(document.getElementById('v-base'), 102.7, 1);
+  }
+}, { threshold: 0.15 });
+s2obs.observe(document.getElementById('s2'));
+
+/* S3 KPIs */
+const s3obs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !s3obs._d) {
+    s3obs._d = true;
+    count(document.getElementById('v-subs'), 3357, 0, true);
+  }
+}, { threshold: 0.1 });
+s3obs.observe(document.getElementById('s3'));
+
+/* Cover visible */
+const cover = document.getElementById('cover');
+cover.style.opacity='1'; cover.style.transform='none'; cover.classList.add('visible');
+
+/* ─── Chart.js defaults ─── */
+Chart.defaults.font.family = "'Pretendard', -apple-system, sans-serif";
+Chart.defaults.font.size = 11;
+const TXT_MUTED = 'rgba(122,112,104,1)';
+const GRID = 'rgba(200,194,186,.3)';
+const ACCENT = 'rgba(184,92,56,.75)';
+const ACCENT_SOFT = 'rgba(184,92,56,.55)';
+const MUTED = 'rgba(122,112,104,.45)';
+const NAVY = 'rgba(154,106,74,.70)';
+const TEAL = 'rgba(168,128,60,.60)';
+
+/* ─── Buildup Chart ─── */
+new Chart(document.getElementById('buildup-chart').getContext('2d'), {
+  type:'bar',
+  data:{
+    labels:['Q1\n(실적확정)','Q2\n(4~6월)','Q3\n(7~9월)','Q4\n(10~12월)'],
+    datasets:[
+      { label:'작년 동일 성장 시 예상 매출 (25년×1.15)', data:[21.44, 23.03, 28.13, 30.13],
+        backgroundColor:MUTED, borderRadius:{topLeft:0,topRight:0,bottomLeft:4,bottomRight:4}, stack:'s' },
+      { label:'추가 증분 기대', data:[2.18, 4.60, 7.51, 3.09],
+        backgroundColor:ACCENT_SOFT, borderRadius:{topLeft:4,topRight:4,bottomLeft:0,bottomRight:0}, stack:'s' },
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ position:'top', labels:{ font:{ size:11 }}},
+      tooltip:{
+        callbacks:{
+          afterBody: (ctx) => {
+            const sums = [23.62, 27.63, 35.64, 33.22];
+            const cums = [23.62, 51.25, 86.89, 120.11];
+            return ['합계: '+sums[ctx[0].dataIndex].toFixed(1)+'억', '누적: '+cums[ctx[0].dataIndex].toFixed(1)+'억'];
+          }
+        }
+      }
+    },
+    scales:{
+      y:{ stacked:true, min:0, max:40, grid:{ color:GRID }, ticks:{ color:TXT_MUTED },
+        title:{ display:true, text:'억 원', font:{ size:10 }, color:TXT_MUTED }},
+      x:{ stacked:true, grid:{ display:false }, ticks:{ color:TXT_MUTED }}
+    }
+  }
+});
+
+/* ─── Lever Range Bar ─── */
+new Chart(document.getElementById('lever-chart').getContext('2d'), {
+  type:'bar',
+  data:{
+    labels:['프로모션·캠페인\n(넵다·멤버스·4주년·블프)','구독 월매출 성장\n(1.13→1.5억/월)','신제품\n(카사바+오메가3)','네이버 하반기 수혜\n(펫사업팀 전체 투자)','퀴즈+전환 개선'],
+    datasets:[{
+      label:'기대 범위 (하한 ~ 상한)',
+      data:[[4,6],[2.7,4.8],[2,3],[1,2],[1,2]],
+      backgroundColor:ACCENT_SOFT,
+      borderColor:ACCENT,
+      borderWidth:1,
+      borderRadius:4,
+      borderSkipped:false,
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label: ctx => { const v=ctx.raw; return `${v[0]}억 ~ ${v[1]}억`; }}}
+    },
+    scales:{
+      x:{ min:0, max:8, grid:{ color:GRID }, ticks:{ color:TXT_MUTED },
+        title:{ display:true, text:'억 원 (연간 증분)', font:{ size:10 }, color:TXT_MUTED }},
+      y:{ grid:{ display:false }, ticks:{ font:{ size:10 }, color:TXT_MUTED }}
+    }
+  }
+});
+
+/* ─── Churn Chart ─── */
+new Chart(document.getElementById('churn-chart').getContext('2d'), {
+  type:'line',
+  data:{
+    labels:['1월','2월','3월','4월(일부)'],
+    datasets:[
+      { label:'전체', data:[14.0,8.52,5.32,4.03], borderColor:ACCENT, borderWidth:2.5, fill:{ target:'origin', above:'rgba(184,92,56,.06)' }, tension:.4, pointRadius:4, pointBackgroundColor:ACCENT, pointBorderColor:'#fff', pointBorderWidth:2 },
+      { label:'영양케어', data:[8.27,6.69,5.61,1.61], borderColor:NAVY, borderWidth:1.5, borderDash:[4,3], fill:false, tension:.4, pointRadius:3, pointBackgroundColor:NAVY },
+      { label:'모래', data:[16.48,9.33,5.13,5.18], borderColor:TEAL, borderWidth:1.5, borderDash:[4,3], fill:false, tension:.4, pointRadius:3, pointBackgroundColor:TEAL }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'top', labels:{ font:{ size:11 }}}},
+    scales:{
+      y:{ min:0, max:20, grid:{ color:GRID }, ticks:{ color:TXT_MUTED, callback: v => v+'%' },
+        title:{ display:true, text:'구독 해지율 %', font:{ size:10 }, color:TXT_MUTED }},
+      x:{ grid:{ display:false }, ticks:{ color:TXT_MUTED }}
+    }
+  }
+});
+
+/* ─── 교차구독 시뮬레이터 ─── */
+const SUB_REV_TOTAL = 140000000; // 현재 월 구독 매출 1.40억 (4·5월 실측)
+const SUB_REV_NUTRI = 36000000;  // 현재 영양 월매출 (비중 26%)
+const SUB_REV_SAND  = 104000000; // 모래 월매출 (고정 가정)
+const NUTRI_ARPU    = 37600;     // 영양 1인 월 결제액
+const NUTRI_CM      = 0.553;     // 영양 공헌이익률 55.3%
+const SAND_ONLY     = 2033;      // 모래 단독 구독자
+
+const cxChart = new Chart(document.getElementById('mrr-chart').getContext('2d'), {
+  type:'bar',
+  data:{
+    labels:['현재','시뮬레이션','목표'],
+    datasets:[{ data:[26, 26, 30], backgroundColor:[MUTED, ACCENT, ACCENT_SOFT], borderWidth:0, borderRadius:6 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }},
+    scales:{
+      y:{ min:0, max:40, grid:{ color:GRID }, ticks:{ color:TXT_MUTED, callback:v=>v+'%' },
+        title:{ display:true, text:'영양 매출 비중 %', font:{ size:10 }, color:TXT_MUTED }},
+      x:{ grid:{ display:false }, ticks:{ color:TXT_MUTED }}
+    }
+  }
+});
+
+function updateCX() {
+  const x = +document.getElementById('cx').value;
+  const addRev   = x * NUTRI_ARPU;
+  const newShare = (SUB_REV_NUTRI + addRev) / (SUB_REV_TOTAL + addRev) * 100;
+  const addCM    = addRev * NUTRI_CM;
+  const addCMy   = addCM * 12;
+  document.getElementById('cx-v').textContent = x.toLocaleString();
+  document.getElementById('cx-share').textContent = newShare.toFixed(1);
+  document.getElementById('cx-cm').textContent = Math.round(addCM/10000).toLocaleString();
+  document.getElementById('cx-cmy').textContent = (addCMy/1e8).toFixed(2);
+  cxChart.data.datasets[0].data[1] = +newShare.toFixed(1);
+  cxChart.update('none');
+}
+document.getElementById('cx').addEventListener('input', updateCX);
+updateCX();
+
+/* ─── SKU Pie (금액 기준) ─── */
+new Chart(document.getElementById('sku-pie').getContext('2d'), {
+  type:'doughnut',
+  data:{
+    labels:['모래 74% (₩157.9M)','영양 26% (₩55.8M)'],
+    datasets:[{ data:[74,26], backgroundColor:[MUTED, ACCENT], borderWidth:0, borderRadius:4 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'60%',
+    plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 }, padding:12 }}}
+  }
+});
+
+/* ─── Cumulative Chart ─── */
+const cumLabels = ['Q1','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const cumBase = [21.44, 29.12, 36.80, 44.47, 53.84, 63.22, 72.60, 82.64, 92.69, 102.73];
+const cumPlan = [23.62, 31.80, 40.16, 51.25, 63.16, 76.64, 86.89, 100.67, 112.88, 120.11];
+new Chart(document.getElementById('cum-chart').getContext('2d'), {
+  type:'line',
+  data:{
+    labels: cumLabels,
+    datasets:[
+      { label:'실측(1~5월)+목표', data:cumPlan, borderColor:ACCENT, borderWidth:2.5,
+        fill:{ target:1, above:'rgba(184,92,56,.08)' }, tension:.3, pointRadius:3,
+        pointBackgroundColor:ACCENT, pointBorderColor:'#fff', pointBorderWidth:2 },
+      { label:'작년 동일 성장 시 예상 매출', data:cumBase, borderColor:MUTED, borderDash:[5,4], borderWidth:1.5, fill:false, tension:.3, pointRadius:0 },
+      { label:'목표 120억', data:cumLabels.map(()=>120), borderColor:TEAL, borderDash:[8,4], borderWidth:1, fill:false, pointRadius:0 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'top', labels:{ font:{ size:11 }}}},
+    scales:{
+      y:{ min:0, max:140, grid:{ color:GRID }, ticks:{ color:TXT_MUTED }, title:{ display:true, text:'억 원 (누적)', font:{ size:10 }, color:TXT_MUTED }},
+      x:{ grid:{ display:false }, ticks:{ color:TXT_MUTED }}
+    }
+  }
+});
+
+/* ─── Accordion ─── */
+document.querySelectorAll('.acc-head').forEach(h => {
+  h.addEventListener('click', () => {
+    const item = h.parentElement, body = item.querySelector('.acc-body');
+    const inner = item.querySelector('.acc-inner'), isOpen = item.classList.contains('open');
+    document.querySelectorAll('.acc-item').forEach(i => { i.classList.remove('open'); i.querySelector('.acc-body').style.maxHeight='0'; });
+    if (!isOpen) { item.classList.add('open'); body.style.maxHeight = inner.scrollHeight+'px'; }
+  });
+});
+
+/* ─── Scroll Progress Bar ─── */
+const prog = document.getElementById('scroll-prog');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  prog.style.width = (window.scrollY / h * 100) + '%';
+}, { passive: true });
+
+/* ─── Number Glow on Visible ─── */
+const numObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !e.target.dataset.glowed) {
+      e.target.dataset.glowed = '1';
+      e.target.classList.add('num-glow');
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
+
+/* ════════════════════════════════════════
+   TRACKER MODULE
+════════════════════════════════════════ */
+(function(){
+  /* ─── Config ─── */
+  const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  const ML = {'2026-01':'1월','2026-02':'2월','2026-03':'3월','2026-04':'4월','2026-05':'5월','2026-06':'6월','2026-07':'7월','2026-08':'8월','2026-09':'9월','2026-10':'10월','2026-11':'11월','2026-12':'12월'};
+  const PHASES = {'2026-01':'Q1','2026-02':'Q1','2026-03':'Q1','2026-04':'P1','2026-05':'P1','2026-06':'P1','2026-07':'P2','2026-08':'P2','2026-09':'P2','2026-10':'P3','2026-11':'P3','2026-12':'P3'};
+  const PHASE_INFO = {Q1:{label:'Q1',desc:'1~3월 · 실적 확정',color:'var(--txt-400)'},P1:{label:'Phase 1',desc:'4~6월 · 바닥 다지기 + 구독 구조 심기',color:'var(--accent)'},P2:{label:'Phase 2',desc:'7~9월 · 구독 엔진 점화 + 팬덤 확장',color:'var(--navy)'},P3:{label:'Phase 3',desc:'10~12월 · 연간 수확 + 브랜드 자산 증명',color:'var(--teal)'}};
+  const REV_TARGET = {'2026-01':8.20,'2026-02':7.76,'2026-03':7.65,'2026-04':8.30,'2026-05':9.77,'2026-06':9.56,'2026-07':11.91,'2026-08':13.48,'2026-09':10.25,'2026-10':13.78,'2026-11':12.21,'2026-12':7.23};
+  const AD_TARGET  = {'2026-01':12,'2026-02':12,'2026-03':12,'2026-04':12,'2026-05':12,'2026-06':12,'2026-07':12,'2026-08':12,'2026-09':12,'2026-10':12,'2026-11':12,'2026-12':12};
+  // 구독자 '수' 목표는 6월 내 달성 → 종료. 이제는 교차구독(질)을 본다. 분기말 '수' 목표 표기 제거.
+  const SUBS_GOAL  = {};
+  const QUARTERS   = ['Q2','Q3','Q4'];
+  const GATE_DEFS  = [
+    {id:'g1',label:'공헌이익액 + 30% 방어',Q2:'30% + 37%',Q3:'30% + 38%',Q4:'30% + 40%'},
+    {id:'g2',label:'영양 매출 비중',Q2:'26% 기준',Q3:'28%',Q4:'30%'},
+    {id:'g3',label:'광고비/매출 비율',Q2:'12% 이하',Q3:'12% 이하',Q4:'12% 이하'},
+    {id:'g4',label:'브랜드 캠페인',Q2:'1회',Q3:'누적 2회',Q4:'누적 3회'},
+  ];
+  const PARTS = ['브라운','유니','노바·제인','마틸다','몰갱','니나','로지','호우'];
+  const TASKS_INIT = {
+    '브라운':{
+      '2026-04':['스스 SA 감액 2주차 판정 → 매출 하락 10% 이내면 유지','슈퍼볼 런칭 광고 집행'],
+      '2026-05':['가족사진 브랜딩 광고 집행 (공식몰 D2C)','퀴즈 MVP → 공식몰 광고 랜딩 퀴즈 전환 테스트','모래 벌크업세일 광고 운영'],
+      '2026-06':['넵다세일 예산 집행 (기간 매출 4억+, 이익률 25% 이상)'],
+      '2026-07':['Phase 2 채널별 광고 전략 재수립','퀴즈 MVP → 공식몰 광고 랜딩 퀴즈 전환 테스트','케어라인 리뉴얼 광고 운영','브랜드캠페인 포캣체크 운영'],'2026-08':['카사바 런칭 광고 집행','세계고양이의날 캠페인 운영'],'2026-09':['오메가3 런칭 광고 + 캠페인 연동'],
+      '2026-10':['4주년 캠페인 광고 집행'],'2026-11':['블프 광고 집행'],'2026-12':['홀리데이 시즌 광고 마무리'],
+    },
+    '유니':{
+      '2026-04':['첫구매 쿠폰팩 시나리오 설계 (14일 영양 15%, 30일 구독 20%, 60일 리마인드 10%)','이탈 시그널 정의'],
+      '2026-05':['쿠폰팩 라이브','스스→자사몰 유도 CRM 1차 (친구톡)','라플라스 구독 이탈 월간 리포팅 정착'],
+      '2026-06':['넵다 구매자 → 구독 전환 후속 CRM','이탈 방어 메시지 A/B (혜택형 vs 콘텐츠형)','케어라인 리뉴얼 사전 고지'],
+      '2026-07':['구독 영양 비중 증대 CRM 설계'],'2026-08':['카사바 구매자 → 구독 전환 CRM'],'2026-09':['오메가3 런칭 CRM + 구독 연동'],
+      '2026-10':['4주년 구독 업셀 CRM'],'2026-11':['블프 윈백 CRM'],'2026-12':['홀리데이 구독 선물 CRM'],
+    },
+    '노바·제인':{
+      '2026-04':['모래 "처방이유" 3종 제작 (60초 미야옹철 영상 + 성분해설 + UGC 프레임)','슈퍼볼 런칭 콘텐츠'],
+      '2026-05':['가족사진 캠페인 콘텐츠','퀴즈 결과 페이지 카피','넵다 소재 (채널별 분리)'],
+      '2026-06':['브랜딩 캠페인 콘텐츠 (Q2 캠페인 1회)','영양케어 처방이유 3종 (케어라인 리뉴얼 연동)'],
+      '2026-07':['카사바 런칭 콘텐츠'],'2026-08':['세계고양이의날(8/8) 캠페인 콘텐츠'],'2026-09':['오메가3 런칭 콘텐츠 (Q3 캠페인 누적 2회)'],
+      '2026-10':['4주년 캠페인 콘텐츠 (Q4 캠페인 누적 3회)'],'2026-11':['블프 콘텐츠'],'2026-12':['홀리데이 콘텐츠'],
+    },
+    '마틸다':{
+      '2026-04':['슈퍼볼 8.3kg 등록 (4/13~16)','브랜드데이 영양 메인 노출','채널별 공헌이익률 마지노선 가격 가이드 초안','케어라인 4월 연기 영향 대응'],
+      '2026-05':['공식몰 케어라인 번들 설계 (번들 추가 할인율 확정, 구독 전환 미끼)','모래벌크(5/11~14) + 넵다(5/26~) 구성 확정'],
+      '2026-06':['BetterHabits:장마 구성','케어라인 리뉴얼 가격 재설정 (6/15~21, 4월 이월)'],
+      '2026-07':['카사바 런칭 구성 + 가격 확정 (7/21~27)','멤버스위크 구성'],'2026-08':['유산균 리뉴얼 구성 + 가격 확정 (8/11~17)','세계고양이의날 워터밤 구성','Phase 2 영양 비중 점검'],'2026-09':['오메가3 런칭 구성 확정 (9/10~16)','추석 세트 구성'],
+      '2026-10':['4주년 세트 구성'],'2026-11':['블프 구성 + 할인 가격'],'2026-12':['홀리데이 번들 구성'],
+    },
+    '몰갱':{
+      '2026-04':['정기구독 동일 SKU 리스트업','상품페이지 정기구독 버튼 UI 설계 → 영양케어 우선 구현'],
+      '2026-05':['모래 상품페이지 구독 버튼 확장','구독 랜딩 혜택 가시성 리디자인'],
+      '2026-06':['퀴즈 MVP 기술 구현 지원 (호우 설계 → Cafe24 구현)','번들 상품페이지 작업'],
+      '2026-07':['퀴즈 1차 개선 반영'],'2026-08':['카사바 상품페이지 작업'],'2026-09':['오메가3 상품페이지 작업'],
+      '2026-10':['4주년 이벤트 랜딩페이지'],'2026-11':['블프 랜딩페이지'],'2026-12':['홀리데이 랜딩페이지'],
+    },
+    '니나':{
+      '2026-04':['슈퍼볼 비주얼 + 4월 캠페인 소재'],
+      '2026-05':['가족사진 비주얼 시스템','퀴즈 UI 비주얼 (Clinical Luxury 톤)','넵다 소재'],
+      '2026-06':['브랜딩 캠페인 비주얼 (마스킹테이프, 못난이 콘테스트)','케어라인 리뉴얼 패키지 디자인'],
+      '2026-07':['카사바 패키지 + 런칭 비주얼'],'2026-08':['세계고양이의날 비주얼'],'2026-09':['오메가3 패키지 + 런칭 비주얼'],
+      '2026-10':['4주년 비주얼'],'2026-11':['블프 비주얼'],'2026-12':['홀리데이 비주얼'],
+    },
+    '로지':{
+      '2026-04':['VOC 분류 체계 구축 (유형 × 심각도 매트릭스)'],
+      '2026-05':['반복 이슈 TOP 5 → 파트별 개선 전달','구독 VOC 별도 트래킹 시작'],
+      '2026-06':['넵다 후 VOC 대응','케어라인 리뉴얼 FAQ + 스크립트'],
+      '2026-07':['카사바 런칭 VOC 대응 준비'],'2026-08':['Q2 구독 이탈 원인 분석'],'2026-09':['오메가3 런칭 VOC 대응'],
+      '2026-10':['4주년 VOC 대응'],'2026-11':['블프 CS 운영 강화'],'2026-12':['2026 연간 VOC 리포트 작성'],
+    },
+    '호우':{
+      '2026-04':['퀴즈 MVP 설계 (질문 흐름 + 결과 유형 + 제품 매칭)'],
+      '2026-05':['퀴즈 MVP 라이브 + 성과 측정 기준 정의'],
+      '2026-06':['퀴즈 1차 개선 (완료율·전환율 기반)'],
+      '2026-07':['퀴즈 2차 개선'],'2026-08':['퀴즈 성과 분석 보고 (60일 전환율)'],'2026-09':['퀴즈 v2 기획'],
+      '2026-10':['퀴즈 v2 라이브'],'2026-11':['퀴즈 블프 특별 버전'],'2026-12':['2026 퀴즈 연간 성과 정리'],
+    },
+  };
+
+  /* ─── Data (Firebase Realtime DB + localStorage 오프라인 캐시) ─── */
+  const KEY = 'drfelis2026tracker';
+  const FB_CONFIG = {
+    apiKey: "AIzaSyAhP1f8WmI7wRSoncbCFyEYYjmrRfcDewo",
+    authDomain: "drfelis-refreshteam.firebaseapp.com",
+    databaseURL: "https://drfelis-refreshteam-default-rtdb.firebaseio.com",
+    projectId: "drfelis-refreshteam",
+    storageBucket: "drfelis-refreshteam.firebasestorage.app",
+    messagingSenderId: "130596116324",
+    appId: "1:130596116324:web:605a6d3d64b56873fb8c71",
+  };
+  const FB_PATH = 'drfelis-2026-tracker/state';
+  let fbDB = null, fbRef = null, fbReady = false, fbSuppressOnce = false;
+
+  let _uidc = 0;
+  function uid(){ return Date.now().toString(36)+'-'+(_uidc++).toString(36)+Math.random().toString(36).slice(2,5); }
+
+  // 이벤트 타입 → 컬러 프리셋 (hex, 컬러피커 호환)
+  const EVENT_TYPES = [
+    {id:'sales',    label:'SALES',    color:'#B85C38'},
+    {id:'new',      label:'NEW 제품', color:'#8C6E52'},
+    {id:'renewal',  label:'RENEWAL',  color:'#8B6914'},
+    {id:'branding', label:'BRANDING', color:'#888888'},
+    {id:'naver',    label:'Naver',    color:'#C08A4A'},
+    {id:'etc',      label:'기타',     color:'#7A4A3A'},
+  ];
+
+  // TASKS_INIT(문자열 배열) → 편집 가능한 {id,text,done} 구조로 시드
+  function seedTaskItems(oldDone){
+    oldDone = oldDone || {};
+    const out = {};
+    for(const p of PARTS){
+      out[p] = {};
+      for(const m of MONTHS){
+        const arr = (TASKS_INIT[p]||{})[m]||[];
+        out[p][m] = arr.map((t,i)=>({ id:uid(), text:t, done:!!oldDone[p+'::'+m+'::'+i] }));
+      }
+    }
+    return out;
+  }
+  // 타임라인 시드 (하드코딩 이벤트 → D.timelineEvents). lane: 'brand'(위) | 'naver'(아래)
+  function seedTimeline(){
+    const C = Object.fromEntries(EVENT_TYPES.map(t=>[t.id,t.color]));
+    const brand = [
+      {label:'고양이의봄',          start:'2026-04-01', end:'2026-04-07', color:C.branding},
+      {label:'슈퍼볼 NEW',          start:'2026-04-13', end:'2026-04-16', color:C.new},
+      {label:'모래 벌크UP 세일',    start:'2026-05-18', end:'2026-05-21', color:C.sales},
+      {label:'넵다세일',            start:'2026-06-22', end:'2026-07-05', color:C.sales},
+      {label:'브랜드데이',          start:'2026-06-25', end:'2026-06-25', color:C.branding},
+      {label:'케어라인 리뉴얼 런칭',start:'2026-07-06', end:'2026-07-12', color:C.renewal},
+      {label:'멤버스위크',          start:'2026-07-07', end:'2026-07-13', color:C.sales},
+      {label:'카사바 NEW',          start:'2026-07-21', end:'2026-07-27', color:C.new},
+      {label:'워터밤 SALES',        start:'2026-08-01', end:'2026-08-10', color:C.sales},
+      {label:'세계고양이의날',      start:'2026-08-08', end:'2026-08-09', color:C.branding},
+      {label:'유산균 RENEWAL',      start:'2026-08-11', end:'2026-08-17', color:C.renewal},
+      {label:'오메가3 NEW',         start:'2026-09-10', end:'2026-09-16', color:C.new},
+      {label:'추석 SALES',          start:'2026-09-17', end:'2026-09-21', color:C.sales},
+      {label:'4주년 SALES',         start:'2026-10-12', end:'2026-10-18', color:C.sales},
+      {label:'Black Friday',        start:'2026-11-20', end:'2026-11-30', color:C.sales},
+      {label:'식기 NEW',            start:'2026-11-23', end:'2026-11-29', color:C.new},
+      {label:'홀리데이',            start:'2026-12-15', end:'2026-12-25', color:C.branding},
+    ].map(e=>({...e, id:uid(), lane:'brand'}));
+    const naver = [
+      {label:'라이프위크(펫)',      start:'2026-06-01', end:'2026-06-07'},
+      {label:'네펫쏜',              start:'2026-06-29', end:'2026-07-05'},
+      {label:'라이프위크 펫통품★', start:'2026-07-20', end:'2026-07-26'},
+      {label:'고양이날 메가위크★', start:'2026-08-03', end:'2026-08-09'},
+      {label:'라이프위크',          start:'2026-08-17', end:'2026-08-23'},
+      {label:'네펫쏜',              start:'2026-08-31', end:'2026-09-06'},
+      {label:'네펫쏜',              start:'2026-09-28', end:'2026-10-04'},
+      {label:'라이프위크(펫)★',    start:'2026-10-12', end:'2026-10-18'},
+      {label:'라이프위크 펫통품★', start:'2026-11-23', end:'2026-11-29'},
+      {label:'네펫쏜',              start:'2026-11-30', end:'2026-12-06'},
+    ].map(e=>({...e, id:uid(), lane:'naver', color:C.naver}));
+    return [...brand, ...naver];
+  }
+
+  // 2026 1~5월 실측 (출처: 마케팅 대시보드 "달성" 컬럼 · 호우 검수 완료). 6월부터는 호우가 매달 수기 입력.
+  // ⚠ 트래커는 Firebase에서 데이터를 불러오므로, 기존 저장본이 있으면 그게 우선한다.
+  //   이 값은 새로 여는 사람에게만 보이며, 기존 Firebase 데이터가 있으면 호우가 1~5월을 한 번 수기로 동기화 필요.
+  const ACTUALS_H1 = {
+    '2026-01':{revenue:8.20, margin:27.4},
+    '2026-02':{revenue:7.76, margin:27.3},
+    '2026-03':{revenue:7.65, margin:30.6},
+    '2026-04':{revenue:8.18, margin:32.3},
+    '2026-05':{revenue:8.36, margin:31.4},
+  };
+
+  function defaultData() {
+    const kpi = Object.fromEntries(MONTHS.map(m=>[m,{revenue:null,margin:null,subs:null,adRatio:null}]));
+    // 1~5월 매출(억)·공헌이익률(%) 선반영. subs·adRatio는 null 유지(호우가 별도 입력).
+    for(const m in ACTUALS_H1){ kpi[m].revenue = ACTUALS_H1[m].revenue; kpi[m].margin = ACTUALS_H1[m].margin; }
+    return {
+      kpi,
+      gates: Object.fromEntries(QUARTERS.map(q=>[q,{g1:'pending',g2:'pending',g3:'pending',g4:'pending'}])),
+      tasks: {},
+      taskItems: seedTaskItems(),
+      timelineEvents: seedTimeline(),
+      issues: [],
+    };
+  }
+  function loadLocal(){
+    try { const r=localStorage.getItem(KEY); if(!r) return defaultData(); const p=JSON.parse(r); return {...defaultData(),...p}; }
+    catch(e){ return defaultData(); }
+  }
+  function mergeData(incoming){
+    if(!incoming) return defaultData();
+    return {
+      kpi: {...defaultData().kpi, ...(incoming.kpi||{})},
+      gates: {...defaultData().gates, ...(incoming.gates||{})},
+      tasks: incoming.tasks||{},
+      // taskItems/timelineEvents가 서버에 없으면 시드(기존 완료상태 이관)
+      taskItems: (incoming.taskItems && Object.keys(incoming.taskItems).length) ? incoming.taskItems : seedTaskItems(incoming.tasks||{}),
+      timelineEvents: (Array.isArray(incoming.timelineEvents) && incoming.timelineEvents.length) ? incoming.timelineEvents : seedTimeline(),
+      issues: Array.isArray(incoming.issues)?incoming.issues:[],
+    };
+  }
+  function saveData(){
+    try { localStorage.setItem(KEY,JSON.stringify(D)); } catch(e){}
+    if(fbReady && fbRef){
+      fbSuppressOnce = true; // 내 쓰기의 에코를 무시
+      fbRef.set(D).catch(e=>{ console.warn('Firebase 저장 실패:',e); setSyncBadge('err'); });
+      setSyncBadge('save');
+    } else {
+      setSyncBadge('offline');
+    }
+  }
+  function setSyncBadge(state){
+    const b = document.getElementById('t-sync-badge');
+    if(!b) return;
+    const map = {
+      sync:   ['실시간 동기화', 'var(--teal)'],
+      save:   ['저장 중…',      'var(--accent)'],
+      err:    ['저장 실패',      'var(--burgundy)'],
+      offline:['오프라인(로컬)','#888'],
+      loading:['불러오는 중…',  '#888'],
+    };
+    const [t,c] = map[state]||map.loading;
+    b.textContent = t; b.style.color = c;
+  }
+  let D = loadLocal();  // 즉시 로컬 캐시로 초기화(오프라인 UX)
+
+  function initFirebase(){
+    try {
+      if(typeof firebase==='undefined'){ setSyncBadge('offline'); return; }
+      firebase.initializeApp(FB_CONFIG);
+      fbDB = firebase.database();
+      fbRef = fbDB.ref(FB_PATH);
+      setSyncBadge('loading');
+      // 실시간 구독: 다른 기기/브라우저 변경도 즉시 반영
+      fbRef.on('value', snap=>{
+        fbReady = true;
+        if(fbSuppressOnce){ fbSuppressOnce=false; setSyncBadge('sync'); return; }
+        const incoming = snap.val();
+        if(incoming){
+          D = mergeData(incoming);
+          try { localStorage.setItem(KEY,JSON.stringify(D)); } catch(e){}
+          if(typeof renderAll==='function') renderAll();
+        } else {
+          // 서버 empty → 로컬 캐시를 초기 업로드
+          fbSuppressOnce = true;
+          fbRef.set(D).catch(()=>{});
+        }
+        setSyncBadge('sync');
+      }, err=>{ console.warn('Firebase 구독 실패:',err); setSyncBadge('offline'); });
+    } catch(e){ console.warn('Firebase init 실패:',e); setSyncBadge('offline'); }
+  }
+
+  /* ─── Tab switching ─── */
+  const strategyWrap = document.getElementById('strategy-wrap');
+  const trackerWrap  = document.getElementById('tracker-wrap');
+  const sideNav      = document.querySelector('.side-nav');
+  const scrollProg   = document.getElementById('scroll-prog');
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+      if(tab==='strategy'){
+        strategyWrap.style.display='';
+        trackerWrap.classList.remove('t-active');
+        sideNav.style.display='';
+        scrollProg.style.display='';
+      } else {
+        strategyWrap.style.display='none';
+        trackerWrap.classList.add('t-active');
+        sideNav.style.display='none';
+        scrollProg.style.display='none';
+        renderAll();
+      }
+    });
+  });
+
+  /* ─── Helpers ─── */
+  function gateIcon(s){ return {pending:'<span style="color:var(--txt-300)">○</span>',pass:'<span style="color:var(--teal)">✓</span>',fail:'<span style="color:var(--burgundy)">✕</span>'}[s]||'<span style="color:var(--txt-300)">○</span>'; }
+  function issueIcon(t){ return {issue:'<span style="color:var(--burgundy)">●</span>',change:'<span style="color:var(--amber)">●</span>',done:'<span style="color:var(--teal)">●</span>'}[t]||'<span style="color:var(--txt-300)">●</span>'; }
+  function issueLabel(t){ return {issue:'이슈',change:'계획변경',done:'완료'}[t]||t; }
+  function today(){ return new Date().toISOString().slice(0,10); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function currentPhase(){
+    const m=new Date().getMonth()+1;
+    if(m>=4&&m<=6) return 'P1';
+    if(m>=7&&m<=9) return 'P2';
+    if(m>=10&&m<=12) return 'P3';
+    return null;
+  }
+  function taskKey(part,month,idx){ return part+'::'+month+'::'+idx; }
+  function qOfMonth(m){ if(['2026-04','2026-05','2026-06'].includes(m)) return 'Q2'; if(['2026-07','2026-08','2026-09'].includes(m)) return 'Q3'; return 'Q4'; }
+
+  /* ─── Block A: Summary ─── */
+  function renderBlockA(){
+    const totalRev = MONTHS.reduce((s,m)=>s+(parseFloat(D.kpi[m]?.revenue)||0),0);
+    const pct = Math.min(100,totalRev/120*100).toFixed(1);
+    const cp = currentPhase();
+    const pi = cp ? PHASE_INFO[cp] : null;
+
+    const chipHtml = QUARTERS.map(q=>{
+      const g=D.gates[q]; const states=Object.values(g);
+      const passes=states.filter(s=>s==='pass').length;
+      const fails=states.filter(s=>s==='fail').length;
+      let cls,icon;
+      if(passes===4){cls='t-sc-ok';icon='✓';}
+      else if(fails>0){cls='t-sc-fail';icon='✕';}
+      else if(passes>0){cls='t-sc-warn';icon='●';}
+      else{cls='t-sc-none';icon='○';}
+      return `<span class="t-sc ${cls}" style="font-size:12px;padding:5px 12px">${icon} ${q} &nbsp;${passes}/4 달성</span>`;
+    }).join('');
+
+    document.getElementById('t-block-a').innerHTML=`
+<div class="bento" style="margin-bottom:32px">
+  <div class="card b-3 kpi-card">
+    <span class="label">현재 Phase</span>
+    <div class="big-num" style="font-size:30px;color:${pi?pi.color:'var(--txt-300)'}">${pi?pi.label:'—'}</div>
+    <div class="kpi-sub" style="margin-top:6px">${pi?pi.desc:'전략 기간 외'}</div>
+  </div>
+  <div class="card b-5">
+    <span class="label">연간 목표 달성률 (누적 입력 / 120억)</span>
+    <div class="t-progress-track"><div class="t-progress-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--txt-500)">
+      <span><strong style="color:var(--accent);font-size:20px">${totalRev.toFixed(2)}</strong>억 달성</span>
+      <strong style="font-size:16px;color:var(--txt-700)">${pct}%</strong>
+      <span>목표 120억</span>
+    </div>
+  </div>
+  <div class="card b-4">
+    <span class="label">OGK Gate 현황</span>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">${chipHtml}</div>
+  </div>
+</div>`;
+  }
+
+  /* ─── Block B: KPI Table ─── */
+  function renderBlockB(){
+    const rows = MONTHS.map(m=>{
+      const k=D.kpi[m]||{};
+      const revA=k.revenue, mrgA=k.margin, subA=k.subs, adA=k.adRatio;
+      const revT=REV_TARGET[m], adT=AD_TARGET[m];
+      const isQEnd=!!SUBS_GOAL[m], subsG=SUBS_GOAL[m];
+      const phColor = PHASES[m]==='P1'?'var(--accent)':PHASES[m]==='P2'?'var(--navy)':'var(--teal)';
+
+      function eCell(field,val,unit,dec){
+        if(val!==null&&val!==undefined)
+          return `<td class="t-has-val" data-month="${m}" data-field="${field}">${parseFloat(val).toFixed(dec)}${unit}</td>`;
+        return `<td class="t-editable" data-month="${m}" data-field="${field}">— 입력</td>`;
+      }
+
+      let statusHtml;
+      if(revA===null){ statusHtml=`<span class="t-sc t-sc-none">미입력</span>`; }
+      else if(revA>=revT&&(mrgA===null||mrgA>=30)){ statusHtml=`<span class="t-sc t-sc-ok">달성 ✓</span>`; }
+      else if(revA>=revT*0.9){ statusHtml=`<span class="t-sc t-sc-warn">근접</span>`; }
+      else{ statusHtml=`<span class="t-sc t-sc-fail">미달</span>`; }
+
+      const subsCell = `<td>
+        ${subA!==null?`<span class="t-has-val" data-month="${m}" data-field="subs">${parseInt(subA).toLocaleString()}명</span>`
+          :`<span class="t-editable" data-month="${m}" data-field="subs">— 입력</span>`}
+        ${isQEnd?`<span class="t-qend-chip">Q말 목표 ${subsG.toLocaleString()}명</span>`:''}
+      </td>`;
+
+      return `<tr>
+        <td><strong>${ML[m]}</strong></td>
+        <td><span style="font-size:11px;font-weight:700;color:${phColor}">${PHASES[m]}</span></td>
+        <td style="color:var(--txt-400)">${revT}억</td>
+        ${eCell('revenue',revA,'억',2)}
+        ${eCell('margin',mrgA,'%',1)}
+        ${subsCell}
+        ${eCell('adRatio',adA,'%',1)}
+        <td>${statusHtml}</td>
+      </tr>`;
+    }).join('');
+
+    // 합계 계산
+    const totalTarget = MONTHS.reduce((s,m)=>s+(REV_TARGET[m]||0),0);
+    const revEnteredArr = MONTHS.map(m=>D.kpi[m]?.revenue).filter(v=>v!==null&&v!==undefined);
+    const totalActual = revEnteredArr.reduce((s,v)=>s+Number(v),0);
+    const enteredCnt = revEnteredArr.length;
+    const achvPct = totalTarget>0 ? (totalActual/totalTarget*100) : 0;
+    const actualColor = enteredCnt===0 ? 'var(--txt-300)'
+      : (totalActual>=totalTarget ? 'var(--teal)' : 'var(--accent)');
+
+    document.getElementById('t-block-b').innerHTML=`
+<div class="tr-sec-title"><span class="ts-eye">KPI</span> 월별 실적 입력 <span class="ts-hint">셀 클릭 → 숫자 입력 → Enter</span></div>
+<div class="card" style="overflow-x:auto">
+  <table class="tbl" style="min-width:680px">
+    <thead><tr>
+      <th>월</th><th>Phase</th><th>매출 목표</th>
+      <th>매출 실적<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
+      <th>공헌이익률<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 30%)</small></th>
+      <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(6월 '수' 목표 달성 · 이제 교차구독)</small></th>
+      <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
+      <th>상태</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr style="background:var(--bg-alt);font-weight:700;border-top:2px solid var(--border)">
+        <td><strong>합계</strong></td>
+        <td><span style="font-size:11px;font-weight:700;color:var(--txt-500)">연간</span></td>
+        <td style="color:var(--txt-700)">${totalTarget.toFixed(2)}억</td>
+        <td style="color:${actualColor}">
+          ${totalActual.toFixed(2)}억
+          <span style="font-size:10px;font-weight:500;color:var(--txt-400);display:block;margin-top:2px">${enteredCnt}/12개월 · ${achvPct.toFixed(1)}%</span>
+        </td>
+        <td colspan="4" style="color:var(--txt-400);font-size:11px;font-weight:500">* 공헌이익률·교차구독·광고비는 월별 개별 관리</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>`;
+
+    document.querySelectorAll('#t-block-b td.t-editable,#t-block-b td.t-has-val').forEach(el=>{
+      el.addEventListener('click',function(e){ openPopover(e,this.dataset.month,this.dataset.field); });
+    });
+    document.querySelectorAll('#t-block-b span.t-editable,#t-block-b span.t-has-val').forEach(el=>{
+      el.addEventListener('click',function(e){ openPopover(e,this.dataset.month,this.dataset.field); });
+    });
+  }
+
+  /* ─── Block C: Gate Grid ─── */
+  function renderBlockC(){
+    const qCols = QUARTERS.map(q=>{
+      const g=D.gates[q];
+      const qColor = q==='Q2'?'var(--accent)':q==='Q3'?'var(--navy)':'var(--teal)';
+      const cells = GATE_DEFS.map(gd=>{
+        const state=g[gd.id];
+        const tColor = state==='pass'?'var(--teal)':state==='fail'?'var(--burgundy)':'var(--txt-300)';
+        return `<div class="t-gate-cell" data-q="${q}" data-g="${gd.id}" data-state="${state}">
+          <div style="font-size:24px">${gateIcon(state)}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--txt-500);margin-top:5px;line-height:1.4">${gd.label}</div>
+          <div style="font-size:12px;font-weight:700;margin-top:4px;color:${tColor}">${gd[q]}</div>
+        </div>`;
+      }).join('');
+      return `<div class="card b-4">
+        <h4 style="color:${qColor};margin-bottom:12px;font-size:15px">${q} (${q==='Q2'?'4~6월':q==='Q3'?'7~9월':'10~12월'})</h4>
+        ${cells}
+      </div>`;
+    }).join('');
+
+    document.getElementById('t-block-c').innerHTML=`
+<div class="tr-sec-title"><span class="ts-eye">OGK</span> Gate 달성 현황 <span class="ts-hint">셀 클릭 → 대기 → 달성 → 미달 순환</span></div>
+<div class="bento">${qCols}</div>`;
+
+    document.querySelectorAll('.t-gate-cell').forEach(cell=>{
+      cell.addEventListener('click',function(){
+        const q=this.dataset.q, g=this.dataset.g;
+        const cycle=['pending','pass','fail'];
+        D.gates[q][g]=cycle[(cycle.indexOf(D.gates[q][g])+1)%cycle.length];
+        saveData(); renderBlockA(); renderBlockC();
+      });
+    });
+  }
+
+  /* ─── Block D: Tasks ─── */
+  const _todayM = new Date().toISOString().slice(0,7);
+  let activePart = '전체', activeMonth = MONTHS.includes(_todayM)?_todayM:MONTHS[3];
+  function getItems(part,month){
+    if(!D.taskItems) D.taskItems={};
+    if(!D.taskItems[part]) D.taskItems[part]={};
+    if(!Array.isArray(D.taskItems[part][month])) D.taskItems[part][month]=[];
+    return D.taskItems[part][month];
+  }
+  function rowHTML(part,it){
+    return `<div class="t-task-item${it.done?' done':''}" data-part="${part}" data-id="${it.id}">
+      <div class="t-task-cb" data-act="toggle">${it.done?'✓':''}</div>
+      <span class="t-task-text" data-act="edit" style="flex:1;cursor:text">${esc(it.text)}</span>
+      <button class="t-task-del" data-act="del" title="삭제" style="flex-shrink:0;background:none;border:none;color:var(--txt-300);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1">✕</button>
+    </div>`;
+  }
+  function addBtnHTML(part){
+    return `<button class="t-task-add" data-part="${part}" style="margin-top:4px;font-size:12px;color:var(--accent);background:none;border:1px dashed var(--border-md);border-radius:7px;padding:5px 10px;cursor:pointer;font-family:var(--ff)">+ ${part} 항목 추가</button>`;
+  }
+  function renderBlockD(){
+    const ALL_PARTS = ['전체',...PARTS];
+    const partTabs = ALL_PARTS.map(p=>
+      `<button class="t-ptab${p===activePart?' active':''}" data-part="${p}">${p}</button>`
+    ).join('');
+    const mTabs = MONTHS.map(m=>
+      `<button class="t-mtab${m===activeMonth?' active':''}" data-month="${m}">${ML[m]}</button>`
+    ).join('');
+
+    let taskHtml='', totalT=0, doneT=0;
+    if(activePart==='전체'){
+      PARTS.forEach(p=>{ getItems(p,activeMonth).forEach(it=>{ totalT++; if(it.done) doneT++; }); });
+      taskHtml = PARTS.map(p=>{
+        const ts=getItems(p,activeMonth);
+        const items=ts.map(it=>rowHTML(p,it)).join('');
+        return `<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:var(--txt-400);letter-spacing:.5px;text-transform:uppercase;margin:8px 0 4px">${p}</div>${items||'<p style="color:var(--txt-300);font-size:12px;padding:2px 0">항목 없음</p>'}${addBtnHTML(p)}</div>`;
+      }).join('');
+    } else {
+      MONTHS.forEach(m=>{ getItems(activePart,m).forEach(it=>{ totalT++; if(it.done) doneT++; }); });
+      const ts=getItems(activePart,activeMonth);
+      taskHtml = (ts.length?ts.map(it=>rowHTML(activePart,it)).join(''):`<p style="color:var(--txt-300);font-size:13px;padding:12px 0">이 달의 태스크가 없습니다.</p>`)+addBtnHTML(activePart);
+    }
+    const partPct = totalT>0?Math.round(doneT/totalT*100):0;
+    const progLabel = activePart==='전체'
+      ? `${ML[activeMonth]} 전체 진행률`
+      : `${activePart} 전체 진행률`;
+
+    document.getElementById('t-block-d').innerHTML=`
+<div class="tr-sec-title"><span class="ts-eye">TASKS</span> 파트별 태스크 체크리스트 <span class="ts-hint">항목 클릭→수정 · ✕→삭제 · +추가</span></div>
+<div class="card">
+  <div class="t-part-tabs">${partTabs}</div>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:4px">
+    <span style="font-size:12px;color:var(--txt-500);flex-shrink:0">${progLabel}</span>
+    <div class="t-progress-track" style="flex:1;height:7px;margin:0"><div class="t-progress-fill" style="width:${partPct}%"></div></div>
+    <span style="font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0">${doneT}/${totalT} (${partPct}%)</span>
+  </div>
+  <div class="t-month-tabs">${mTabs}</div>
+  <div id="t-task-items">${taskHtml}</div>
+</div>`;
+
+    document.querySelectorAll('.t-ptab').forEach(b=>b.addEventListener('click',()=>{ activePart=b.dataset.part; renderBlockD(); }));
+    document.querySelectorAll('.t-mtab').forEach(b=>b.addEventListener('click',()=>{ activeMonth=b.dataset.month; renderBlockD(); }));
+    document.querySelectorAll('#t-task-items .t-task-item').forEach(item=>{
+      const part=item.dataset.part, id=item.dataset.id;
+      item.querySelector('[data-act="toggle"]').addEventListener('click',e=>{
+        e.stopPropagation();
+        const it=getItems(part,activeMonth).find(x=>x.id===id);
+        if(it){ it.done=!it.done; saveData(); renderBlockD(); }
+      });
+      item.querySelector('[data-act="edit"]').addEventListener('click',e=>{
+        e.stopPropagation(); openTaskModal(part,activeMonth,id);
+      });
+      item.querySelector('[data-act="del"]').addEventListener('click',e=>{
+        e.stopPropagation();
+        const arr=getItems(part,activeMonth); const idx=arr.findIndex(x=>x.id===id);
+        if(idx>=0){ arr.splice(idx,1); saveData(); renderBlockD(); }
+      });
+    });
+    document.querySelectorAll('#t-task-items .t-task-add').forEach(b=>{
+      b.addEventListener('click',()=>openTaskModal(b.dataset.part,activeMonth,null));
+    });
+  }
+
+  /* ─── Block E: Issue Log ─── */
+  function renderBlockE(){
+    const listHtml = D.issues.length===0
+      ? `<p style="color:var(--txt-300);font-size:13px;padding:12px">아직 기록된 항목이 없습니다. 이슈 발생, 계획 변경, 완료 보고를 추가하세요.</p>`
+      : [...D.issues].reverse().map(issue=>`
+        <div class="t-issue-item">
+          <div style="font-size:24px;flex-shrink:0">${issueIcon(issue.type)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:var(--txt-300);margin-bottom:3px">${issue.date} · ${issueLabel(issue.type)} · <strong>${issue.part}</strong></div>
+            <div style="font-size:14px;font-weight:700;color:var(--txt-900)">${issue.title}</div>
+            ${issue.desc?`<div style="font-size:13px;color:var(--txt-500);margin-top:5px;line-height:1.7;white-space:pre-wrap">${issue.desc}</div>`:''}
+          </div>
+          <button class="t-issue-del" data-id="${issue.id}" title="삭제">✕</button>
+        </div>`).join('');
+
+    document.getElementById('t-block-e').innerHTML=`
+<div class="tr-sec-title" style="justify-content:space-between">
+  <div style="display:flex;align-items:center;gap:10px"><span class="ts-eye">LOG</span> 이슈 &amp; 계획 변경 로그</div>
+  <button class="t-btn-add" id="t-issue-add-btn">+ 항목 추가</button>
+</div>
+<div id="t-issue-list">${listHtml}</div>`;
+
+    document.getElementById('t-issue-add-btn').addEventListener('click',openModal);
+    document.querySelectorAll('.t-issue-del').forEach(btn=>{
+      btn.addEventListener('click',function(){
+        D.issues=D.issues.filter(i=>i.id!==this.dataset.id);
+        saveData(); renderBlockE();
+      });
+    });
+  }
+
+  function renderTimeline(){
+    const wrap = document.getElementById('t-block-timeline');
+    if(!wrap) return;
+    if(!Array.isArray(D.timelineEvents)) D.timelineEvents = seedTimeline();
+    const BRAND_EVENTS = D.timelineEvents.filter(e=>e.lane!=='naver');
+    const NAVER_EVENTS = D.timelineEvents.filter(e=>e.lane==='naver');
+    const MONTH_DAYS = [0,31,59,90,120,151,181,212,243,273,304,334,365];
+    const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    const YEAR0 = new Date('2026-01-01');
+    function doy(s){ return Math.round((new Date(s)-YEAR0)/86400000); }
+    function assignRows(evs,max){
+      const ends=[];const out=[];
+      for(const ev of evs){
+        const s=doy(ev.start),e=doy(ev.end);
+        let r=ends.findIndex(x=>x<s);
+        if(r<0) r=Math.min(ends.length,max-1);
+        ends[r]=e; out.push({...ev,row:r,s,e});
+      } return out;
+    }
+    let zoom=3;
+    function draw(ppd){
+      const inner=document.getElementById('tl-inner');
+      if(!inner) return;
+      const PAD=30, AX=105, RH=18, GAP=3;
+      inner.style.width=(Math.round(365*ppd)+PAD+20)+'px';
+      let h='';
+      for(let m=0;m<12;m++){
+        const x=Math.round(MONTH_DAYS[m]*ppd)+PAD;
+        const xn=Math.round(MONTH_DAYS[m+1]*ppd)+PAD;
+        h+=`<div style="position:absolute;left:${x}px;width:${xn-x}px;top:0;bottom:0;background:${m%2?'rgba(0,0,0,0)':'rgba(0,0,0,.025)'};border-left:1px solid rgba(0,0,0,.07)"></div>`;
+        h+=`<div style="position:absolute;left:${x+Math.round((xn-x)/2)}px;top:${AX+4}px;transform:translateX(-50%);font-size:9px;color:var(--txt-400);white-space:nowrap">${MONTH_NAMES[m]}</div>`;
+      }
+      h+=`<div style="position:absolute;left:${PAD}px;right:0;top:${AX}px;height:1px;background:var(--txt-200)"></div>`;
+      const fmtDate=s=>{const [,mm,dd]=s.split('-');return parseInt(mm)+'/'+parseInt(dd);};
+      const fmtRange=(s,e)=>s===e?fmtDate(s):fmtDate(s)+' ~ '+fmtDate(e);
+      for(const ev of assignRows(BRAND_EVENTS,3)){
+        const x=Math.round(ev.s*ppd)+PAD;
+        const w=Math.max(Math.round((ev.e-ev.s+1)*ppd),4);
+        const y=AX-(RH+GAP)*(ev.row+1)-2;
+        const range=fmtRange(ev.start,ev.end);
+        h+=`<div data-id="${ev.id}" data-label="${esc(ev.label)}" data-date="${range}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${RH}px;background:${ev.color||'#B85C38'};border-radius:3px;font-size:9px;font-weight:700;color:#fff;padding:0 4px;line-height:${RH}px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.9;cursor:pointer">${esc(ev.label)}</div>`;
+      }
+      for(const ev of assignRows(NAVER_EVENTS,2)){
+        const x=Math.round(ev.s*ppd)+PAD;
+        const w=Math.max(Math.round((ev.e-ev.s+1)*ppd),4);
+        const y=AX+18+(RH+GAP)*ev.row;
+        const range=fmtRange(ev.start,ev.end);
+        h+=`<div data-id="${ev.id}" data-label="${esc(ev.label)}" data-date="${range}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${RH}px;background:${ev.color||'#C08A4A'};border-radius:3px;font-size:9px;font-weight:700;color:#fff;padding:0 4px;line-height:${RH}px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.85;cursor:pointer">${esc(ev.label)}</div>`;
+      }
+      const td=doy(new Date().toISOString().slice(0,10));
+      const tx=Math.round(td*ppd)+PAD;
+      h+=`<div style="position:absolute;left:${tx}px;top:0;width:2px;height:100%;background:var(--burgundy);opacity:.85;z-index:10"></div>`;
+      h+=`<div style="position:absolute;left:${tx+4}px;top:3px;font-size:9px;font-weight:700;color:var(--burgundy);white-space:nowrap;z-index:10">오늘</div>`;
+      inner.innerHTML=h;
+    }
+    wrap.innerHTML=`
+<div class="tr-sec-title" style="flex-wrap:wrap;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px"><span class="ts-eye">TIMELINE</span> 2026 캠페인 타임라인</div>
+  <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+    <span style="font-size:10px;color:var(--txt-400)">축척</span>
+    <input type="range" id="tl-zoom" min="1" max="9" step=".2" value="3" style="width:90px;accent-color:var(--accent)">
+    <button id="tl-today-btn" class="tr-add-btn" style="padding:4px 10px;font-size:11px">오늘로</button>
+    <button id="tl-add-btn" class="t-btn-add" style="padding:4px 10px;font-size:11px">+ 캠페인 추가</button>
+  </div>
+</div>
+<div style="font-size:10px;color:var(--txt-300);margin:-2px 0 6px;padding-left:2px">캠페인 바를 클릭하면 수정·삭제할 수 있습니다.</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--txt-400);margin-bottom:8px;padding-left:2px">
+  <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#B85C38;vertical-align:middle;margin-right:3px"></span>SALES</span>
+  <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8C6E52;vertical-align:middle;margin-right:3px"></span>NEW 제품</span>
+  <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8B6914;vertical-align:middle;margin-right:3px"></span>RENEWAL</span>
+  <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#888;vertical-align:middle;margin-right:3px"></span>BRANDING</span>
+  <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#C08A4A;vertical-align:middle;margin-right:3px"></span>Naver 이벤트</span>
+  <span style="color:var(--burgundy);font-weight:700">│ 오늘</span>
+</div>
+<div id="tl-outer"><div id="tl-inner"></div></div>
+<div id="tl-tip" style="display:none;position:fixed;z-index:9999;background:rgba(20,20,20,.92);color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:nowrap;max-width:260px;white-space:normal;line-height:1.4"></div>`;
+    draw(zoom);
+    function scrollToToday(){
+      const outer=document.getElementById('tl-outer');
+      if(!outer) return;
+      const PAD=30;
+      const td=doy(new Date().toISOString().slice(0,10));
+      outer.scrollLeft=Math.round(td*zoom)+PAD-outer.clientWidth/2;
+    }
+    setTimeout(scrollToToday,60);
+    document.getElementById('tl-zoom').addEventListener('input',function(){
+      zoom=parseFloat(this.value); draw(zoom); scrollToToday();
+    });
+    document.getElementById('tl-today-btn').addEventListener('click',scrollToToday);
+    document.getElementById('tl-add-btn').addEventListener('click',()=>openTlModal(null));
+    const outer=document.getElementById('tl-outer');
+    const tip=document.getElementById('tl-tip');
+    const tipHTML=t=>`<div>${t.dataset.label}</div>`+(t.dataset.date?`<div style="font-size:10px;font-weight:500;color:#c9c9c9;margin-top:2px">${t.dataset.date} · 클릭하여 수정</div>`:'');
+    // Tooltip: hover
+    outer.addEventListener('mouseover',e=>{
+      const t=e.target.closest('[data-label]');
+      if(!t||!tip) return;
+      tip.innerHTML=tipHTML(t);
+      tip.style.display='block';
+    });
+    outer.addEventListener('mousemove',e=>{
+      if(!tip||tip.style.display==='none') return;
+      tip.style.left=(e.clientX+12)+'px';
+      tip.style.top=(e.clientY-30)+'px';
+    });
+    outer.addEventListener('mouseout',e=>{
+      if(!e.target.closest('[data-label]')) return;
+      if(!tip) return;
+      tip.style.display='none';
+    });
+    // Drag-to-scroll + click(=편집) 구분
+    let dragging=false,moved=false,startX=0,startScroll=0;
+    outer.addEventListener('mousedown',e=>{dragging=true;moved=false;startX=e.clientX;startScroll=outer.scrollLeft;outer.classList.add('dragging');});
+    outer.addEventListener('mousemove',e=>{if(!dragging)return;if(Math.abs(e.clientX-startX)>4)moved=true;outer.scrollLeft=startScroll-(e.clientX-startX);});
+    outer.addEventListener('mouseup',e=>{
+      dragging=false;outer.classList.remove('dragging');
+      if(moved) return; // 드래그였으면 편집 안 함
+      const t=e.target.closest('[data-id]');
+      if(t){ if(tip)tip.style.display='none'; openTlModal(t.dataset.id); }
+    });
+    outer.addEventListener('mouseleave',()=>{dragging=false;outer.classList.remove('dragging');if(tip)tip.style.display='none';});
+  }
+
+  function renderAll(){ renderBlockA(); renderBlockB(); renderBlockC(); renderBlockD(); renderTimeline(); renderBlockE(); }
+
+  /* ─── Popover ─── */
+  const popover   = document.getElementById('t-popover');
+  const popInput  = document.getElementById('t-popover-input');
+  const popLabel  = document.getElementById('t-pop-label');
+  const FIELD_META = {
+    revenue:{label:'매출 실적 (억 원)',step:0.01,min:0},
+    margin: {label:'공헌이익률 (%)',step:0.1,min:0,max:100},
+    subs:   {label:'구독자 수 (명)',step:1,min:0},
+    adRatio:{label:'광고비/매출 비율 (%)',step:0.1,min:0,max:100},
+  };
+  let popState={month:null,field:null};
+
+  function openPopover(e,month,field){
+    if(!month||!field) return;
+    popState={month,field};
+    const meta=FIELD_META[field]||{label:field,step:0.01};
+    popLabel.textContent=meta.label;
+    popInput.step=meta.step; popInput.min=meta.min||0;
+    if(meta.max) popInput.max=meta.max;
+    const cur=D.kpi[month]?.[field];
+    popInput.value=(cur!==null&&cur!==undefined)?cur:'';
+    popover.style.display='block';
+    const rect=e.target.getBoundingClientRect();
+    let top=rect.bottom+8, left=rect.left;
+    if(left+200>window.innerWidth) left=window.innerWidth-210;
+    if(top+130>window.innerHeight) top=rect.top-130;
+    popover.style.top=top+'px'; popover.style.left=left+'px';
+    setTimeout(()=>popInput.focus(),50);
+    e.stopPropagation();
+  }
+  function savePopover(){
+    if(!popState.month||!popState.field) return;
+    const v=popInput.value.trim();
+    if(!D.kpi[popState.month]) D.kpi[popState.month]={};
+    D.kpi[popState.month][popState.field]=(v==='')?null:parseFloat(v);
+    saveData(); popover.style.display='none';
+    renderBlockA(); renderBlockB();
+  }
+
+  document.querySelector('.t-pop-save').addEventListener('click',savePopover);
+  document.querySelector('.t-pop-cancel').addEventListener('click',()=>{ popover.style.display='none'; });
+  popInput.addEventListener('keydown',e=>{ if(e.key==='Enter') savePopover(); if(e.key==='Escape') popover.style.display='none'; });
+  document.addEventListener('click',e=>{ if(popover.style.display!=='none'&&!popover.contains(e.target)) popover.style.display='none'; });
+
+  /* ─── Modal ─── */
+  const modalOverlay=document.getElementById('t-modal-overlay');
+  function openModal(){ modalOverlay.style.display='flex'; setTimeout(()=>document.getElementById('t-modal-title').focus(),50); }
+  function closeModal(){ modalOverlay.style.display='none'; }
+  document.getElementById('t-modal-cancel').addEventListener('click',closeModal);
+  modalOverlay.addEventListener('click',e=>{ if(e.target===modalOverlay) closeModal(); });
+  document.getElementById('t-modal-save').addEventListener('click',()=>{
+    const title=document.getElementById('t-modal-title').value.trim();
+    if(!title){ document.getElementById('t-modal-title').focus(); return; }
+    D.issues.push({
+      id:Date.now().toString(),
+      date:today(),
+      type:document.getElementById('t-modal-type').value,
+      part:document.getElementById('t-modal-part').value,
+      title,
+      desc:document.getElementById('t-modal-desc').value.trim(),
+    });
+    saveData(); closeModal();
+    document.getElementById('t-modal-title').value='';
+    document.getElementById('t-modal-desc').value='';
+    renderBlockE();
+  });
+
+  /* ─── Task add/edit Modal ─── */
+  const taskOv=document.getElementById('t-task-modal-overlay');
+  const taskTextEl=document.getElementById('t-task-modal-text');
+  const taskDelBtn=document.getElementById('t-task-modal-del');
+  let taskEdit={part:null,month:null,id:null};
+  function openTaskModal(part,month,id){
+    taskEdit={part,month,id};
+    const editing=!!id;
+    document.getElementById('t-task-modal-h').textContent=editing?'태스크 수정':'태스크 추가';
+    document.getElementById('t-task-modal-sub').textContent=`${part} · ${ML[month]}`;
+    let cur='';
+    if(editing){ const it=getItems(part,month).find(x=>x.id===id); cur=it?it.text:''; }
+    taskTextEl.value=cur;
+    taskDelBtn.style.visibility=editing?'visible':'hidden';
+    taskOv.style.display='flex';
+    setTimeout(()=>taskTextEl.focus(),50);
+  }
+  function closeTaskModal(){ taskOv.style.display='none'; }
+  function saveTaskModal(){
+    const txt=taskTextEl.value.trim();
+    if(!txt){ taskTextEl.focus(); return; }
+    const arr=getItems(taskEdit.part,taskEdit.month);
+    if(taskEdit.id){ const it=arr.find(x=>x.id===taskEdit.id); if(it) it.text=txt; }
+    else { arr.push({id:uid(),text:txt,done:false}); }
+    saveData(); closeTaskModal(); renderBlockD();
+  }
+  document.getElementById('t-task-modal-save').addEventListener('click',saveTaskModal);
+  document.getElementById('t-task-modal-cancel').addEventListener('click',closeTaskModal);
+  taskDelBtn.addEventListener('click',()=>{
+    if(!taskEdit.id) return;
+    const arr=getItems(taskEdit.part,taskEdit.month); const i=arr.findIndex(x=>x.id===taskEdit.id);
+    if(i>=0){ arr.splice(i,1); saveData(); closeTaskModal(); renderBlockD(); }
+  });
+  taskOv.addEventListener('click',e=>{ if(e.target===taskOv) closeTaskModal(); });
+  taskTextEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) saveTaskModal(); if(e.key==='Escape') closeTaskModal(); });
+
+  /* ─── Timeline event add/edit Modal ─── */
+  const tlOv=document.getElementById('t-tl-modal-overlay');
+  const tlLabel=document.getElementById('t-tl-label');
+  const tlStart=document.getElementById('t-tl-start');
+  const tlEnd=document.getElementById('t-tl-end');
+  const tlLane=document.getElementById('t-tl-lane');
+  const tlColor=document.getElementById('t-tl-color');
+  const tlDelBtn=document.getElementById('t-tl-del');
+  let tlEditId=null;
+  // 컬러 프리셋 스와치
+  document.getElementById('t-tl-swatches').innerHTML=EVENT_TYPES.map(t=>
+    `<button type="button" class="t-tl-swatch" data-color="${t.color}" title="${t.label}" style="width:26px;height:26px;border-radius:6px;border:1px solid transparent;background:${t.color};cursor:pointer"></button>`
+  ).join('');
+  document.querySelectorAll('.t-tl-swatch').forEach(b=>b.addEventListener('click',()=>{
+    tlColor.value=b.dataset.color;
+    document.querySelectorAll('.t-tl-swatch').forEach(x=>x.style.borderColor='transparent');
+    b.style.borderColor='var(--txt-900)';
+  }));
+  function openTlModal(id){
+    tlEditId=id;
+    const editing=!!id;
+    document.getElementById('t-tl-modal-h').textContent=editing?'캠페인 수정':'캠페인 추가';
+    let ev=null;
+    if(editing) ev=(D.timelineEvents||[]).find(x=>x.id===id);
+    tlLabel.value=ev?ev.label:'';
+    tlStart.value=ev?ev.start:'2026-'+String(new Date().getMonth()+1).padStart(2,'0')+'-01';
+    tlEnd.value=ev?ev.end:tlStart.value;
+    tlLane.value=ev?(ev.lane||'brand'):'brand';
+    tlColor.value=ev?(ev.color||'#B85C38'):'#B85C38';
+    document.querySelectorAll('.t-tl-swatch').forEach(x=>x.style.borderColor=(x.dataset.color.toLowerCase()===tlColor.value.toLowerCase())?'var(--txt-900)':'transparent');
+    tlDelBtn.style.visibility=editing?'visible':'hidden';
+    tlOv.style.display='flex';
+    setTimeout(()=>tlLabel.focus(),50);
+  }
+  function closeTlModal(){ tlOv.style.display='none'; }
+  function saveTlModal(){
+    const label=tlLabel.value.trim();
+    if(!label){ tlLabel.focus(); return; }
+    let s=tlStart.value, e=tlEnd.value;
+    if(!s){ tlStart.focus(); return; }
+    if(!e) e=s;
+    if(e<s){ const t=s; s=e; e=t; } // 뒤집힘 보정
+    if(!Array.isArray(D.timelineEvents)) D.timelineEvents=[];
+    if(tlEditId){
+      const ev=D.timelineEvents.find(x=>x.id===tlEditId);
+      if(ev){ ev.label=label; ev.start=s; ev.end=e; ev.lane=tlLane.value; ev.color=tlColor.value; }
+    } else {
+      D.timelineEvents.push({id:uid(),label,start:s,end:e,lane:tlLane.value,color:tlColor.value});
+    }
+    saveData(); closeTlModal(); renderTimeline();
+  }
+  document.getElementById('t-tl-save').addEventListener('click',saveTlModal);
+  document.getElementById('t-tl-cancel').addEventListener('click',closeTlModal);
+  tlDelBtn.addEventListener('click',()=>{
+    if(!tlEditId) return;
+    D.timelineEvents=(D.timelineEvents||[]).filter(x=>x.id!==tlEditId);
+    saveData(); closeTlModal(); renderTimeline();
+  });
+  tlOv.addEventListener('click',e=>{ if(e.target===tlOv) closeTlModal(); });
+  tlLabel.addEventListener('keydown',e=>{ if(e.key==='Enter') saveTlModal(); if(e.key==='Escape') closeTlModal(); });
+
+  /* Firebase 초기화 (스크립트 로드 후 즉시) */
+  initFirebase();
+
+})(); /* END TRACKER */
+</script>
+</body>
+</html>
