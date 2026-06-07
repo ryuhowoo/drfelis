@@ -70,6 +70,7 @@ export default function UploadPage() {
           <UploadCard key={c.key} def={c} />
         ))}
         <PriceMasterCard />
+        <GuideImportCard />
       </div>
       <UploadHistory />
     </div>
@@ -1120,6 +1121,121 @@ function PriceMasterCard() {
               />
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// ⑤ 프로모션 가이드 (일괄) — 미리보기 전용 (S: 전용 임포터 1단계)
+//    캠페인 블록(CF_P 코드·기간·상품표)을 파싱해 무엇이 잡히는지 확인만 한다. DB 기록 없음.
+// ─────────────────────────────────────────────
+function GuideImportCard() {
+  const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
+  const [campaigns, setCampaigns] = useState<
+    import("@/lib/parseGuide").GuideCampaign[] | null
+  >(null);
+
+  async function handleFile(file: File) {
+    try {
+      setCampaigns(null);
+      setP({ phase: "reading", message: `${file.name} 읽는 중…` });
+      const buf = await file.arrayBuffer();
+      setP({ phase: "parsing", message: "가이드 파싱 중…" });
+      const { parseCampaignGuide } = await import("@/lib/parseGuide");
+      const found = parseCampaignGuide(buf);
+      if (found.length === 0)
+        throw new Error(
+          "캠페인 블록(CF_P 코드 + 상품명·판매수량·매출 표)을 찾지 못했습니다. 프로모션 가이드 워크북이 맞는지 확인하세요.",
+        );
+      setCampaigns(found);
+      setP({
+        phase: "ok",
+        message: `${found.length}개 캠페인 · 상품 ${found.reduce((s, c) => s + c.products.length, 0)}행 인식`,
+      });
+    } catch (e) {
+      setP({ phase: "error", message: errMsg(e) });
+    }
+  }
+
+  return (
+    <div className="rounded-[24px] bg-white card-soft p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-medium">⑤ 프로모션 가이드 (일괄 · 미리보기)</h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            여러 캠페인이 박스로 쌓인 ‘프로모션 가이드’ 워크북에서 캠페인별 상품·판매수량·매출을
+            인식합니다. <b>지금은 미리보기 전용</b>(DB에 쓰지 않음) — 인식 결과를 확인한 뒤 다음
+            단계에서 백필을 켭니다.
+          </p>
+        </div>
+        <label
+          className={`shrink-0 cursor-pointer rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 ${
+            p.phase === "reading" || p.phase === "parsing" ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          파일 선택
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {p.phase !== "idle" && p.message && (
+        <div
+          className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+            p.phase === "error"
+              ? "bg-red-50 text-red-700"
+              : p.phase === "ok"
+                ? "bg-green-50 text-green-700"
+                : "bg-neutral-100 text-neutral-600"
+          }`}
+        >
+          {p.message}
+        </div>
+      )}
+
+      {campaigns && campaigns.length > 0 && (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead className="text-xs text-neutral-400">
+              <tr>
+                <th className="py-1.5 pr-3">코드</th>
+                <th className="py-1.5 pr-3">기간</th>
+                <th className="py-1.5 pr-3 text-right">상품수</th>
+                <th className="py-1.5 pr-3 text-right">Σ판매수량</th>
+                <th className="py-1.5 text-right">Σ매출</th>
+              </tr>
+            </thead>
+            <tbody>
+              {campaigns.map((c) => (
+                <tr key={c.code} className="border-t border-neutral-100">
+                  <td className="py-1.5 pr-3 font-medium text-neutral-800">{c.code}</td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
+                    {c.start_date ?? "?"}
+                    {c.end_date ? ` ~ ${c.end_date}` : ""}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">{c.products.length}</td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">
+                    {c.total_qty.toLocaleString()}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">{won(c.total_revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-[11px] text-neutral-400">
+            상품명·수량·매출이 캠페인별로 맞게 잡혔는지 확인해 주세요. 이 표를 캡처해 공유하면
+            컬럼 매핑을 검증한 뒤 실제 백필(코드로 캠페인 매칭→실적 교체)을 활성화합니다.
+          </p>
         </div>
       )}
     </div>
