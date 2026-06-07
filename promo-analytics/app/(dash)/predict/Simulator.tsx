@@ -14,7 +14,7 @@ import {
 import { won, wonShort, pct } from "@/lib/format";
 import { predict, type CaseFeature, type PredictionSpec } from "@/lib/predict";
 
-type Options = { benefitTypes: string[]; seasonalities: string[] };
+type Options = { benefitTypes: string[]; seasonalities: string[]; purposes: string[] };
 
 const BRAND = "#e76f51";
 
@@ -30,6 +30,7 @@ type Scenario = {
 export default function Simulator({ cases, options }: { cases: CaseFeature[]; options: Options }) {
   const [promoType, setPromoType] = useState(options.benefitTypes[0] ?? "할인");
   const [seasonTag, setSeasonTag] = useState("");
+  const [purpose, setPurpose] = useState("");
   const [discount, setDiscount] = useState(40);
   const [days, setDays] = useState(4);
   const [pinned, setPinned] = useState<Scenario[]>([]);
@@ -37,12 +38,13 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
   const spec: PredictionSpec = {
     promo_type: promoType || null,
     season_tag: seasonTag || null,
+    purpose: purpose || null,
     discount_rate: discount / 100,
     duration_days: days,
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const pred = useMemo(() => predict(spec, cases), [promoType, seasonTag, discount, days, cases]);
+  const pred = useMemo(() => predict(spec, cases), [promoType, seasonTag, purpose, discount, days, cases]);
 
   // 할인율별 예상 증분/공헌이익 곡선
   const curve = useMemo(() => {
@@ -57,7 +59,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promoType, seasonTag, days, cases]);
+  }, [promoType, seasonTag, purpose, days, cases]);
 
   // 스윗스팟: 최고 효과(증분 최대) / 최고 효율(공헌이익 최대)
   const bestEffect = useMemo(
@@ -76,7 +78,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       [
         ...prev,
         {
-          label: `${promoType || "?"} ${discount}%·${days}일${seasonTag ? `·${seasonTag}` : ""}`,
+          label: `${promoType || "?"} ${discount}%·${days}일${seasonTag ? `·${seasonTag}` : ""}${purpose ? `·${purpose}` : ""}`,
           uplift: pred.expected_uplift,
           promoDaily: pred.expected_promo_daily,
           baselineDaily: pred.expected_baseline_daily,
@@ -113,6 +115,12 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
           </Field>
           <Field label="시즈널리티">
             <Chips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} clearable />
+          </Field>
+          <Field label="목적">
+            <Chips options={options.purposes} value={purpose} onChange={setPurpose} clearable />
+            <p className="mt-1 text-[11px] text-neutral-400">
+              목적을 고르면 같은 목적 캠페인 사례를 우선 가중해 예측합니다.
+            </p>
           </Field>
 
           <div className="mt-5">
