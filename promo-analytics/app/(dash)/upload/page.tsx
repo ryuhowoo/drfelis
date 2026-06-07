@@ -23,12 +23,12 @@ const CARDS: CardDef[] = [
   {
     key: "daily",
     title: "② 일별 매출 추이",
-    desc: "일자 × 기초상품 × 옵션 × 결제금액 × 수량. baseline(평소 매출)의 연료입니다.",
+    desc: "일자 × 기초상품 × 옵션 × 결제금액 × 수량. baseline(평소 매출)의 연료입니다. 재업로드 시 같은 기간·상품을 교체합니다(누적 아님) — 수량·옵션정보 백필용.",
   },
   {
     key: "promotion",
     title: "③ 캠페인 시트",
-    desc: "캠페인 기간 실적(전 제품). 업로드하면 캠페인이 생성되고 상세로 이동합니다.",
+    desc: "캠페인 기간 실적(전 제품). 같은 코드의 캠페인이 있으면 실적을 교체(백필)하고 확정 플랜은 보존합니다. 없으면 새로 생성합니다.",
   },
 ];
 
@@ -87,42 +87,72 @@ function UploadCard({ def }: { def: CardDef }) {
         const rows = parse.parseDailySales(buf);
         if (rows.length === 0) throw new Error("유효한 행이 없습니다.");
 
-        // 다른 source의 동일 기간·동일 상품 데이터 중복 경고
         const allDates = rows.map((r) => r.sale_date);
         const minDate = allDates.reduce((a, b) => (a < b ? a : b));
         const maxDate = allDates.reduce((a, b) => (a > b ? a : b));
         const baseNamesList = [...new Set(rows.map((r) => r.base_name))];
-        setP({ phase: "uploading", message: "기존 데이터 중복 확인 중…" });
-        const { count: existingCount, error: cntErr } = await supabase
+        const newRevenue = rows.reduce((s, r) => s + r.revenue, 0);
+
+        // N1 백필 = 소스 교체. 같은 기간·상품의 기존 행을 삭제 후 새 파일 삽입(누적 금지).
+        // 옵션정보가 채워지면 자연키(일자·상품·옵션)가 바뀌어 upsert로는 옛 빈-옵션 행이 남아
+        // 매출이 중복 합산되므로, 반드시 범위 삭제 후 삽입한다.
+        setP({ phase: "uploading", message: "기존 데이터 확인 중…" });
+        const { count: oldCount, error: cntErr } = await supabase
           .from("daily_sales")
           .select("*", { count: "exact", head: true })
           .gte("sale_date", minDate)
           .lte("sale_date", maxDate)
-          .in("base_name", baseNamesList)
-          .neq("source_file", file.name);
+          .in("base_name", baseNamesList);
         if (cntErr) throw cntErr;
-        if (existingCount && existingCount > 0) {
-          const { data: srcSample } = await supabase
-            .from("daily_sales")
-            .select("source_file")
-            .gte("sale_date", minDate)
-            .lte("sale_date", maxDate)
-            .in("base_name", baseNamesList)
-            .neq("source_file", file.name)
-            .limit(200);
-          const srcSet = [
-            ...new Set((srcSample ?? []).map((r) => r.source_file as string)),
-          ];
+
+        if (oldCount && oldCount > 0) {
+          // 기존 총매출 합산(페이지네이션) — 불변식(총매출 동일) 확인용
+          let oldRevenue = 0;
+          const size = 1000;
+          for (let from = 0; from < oldCount; from += size) {
+            const { data, error } = await supabase
+              .from("daily_sales")
+              .select("revenue")
+              .gte("sale_date", minDate)
+              .lte("sale_date", maxDate)
+              .in("base_name", baseNamesList)
+              .range(from, from + size - 1);
+            if (error) throw error;
+            for (const r of data ?? []) oldRevenue += Number(r.revenue) || 0;
+          }
+          const delta = newRevenue - oldRevenue;
+          const deltaPct =
+            oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
+
+          // 불변식 위반(±5% 초과)이면 중단 — 백필은 수량·옵션만 채우고 총매출은 동일해야 함
+          if (Math.abs(deltaPct) > 5) {
+            throw new Error(
+              `백필 중단: 교체 시 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
+                `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
+                `백필은 수량·옵션정보만 채워야 하며 같은 기간 총매출은 동일해야 합니다. 파일/기간을 확인하세요.`,
+            );
+          }
+
           const ok = window.confirm(
-            `같은 기간(${minDate} ~ ${maxDate})에 다른 파일에서 적재된 데이터가 ${existingCount.toLocaleString()}건 있어요.\n` +
-              `기존 source: ${srcSet.join(", ") || "(이름 없음)"}\n\n` +
-              `옵션 표기가 같으면 덮어써지지만, 다르면 별도 행으로 추가돼 매출이 중복 합산될 수 있어요.\n\n` +
-              `그래도 진행할까요?`,
+            `백필(소스 교체) — 기간 ${minDate} ~ ${maxDate}\n` +
+              `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
+              `신규 ${rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
+              `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
+              `이 기간·상품의 기존 행을 모두 삭제하고 새 파일로 교체합니다 (누적 아님). 진행할까요?`,
           );
           if (!ok) {
-            setP({ phase: "idle", message: "" });
+            setP({ phase: "idle", message: "취소됨" });
             return;
           }
+
+          setP({ phase: "uploading", message: `기존 ${oldCount.toLocaleString()}행 삭제 중…` });
+          const { error: delErr } = await supabase
+            .from("daily_sales")
+            .delete()
+            .gte("sale_date", minDate)
+            .lte("sale_date", maxDate)
+            .in("base_name", baseNamesList);
+          if (delErr) throw delErr;
         }
 
         setP({ phase: "uploading", message: `상품 매칭 중… (${rows.length}행)` });
@@ -131,8 +161,7 @@ function UploadCard({ def }: { def: CardDef }) {
           rows.map((r) => r.base_name),
         );
 
-        // 충돌 키(sale_date·base_name·option_info)로 사전 중복 제거 — 후순위 우선(합산).
-        // 같은 키가 한 배치에 두 번 들어가면 Postgres upsert가 실패하므로 방어.
+        // 파일 내부 동일 키(일자·상품·옵션) 합산 — 한 배치에 중복 키가 있으면 upsert가 실패하므로 방어.
         const dedup = new Map<
           string,
           { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
@@ -145,7 +174,6 @@ function UploadCard({ def }: { def: CardDef }) {
             product_id: productMap.get(r.base_name) ?? null,
             base_name: r.base_name,
             option_info: r.option_info,
-            // 동일 키가 여러 행으로 분리돼 있으면 합산(옵션 컬럼 없는 파일 대비)
             revenue: (prev?.revenue ?? 0) + r.revenue,
             quantity: (prev?.quantity ?? 0) + r.quantity,
             source_file: file.name,
@@ -183,15 +211,121 @@ function UploadCard({ def }: { def: CardDef }) {
       if (!parsed.start_date || !parsed.end_date)
         throw new Error("캠페인 기간을 시트에서 찾지 못했습니다. (일자 누적 컬럼 확인)");
 
+      const rawName = file.name.replace(/\.(xlsx|xls|csv)$/i, "");
+      const code = parse.extractPromoCode(rawName);
+      const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
+      const newRevenue = parsed.rows.reduce((s, r) => s + r.revenue, 0);
+
+      const buildRecords = (promotionId: string, productMap: Map<string, string>) =>
+        parsed.rows.map((r) => ({
+          promotion_id: promotionId,
+          product_id: productMap.get(r.base_name) ?? null,
+          base_name: r.base_name,
+          option_info: r.option_info,
+          revenue: r.revenue,
+          order_count: r.order_count,
+          aov: r.aov,
+          fee: r.fee,
+          cost: r.cost,
+          quantity: r.quantity,
+        }));
+
+      // 기존 캠페인 탐지 (코드 우선, 없으면 이름) — 있으면 N1 백필(실적 교체)
+      setP({ phase: "uploading", message: "기존 캠페인 확인 중…" });
+      let existing: { id: string } | null = null;
+      if (code) {
+        const { data } = await supabase
+          .from("promotions")
+          .select("id")
+          .eq("code", code)
+          .limit(1)
+          .maybeSingle();
+        existing = (data as { id: string } | null) ?? null;
+      }
+      if (!existing) {
+        const { data } = await supabase
+          .from("promotions")
+          .select("id")
+          .eq("name", name)
+          .limit(1)
+          .maybeSingle();
+        existing = (data as { id: string } | null) ?? null;
+      }
+
+      if (existing) {
+        // 백필: 이 캠페인의 기존 실적만 삭제 후 교체. 확정 플랜(frozen)·expected는 건드리지 않음.
+        const { data: oldRows, error: oldErr } = await supabase
+          .from("promotion_sales")
+          .select("revenue")
+          .eq("promotion_id", existing.id);
+        if (oldErr) throw oldErr;
+        const oldCount = (oldRows ?? []).length;
+        const oldRevenue = (oldRows ?? []).reduce(
+          (s, r) => s + (Number(r.revenue) || 0),
+          0,
+        );
+        const delta = newRevenue - oldRevenue;
+        const deltaPct =
+          oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
+        if (Math.abs(deltaPct) > 5) {
+          throw new Error(
+            `백필 중단: 캠페인 실적 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
+              `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
+              `백필은 수량·옵션정보만 채워야 하며 실적 매출은 동일해야 합니다. 파일을 확인하세요.`,
+          );
+        }
+        const ok = window.confirm(
+          `백필(캠페인 실적 교체) — ${name}\n` +
+            `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
+            `신규 ${parsed.rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
+            `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
+            `이 캠페인의 기존 실적을 삭제하고 교체합니다. 확정 플랜(frozen)은 그대로 보존됩니다.\n` +
+            `진행할까요? (취소 시 중단 — 중복 캠페인을 만들지 않습니다)`,
+        );
+        if (!ok) {
+          setP({ phase: "idle", message: "취소됨" });
+          return;
+        }
+
+        setP({ phase: "uploading", message: "상품 매칭 중…" });
+        const productMap = await products.ensureProducts(
+          supabase,
+          parsed.rows.map((r) => r.base_name),
+        );
+
+        setP({ phase: "uploading", message: `기존 실적 ${oldCount.toLocaleString()}행 삭제 중…` });
+        const { error: delErr } = await supabase
+          .from("promotion_sales")
+          .delete()
+          .eq("promotion_id", existing.id);
+        if (delErr) throw delErr;
+
+        const records = buildRecords(existing.id, productMap);
+        const batches = products.chunk(records, 1000);
+        let done = 0;
+        for (const [i, batch] of batches.entries()) {
+          setP({
+            phase: "uploading",
+            message: `${i + 1}/${batches.length} 배치 적재 중…`,
+            done,
+            total: records.length,
+          });
+          const { error } = await supabase.from("promotion_sales").insert(batch);
+          if (error) throw error;
+          done += batch.length;
+        }
+
+        setP({ phase: "ok", message: `${name} 실적 백필 완료 · ${done}행. 상세로 이동합니다…` });
+        router.push(`/promotions/${existing.id}`);
+        return;
+      }
+
+      // 신규 캠페인 생성 (기존 동작)
       setP({ phase: "uploading", message: "상품 매칭 중…" });
       const productMap = await products.ensureProducts(
         supabase,
         parsed.rows.map((r) => r.base_name),
       );
-
-      const rawName = file.name.replace(/\.(xlsx|xls|csv)$/i, "");
-      const code = parse.extractPromoCode(rawName);
-      const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
 
       // 시즌 마스터 + 이름·기간으로 시즌성 자동 추정
       const { inferSeasonality } = await import("@/lib/season");
@@ -216,18 +350,7 @@ function UploadCard({ def }: { def: CardDef }) {
         .single();
       if (pErr) throw pErr;
 
-      const records = parsed.rows.map((r) => ({
-        promotion_id: promo.id,
-        product_id: productMap.get(r.base_name) ?? null,
-        base_name: r.base_name,
-        option_info: r.option_info,
-        revenue: r.revenue,
-        order_count: r.order_count,
-        aov: r.aov,
-        fee: r.fee,
-        cost: r.cost,
-        quantity: r.quantity,
-      }));
+      const records = buildRecords(promo.id, productMap);
 
       const batches = products.chunk(records, 1000);
       let done = 0;
