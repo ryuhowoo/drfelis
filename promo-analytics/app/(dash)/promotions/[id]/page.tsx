@@ -44,6 +44,20 @@ export default async function PromotionDetail({
   const summary = (sData?.[0] as PromotionSummary) ?? null;
   const notes = (nData as PromotionNote[]) ?? [];
 
+  // 현재 가격 가이드(플랜) 요약 (S2)
+  const { data: planRow } = await supabase
+    .from("campaign_plans")
+    .select("id, version, status, expected_revenue_total, expected_contribution_total")
+    .eq("promotion_id", id)
+    .eq("is_current", true)
+    .maybeSingle();
+  const plan = planRow as {
+    version: number;
+    status: string;
+    expected_revenue_total: number | null;
+    expected_contribution_total: number | null;
+  } | null;
+
   const mains = rows.filter((r) => r.is_main);
   const chartData = rows
     .filter((r) => Math.abs(r.uplift_revenue) > 0)
@@ -116,6 +130,43 @@ export default async function PromotionDetail({
               : undefined
           }
         />
+      </div>
+
+      {/* 가격 가이드(플랜) 요약 + CTA */}
+      <div className="mt-6 rounded-[24px] bg-white card-soft p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-neutral-700">가격 가이드(플랜)</h2>
+            {plan ? (
+              <p className="mt-1 text-sm text-neutral-500">
+                v{plan.version} ·{" "}
+                <span
+                  className={
+                    plan.status === "confirmed" ? "text-green-600" : "text-amber-600"
+                  }
+                >
+                  {plan.status === "confirmed" ? "확정됨" : "draft"}
+                </span>{" "}
+                · 예상 매출 {won(plan.expected_revenue_total)} · 예상 공헌이익{" "}
+                {won(plan.expected_contribution_total)}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-neutral-500">
+                아직 플랜이 없습니다. 옵션(다중 SKU 묶음)·예상 세트수로 예상 성과를 미리
+                계산하세요.
+              </p>
+            )}
+            <p className="mt-1 text-xs text-neutral-300">
+              달성률(계획 대비 실적)은 다음 단계에서 표시됩니다.
+            </p>
+          </div>
+          <Link
+            href={`/promotions/${id}/plan`}
+            className="shrink-0 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+          >
+            {plan ? "플랜 편집" : "플랜 만들기"}
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">

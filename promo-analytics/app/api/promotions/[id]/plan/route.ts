@@ -1,0 +1,194 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { computeOptionTotals, rateCardMult, type PlanItemInput } from "@/lib/plan";
+
+export const runtime = "nodejs";
+
+type ItemIn = {
+  product_id: string;
+  base_name: string;
+  sku_qty_per_option: number;
+  unit_sale_price: number;
+  source_config_id?: string | null;
+};
+type OptionIn = {
+  option_label: string;
+  expected_option_qty: number;
+  is_main?: boolean;
+  match_patterns?: string[];
+  sort?: number;
+  items: ItemIn[];
+};
+
+// 현재 플랜 보장: 플랜이 하나도 없으면 version=1 draft(current) 생성, 있으면 최신 버전 반환
+export async function POST(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    const { data: existing, error: exErr } = await supabase
+      .from("campaign_plans")
+      .select("id, version")
+      .eq("promotion_id", id)
+      .order("version", { ascending: false })
+      .limit(1);
+    if (exErr) throw exErr;
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ plan_id: existing[0].id, created: false });
+    }
+
+    const { data: created, error: cErr } = await supabase
+      .from("campaign_plans")
+      .insert({ promotion_id: id, version: 1, is_current: true, status: "draft" })
+      .select("id")
+      .single();
+    if (cErr) throw cErr;
+    return NextResponse.json({ plan_id: created.id, created: true });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "플랜 생성 실패" },
+      { status: 500 },
+    );
+  }
+}
+
+// draft 옵션/아이템 전체 교체 저장 + 라이브 롤업 계산 (confirmed 면 거부)
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = (await req.json()) as { plan_id: string; options: OptionIn[] };
+    const { plan_id, options } = body;
+    const supabase = await createClient();
+
+    const { data: plan, error: pErr } = await supabase
+      .from("campaign_plans")
+      .select("id, status")
+      .eq("id", plan_id)
+      .eq("promotion_id", id)
+      .single();
+    if (pErr || !plan)
+      return NextResponse.json({ error: "플랜을 찾을 수 없습니다" }, { status: 404 });
+    if (plan.status === "confirmed")
+      return NextResponse.json(
+        { error: "확정된 플랜은 수정할 수 없습니다. '수정(새 버전)'으로 새 draft를 만드세요." },
+        { status: 409 },
+      );
+
+    // 라이브 단가/원가: rate card current + products
+    const { data: rc } = await supabase
+      .from("rate_card")
+      .select("fee_rate, ad_rate, logistics_rate, reward_rate")
+      .eq("is_current", true)
+      .order("effective_from", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const mult = rc ? rateCardMult(rc) : 0.715;
+
+    const productIds = [
+      ...new Set(options.flatMap((o) => o.items.map((it) => it.product_id))),
+    ];
+    const priceMap = new Map<
+      string,
+      { consumer_price: number | null; regular_price: number | null; cost: number | null }
+    >();
+    if (productIds.length > 0) {
+      const { data: prods, error: prErr } = await supabase
+        .from("products")
+        .select("id, consumer_price, regular_price, cost")
+        .in("id", productIds);
+      if (prErr) throw prErr;
+      for (const p of prods ?? [])
+        priceMap.set(p.id as string, {
+          consumer_price: p.consumer_price as number | null,
+          regular_price: p.regular_price as number | null,
+          cost: p.cost as number | null,
+        });
+    }
+
+    // 전체 교체: 기존 옵션 삭제(아이템 cascade)
+    const { error: delErr } = await supabase
+      .from("campaign_plan_options")
+      .delete()
+      .eq("campaign_plan_id", plan_id);
+    if (delErr) throw delErr;
+
+    let revTotal = 0;
+    let contribTotal = 0;
+    for (const [idx, opt] of options.entries()) {
+      const itemInputs: PlanItemInput[] = opt.items.map((it) => {
+        const pm = priceMap.get(it.product_id);
+        return {
+          sku_qty_per_option: it.sku_qty_per_option,
+          unit_sale_price: it.unit_sale_price,
+          consumer_price: pm?.consumer_price ?? null,
+          regular_price: pm?.regular_price ?? null,
+          cost: pm?.cost ?? null,
+        };
+      });
+      const t = computeOptionTotals(itemInputs, mult, opt.expected_option_qty);
+      revTotal += t.expected_revenue;
+      contribTotal += t.expected_contribution;
+
+      const { data: newOpt, error: oErr } = await supabase
+        .from("campaign_plan_options")
+        .insert({
+          campaign_plan_id: plan_id,
+          option_label: opt.option_label,
+          expected_option_qty: opt.expected_option_qty,
+          is_main: !!opt.is_main,
+          match_patterns: opt.match_patterns ?? [],
+          sort: opt.sort ?? idx,
+          set_price: t.set_price,
+          consumer_total: t.consumer_total,
+          regular_total: t.regular_total,
+          discount_rate_consumer: t.discount_rate_consumer,
+          discount_rate_regular: t.discount_rate_regular,
+          expected_revenue: t.expected_revenue,
+          expected_contribution: t.expected_contribution,
+        })
+        .select("id")
+        .single();
+      if (oErr) throw oErr;
+
+      if (opt.items.length > 0) {
+        const { error: iErr } = await supabase
+          .from("campaign_plan_option_items")
+          .insert(
+            opt.items.map((it, i) => ({
+              campaign_plan_option_id: newOpt.id,
+              product_id: it.product_id,
+              base_name: it.base_name,
+              sku_qty_per_option: it.sku_qty_per_option,
+              unit_sale_price: it.unit_sale_price,
+              source_config_id: it.source_config_id ?? null,
+              sort: i,
+            })),
+          );
+        if (iErr) throw iErr;
+      }
+    }
+
+    const { error: upErr } = await supabase
+      .from("campaign_plans")
+      .update({
+        expected_revenue_total: revTotal,
+        expected_contribution_total: contribTotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", plan_id);
+    if (upErr) throw upErr;
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "플랜 저장 실패" },
+      { status: 500 },
+    );
+  }
+}
