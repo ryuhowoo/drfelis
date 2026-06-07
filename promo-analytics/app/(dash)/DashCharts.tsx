@@ -3,13 +3,65 @@
 import {
   Area,
   AreaChart,
+  Line,
+  LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  YAxis,
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
 const BRAND = "#e76f51";
+
+// 캠페인별 달성률 추세 — 매출/공헌 달성률 라인 (확정 플랜 보유, 시작일 순)
+export function AchievementTrend({
+  data,
+}: {
+  data: { label: string; revenue: number | null; contribution: number | null }[];
+}) {
+  if (data.length === 0)
+    return (
+      <div className="flex h-[150px] items-center justify-center text-sm text-neutral-300">
+        확정 플랜 데이터가 쌓이면 달성률 추세가 표시됩니다.
+      </div>
+    );
+  return (
+    <ResponsiveContainer width="100%" height={170}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <XAxis
+          dataKey="label"
+          fontSize={10}
+          stroke="#bcb8b3"
+          tickLine={false}
+          axisLine={false}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          fontSize={10}
+          stroke="#bcb8b3"
+          tickLine={false}
+          axisLine={false}
+          width={38}
+          tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
+        />
+        <ReferenceLine y={1} stroke="#d4d4d4" strokeDasharray="3 3" />
+        <Tooltip
+          formatter={(v, n) =>
+            [
+              v != null ? `${Math.round(Number(v) * 100)}%` : "—",
+              n === "revenue" ? "매출 달성" : "공헌 달성",
+            ] as [string, string]
+          }
+          contentStyle={{ borderRadius: 14, border: "none", boxShadow: "0 8px 24px -8px rgba(0,0,0,.2)", fontSize: 12 }}
+        />
+        <Line type="monotone" dataKey="revenue" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
+        <Line type="monotone" dataKey="contribution" stroke="#2f2d2b" strokeWidth={2} dot={{ r: 2 }} connectNulls />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
 // 월별 증분 — 오렌지 영역 스파크라인
 export function MonthlyArea({

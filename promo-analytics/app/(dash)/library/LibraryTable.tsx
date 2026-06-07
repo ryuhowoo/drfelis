@@ -17,16 +17,28 @@ export type LibraryRow = {
   halo_share: number | null;
   contribution: number;
   uplift_per_day: number;
+  has_confirmed_plan: boolean;
+  ach_revenue: number | null;
+  ach_contribution: number | null;
+  quantity_reliable: boolean | null;
 };
 
 type Scored = LibraryRow & { score: number };
 
-type SortKey = "score" | "total_uplift" | "uplift_per_day" | "contribution";
+type SortKey =
+  | "score"
+  | "total_uplift"
+  | "uplift_per_day"
+  | "contribution"
+  | "ach_revenue"
+  | "ach_contribution";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "score", label: "종합점수" },
   { key: "total_uplift", label: "총 기여" },
   { key: "uplift_per_day", label: "일평균 기여" },
   { key: "contribution", label: "공헌이익" },
+  { key: "ach_revenue", label: "매출 달성률" },
+  { key: "ach_contribution", label: "공헌 달성률" },
 ];
 
 export default function LibraryTable({ data }: { data: LibraryRow[] }) {
@@ -126,9 +138,25 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               <Stat label="총 기여" value={wonShort(r.total_uplift)} bold />
               <Stat label="간접비중" value={pct(r.halo_share)} />
               <Stat label="공헌이익" value={wonShort(r.contribution)} />
-              <Stat label="일평균 기여" value={wonShort(r.uplift_per_day)} />
+              <Stat
+                label="매출 달성"
+                value={
+                  r.has_confirmed_plan
+                    ? r.ach_revenue != null
+                      ? pct(r.ach_revenue, 0)
+                      : "—"
+                    : "플랜없음"
+                }
+              />
+              <Stat
+                label="공헌 달성"
+                value={
+                  r.has_confirmed_plan && r.ach_contribution != null
+                    ? pct(r.ach_contribution, 0)
+                    : "—"
+                }
+              />
               <Stat label="할인" value={r.discount_rate != null ? pct(r.discount_rate, 0) : "—"} />
-              {r.purpose && <Stat label="목적" value={r.purpose} truncate />}
             </dl>
           </li>
         ))}
@@ -141,7 +169,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
 
       {/* 데스크톱: 테이블 */}
       <div className="hidden overflow-x-auto rounded-[24px] bg-white card-soft md:block">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
               <th className="px-4 py-3 text-center font-medium">종합점수</th>
@@ -151,6 +179,8 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               <th className="px-4 py-3 text-right font-medium">총 기여</th>
               <th className="px-4 py-3 text-right font-medium">간접비중</th>
               <th className="px-4 py-3 text-right font-medium">공헌이익</th>
+              <th className="px-4 py-3 text-right font-medium">매출 달성률</th>
+              <th className="px-4 py-3 text-right font-medium">공헌 달성률</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -182,11 +212,20 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">{wonShort(r.total_uplift)}</td>
                 <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{pct(r.halo_share)}</td>
                 <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{wonShort(r.contribution)}</td>
+                <td className="px-4 py-3 text-right">
+                  <AchCell v={r.ach_revenue} hasPlan={r.has_confirmed_plan} />
+                  {r.has_confirmed_plan && r.quantity_reliable === false && (
+                    <div className="text-[10px] text-amber-600">수량 데이터부족</div>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <AchCell v={r.ach_contribution} hasPlan={r.has_confirmed_plan} />
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-neutral-400">
+                <td colSpan={9} className="px-4 py-10 text-center text-neutral-400">
                   조건에 맞는 캠페인이 없습니다.
                 </td>
               </tr>
@@ -250,4 +289,16 @@ function Tag({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{children}</span>
   );
+}
+
+function AchCell({ v, hasPlan }: { v: number | null; hasPlan: boolean }) {
+  if (!hasPlan)
+    return (
+      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-400">
+        플랜없음
+      </span>
+    );
+  if (v == null) return <span className="text-neutral-300">—</span>;
+  const c = v >= 1 ? "text-green-600" : v < 0.7 ? "text-red-500" : "text-neutral-700";
+  return <span className={`font-medium tabular-nums ${c}`}>{pct(v, 0)}</span>;
 }
