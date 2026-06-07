@@ -13,11 +13,13 @@ export default function EditForm({
   products,
   initialMainIds,
   options,
+  initialWeights,
 }: {
   promo: Promotion;
   products: ProductItem[];
   initialMainIds: string[];
   options: Options;
+  initialWeights: Record<string, number>;
 }) {
   const router = useRouter();
   const [name, setName] = useState(promo.name);
@@ -28,6 +30,8 @@ export default function EditForm({
   const [purposes, setPurposes] = useState<string[]>(
     promo.purposes ?? (promo.purpose ? [promo.purpose] : []),
   );
+  const [purposeWeights, setPurposeWeights] =
+    useState<Record<string, number>>(initialWeights);
   const [startDate, setStartDate] = useState(promo.start_date ?? "");
   const [endDate, setEndDate] = useState(promo.end_date ?? "");
   const [discountRate, setDiscountRate] = useState(
@@ -53,6 +57,12 @@ export default function EditForm({
   function togglePurpose(t: string) {
     setPurposes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
   }
+  // 목적 가중치: 저장값 우선, 없으면 주목적(0번)=1.0 / 보조=0.0
+  const weightOf = (p: string, i: number) => purposeWeights[p] ?? (i === 0 ? 1 : 0);
+  function setWeight(p: string, v: number) {
+    setPurposeWeights((w) => ({ ...w, [p]: Number.isNaN(v) ? 0 : v }));
+  }
+  const weightSum = purposes.reduce((s, p, i) => s + weightOf(p, i), 0);
   function toggleMain(id: string) {
     setMainIds((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
   }
@@ -84,6 +94,7 @@ export default function EditForm({
         season_tag: seasonTag || null,
         purposes,
         purpose: purposes[0] ?? null,
+        purpose_weights: purposes.map((p, i) => ({ purpose: p, weight: weightOf(p, i) })),
         start_date: startDate,
         end_date: endDate,
         benefits: Object.keys(benefits).length ? benefits : null,
@@ -149,6 +160,36 @@ export default function EditForm({
             브랜딩 + 세일즈처럼 섞인 캠페인도 모두 체크해주세요. ‘설정 → 캠페인 목적’에서 항목을 추가할 수 있어요.
           </p>
         </Field>
+
+        {purposes.length > 0 && (
+          <Field label="목적 가중치 (집계·랭킹·예측에 사용)">
+            <div className="space-y-2 rounded-xl border border-neutral-200 p-3">
+              {purposes.map((p, i) => (
+                <div key={p} className="flex items-center gap-3">
+                  <span className="w-36 shrink-0 truncate text-sm text-neutral-700">{p}</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="1"
+                    value={weightOf(p, i)}
+                    onChange={(e) => setWeight(p, Number(e.target.value))}
+                    className="w-24 rounded-lg border border-neutral-200 px-2 py-1 text-right text-sm focus:border-brand-400 focus:outline-none"
+                  />
+                  {i === 0 && (
+                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] text-brand-600">
+                      주목적
+                    </span>
+                  )}
+                </div>
+              ))}
+              <p className="text-xs text-neutral-400">
+                합계 {weightSum.toFixed(1)} · 기본은 주목적 1.0 / 보조 0.0(주목적 귀속, 중복
+                카운트 없음). 보조 목적에도 성과를 나눠 귀속하려면 0.7 / 0.3 처럼 조정하세요.
+              </p>
+            </div>
+          </Field>
+        )}
 
         <Field label="시즈널리티">
           <SingleChips options={options.seasonalities} value={seasonTag} onChange={setSeasonTag} />

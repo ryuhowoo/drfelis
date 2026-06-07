@@ -12,8 +12,9 @@ export async function PATCH(
     const body = await req.json();
     const supabase = await createClient();
 
-    const { main_product_ids, ...fields } = body as {
+    const { main_product_ids, purpose_weights, ...fields } = body as {
       main_product_ids?: string[];
+      purpose_weights?: { purpose: string; weight: number }[];
       [k: string]: unknown;
     };
 
@@ -57,6 +58,27 @@ export async function PATCH(
               product_id: pid,
             })),
           );
+        if (error) throw error;
+      }
+    }
+
+    // 목적 가중치 재설정 (전체 교체) — S5
+    if (Array.isArray(purpose_weights)) {
+      await supabase
+        .from("promotion_purpose_weights")
+        .delete()
+        .eq("promotion_id", id);
+      const rows = purpose_weights
+        .filter((w) => w && typeof w.purpose === "string" && w.purpose.trim())
+        .map((w) => ({
+          promotion_id: id,
+          purpose: w.purpose.trim(),
+          weight: Number(w.weight) || 0,
+        }));
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from("promotion_purpose_weights")
+          .insert(rows);
         if (error) throw error;
       }
     }
