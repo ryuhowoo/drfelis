@@ -249,6 +249,14 @@ export type PurposeFit = {
   data_reliable: boolean;
 };
 
+// campaign_fits() 반환 (전 캠페인 × 목적 적합도)
+export type CampaignFit = {
+  promotion_id: string;
+  purpose: string;
+  fit_score_0_100: number | null;
+  data_reliable: boolean;
+};
+
 // S4: 캠페인별 달성률 (campaign_achievements 함수 반환)
 export type CampaignAchievement = {
   promotion_id: string;

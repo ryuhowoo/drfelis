@@ -21,6 +21,7 @@ export type LibraryRow = {
   ach_revenue: number | null;
   ach_contribution: number | null;
   quantity_reliable: boolean | null;
+  fits: { purpose: string; score: number | null; reliable: boolean }[];
 };
 
 type Scored = LibraryRow & { score: number };
@@ -31,7 +32,8 @@ type SortKey =
   | "uplift_per_day"
   | "contribution"
   | "ach_revenue"
-  | "ach_contribution";
+  | "ach_contribution"
+  | "purpose_fit";
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "score", label: "종합점수" },
   { key: "total_uplift", label: "총 기여" },
@@ -39,12 +41,23 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "contribution", label: "공헌이익" },
   { key: "ach_revenue", label: "매출 달성률" },
   { key: "ach_contribution", label: "공헌 달성률" },
+  { key: "purpose_fit", label: "목적 적합도" },
 ];
+
+// 행의 적합도 점수 (목적 필터 활성 시 그 목적들 중 max, 아니면 전체 max)
+function rowFitScore(r: LibraryRow, filter: string[]): number {
+  const pool = filter.length
+    ? r.fits.filter((f) => filter.includes(f.purpose))
+    : r.fits;
+  const scores = pool.map((f) => f.score).filter((s): s is number => s != null);
+  return scores.length ? Math.max(...scores) : -1;
+}
 
 export default function LibraryTable({ data }: { data: LibraryRow[] }) {
   const [type, setType] = useState("");
   const [season, setSeason] = useState("");
   const [sort, setSort] = useState<SortKey>("score");
+  const [purposeFilter, setPurposeFilter] = useState<string[]>([]);
 
   const types = useMemo(
     () => [...new Set(data.map((d) => d.promo_type).filter(Boolean) as string[])],
@@ -54,6 +67,14 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
     () => [...new Set(data.map((d) => d.season_tag).filter(Boolean) as string[])],
     [data],
   );
+  const purposes = useMemo(
+    () => [...new Set(data.flatMap((d) => d.fits.map((f) => f.purpose)))],
+    [data],
+  );
+  const togglePurpose = (p: string) =>
+    setPurposeFilter((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
+    );
 
   // 종합 점수 = 공헌이익 0.4 · 일평균 기여 0.3 · 효율(기여/할인) 0.2 · 간접비중 0.1
   const scored = useMemo<Scored[]>(() => {
@@ -73,11 +94,23 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
   }, [data]);
 
   const rows = useMemo(() => {
-    return scored
+    const filtered = scored
       .filter((d) => (type ? d.promo_type === type : true))
       .filter((d) => (season ? d.season_tag === season : true))
-      .sort((a, b) => (b[sort] ?? 0) - (a[sort] ?? 0));
-  }, [scored, type, season, sort]);
+      .filter((d) =>
+        purposeFilter.length
+          ? d.fits.some((f) => purposeFilter.includes(f.purpose))
+          : true,
+      );
+    if (sort === "purpose_fit") {
+      return [...filtered].sort(
+        (a, b) => rowFitScore(b, purposeFilter) - rowFitScore(a, purposeFilter),
+      );
+    }
+    return filtered.sort(
+      (a, b) => ((b[sort] as number) ?? 0) - ((a[sort] as number) ?? 0),
+    );
+  }, [scored, type, season, sort, purposeFilter]);
 
   return (
     <div>
@@ -99,6 +132,39 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
           ))}
         </div>
       </div>
+
+      {/* 목적 필터 (다중) + 분포 — S5.3 */}
+      {purposes.length > 0 && (
+        <div className="mb-4">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-neutral-500">목적:</span>
+            {purposes.map((p) => (
+              <button
+                key={p}
+                onClick={() => togglePurpose(p)}
+                className={`max-w-[14rem] truncate rounded-full border px-2.5 py-1 text-xs transition ${
+                  purposeFilter.includes(p)
+                    ? "border-brand-500 bg-brand-500 text-white"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            {purposeFilter.length > 0 && (
+              <button
+                onClick={() => setPurposeFilter([])}
+                className="text-xs text-neutral-400 hover:text-neutral-600"
+              >
+                초기화
+              </button>
+            )}
+          </div>
+          {purposeFilter.length > 0 && (
+            <PurposeDistribution rows={rows} purposes={purposeFilter} />
+          )}
+        </div>
+      )}
 
       {/* 모바일: 카드 리스트 */}
       <ul className="space-y-2 md:hidden">
@@ -157,6 +223,13 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 }
               />
               <Stat label="할인" value={r.discount_rate != null ? pct(r.discount_rate, 0) : "—"} />
+              <Stat
+                label="목적 적합도"
+                value={(() => {
+                  const f = rowFitScore(r, purposeFilter);
+                  return f < 0 ? "—" : String(Math.round(f));
+                })()}
+              />
             </dl>
           </li>
         ))}
@@ -169,7 +242,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
 
       {/* 데스크톱: 테이블 */}
       <div className="hidden overflow-x-auto rounded-[24px] bg-white card-soft md:block">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1000px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
               <th className="px-4 py-3 text-center font-medium">종합점수</th>
@@ -181,6 +254,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               <th className="px-4 py-3 text-right font-medium">공헌이익</th>
               <th className="px-4 py-3 text-right font-medium">매출 달성률</th>
               <th className="px-4 py-3 text-right font-medium">공헌 달성률</th>
+              <th className="px-4 py-3 text-right font-medium">목적 적합도</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -221,11 +295,14 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 <td className="px-4 py-3 text-right">
                   <AchCell v={r.ach_contribution} hasPlan={r.has_confirmed_plan} />
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <FitBadge score={rowFitScore(r, purposeFilter)} />
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-neutral-400">
+                <td colSpan={10} className="px-4 py-10 text-center text-neutral-400">
                   조건에 맞는 캠페인이 없습니다.
                 </td>
               </tr>
@@ -288,6 +365,70 @@ function Select({
 function Tag({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{children}</span>
+  );
+}
+
+function FitBadge({ score }: { score: number }) {
+  if (score < 0) return <span className="text-neutral-300">—</span>;
+  const c =
+    score >= 70
+      ? "bg-brand-50 text-brand-600"
+      : score >= 40
+        ? "bg-neutral-100 text-neutral-600"
+        : "bg-neutral-100 text-neutral-400";
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${c}`}>
+      {Math.round(score)}
+    </span>
+  );
+}
+
+// 선택 목적별 적합도 분포 (필터된 캠페인 점수를 트랙 위 점으로)
+function PurposeDistribution({
+  rows,
+  purposes,
+}: {
+  rows: LibraryRow[];
+  purposes: string[];
+}) {
+  return (
+    <div className="mt-2 space-y-2 rounded-xl bg-neutral-50 p-3">
+      {purposes.map((p) => {
+        const pts = rows
+          .map((r) => r.fits.find((f) => f.purpose === p))
+          .filter((x): x is { purpose: string; score: number | null; reliable: boolean } => !!x);
+        const scores = pts.map((x) => x.score).filter((s): s is number => s != null);
+        const avg = scores.length
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : null;
+        const anyUnreliable = pts.some((x) => !x.reliable);
+        return (
+          <div key={p}>
+            <div className="mb-1 flex items-center justify-between text-[11px] text-neutral-500">
+              <span className="truncate">
+                {p} · {scores.length}건
+                {anyUnreliable && (
+                  <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">
+                    데이터 부족
+                  </span>
+                )}
+              </span>
+              <span>평균 {avg != null ? Math.round(avg) : "—"}</span>
+            </div>
+            <div className="relative h-5 rounded-full bg-white">
+              {scores.map((s, i) => (
+                <span
+                  key={i}
+                  title={String(Math.round(s))}
+                  className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/70"
+                  style={{ left: `${Math.min(100, Math.max(0, s))}%` }}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

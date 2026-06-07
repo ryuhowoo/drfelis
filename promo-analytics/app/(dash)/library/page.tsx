@@ -1,18 +1,38 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Promotion, PromotionSummary, CampaignAchievement } from "@/lib/types";
+import type {
+  Promotion,
+  PromotionSummary,
+  CampaignAchievement,
+  CampaignFit,
+} from "@/lib/types";
 import LibraryTable, { type LibraryRow } from "./LibraryTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const supabase = await createClient();
-  const [{ data: promos }, { data: achData }] = await Promise.all([
+  const [{ data: promos }, { data: achData }, { data: fitData }] = await Promise.all([
     supabase.from("promotions").select("*").order("start_date", { ascending: false }),
     supabase.rpc("campaign_achievements"),
+    supabase.rpc("campaign_fits"),
   ]);
   const achMap = new Map<string, CampaignAchievement>(
     ((achData as CampaignAchievement[]) ?? []).map((a) => [a.promotion_id, a]),
   );
+  // 캠페인별 목적 적합도 묶기
+  const fitMap = new Map<
+    string,
+    { purpose: string; score: number | null; reliable: boolean }[]
+  >();
+  for (const f of (fitData as CampaignFit[]) ?? []) {
+    const arr = fitMap.get(f.promotion_id) ?? [];
+    arr.push({
+      purpose: f.purpose,
+      score: f.fit_score_0_100 != null ? Number(f.fit_score_0_100) : null,
+      reliable: f.data_reliable,
+    });
+    fitMap.set(f.promotion_id, arr);
+  }
 
   const rows: LibraryRow[] = await Promise.all(
     (promos ?? []).map(async (p: Promotion) => {
@@ -37,6 +57,7 @@ export default async function LibraryPage() {
         ach_revenue: a?.ach_revenue ?? null,
         ach_contribution: a?.ach_contribution ?? null,
         quantity_reliable: a?.quantity_reliable ?? null,
+        fits: fitMap.get(p.id) ?? [],
       };
     }),
   );
