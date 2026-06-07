@@ -178,3 +178,56 @@ export type CampaignPlanOptionItem = {
   frozen_cost: number | null;
   sort: number;
 };
+
+// ─────────────────────────────────────────────
+// S3: 달성률 (plan_vs_actual 함수 반환)
+// ─────────────────────────────────────────────
+
+export type PlanVsActualRow = {
+  product_id: string;
+  base_name: string;
+  expected_qty: number;
+  expected_revenue: number;
+  expected_contribution: number;
+  actual_qty: number;
+  actual_revenue: number;
+  actual_contribution: number;
+  ach_qty: number | null;
+  ach_revenue: number | null;
+  ach_contribution: number | null;
+  status: "matched" | "unsold" | "unplanned";
+};
+
+export type PlanVsActualSummary = {
+  has_confirmed_plan: boolean;
+  expected_revenue_total: number | null;
+  actual_revenue_total: number | null;
+  ach_revenue: number | null;
+  expected_qty_total: number | null;
+  actual_qty_total: number | null;
+  ach_qty: number | null;
+  expected_contribution_total: number | null;
+  actual_contribution_total: number | null;
+  ach_contribution: number | null;
+  unplanned_revenue: number | null;
+  unplanned_qty: number | null;
+  unplanned_contribution: number | null;
+  matched_sku_count: number | null;
+  unsold_sku_count: number | null;
+  unplanned_sku_count: number | null;
+  quantity_reliable: boolean | null;
+  snapshot_mult: number | null;
+};
+
+export type PlanVsActualOption = {
+  option_id: string;
+  option_label: string;
+  expected_option_qty: number;
+  expected_revenue: number | null;
+  expected_contribution: number | null;
+  match_patterns: string[];
+  matched: boolean;
+  actual_revenue: number;
+  actual_qty: number;
+  ach_revenue: number | null;
+};
