@@ -1,15 +1,34 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Promotion, PromotionSummary, MeasurementRow } from "./types";
+import type {
+  Promotion,
+  PromotionSummary,
+  MeasurementRow,
+  CampaignAchievement,
+} from "./types";
 import type { CaseFeature } from "./predict";
 import { daysBetween } from "./format";
+
+// 달성 신뢰도(S6): 확정 플랜 + 계획 정확도(|1−ach_revenue|)를 0~1로.
+// 확정·근접 달성↑, 플랜 없거나 실적 없으면 기본값 0.5.
+function reliabilityFrom(a: CampaignAchievement | null): number {
+  if (!a || !a.has_confirmed_plan || a.ach_revenue == null) return 0.5;
+  const accuracy = Math.max(0, 1 - Math.abs(1 - a.ach_revenue));
+  return 0.5 + 0.5 * accuracy;
+}
 
 /** 모든 프로모션 + 요약/측정을 CaseFeature 배열로 로드 */
 export async function loadCases(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
 ): Promise<CaseFeature[]> {
-  const { data: promos } = await supabase.from("promotions").select("*");
+  const [{ data: promos }, { data: achData }] = await Promise.all([
+    supabase.from("promotions").select("*"),
+    supabase.rpc("campaign_achievements"),
+  ]);
   if (!promos) return [];
+  const achMap = new Map<string, CampaignAchievement>(
+    ((achData as CampaignAchievement[]) ?? []).map((a) => [a.promotion_id, a]),
+  );
 
   return Promise.all(
     (promos as Promotion[]).map(async (p) => {
@@ -29,6 +48,7 @@ export async function loadCases(
       const purposes = ((ewData as { purpose: string; weight: number }[]) ?? []).map(
         (w) => ({ purpose: w.purpose, weight: Number(w.weight) }),
       );
+      const a = achMap.get(p.id) ?? null;
       const duration = daysBetween(p.start_date, p.end_date);
       const promoDays = meas[0]?.promo_days ?? duration;
       const baseline_daily = meas.reduce((a, x) => a + x.baseline_daily_revenue, 0);
@@ -55,6 +75,10 @@ export async function loadCases(
         qty_per_day: promoDays > 0 ? totalQty / promoDays : 0,
         orders_per_day: promoDays > 0 ? totalOrders / promoDays : 0,
         purposes,
+        ach_revenue: a?.ach_revenue ?? null,
+        ach_contribution: a?.ach_contribution ?? null,
+        has_confirmed_plan: a?.has_confirmed_plan ?? false,
+        reliability: reliabilityFrom(a),
       };
     }),
   );

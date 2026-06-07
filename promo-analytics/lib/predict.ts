@@ -20,6 +20,11 @@ export type CaseFeature = {
   qty_per_day: number; // 일평균 판매수량
   orders_per_day: number; // 일평균 구매건수
   purposes: { purpose: string; weight: number }[]; // 유효 목적 가중 (S5)
+  // 달성률 패턴 (S6) — campaign_achievements/plan_vs_actual 단일 출처
+  ach_revenue: number | null; // 계획 대비 실적 매출 비율 (1.0=계획대로)
+  ach_contribution: number | null; // 계획 대비 실적 공헌 비율
+  has_confirmed_plan: boolean;
+  reliability: number; // 0~1 달성 신뢰도 = f(|1−ach_revenue|, 확정 플랜)
 };
 
 export type PredictionSpec = {
@@ -48,13 +53,19 @@ export type Prediction = {
   rationale: string;
 };
 
+// 유사도 × 달성 신뢰도(S6)로 가중. 계획을 잘 맞춘 사례가 예측을 더 끈다.
+function caseWeight(c: Comparable): number {
+  return c.score * (c.reliability ?? 1);
+}
+
 function wavg(items: Comparable[], pick: (c: Comparable) => number | null): number {
   let s = 0, w = 0;
   for (const c of items) {
     const v = pick(c);
     if (v == null) continue;
-    s += v * c.score;
-    w += c.score;
+    const cw = caseWeight(c);
+    s += v * cw;
+    w += cw;
   }
   return w > 0 ? s / w : 0;
 }
@@ -135,9 +146,12 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
     };
   }
 
-  // 유사도 가중 평균 일평균 증분
-  const wSum = top.reduce((s, c) => s + c.score, 0);
-  const perDay = top.reduce((s, c) => s + c.uplift_per_day * c.score, 0) / wSum;
+  // 유사도 × 달성 신뢰도(S6) 가중 평균 일평균 증분
+  const ewSum = top.reduce((s, c) => s + caseWeight(c), 0);
+  const perDay =
+    ewSum > 0
+      ? top.reduce((s, c) => s + c.uplift_per_day * caseWeight(c), 0) / ewSum
+      : 0;
   const expected = perDay * spec.duration_days;
 
   // 분산 → 범위
@@ -145,9 +159,16 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
   const min = Math.min(...perDays) * spec.duration_days;
   const max = Math.max(...perDays) * spec.duration_days;
 
-  // 신뢰도: 사례 수 + 평균 유사도
+  // 신뢰도: 사례 수 + 평균 유사도 + 평균 달성 신뢰도, 달성 분산 크면 ↓ (S6)
+  const wSum = top.reduce((s, c) => s + c.score, 0);
   const avgScore = wSum / top.length;
-  const cScore = Math.min(1, (top.length / 5) * 0.5 + avgScore * 0.5);
+  const meanRel = top.reduce((s, c) => s + c.reliability, 0) / top.length;
+  const relStdev = Math.sqrt(
+    top.reduce((s, c) => s + (c.reliability - meanRel) ** 2, 0) / top.length,
+  );
+  const cScore =
+    Math.min(1, (top.length / 5) * 0.4 + avgScore * 0.35 + meanRel * 0.25) *
+    (1 - Math.min(0.35, relStdev)); // 달성 분산 패널티
   const confidence: Prediction["confidence"] =
     cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음";
 
@@ -170,7 +191,9 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
     comparables: top,
     rationale:
       `유사 사례 ${top.length}건(평균 유사도 ${(avgScore * 100).toFixed(0)}%)의 일평균 증분을 가중 평균해 ${spec.duration_days}일로 환산했습니다.` +
-      (spec.purpose ? ` ‘${spec.purpose}’ 목적 사례를 우선 가중했습니다.` : ""),
+      (spec.purpose ? ` ‘${spec.purpose}’ 목적 사례를 우선 가중했습니다.` : "") +
+      ` 계획을 잘 맞춘 캠페인(달성 신뢰도 평균 ${(meanRel * 100).toFixed(0)}%)에 가중치를 더 줬습니다.` +
+      (relStdev > 0.25 ? " 다만 사례 간 달성 편차가 커 신뢰도를 낮췄습니다." : ""),
   };
 }
 
