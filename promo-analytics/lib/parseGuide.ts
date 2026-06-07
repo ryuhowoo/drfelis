@@ -57,8 +57,9 @@ function dateFromDigits(d: string): string | null {
 }
 
 function parsePeriod(text: string, fallbackYear: number | null) {
+  // 첫 날짜와 '~' 사이의 요일 표기·시간 등(예: " (MON) ", " 14:00 ")을 모두 허용
   const re =
-    /(?:(\d{4})[.\-/])?(\d{1,2})[.\-/](\d{1,2})(?:\s+\d{1,2}:\d{2})?\s*~\s*(?:(\d{4})[.\-/])?(\d{1,2})[.\-/](\d{1,2})/;
+    /(?:(\d{4})[.\-/])?(\d{1,2})[.\-/](\d{1,2})[^~]*~\s*(?:(\d{4})[.\-/])?(\d{1,2})[.\-/](\d{1,2})/;
   const m = text.match(re);
   if (!m) return { start: null as string | null, end: null as string | null };
   const y1 = m[1] ? Number(m[1]) : fallbackYear;
@@ -136,7 +137,19 @@ export function parseCampaignGuide(buf: ArrayBuffer): GuideCampaign[] {
       const codeCellRaw = cells.find((c) => /^CF_P_\d{4,8}/i.test(c));
       const parsed = codeCellRaw ? codeFromCell(codeCellRaw) : null;
       if (parsed) {
-        if (!cur || cur.code !== parsed.code) {
+        const curDigits = cur ? cur.code.replace(/^CF_P_/i, "") : null;
+        // 같은 캠페인: 한쪽 코드가 다른 쪽의 프리픽스 (예: 2308 ↔ 230817)
+        const same =
+          curDigits != null &&
+          (parsed.digits.startsWith(curDigits) || curDigits.startsWith(parsed.digits));
+        if (cur && same) {
+          // 더 구체적인(긴) 코드면 코드·날짜 보강 (블록 분할/중복 방지)
+          if (parsed.digits.length > curDigits!.length) {
+            cur.code = parsed.code;
+            const d = dateFromDigits(parsed.digits);
+            if (d) cur.start_date = d;
+          }
+        } else if (!cur || cur.code !== parsed.code) {
           flush();
           cur = {
             code: parsed.code,
