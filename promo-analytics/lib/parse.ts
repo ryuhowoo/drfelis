@@ -12,7 +12,7 @@ function norm(s: unknown): string {
 
 /** 헤더 행에서 후보 키워드 중 하나라도 포함하는 첫 컬럼 인덱스 */
 function findCol(header: unknown[], candidates: string[]): number {
-  const normed = header.map(norm);
+  const normed = Array.from(header, norm); // 구멍 없이 dense — undefined 접근 방지
   for (let i = 0; i < normed.length; i++) {
     if (candidates.some((c) => normed[i].includes(norm(c)))) return i;
   }
@@ -47,7 +47,9 @@ function pad(n: number | string): string {
 function firstSheetRows(buf: ArrayBuffer): unknown[][] {
   const wb = XLSX.read(buf, { cellDates: true });
   const ws = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+  // defval: "" — 빈 셀을 ""로 채워 희소 배열(구멍) 방지. 헤더에 병합/공백 칸이 있어도
+  // header.map(norm)[i]가 undefined가 되지 않아 findCol 등이 크래시하지 않는다.
+  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
 }
 
 /** 워크북 객체 (여러 시트를 이름으로 지정해 파싱할 때 한 번만 읽어 재사용) */
@@ -64,7 +66,7 @@ export function sheetNames(buf: ArrayBuffer): string[] {
 function sheetRows(wb: XLSX.WorkBook, sheetName: string): unknown[][] {
   const ws = wb.Sheets[sheetName];
   if (!ws) throw new Error(`시트를 찾을 수 없습니다: ${sheetName}`);
-  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
 }
 
 /** 헤더 셀을 공백 제거·소문자만 적용해 반환 (VAT+/VAT− 구분처럼 부호를 보존해야 할 때) */
