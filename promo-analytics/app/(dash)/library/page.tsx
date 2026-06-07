@@ -1,20 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Promotion, PromotionSummary } from "@/lib/types";
+import type { Promotion, PromotionSummary, CampaignAchievement } from "@/lib/types";
 import LibraryTable, { type LibraryRow } from "./LibraryTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const supabase = await createClient();
-  const { data: promos } = await supabase
-    .from("promotions")
-    .select("*")
-    .order("start_date", { ascending: false });
+  const [{ data: promos }, { data: achData }] = await Promise.all([
+    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
+    supabase.rpc("campaign_achievements"),
+  ]);
+  const achMap = new Map<string, CampaignAchievement>(
+    ((achData as CampaignAchievement[]) ?? []).map((a) => [a.promotion_id, a]),
+  );
 
   const rows: LibraryRow[] = await Promise.all(
     (promos ?? []).map(async (p: Promotion) => {
       const { data } = await supabase.rpc("promotion_summary", { p_id: p.id });
       const s = (data?.[0] as PromotionSummary) ?? null;
+      const a = achMap.get(p.id) ?? null;
       return {
         id: p.id,
         name: p.name,
@@ -29,6 +33,10 @@ export default async function LibraryPage() {
         contribution: s?.contribution ?? 0,
         uplift_per_day:
           s && s.promo_days > 0 ? s.total_uplift / s.promo_days : 0,
+        has_confirmed_plan: a?.has_confirmed_plan ?? false,
+        ach_revenue: a?.ach_revenue ?? null,
+        ach_contribution: a?.ach_contribution ?? null,
+        quantity_reliable: a?.quantity_reliable ?? null,
       };
     }),
   );

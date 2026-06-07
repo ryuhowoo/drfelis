@@ -231,3 +231,21 @@ export type PlanVsActualOption = {
   actual_qty: number;
   ach_revenue: number | null;
 };
+
+// S4: 캠페인별 달성률 (campaign_achievements 함수 반환)
+export type CampaignAchievement = {
+  promotion_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  confirmed_at: string | null;
+  has_confirmed_plan: boolean;
+  ach_revenue: number | null;
+  ach_qty: number | null;
+  ach_contribution: number | null;
+  expected_revenue_total: number | null;
+  actual_revenue_total: number | null;
+  expected_contribution_total: number | null;
+  actual_contribution_total: number | null;
+  quantity_reliable: boolean | null;
+};

@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Promotion, PromotionSummary, MeasurementRow } from "@/lib/types";
+import type {
+  Promotion,
+  PromotionSummary,
+  MeasurementRow,
+  CampaignAchievement,
+} from "@/lib/types";
 import { won, wonShort, pct } from "@/lib/format";
-import { MonthlyArea, Concentric, Donut, BaselineVsPromo } from "./DashCharts";
+import {
+  MonthlyArea,
+  Concentric,
+  Donut,
+  BaselineVsPromo,
+  AchievementTrend,
+} from "./DashCharts";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +36,29 @@ type OverallMetrics = {
 
 export default async function Dashboard() {
   const supabase = await createClient();
-  const [{ data: promos }, { data: overallData }] = await Promise.all([
-    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
-    supabase.rpc("overall_baseline_metrics"),
-  ]);
+  const [{ data: promos }, { data: overallData }, { data: achData }] =
+    await Promise.all([
+      supabase.from("promotions").select("*").order("start_date", { ascending: false }),
+      supabase.rpc("overall_baseline_metrics"),
+      supabase.rpc("campaign_achievements"),
+    ]);
 
   const overall = (overallData?.[0] as OverallMetrics | undefined) ?? null;
+
+  // 달성률 (S4): 확정 플랜 보유 캠페인만, 매출(expected_revenue_total) 가중평균
+  const ach = (achData as CampaignAchievement[]) ?? [];
+  const withPlan = ach.filter((a) => a.has_confirmed_plan);
+  const wAchRevenue = weightedAvg(
+    withPlan.map((a) => ({ v: a.ach_revenue, w: a.expected_revenue_total })),
+  );
+  const wAchContribution = weightedAvg(
+    withPlan.map((a) => ({ v: a.ach_contribution, w: a.expected_revenue_total })),
+  );
+  const achTrend = withPlan.map((a) => ({
+    label: a.start_date.slice(2, 7).replace("-", "."),
+    revenue: a.ach_revenue,
+    contribution: a.ach_contribution,
+  }));
 
   const rows: Row[] = await Promise.all(
     (promos ?? []).map(async (p: Promotion) => {
@@ -163,6 +191,34 @@ export default async function Dashboard() {
         <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`캠페인 ${n}건 평균`} />
       </div>
 
+      {/* 달성률 (계획 대비 실적) — S4 */}
+      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+        <Card>
+          <CardTitle>최근 캠페인 평균 달성률</CardTitle>
+          {withPlan.length > 0 ? (
+            <div className="space-y-3">
+              <AchStat label="매출 달성률 (가중)" v={wAchRevenue} primary />
+              <AchStat label="공헌이익 달성률 (가중)" v={wAchContribution} />
+              <p className="text-xs text-neutral-400">
+                확정 플랜 {withPlan.length}건 기준 · 예상매출 가중평균
+              </p>
+            </div>
+          ) : (
+            <p className="py-6 text-sm text-neutral-400">
+              확정 플랜 데이터 없음 — 캠페인 플랜을 확정하면 달성률이 집계됩니다.
+            </p>
+          )}
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardTitle>캠페인별 달성률 추세</CardTitle>
+          <AchievementTrend data={achTrend} />
+          <p className="mt-1 text-xs text-neutral-400">
+            <span className="text-brand-600">●</span> 매출 달성률{" "}
+            <span className="ml-2 text-neutral-700">●</span> 공헌이익 달성률 · 점선 = 100%(계획 달성)
+          </p>
+        </Card>
+      </div>
+
       {/* 상시 vs 행사 비교 (비교 기준) */}
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -270,6 +326,47 @@ export default async function Dashboard() {
 
 function sum(a: number[]) {
   return a.reduce((x, y) => x + y, 0);
+}
+
+// 금액 가중평균 (v=비율, w=가중치). 유효한(v·w 모두 존재, w>0) 항목만.
+function weightedAvg(
+  items: { v: number | null; w: number | null }[],
+): number | null {
+  let num = 0;
+  let den = 0;
+  for (const { v, w } of items) {
+    if (v == null || w == null || w <= 0) continue;
+    num += v * w;
+    den += w;
+  }
+  return den > 0 ? num / den : null;
+}
+
+function AchStat({
+  label,
+  v,
+  primary,
+}: {
+  label: string;
+  v: number | null;
+  primary?: boolean;
+}) {
+  const color =
+    v == null
+      ? "text-neutral-300"
+      : v >= 1
+        ? "text-green-600"
+        : v < 0.7
+          ? "text-red-500"
+          : "text-neutral-900";
+  return (
+    <div>
+      <div className="text-xs text-neutral-400">{label}</div>
+      <div className={`mt-0.5 font-bold tabular-nums ${primary ? "text-3xl" : "text-2xl"} ${color}`}>
+        {v != null ? pct(v, 0) : "—"}
+      </div>
+    </div>
+  );
 }
 
 function Kpi({
