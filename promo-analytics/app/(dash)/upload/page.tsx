@@ -1,10 +1,35 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { won, pct } from "@/lib/format";
 import type { ParsedPriceConfig } from "@/lib/parse";
+
+// 업로드 이력 기록 — 연동 파일명·시간·종류·행수를 남긴다(업데이트 참고용).
+// 실패해도 업로드 자체를 막지 않는다(best-effort).
+async function logUpload(
+  supabase: ReturnType<typeof createClient>,
+  entry: {
+    kind: "daily" | "promotion" | "price_master";
+    source_file: string;
+    detail?: string;
+    row_count?: number;
+    total_revenue?: number | null;
+    action?: "insert" | "replace";
+  },
+) {
+  try {
+    const { data } = await supabase.auth.getUser();
+    await supabase
+      .from("upload_log")
+      .insert({ ...entry, uploaded_by: data.user?.email ?? null });
+    if (typeof window !== "undefined")
+      window.dispatchEvent(new Event("upload-done"));
+  } catch {
+    /* 이력 기록 실패는 무시 */
+  }
+}
 
 type Kind = "master" | "daily" | "promotion";
 
@@ -46,6 +71,116 @@ export default function UploadPage() {
         ))}
         <PriceMasterCard />
       </div>
+      <UploadHistory />
+    </div>
+  );
+}
+
+type LogRow = {
+  id: string;
+  kind: string;
+  source_file: string;
+  detail: string | null;
+  row_count: number | null;
+  total_revenue: number | null;
+  action: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+};
+
+const KIND_LABEL: Record<string, string> = {
+  daily: "일별 매출",
+  promotion: "캠페인",
+  price_master: "가격 마스터",
+};
+
+function UploadHistory() {
+  const [rows, setRows] = useState<LogRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("upload_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setRows((data as LogRow[]) ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const h = () => load();
+    window.addEventListener("upload-done", h);
+    return () => window.removeEventListener("upload-done", h);
+  }, [load]);
+
+  return (
+    <div className="mt-6 rounded-[24px] bg-white card-soft p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-medium">연동 이력</h2>
+        <button
+          onClick={load}
+          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-50"
+        >
+          새로고침
+        </button>
+      </div>
+      <p className="mt-1 text-sm text-neutral-500">
+        최근 업로드한 파일·시간·행수입니다. 다음 업데이트 때 어떤 소스가 반영됐는지 참고하세요.
+      </p>
+      {loading ? (
+        <p className="mt-4 text-sm text-neutral-400">불러오는 중…</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-4 text-sm text-neutral-400">아직 업로드 이력이 없습니다.</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="text-xs text-neutral-400">
+              <tr>
+                <th className="py-1.5 pr-3">시간</th>
+                <th className="py-1.5 pr-3">종류</th>
+                <th className="py-1.5 pr-3">파일명</th>
+                <th className="py-1.5 pr-3">요약</th>
+                <th className="py-1.5 pr-3 text-right">행수</th>
+                <th className="py-1.5">방식</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-neutral-100 align-top">
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
+                    {new Date(r.created_at).toLocaleString("ko-KR", {
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap">
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                      {KIND_LABEL[r.kind] ?? r.kind}
+                    </span>
+                  </td>
+                  <td className="py-1.5 pr-3 font-medium text-neutral-800">{r.source_file}</td>
+                  <td className="py-1.5 pr-3 text-neutral-500">{r.detail ?? "—"}</td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums text-neutral-700">
+                    {r.row_count != null ? r.row_count.toLocaleString() : "—"}
+                  </td>
+                  <td className="py-1.5">
+                    {r.action === "replace" ? (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-700">교체(백필)</span>
+                    ) : (
+                      <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] text-neutral-500">신규</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -79,6 +214,13 @@ function UploadCard({ def }: { def: CardDef }) {
           .from("products")
           .upsert(rows, { onConflict: "base_name" });
         if (error) throw error;
+        await logUpload(supabase, {
+          kind: "price_master",
+          source_file: file.name,
+          detail: `품목 마스터 ${rows.length}건`,
+          row_count: rows.length,
+          action: "replace",
+        });
         setP({ phase: "ok", message: `${rows.length}개 품목 반영 완료` });
         return;
       }
@@ -198,6 +340,14 @@ function UploadCard({ def }: { def: CardDef }) {
         }
 
         const dates = rows.map((r) => r.sale_date).sort();
+        await logUpload(supabase, {
+          kind: "daily",
+          source_file: file.name,
+          detail: `${dates[0]} ~ ${dates[dates.length - 1]} · 상품 ${productMap.size}종`,
+          row_count: done,
+          total_revenue: newRevenue,
+          action: oldCount && oldCount > 0 ? "replace" : "insert",
+        });
         setP({
           phase: "ok",
           message: `${done}행 적재 · 상품 ${productMap.size}종 · 기간 ${dates[0]} ~ ${dates[dates.length - 1]}`,
@@ -315,6 +465,14 @@ function UploadCard({ def }: { def: CardDef }) {
           done += batch.length;
         }
 
+        await logUpload(supabase, {
+          kind: "promotion",
+          source_file: file.name,
+          detail: `${name} · 실적 교체`,
+          row_count: done,
+          total_revenue: newRevenue,
+          action: "replace",
+        });
         setP({ phase: "ok", message: `${name} 실적 백필 완료 · ${done}행. 상세로 이동합니다…` });
         router.push(`/promotions/${existing.id}`);
         return;
@@ -366,6 +524,14 @@ function UploadCard({ def }: { def: CardDef }) {
         done += batch.length;
       }
 
+      await logUpload(supabase, {
+        kind: "promotion",
+        source_file: file.name,
+        detail: `${name} · ${parsed.start_date}~${parsed.end_date} · 신규`,
+        row_count: done,
+        total_revenue: newRevenue,
+        action: "insert",
+      });
       setP({ phase: "ok", message: `${name} 생성 완료 · ${done}행. 상세로 이동합니다…` });
       router.push(`/promotions/${promo.id}/edit`);
     } catch (e) {
@@ -737,6 +903,13 @@ function PriceMasterCard() {
         done += batch.length;
       }
 
+      await logUpload(supabase, {
+        kind: "price_master",
+        source_file: fileName,
+        detail: `품목 ${itemPayload.length}건 · 구성 ${records.length}건${unmatched > 0 ? ` · 매칭실패 ${unmatched}` : ""}`,
+        row_count: records.length,
+        action: "replace",
+      });
       setPreview((prev) =>
         prev ? { ...prev, matchedConfigCount: records.length, unmatched } : prev,
       );
