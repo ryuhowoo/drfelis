@@ -7,7 +7,11 @@ import type {
   CampaignPlanOptionItem,
   RateCard,
 } from "@/lib/types";
-import PlanEditor, { type EditorOption, type ProductEcon } from "./PlanEditor";
+import PlanEditor, {
+  type EditorOption,
+  type ProductEcon,
+  type QtyHint,
+} from "./PlanEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +110,35 @@ export default async function PlanPage({
     .limit(1)
     .maybeSingle();
 
+  // 예상 세트수 힌트 (S6.2): 다른 캠페인 확정 플랜 옵션의 예상 세트수 평균 (비구속)
+  let qtyHint: QtyHint = { main: null, sub: null, mainN: 0, subN: 0 };
+  const { data: confPlans } = await supabase
+    .from("campaign_plans")
+    .select("id")
+    .eq("status", "confirmed")
+    .neq("promotion_id", id);
+  const confIds = ((confPlans as { id: string }[]) ?? []).map((p) => p.id);
+  if (confIds.length > 0) {
+    const { data: hintOpts } = await supabase
+      .from("campaign_plan_options")
+      .select("expected_option_qty, is_main")
+      .in("campaign_plan_id", confIds);
+    const hintRows =
+      (hintOpts as { expected_option_qty: number | null; is_main: boolean }[]) ?? [];
+    const avgQty = (pred: (r: (typeof hintRows)[number]) => boolean) => {
+      const xs = hintRows
+        .filter(pred)
+        .map((r) => r.expected_option_qty)
+        .filter((x): x is number => x != null && x > 0);
+      return xs.length
+        ? { v: Math.round(xs.reduce((a, b) => a + b, 0) / xs.length), n: xs.length }
+        : { v: null, n: 0 };
+    };
+    const m = avgQty((r) => r.is_main);
+    const s = avgQty((r) => !r.is_main);
+    qtyHint = { main: m.v, sub: s.v, mainN: m.n, subN: s.n };
+  }
+
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <div className="mb-1 text-sm text-neutral-400">
@@ -128,6 +161,7 @@ export default async function PlanPage({
         plan={plan}
         initialOptions={options}
         rateCard={(rc as RateCard) ?? null}
+        qtyHint={qtyHint}
       />
     </div>
   );
