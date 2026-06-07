@@ -185,35 +185,46 @@ export default function Recommend({ options }: { options: Options }) {
                         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">신뢰도 {r.confidence}</span>
                       </div>
 
-                      {/* 목적별 예측 */}
-                      <div className="mt-2 grid gap-1.5 text-xs text-neutral-500 sm:grid-cols-2">
+                      {/* 목적별 충족도 (목표 대비) — S5.6 */}
+                      <div className="mt-3 space-y-2">
                         {(r.per_goal ?? [{
                           goal: "revenue" as Goal,
                           metric_per_day: r.metric_per_day,
                           predicted_metric: r.predicted_metric,
                           target: 0,
                           meets_target: r.meets_target,
-                        }]).map((pg) => (
-                          <div key={pg.goal} className="flex items-center gap-1.5">
-                            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
-                              {GOAL_LABEL[pg.goal]}
-                            </span>
-                            <span>
-                              예상 <strong className="text-neutral-800">{fmtMetric(unitFor(pg.goal), pg.predicted_metric)}</strong>
-                              {pg.target > 0 && (
-                                <>
-                                  {" / "}
-                                  목표 {fmtMetric(unitFor(pg.goal), pg.target)}
-                                  {pg.meets_target ? (
-                                    <span className="ml-1 text-green-600">✓</span>
-                                  ) : (
-                                    <span className="ml-1 text-amber-600">▾</span>
-                                  )}
-                                </>
+                        }]).map((pg) => {
+                          const unit = unitFor(pg.goal);
+                          const fulfill = pg.target > 0 ? pg.predicted_metric / pg.target : null;
+                          return (
+                            <div key={pg.goal}>
+                              <div className="mb-0.5 flex items-center justify-between gap-2 text-xs">
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
+                                    {GOAL_LABEL[pg.goal]}
+                                  </span>
+                                  <span className="truncate text-neutral-500">
+                                    예상 <strong className="text-neutral-800">{fmtMetric(unit, pg.predicted_metric)}</strong>
+                                    {pg.target > 0 && <> / 목표 {fmtMetric(unit, pg.target)}</>}
+                                  </span>
+                                </span>
+                                {fulfill != null && (
+                                  <span className={`shrink-0 font-semibold ${pg.meets_target ? "text-green-600" : "text-amber-600"}`}>
+                                    {Math.round(fulfill * 100)}%
+                                  </span>
+                                )}
+                              </div>
+                              {fulfill != null && (
+                                <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
+                                  <div
+                                    className={`h-full rounded-full ${pg.meets_target ? "bg-green-500" : "bg-amber-400"}`}
+                                    style={{ width: `${Math.min(100, fulfill * 100)}%` }}
+                                  />
+                                </div>
                               )}
-                            </span>
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
