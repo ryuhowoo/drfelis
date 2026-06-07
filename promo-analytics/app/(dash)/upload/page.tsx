@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { won, pct } from "@/lib/format";
+import type { ParsedPriceConfig } from "@/lib/parse";
 
 type Kind = "master" | "daily" | "promotion";
 
@@ -42,6 +44,7 @@ export default function UploadPage() {
         {CARDS.map((c) => (
           <UploadCard key={c.key} def={c} />
         ))}
+        <PriceMasterCard />
       </div>
     </div>
   );
@@ -253,7 +256,7 @@ function UploadCard({ def }: { def: CardDef }) {
     }
   }
 
-  const pct =
+  const pctVal =
     p.total && p.total > 0 && p.done != null ? Math.round((p.done / p.total) * 100) : null;
 
   return (
@@ -294,11 +297,11 @@ function UploadCard({ def }: { def: CardDef }) {
           }`}
         >
           <div>{p.message}</div>
-          {pct != null && p.phase === "uploading" && (
+          {pctVal != null && p.phase === "uploading" && (
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/60">
               <div
                 className="h-full bg-brand-500 transition-all"
-                style={{ width: `${pct}%` }}
+                style={{ width: `${pctVal}%` }}
               />
             </div>
           )}
@@ -306,4 +309,537 @@ function UploadCard({ def }: { def: CardDef }) {
       )}
     </div>
   );
+}
+
+// ─────────────────────────────────────────────
+// ④ 가격 마스터 (S1) — 워크북 1개에서 품목 + 가격가이드 두 시트를 적재
+// ─────────────────────────────────────────────
+
+type Skip = { reason: string; count: number };
+
+type CostLookup = {
+  cost: number | null;
+  consumer_price: number | null;
+  regular_price: number | null;
+};
+
+type PMPreview = {
+  itemCount: number;
+  configCount: number;
+  matchedConfigCount: number | null; // 적재 시 산출 (미리보기 단계는 null)
+  itemSkipped: Skip[];
+  guideSkipped: Skip[];
+  unmatched: number; // 가격가이드 행 중 품목 매칭 실패
+  sample: ParsedPriceConfig[];
+  mult: number;
+};
+
+// 예정값 시트 — 현재 마스터로 적재하면 안 됨 (그린푸드=원가 변경예정, 가격인상=8월초 인상예정)
+const FUTURE_SHEET_MARKERS = ["인상", "인하", "예정", "그린푸드"];
+
+function isFutureSheet(name: string): boolean {
+  const n = name.replace(/\s+/g, "");
+  return FUTURE_SHEET_MARKERS.some((m) => n.includes(m));
+}
+
+/** 예정 시트를 제외하고, prefer 키워드를 순서대로 만족하는 첫 시트를 기본값으로 */
+function pickDefaultSheet(sheets: string[], prefer: string[]): string {
+  const current = sheets.filter((s) => !isFutureSheet(s));
+  for (const k of prefer) {
+    const hit = current.find((s) => s.replace(/\s+/g, "").includes(k));
+    if (hit) return hit;
+  }
+  return current[0] ?? sheets[0] ?? "";
+}
+
+/** 현재 rate card에서 공헌이익 승수 mult = 1 − (수수료+광고+물류+적립) 산출 */
+async function fetchMult(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+): Promise<number> {
+  const { data } = await supabase
+    .from("rate_card")
+    .select("fee_rate, ad_rate, logistics_rate, reward_rate")
+    .eq("is_current", true)
+    .order("effective_from", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return 0.715;
+  const sum =
+    Number(data.fee_rate) +
+    Number(data.ad_rate) +
+    Number(data.logistics_rate) +
+    Number(data.reward_rate);
+  return 1 - sum;
+}
+
+function PriceMasterCard() {
+  const bufRef = useRef<ArrayBuffer | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+  const [sheets, setSheets] = useState<string[]>([]);
+  const [itemSheet, setItemSheet] = useState<string>("");
+  const [guideSheet, setGuideSheet] = useState<string>("");
+  const [preview, setPreview] = useState<PMPreview | null>(null);
+  const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
+
+  const busy =
+    p.phase === "reading" || p.phase === "parsing" || p.phase === "uploading";
+
+  async function handleFile(file: File) {
+    try {
+      setPreview(null);
+      setP({ phase: "reading", message: `${file.name} 읽는 중…` });
+      const buf = await file.arrayBuffer();
+      bufRef.current = buf;
+      setFileName(file.name);
+      const parse = await import("@/lib/parse");
+      const names = parse.sheetNames(buf);
+      setSheets(names);
+      setItemSheet(pickDefaultSheet(names, ["품목"]));
+      setGuideSheet(pickDefaultSheet(names, ["가격가이드", "가이드", "가격"]));
+      setP({
+        phase: "idle",
+        message: "",
+      });
+    } catch (e) {
+      setP({ phase: "error", message: errMsg(e) });
+    }
+  }
+
+  async function handlePreview() {
+    if (!bufRef.current) return;
+    try {
+      setP({ phase: "parsing", message: "엑셀 파싱 중 (미리보기)…" });
+      const parse = await import("@/lib/parse");
+      const supabase = createClient();
+      const mult = await fetchMult(supabase);
+      const wb = parse.readWorkbook(bufRef.current);
+      const item = parse.parseItemMaster(wb, itemSheet);
+      const lookup = new Map<string, CostLookup>(
+        item.rows
+          .filter((r) => r.dr_code)
+          .map((r): [string, CostLookup] => [
+            r.dr_code as string,
+            {
+              cost: r.cost,
+              consumer_price: r.consumer_price,
+              regular_price: r.regular_price,
+            },
+          ]),
+      );
+      const guide = parse.parsePriceGuide(wb, guideSheet, { mult, lookup });
+      setPreview({
+        itemCount: item.rows.length,
+        configCount: guide.configs.length,
+        matchedConfigCount: null,
+        itemSkipped: item.skipped,
+        guideSkipped: guide.skipped,
+        unmatched: 0,
+        sample: guide.configs.slice(0, 10),
+        mult,
+      });
+      setP({ phase: "idle", message: "" });
+    } catch (e) {
+      setP({ phase: "error", message: errMsg(e) });
+    }
+  }
+
+  async function handleLoad() {
+    if (!bufRef.current) return;
+    if (isFutureSheet(itemSheet) || isFutureSheet(guideSheet)) {
+      const bad = [itemSheet, guideSheet].filter(isFutureSheet).join(", ");
+      const ok = window.confirm(
+        `선택한 시트(${bad})는 '예정값'(원가 변경·가격 인상 예정)으로 보입니다.\n` +
+          `현재 가격 마스터로 적재하면 안 됩니다. 그래도 진행할까요?`,
+      );
+      if (!ok) {
+        setP({ phase: "idle", message: "취소됨" });
+        return;
+      }
+    }
+    try {
+      const parse = await import("@/lib/parse");
+      const products = await import("@/lib/products");
+      const supabase = createClient();
+      const mult = await fetchMult(supabase);
+      const wb = parse.readWorkbook(bufRef.current);
+
+      setP({ phase: "parsing", message: "엑셀 파싱 중…" });
+      const item = parse.parseItemMaster(wb, itemSheet);
+      const lookup = new Map<string, CostLookup>(
+        item.rows
+          .filter((r) => r.dr_code)
+          .map((r): [string, CostLookup] => [
+            r.dr_code as string,
+            {
+              cost: r.cost,
+              consumer_price: r.consumer_price,
+              regular_price: r.regular_price,
+            },
+          ]),
+      );
+      const guide = parse.parsePriceGuide(wb, guideSheet, { mult, lookup });
+      if (item.rows.length === 0 && guide.configs.length === 0)
+        throw new Error("적재할 품목·구성이 없습니다. 시트 지정을 확인하세요.");
+
+      // 1) 품목 upsert (base_name 고유키 — 기존 인프라 재사용, dr_code/원가/가격은 필드로 갱신)
+      setP({ phase: "uploading", message: `품목 ${item.rows.length}건 반영 중…` });
+      const itemPayload = dedupBy(item.rows, (r) => r.base_name).map((r) => ({
+        base_name: r.base_name,
+        dr_code: r.dr_code,
+        cost: r.cost,
+        cost_vat_excluded: r.cost_vat_excluded,
+        consumer_price: r.consumer_price,
+        regular_price: r.regular_price,
+      }));
+      if (itemPayload.length > 0) {
+        const { error } = await supabase
+          .from("products")
+          .upsert(itemPayload, { onConflict: "base_name" });
+        if (error) throw error;
+      }
+
+      // 2) 전체 products 로드 → dr_code/base_name 으로 product_id 해석 맵
+      const { data: allProducts, error: pErr } = await supabase
+        .from("products")
+        .select("id, base_name, dr_code");
+      if (pErr) throw pErr;
+      const byDr = new Map<string, { id: string; base_name: string }>();
+      const byBase = new Map<string, { id: string; base_name: string }>();
+      for (const pr of allProducts ?? []) {
+        const v = { id: pr.id as string, base_name: pr.base_name as string };
+        if (pr.dr_code) byDr.set(pr.dr_code as string, v);
+        byBase.set(pr.base_name as string, v);
+      }
+
+      // 3) 카테고리 갱신 (가격가이드 시트 → products.category, 기존 품목만)
+      const catByDr = new Map<string, string>();
+      const catByBase = new Map<string, string>();
+      for (const c of guide.categories) {
+        if (c.dr_code) catByDr.set(c.dr_code, c.category);
+        if (c.base_name) catByBase.set(c.base_name, c.category);
+      }
+      const catPayload: { base_name: string; category: string }[] = [];
+      for (const pr of allProducts ?? []) {
+        const cat =
+          (pr.dr_code && catByDr.get(pr.dr_code as string)) ||
+          catByBase.get(pr.base_name as string);
+        if (cat) catPayload.push({ base_name: pr.base_name as string, category: cat });
+      }
+      if (catPayload.length > 0) {
+        const { error } = await supabase
+          .from("products")
+          .upsert(catPayload, { onConflict: "base_name" });
+        if (error) throw error;
+      }
+
+      // 4) configs: product_id 해석 + (product_id, config_type) 중복 제거
+      const recMap = new Map<
+        string,
+        {
+          product_id: string;
+          base_name: string;
+          config_type: string;
+          pack_count: number;
+          free_shipping: boolean;
+          list_price: number | null;
+          sale_price: number;
+          discount_rate_consumer: number | null;
+          discount_rate_regular: number | null;
+          unit_cost_total: number | null;
+          contribution: number | null;
+          contribution_rate: number | null;
+          source_file: string;
+        }
+      >();
+      let unmatched = 0;
+      for (const c of guide.configs) {
+        const match =
+          (c.dr_code && byDr.get(c.dr_code)) ||
+          (c.base_name && byBase.get(c.base_name)) ||
+          null;
+        if (!match) {
+          unmatched++;
+          continue;
+        }
+        const key = `${match.id}::${c.config_type}`;
+        recMap.set(key, {
+          product_id: match.id,
+          base_name: match.base_name,
+          config_type: c.config_type,
+          pack_count: c.pack_count,
+          free_shipping: c.free_shipping,
+          list_price: c.list_price,
+          sale_price: c.sale_price,
+          discount_rate_consumer: c.discount_rate_consumer,
+          discount_rate_regular: c.discount_rate_regular,
+          unit_cost_total: c.unit_cost_total,
+          contribution: c.contribution,
+          contribution_rate: c.contribution_rate,
+          source_file: fileName,
+        });
+      }
+      const records = [...recMap.values()];
+
+      // 5) 다른 source_file 의 기존 구성 존재 시 경고 (PR #27 confirm 패턴)
+      const { count: otherCount } = await supabase
+        .from("product_price_configs")
+        .select("*", { count: "exact", head: true })
+        .neq("source_file", fileName);
+      if (otherCount && otherCount > 0) {
+        const ok = window.confirm(
+          `다른 파일에서 적재된 가격 구성이 ${otherCount.toLocaleString()}건 있어요.\n` +
+            `같은 (품목 × 구성)은 이번 값으로 덮어써집니다.\n\n그래도 진행할까요?`,
+        );
+        if (!ok) {
+          setP({ phase: "idle", message: "취소됨" });
+          return;
+        }
+      }
+
+      // 6) upsert by (product_id, config_type)
+      const batches = products.chunk(records, 500);
+      let done = 0;
+      for (const [i, batch] of batches.entries()) {
+        setP({
+          phase: "uploading",
+          message: `구성 ${i + 1}/${batches.length} 배치 적재 중…`,
+          done,
+          total: records.length,
+        });
+        const { error } = await supabase
+          .from("product_price_configs")
+          .upsert(batch, { onConflict: "product_id,config_type" });
+        if (error) throw error;
+        done += batch.length;
+      }
+
+      setPreview((prev) =>
+        prev ? { ...prev, matchedConfigCount: records.length, unmatched } : prev,
+      );
+      setP({
+        phase: "ok",
+        message:
+          `품목 ${itemPayload.length}건 · 구성 ${records.length}건 반영 완료` +
+          (unmatched > 0 ? ` · 품목 매칭 실패 ${unmatched}건(skip)` : ""),
+      });
+    } catch (e) {
+      setP({ phase: "error", message: errMsg(e) });
+    }
+  }
+
+  const pctVal =
+    p.total && p.total > 0 && p.done != null
+      ? Math.round((p.done / p.total) * 100)
+      : null;
+
+  return (
+    <div className="rounded-[24px] bg-white card-soft p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-medium">④ 가격 마스터 (가격가이드 워크북)</h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            품목 시트 + 가격가이드 시트를 한 번에 적재합니다. SKU × 구성(단품/2·3·4·5묶음)별
+            할인율·공헌이익은 rate card로 자동 계산합니다. 재업로드 시 중복 없이 갱신됩니다.
+          </p>
+        </div>
+        <label
+          className={`shrink-0 cursor-pointer rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 ${
+            busy ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          파일 선택
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {sheets.length > 0 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="text-sm">
+            <span className="text-neutral-500">품목 시트</span>
+            <select
+              className="mt-1 w-full rounded-lg border border-neutral-200 px-2.5 py-2 text-sm"
+              value={itemSheet}
+              onChange={(e) => setItemSheet(e.target.value)}
+              disabled={busy}
+            >
+              {sheets.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="text-neutral-500">가격가이드 시트</span>
+            <select
+              className="mt-1 w-full rounded-lg border border-neutral-200 px-2.5 py-2 text-sm"
+              value={guideSheet}
+              onChange={(e) => setGuideSheet(e.target.value)}
+              disabled={busy}
+            >
+              {sheets.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      {sheets.some(isFutureSheet) && (
+        <p className="mt-2 text-xs text-amber-600">
+          예정값 시트(적재 금지):{" "}
+          <b>{sheets.filter(isFutureSheet).join(", ")}</b> — 원가 변경·가격 인상 예정분이라
+          현재 가격 마스터로 적재하지 마세요.
+        </p>
+      )}
+      {(isFutureSheet(itemSheet) || isFutureSheet(guideSheet)) && (
+        <p className="mt-1 text-xs font-medium text-red-600">
+          ⚠️ 지금 예정값 시트가 선택돼 있습니다. 현재값 시트(예: 가격가이드_2026)로 바꿔주세요.
+        </p>
+      )}
+
+      {sheets.length > 0 && (
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={busy || !itemSheet || !guideSheet}
+            className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50"
+          >
+            미리보기 (dry-run)
+          </button>
+          <button
+            type="button"
+            onClick={handleLoad}
+            disabled={busy || !preview}
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+          >
+            적재
+          </button>
+        </div>
+      )}
+
+      {preview && (
+        <div className="mt-4 rounded-xl border border-neutral-200 p-3 text-sm">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-neutral-700">
+            <span>
+              품목 <b>{preview.itemCount.toLocaleString()}</b>건
+            </span>
+            <span>
+              구성 <b>{preview.configCount.toLocaleString()}</b>건
+            </span>
+            {preview.matchedConfigCount != null && (
+              <span>
+                적재 <b>{preview.matchedConfigCount.toLocaleString()}</b>건
+              </span>
+            )}
+            <span className="text-neutral-400">
+              공헌이익 승수 mult = {preview.mult.toFixed(3)}
+            </span>
+          </div>
+          {(preview.itemSkipped.length > 0 || preview.guideSkipped.length > 0) && (
+            <div className="mt-1.5 text-xs text-amber-600">
+              {[...preview.itemSkipped, ...preview.guideSkipped]
+                .map((s) => `${s.reason} ${s.count}건`)
+                .join(" · ")}
+            </div>
+          )}
+          {preview.sample.length > 0 && (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="text-neutral-400">
+                  <tr>
+                    <th className="py-1 pr-3">품목</th>
+                    <th className="py-1 pr-3">구성</th>
+                    <th className="py-1 pr-3 text-right">판매가</th>
+                    <th className="py-1 pr-3 text-right">정가</th>
+                    <th className="py-1 pr-3 text-right">할인(소비자)</th>
+                    <th className="py-1 pr-3 text-right">할인(상시)</th>
+                    <th className="py-1 pr-3 text-right">공헌이익</th>
+                    <th className="py-1 text-right">공헌이익률</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.sample.map((c, i) => (
+                    <tr key={i} className="border-t border-neutral-100">
+                      <td className="py-1 pr-3">{c.base_name ?? c.dr_code ?? "—"}</td>
+                      <td className="py-1 pr-3">
+                        {c.config_type}
+                        {c.free_shipping && (
+                          <span className="ml-1 rounded bg-sky-100 px-1 text-[10px] text-sky-700">
+                            무배
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-1 pr-3 text-right">{won(c.sale_price)}</td>
+                      <td className="py-1 pr-3 text-right">{won(c.list_price)}</td>
+                      <td className="py-1 pr-3 text-right">
+                        {pct(c.discount_rate_consumer)}
+                      </td>
+                      <td className="py-1 pr-3 text-right">
+                        {pct(c.discount_rate_regular)}
+                      </td>
+                      <td className="py-1 pr-3 text-right">{won(c.contribution)}</td>
+                      <td className="py-1 text-right">{pct(c.contribution_rate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-1.5 text-[11px] text-neutral-400">
+                상위 {preview.sample.length}행 미리보기. 매핑·건수를 확인한 뒤 [적재]를 누르세요.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {p.phase !== "idle" && p.message && (
+        <div
+          className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+            p.phase === "error"
+              ? "bg-red-50 text-red-700"
+              : p.phase === "ok"
+                ? "bg-green-50 text-green-700"
+                : "bg-neutral-100 text-neutral-600"
+          }`}
+        >
+          <div>{p.message}</div>
+          {pctVal != null && p.phase === "uploading" && (
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/60">
+              <div
+                className="h-full bg-brand-500 transition-all"
+                style={{ width: `${pctVal}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function errMsg(e: unknown): string {
+  return e instanceof Error
+    ? e.message
+    : typeof e === "object" && e && "message" in e
+      ? String((e as { message: unknown }).message)
+      : "임포트 실패";
+}
+
+function dedupBy<T>(arr: T[], key: (t: T) => string): T[] {
+  const m = new Map<string, T>();
+  for (const it of arr) m.set(key(it), it);
+  return [...m.values()];
 }
