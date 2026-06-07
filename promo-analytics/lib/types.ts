@@ -121,17 +121,6 @@ export type PromotionNote = {
 // S2: 캠페인 플랜 (L2)
 // ─────────────────────────────────────────────
 
-// rate card 변동비율 (플랜 draft는 current 라이브 참조)
-export type RateCard = {
-  id: string;
-  fee_rate: number;
-  ad_rate: number;
-  logistics_rate: number;
-  reward_rate: number;
-  is_current: boolean;
-  effective_from: string;
-};
-
 // confirm 시 동결되는 rate card 스냅샷
 export type RateCardSnapshot = {
   fee_rate: number;
