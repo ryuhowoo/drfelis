@@ -71,7 +71,9 @@ function sheetRows(wb: XLSX.WorkBook, sheetName: string): unknown[][] {
 
 /** 헤더 셀을 공백 제거·소문자만 적용해 반환 (VAT+/VAT− 구분처럼 부호를 보존해야 할 때) */
 function rawHeader(header: unknown[]): string[] {
-  return header.map((h) => String(h ?? "").replace(/\s+/g, "").toLowerCase());
+  // Array.from — 희소 배열(병합/공백 셀로 생긴 구멍) 방지. findColRaw/findPackPriceCol의
+  // .findIndex가 구멍을 undefined로 방문해 .includes에서 크래시하던 문제 차단.
+  return Array.from(header, (h) => String(h ?? "").replace(/\s+/g, "").toLowerCase());
 }
 
 /** 원시 헤더(부호 보존) 기준으로 조건에 맞는 첫 컬럼 인덱스 */
@@ -128,7 +130,11 @@ export type DailyRow = {
 export function parseDailySales(buf: ArrayBuffer): DailyRow[] {
   const rows = firstSheetRows(buf);
   const h = findHeaderRow(rows, ["일자", "기초상품명", "결제금액", "판매수량"]);
-  if (h < 0) throw new Error("일별 매출 추이 헤더를 찾을 수 없습니다 (일자/기초상품명/결제금액/판매수량).");
+  if (h < 0)
+    throw new Error(
+      "일별 매출 추이 헤더를 찾을 수 없습니다 (일자·기초상품명·결제금액·판매수량 컬럼 필요). " +
+        "‘가이드/기획’ 문서가 아니라 일자별 매출 export인지 확인하세요.",
+    );
   const header = rows[h];
   const cDate = findCol(header, ["일자"]);
   const cName = findCol(header, ["기초상품명", "상품명"]);
@@ -176,7 +182,11 @@ export type ParsedPromotion = {
 export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
   const rows = firstSheetRows(buf);
   const h = findHeaderRow(rows, ["일자", "기초상품명", "결제금액", "원가", "수수료"]);
-  if (h < 0) throw new Error("프로모션 시트 헤더를 찾을 수 없습니다.");
+  if (h < 0)
+    throw new Error(
+      "캠페인 매출 시트 헤더를 찾을 수 없습니다 (일자·기초상품명·결제금액·원가·수수료 컬럼 필요). " +
+        "‘프로모션 가이드/기획’ 문서는 형식이 달라 이 칸으로 올릴 수 없습니다 — 캠페인 매출 export를 올려주세요.",
+    );
   const header = rows[h];
   const cPeriod = findCol(header, ["일자"]);
   const cName = findCol(header, ["기초상품명", "상품명"]);
