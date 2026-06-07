@@ -451,6 +451,8 @@ export function parsePriceGuide(
     const drc = list && list > 0 ? (list - sale) / list : null;
     const drr = rp && rp > 0 ? (rp * pack - sale) / (rp * pack) : null;
     const uct = cost && cost > 0 ? cost * pack : null;
+    // 물류비는 개별 차감하지 않고 rate card 평균(12%)으로 고정 — 무료배송 여부와 무관하게
+    // 변동비는 mult에 일괄 반영. free_shipping은 정보용 플래그일 뿐 공헌이익을 바꾸지 않는다.
     const contribution = uct != null ? sale * opts.mult - uct : null;
     const crate = contribution != null && sale > 0 ? contribution / sale : null;
     return {
