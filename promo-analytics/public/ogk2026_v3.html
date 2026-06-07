@@ -1231,7 +1231,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
   <h2 class="section-heading">9개월, <em>3개의 Phase</em> <span style="font-size:.55em;color:var(--txt-500);font-weight:500">(= 3개 분기 OGK)</span></h2>
 
   <div class="quote">
-    <p>작년 동일 성장 시 예상 매출 ~103억 위에 <strong>약 17억을 추가 증분으로 쌓는다.</strong> 상반기는 전환 구조를 완성하고, 하반기에 신제품·프로모션·네이버 수혜로 수확한다.</p>
+    <p>상반기 <strong>40.15억(+30.1%)</strong> 확정 위에, 작년 같은 기간 대비 성장률로 Jun~Dec를 쌓는다 — <strong>약속(하한)은 120억, 추세가 유지되면 기준선 125.5억.</strong> 상반기는 전환 구조를 완성하고, 하반기에 신제품·재고 회복·네이버 수혜로 수확한다.</p>
   </div>
 
   <div class="bento" style="margin-bottom:16px;">
@@ -1877,18 +1877,18 @@ new Chart(document.getElementById('sku-pie').getContext('2d'), {
 
 /* ─── Cumulative Chart ─── */
 const cumLabels = ['Q1','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-const cumBase = [21.44, 29.12, 36.80, 44.47, 53.84, 63.22, 72.60, 82.64, 92.69, 102.73];
+const cumBase = [23.62, 31.80, 40.16, 52.01, 64.73, 79.13, 90.08, 104.80, 117.84, 125.56];
 const cumPlan = [23.62, 31.80, 40.16, 51.25, 63.16, 76.64, 86.89, 100.67, 112.88, 120.11];
 new Chart(document.getElementById('cum-chart').getContext('2d'), {
   type:'line',
   data:{
     labels: cumLabels,
     datasets:[
-      { label:'실측(1~5월)+목표', data:cumPlan, borderColor:ACCENT, borderWidth:2.5,
+      { label:'실측(1~5월) + 목표(120억 하한)', data:cumPlan, borderColor:ACCENT, borderWidth:2.5,
         fill:{ target:1, above:'rgba(184,92,56,.08)' }, tension:.3, pointRadius:3,
         pointBackgroundColor:ACCENT, pointBorderColor:'#fff', pointBorderWidth:2 },
-      { label:'작년 동일 성장 시 예상 매출', data:cumBase, borderColor:MUTED, borderDash:[5,4], borderWidth:1.5, fill:false, tension:.3, pointRadius:0 },
-      { label:'목표 120억', data:cumLabels.map(()=>120), borderColor:TEAL, borderDash:[8,4], borderWidth:1, fill:false, pointRadius:0 }
+      { label:'기준선 추세(+25%, 125.5억)', data:cumBase, borderColor:MUTED, borderDash:[5,4], borderWidth:1.5, fill:false, tension:.3, pointRadius:0 },
+      { label:'하한 120억', data:cumLabels.map(()=>120), borderColor:TEAL, borderDash:[8,4], borderWidth:1, fill:false, pointRadius:0 }
     ]
   },
   options:{
