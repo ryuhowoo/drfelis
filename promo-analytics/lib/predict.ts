@@ -58,6 +58,33 @@ function caseWeight(c: Comparable): number {
   return c.score * (c.reliability ?? 1);
 }
 
+// 추천 버킷용 — 달성 신뢰도 평균/편차 (S6.3 일관성 랭킹)
+function bucketReliability(g: CaseFeature[]): { mean: number; stdev: number } {
+  const rels = g.map((c) => c.reliability ?? 0.5);
+  const mean = rels.reduce((a, b) => a + b, 0) / rels.length;
+  const stdev = Math.sqrt(
+    rels.reduce((s, r) => s + (r - mean) ** 2, 0) / rels.length,
+  );
+  return { mean, stdev };
+}
+
+// reliability 가중 평균 — 잘 맞춘 사례가 버킷 예측치를 더 끌도록
+function ravg(g: CaseFeature[], pick: (c: CaseFeature) => number): number {
+  let s = 0,
+    w = 0;
+  for (const c of g) {
+    const rel = c.reliability ?? 0.5;
+    s += pick(c) * rel;
+    w += rel;
+  }
+  return w > 0 ? s / w : 0;
+}
+
+// 달성 일관성 보정: 평균 신뢰도↑·편차↓일수록 점수/신뢰도를 끌어올린다.
+function consistencyFactor(mean: number, stdev: number): number {
+  return (0.7 + 0.3 * mean) * (1 - Math.min(0.3, stdev));
+}
+
 function wavg(items: Comparable[], pick: (c: Comparable) => number | null): number {
   let s = 0, w = 0;
   for (const c of items) {
@@ -222,6 +249,7 @@ export type GoalRec = {
   contribution_rate: number | null;
   score: number; // 종합 점수 0~100
   confidence: "높음" | "보통" | "낮음";
+  reliability: number; // 0~1 버킷 평균 달성 신뢰도 (S6)
   sample: number;
   meets_target: boolean;
   examples: { id: string; name: string }[];
@@ -270,6 +298,8 @@ export function recommendByGoal(
     contribution_rate: number | null;
     efficiency: number; // 증분/할인깊이
     halo_share: number;
+    reliability: number; // 버킷 평균 달성 신뢰도
+    rel_stdev: number;
     sample: number;
     examples: { id: string; name: string }[];
   };
@@ -277,21 +307,22 @@ export function recommendByGoal(
   for (const [key, g] of buckets) {
     const [promo_type, bucketStr] = key.split("|");
     const bucket = Number(bucketStr);
-    const avg = (pick: (c: CaseFeature) => number) =>
-      g.reduce((s, c) => s + pick(c), 0) / g.length;
     const dr = bucket >= 0 ? bucket / 100 : null;
-    const uplift_per_day = avg((c) => c.uplift_per_day);
+    const uplift_per_day = ravg(g, (c) => c.uplift_per_day); // reliability 가중
     const crs = g.map((c) => c.contribution_rate).filter((x): x is number => x != null);
     const cr = crs.length ? crs.reduce((a, b) => a + b, 0) / crs.length : null;
+    const rel = bucketReliability(g);
     raws.push({
       promo_type,
       discount_rate: dr,
-      metric_per_day: avg((c) => goalPerDay(goal, c)),
+      metric_per_day: ravg(g, (c) => goalPerDay(goal, c)),
       uplift_per_day,
-      contribution_per_day: avg((c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
+      contribution_per_day: ravg(g, (c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
       contribution_rate: cr,
       efficiency: dr && dr > 0 ? uplift_per_day / dr : uplift_per_day,
-      halo_share: avg((c) => c.halo_share ?? 0),
+      halo_share: ravg(g, (c) => c.halo_share ?? 0),
+      reliability: rel.mean,
+      rel_stdev: rel.stdev,
       sample: g.length,
       examples: g.slice(0, 3).map((c) => ({ id: c.id, name: c.name })),
     });
@@ -304,15 +335,18 @@ export function recommendByGoal(
   const mE = maxOf((r) => r.efficiency);
 
   const recs: GoalRec[] = raws.map((r) => {
-    // 종합 점수: 공헌이익 40 · 증분 30 · 효율 20 · 후광 10
+    // 종합 점수: 공헌이익 40 · 증분 30 · 효율 20 · 후광 10, 달성 일관성 보정(S6.3)
     const score =
       (0.4 * (r.contribution_per_day / mC) +
         0.3 * (r.uplift_per_day / mU) +
         0.2 * (r.efficiency / mE) +
         0.1 * Math.min(1, r.halo_share)) *
+      consistencyFactor(r.reliability, r.rel_stdev) *
       100;
     const predicted_metric = r.metric_per_day * durationDays;
-    const cScore = Math.min(1, r.sample / 5);
+    const cScore =
+      Math.min(1, (r.sample / 5) * 0.7 + r.reliability * 0.3) *
+      (1 - Math.min(0.3, r.rel_stdev));
     return {
       promo_type: r.promo_type,
       discount_rate: r.discount_rate,
@@ -323,6 +357,7 @@ export function recommendByGoal(
       contribution_rate: r.contribution_rate,
       score: Math.round(score),
       confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
+      reliability: r.reliability,
       sample: r.sample,
       meets_target: predicted_metric >= target,
       examples: r.examples,
@@ -368,6 +403,8 @@ export function recommendByGoals(
     contribution_rate: number | null;
     efficiency: number;
     halo_share: number;
+    reliability: number; // 버킷 평균 달성 신뢰도
+    rel_stdev: number;
     sample: number;
     examples: { id: string; name: string }[];
   };
@@ -375,25 +412,26 @@ export function recommendByGoals(
   for (const [key, g] of buckets) {
     const [promo_type, bucketStr] = key.split("|");
     const bucket = Number(bucketStr);
-    const avg = (pick: (c: CaseFeature) => number) =>
-      g.reduce((s, c) => s + pick(c), 0) / g.length;
     const dr = bucket >= 0 ? bucket / 100 : null;
-    const uplift_per_day = avg((c) => c.uplift_per_day);
+    const uplift_per_day = ravg(g, (c) => c.uplift_per_day); // reliability 가중
     const crs = g.map((c) => c.contribution_rate).filter((x): x is number => x != null);
     const cr = crs.length ? crs.reduce((a, b) => a + b, 0) / crs.length : null;
+    const rel = bucketReliability(g);
     const metrics = new Map<Goal, number>();
     metrics.set("revenue", uplift_per_day);
-    metrics.set("stock", avg((c) => c.qty_per_day));
-    metrics.set("branding", avg((c) => c.orders_per_day));
+    metrics.set("stock", ravg(g, (c) => c.qty_per_day));
+    metrics.set("branding", ravg(g, (c) => c.orders_per_day));
     raws.push({
       promo_type,
       discount_rate: dr,
       metrics,
       uplift_per_day,
-      contribution_per_day: avg((c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
+      contribution_per_day: ravg(g, (c) => (c.duration_days > 0 ? c.contribution / c.duration_days : 0)),
       contribution_rate: cr,
       efficiency: dr && dr > 0 ? uplift_per_day / dr : uplift_per_day,
-      halo_share: avg((c) => c.halo_share ?? 0),
+      halo_share: ravg(g, (c) => c.halo_share ?? 0),
+      reliability: rel.mean,
+      rel_stdev: rel.stdev,
       sample: g.length,
       examples: g.slice(0, 3).map((c) => ({ id: c.id, name: c.name })),
     });
@@ -424,7 +462,10 @@ export function recommendByGoals(
         const max = mMetric.get(gt.goal) ?? 1e-9;
         return s + m / max;
       }, 0) / goalTargets.length;
-    const score = (baseScore * 0.5 + goalScore * 0.5) * 100;
+    const score =
+      (baseScore * 0.5 + goalScore * 0.5) *
+      consistencyFactor(r.reliability, r.rel_stdev) * // 달성 일관성 보정(S6.3)
+      100;
 
     const per_goal = goalTargets.map((gt) => {
       const metricPerDay = r.metrics.get(gt.goal) ?? 0;
@@ -439,7 +480,9 @@ export function recommendByGoals(
     });
     const meetsAll = per_goal.every((p) => p.meets_target);
 
-    const cScore = Math.min(1, r.sample / 5);
+    const cScore =
+      Math.min(1, (r.sample / 5) * 0.7 + r.reliability * 0.3) *
+      (1 - Math.min(0.3, r.rel_stdev));
     // GoalRec의 단일 metric 필드는 첫 목표 기준으로 채움(하위 호환).
     const primary = per_goal[0];
     return {
@@ -452,6 +495,7 @@ export function recommendByGoals(
       contribution_rate: r.contribution_rate,
       score: Math.round(score),
       confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
+      reliability: r.reliability,
       sample: r.sample,
       meets_target: meetsAll,
       examples: r.examples,

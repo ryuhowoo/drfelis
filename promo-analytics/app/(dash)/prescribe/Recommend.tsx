@@ -183,6 +183,12 @@ export default function Recommend({ options }: { options: Options }) {
                         </span>
                         {r.meets_target && <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">목표 달성</span>}
                         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">신뢰도 {r.confidence}</span>
+                        <span
+                          className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500"
+                          title="유사 캠페인의 계획 달성 신뢰도를 랭킹·예측에 반영"
+                        >
+                          달성 {Math.round(r.reliability * 100)}%
+                        </span>
                       </div>
 
                       {/* 목적별 충족도 (목표 대비) — S5.6 */}
