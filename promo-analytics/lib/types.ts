@@ -232,6 +232,15 @@ export type PlanVsActualOption = {
   ach_revenue: number | null;
 };
 
+// S5: 목적 가중 / 적합도
+export type PurposeWeight = { purpose: string; weight: number };
+export type PurposeFit = {
+  purpose: string;
+  fit_metric_raw: number | null;
+  fit_score_0_100: number | null;
+  data_reliable: boolean;
+};
+
 // S4: 캠페인별 달성률 (campaign_achievements 함수 반환)
 export type CampaignAchievement = {
   promotion_id: string;

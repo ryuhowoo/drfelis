@@ -48,6 +48,15 @@ export default async function EditPromotion({
   const mainIds = (mains ?? []).map((m) => m.product_id);
   const options = await loadOptions(supabase);
 
+  // 목적 가중치 (S5) — 저장된 값 로드
+  const { data: weightRows } = await supabase
+    .from("promotion_purpose_weights")
+    .select("purpose, weight")
+    .eq("promotion_id", id);
+  const initialWeights: Record<string, number> = {};
+  for (const w of weightRows ?? [])
+    initialWeights[w.purpose as string] = Number(w.weight);
+
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <EditForm
@@ -55,6 +64,7 @@ export default async function EditPromotion({
         products={products}
         initialMainIds={mainIds}
         options={options}
+        initialWeights={initialWeights}
       />
     </div>
   );

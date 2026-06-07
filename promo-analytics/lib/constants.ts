@@ -29,3 +29,30 @@ export const PURPOSE_TAGS = [
   "리뉴얼",
   "회원 활성화",
 ];
+
+// 목적별 적합도(purpose_fit) 대표 지표 — 단일 출처(편집 용이). purpose_fit() SQL과 의미 일치.
+export type PurposeFitMeta = {
+  label: string;
+  source: string;
+  quantityDependent?: boolean; // 수량 의존 → "데이터 부족" 배지 대상
+};
+export const PURPOSE_FIT_METRIC: Record<string, PurposeFitMeta> = {
+  세일즈: { label: "증분율 (uplift %)", source: "promotion_summary" },
+  재고소진: {
+    label: "수량 달성률",
+    source: "plan_vs_actual_summary.ach_qty",
+    quantityDependent: true,
+  },
+  브랜딩: {
+    label: "구매 건수",
+    source: "promotion_sales.order_count",
+    quantityDependent: true,
+  },
+};
+export const DEFAULT_PURPOSE_FIT: PurposeFitMeta = {
+  label: "증분율 (uplift %)",
+  source: "promotion_summary (fallback)",
+};
+export function purposeFitMeta(purpose: string): PurposeFitMeta {
+  return PURPOSE_FIT_METRIC[purpose] ?? DEFAULT_PURPOSE_FIT;
+}
