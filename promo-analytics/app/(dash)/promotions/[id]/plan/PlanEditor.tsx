@@ -42,6 +42,13 @@ export type ProductEcon = Record<
   string,
   { consumer_price: number | null; regular_price: number | null; cost: number | null }
 >;
+// 예상 세트수 힌트 (S6.2) — 유사 캠페인 확정 플랜 평균, 비구속 표시용
+export type QtyHint = {
+  main: number | null;
+  sub: number | null;
+  mainN: number;
+  subN: number;
+};
 
 type ItemState = EditorItem & { key: string };
 type OptState = {
@@ -74,11 +81,13 @@ export default function PlanEditor({
   plan,
   initialOptions,
   rateCard,
+  qtyHint,
 }: {
   promotionId: string;
   plan: CampaignPlan | null;
   initialOptions: EditorOption[];
   rateCard: RateCard | null;
+  qtyHint?: QtyHint;
 }) {
   const router = useRouter();
   const [options, setOptions] = useState<OptState[]>(() => toState(initialOptions));
@@ -317,6 +326,7 @@ export default function PlanEditor({
             opt={o}
             totals={optionResults[i]}
             mult={mult}
+            qtyHint={qtyHint}
             readOnly={confirmed}
             onPatch={(patch) => patchOption(o.key, patch)}
             onRemove={() => removeOption(o.key)}
@@ -426,6 +436,7 @@ function OptionCard({
   opt,
   totals,
   mult,
+  qtyHint,
   readOnly,
   onPatch,
   onRemove,
@@ -436,6 +447,7 @@ function OptionCard({
   opt: OptState;
   totals: ReturnType<typeof computeOptionTotals>;
   mult: number;
+  qtyHint?: QtyHint;
   readOnly: boolean;
   onPatch: (patch: Partial<OptState>) => void;
   onRemove: () => void;
@@ -453,18 +465,29 @@ function OptionCard({
           onChange={(e) => onPatch({ option_label: e.target.value })}
           placeholder="옵션 라벨 (예: 모래 4묶음 세트)"
         />
-        <label className="flex items-center gap-1 text-xs text-neutral-500">
-          예상 세트수
-          <input
-            type="number"
-            className="w-24 rounded-lg border border-neutral-200 px-2 py-1.5 text-right text-sm disabled:bg-neutral-50"
-            value={opt.expected_option_qty || 0}
-            disabled={readOnly}
-            onChange={(e) =>
-              onPatch({ expected_option_qty: Number(e.target.value) || 0 })
-            }
-          />
-        </label>
+        <div className="flex flex-col gap-0.5">
+          <label className="flex items-center gap-1 text-xs text-neutral-500">
+            예상 세트수
+            <input
+              type="number"
+              className="w-24 rounded-lg border border-neutral-200 px-2 py-1.5 text-right text-sm disabled:bg-neutral-50"
+              value={opt.expected_option_qty || 0}
+              disabled={readOnly}
+              onChange={(e) =>
+                onPatch({ expected_option_qty: Number(e.target.value) || 0 })
+              }
+            />
+          </label>
+          {(() => {
+            const hv = opt.is_main ? qtyHint?.main : qtyHint?.sub;
+            const hn = opt.is_main ? qtyHint?.mainN : qtyHint?.subN;
+            return hv != null && hn ? (
+              <span className="text-[10px] text-neutral-400">
+                유사 캠페인 평균 {num(hv)}세트 ({hn}건, {opt.is_main ? "메인" : "서브"})
+              </span>
+            ) : null;
+          })()}
+        </div>
         <label className="flex items-center gap-1 text-xs text-neutral-500">
           <input
             type="checkbox"
