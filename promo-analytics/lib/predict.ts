@@ -19,6 +19,7 @@ export type CaseFeature = {
   actual_daily: number; // 행사 기간 일평균
   qty_per_day: number; // 일평균 판매수량
   orders_per_day: number; // 일평균 구매건수
+  purposes: { purpose: string; weight: number }[]; // 유효 목적 가중 (S5)
 };
 
 export type PredictionSpec = {
@@ -26,6 +27,7 @@ export type PredictionSpec = {
   season_tag?: string | null;
   discount_rate?: number | null; // 0~1
   duration_days: number;
+  purpose?: string | null; // 목적 선택 (S5) — 같은 목적 사례 우선 가중
 };
 
 export type Comparable = CaseFeature & { score: number };
@@ -87,9 +89,17 @@ export function similarity(spec: PredictionSpec, c: CaseFeature): number {
   return weight > 0 ? score / weight : 0;
 }
 
+// 목적 선택 시 같은 목적 사례를 우선 가중 (제외가 아닌 우선순위 — 콜드스타트 대비).
+// effective_weight 1.0 → ×1.0, 0 → ×0.4.
+function purposeFactor(spec: PredictionSpec, c: CaseFeature): number {
+  if (!spec.purpose) return 1;
+  const pw = c.purposes?.find((p) => p.purpose === spec.purpose)?.weight ?? 0;
+  return 0.4 + 0.6 * Math.min(1, Math.max(0, pw));
+}
+
 export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction {
   const scored: Comparable[] = cases
-    .map((c) => ({ ...c, score: similarity(spec, c) }))
+    .map((c) => ({ ...c, score: similarity(spec, c) * purposeFactor(spec, c) }))
     .filter((c) => c.score > 0.15 && c.uplift_per_day !== 0)
     .sort((a, b) => b.score - a.score);
 
@@ -158,9 +168,9 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
     confidence,
     confidence_score: cScore,
     comparables: top,
-    rationale: `유사 사례 ${top.length}건(평균 유사도 ${(avgScore * 100).toFixed(
-      0,
-    )}%)의 일평균 증분을 가중 평균해 ${spec.duration_days}일로 환산했습니다.`,
+    rationale:
+      `유사 사례 ${top.length}건(평균 유사도 ${(avgScore * 100).toFixed(0)}%)의 일평균 증분을 가중 평균해 ${spec.duration_days}일로 환산했습니다.` +
+      (spec.purpose ? ` ‘${spec.purpose}’ 목적 사례를 우선 가중했습니다.` : ""),
   };
 }
 
