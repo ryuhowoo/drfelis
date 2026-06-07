@@ -334,11 +334,22 @@ type PMPreview = {
   mult: number;
 };
 
-function pickDefaultSheet(sheets: string[], includes: string[]): string {
-  const hit = sheets.find((s) =>
-    includes.some((k) => s.replace(/\s+/g, "").includes(k)),
-  );
-  return hit ?? sheets[0] ?? "";
+// 예정값 시트 — 현재 마스터로 적재하면 안 됨 (그린푸드=원가 변경예정, 가격인상=8월초 인상예정)
+const FUTURE_SHEET_MARKERS = ["인상", "인하", "예정", "그린푸드"];
+
+function isFutureSheet(name: string): boolean {
+  const n = name.replace(/\s+/g, "");
+  return FUTURE_SHEET_MARKERS.some((m) => n.includes(m));
+}
+
+/** 예정 시트를 제외하고, prefer 키워드를 순서대로 만족하는 첫 시트를 기본값으로 */
+function pickDefaultSheet(sheets: string[], prefer: string[]): string {
+  const current = sheets.filter((s) => !isFutureSheet(s));
+  for (const k of prefer) {
+    const hit = current.find((s) => s.replace(/\s+/g, "").includes(k));
+    if (hit) return hit;
+  }
+  return current[0] ?? sheets[0] ?? "";
 }
 
 /** 현재 rate card에서 공헌이익 승수 mult = 1 − (수수료+광고+물류+적립) 산출 */
@@ -435,6 +446,17 @@ function PriceMasterCard() {
 
   async function handleLoad() {
     if (!bufRef.current) return;
+    if (isFutureSheet(itemSheet) || isFutureSheet(guideSheet)) {
+      const bad = [itemSheet, guideSheet].filter(isFutureSheet).join(", ");
+      const ok = window.confirm(
+        `선택한 시트(${bad})는 '예정값'(원가 변경·가격 인상 예정)으로 보입니다.\n` +
+          `현재 가격 마스터로 적재하면 안 됩니다. 그래도 진행할까요?`,
+      );
+      if (!ok) {
+        setP({ phase: "idle", message: "취소됨" });
+        return;
+      }
+    }
     try {
       const parse = await import("@/lib/parse");
       const products = await import("@/lib/products");
@@ -675,6 +697,19 @@ function PriceMasterCard() {
         </div>
       )}
 
+      {sheets.some(isFutureSheet) && (
+        <p className="mt-2 text-xs text-amber-600">
+          예정값 시트(적재 금지):{" "}
+          <b>{sheets.filter(isFutureSheet).join(", ")}</b> — 원가 변경·가격 인상 예정분이라
+          현재 가격 마스터로 적재하지 마세요.
+        </p>
+      )}
+      {(isFutureSheet(itemSheet) || isFutureSheet(guideSheet)) && (
+        <p className="mt-1 text-xs font-medium text-red-600">
+          ⚠️ 지금 예정값 시트가 선택돼 있습니다. 현재값 시트(예: 가격가이드_2026)로 바꿔주세요.
+        </p>
+      )}
+
       {sheets.length > 0 && (
         <div className="mt-3 flex gap-2">
           <button
@@ -740,7 +775,14 @@ function PriceMasterCard() {
                   {preview.sample.map((c, i) => (
                     <tr key={i} className="border-t border-neutral-100">
                       <td className="py-1 pr-3">{c.base_name ?? c.dr_code ?? "—"}</td>
-                      <td className="py-1 pr-3">{c.config_type}</td>
+                      <td className="py-1 pr-3">
+                        {c.config_type}
+                        {c.free_shipping && (
+                          <span className="ml-1 rounded bg-sky-100 px-1 text-[10px] text-sky-700">
+                            무배
+                          </span>
+                        )}
+                      </td>
                       <td className="py-1 pr-3 text-right">{won(c.sale_price)}</td>
                       <td className="py-1 pr-3 text-right">{won(c.list_price)}</td>
                       <td className="py-1 pr-3 text-right">

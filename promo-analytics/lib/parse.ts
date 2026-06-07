@@ -363,6 +363,9 @@ export type PriceGuideResult = {
   skipped: Skip[];
 };
 
+/** 공식몰 기본 혜택: 5만원 이상 결제 시 배송비 무료 (구성 판매가가 이 값 이상이면 free_shipping) */
+export const FREE_SHIP_THRESHOLD = 50000;
+
 /** 가격/원가/소비자가/상시가 fallback (시트값 우선, 없으면 품목 시트 lookup) */
 function pick(sheetVal: number, lookupVal: number | null | undefined): number | null {
   if (sheetVal && sheetVal > 0) return sheetVal;
@@ -402,8 +405,10 @@ export function parsePriceGuide(
       string,
       { cost: number | null; consumer_price: number | null; regular_price: number | null }
     >;
+    freeShipThreshold?: number;
   },
 ): PriceGuideResult {
+  const freeShipAt = opts.freeShipThreshold ?? FREE_SHIP_THRESHOLD;
   const rows = sheetRows(wb, sheetName);
   const h = findHeaderRowAll(rows, ["품목코드", "소비자가"]);
   if (h < 0)
@@ -454,7 +459,8 @@ export function parsePriceGuide(
       category: cat,
       config_type,
       pack_count: pack,
-      free_shipping: false,
+      // 공식몰 기본 혜택: 판매가 5만원 이상이면 자동 무료배송
+      free_shipping: sale >= freeShipAt,
       list_price: list,
       sale_price: sale,
       discount_rate_consumer: drc,
