@@ -3,9 +3,45 @@ export type Product = {
   base_name: string;
   dr_code: string | null;
   category: string | null;
-  cost: number | null;
+  cost: number | null; // 제품원가 (VAT+)
+  cost_vat_excluded: number | null; // 제품원가 (VAT−), 참고용
   consumer_price: number | null;
   regular_price: number | null;
+};
+
+// promo.rate_card — 변동비율 파라미터 (단일 current 행 + 이력)
+export type RateCard = {
+  id: string;
+  fee_rate: number; // 수수료 (기본 0.045)
+  ad_rate: number; // 광고비 (기본 0.10)
+  logistics_rate: number; // 물류비 (기본 0.12)
+  reward_rate: number; // 적립금 (기본 0.02)
+  effective_from: string;
+  is_current: boolean;
+  note: string | null;
+  created_at: string;
+};
+
+// 가격 마스터 구성 종류 (v1: 단품 + N묶음)
+export type PriceConfigType = "단품" | "2묶음" | "3묶음" | "4묶음" | "5묶음";
+
+// promo.product_price_configs — SKU × 판매구성 마스터
+export type ProductPriceConfig = {
+  id: string;
+  product_id: string;
+  base_name: string;
+  config_type: PriceConfigType;
+  pack_count: number; // 1~5
+  free_shipping: boolean;
+  list_price: number | null; // 소비자가 × pack_count
+  sale_price: number; // 판매가 (구성별)
+  discount_rate_consumer: number | null; // (list_price − sale_price)/list_price
+  discount_rate_regular: number | null; // (상시가×pack − sale_price)/(상시가×pack)
+  unit_cost_total: number | null; // 원가(VAT+) × pack_count
+  contribution: number | null; // sale_price × mult − unit_cost_total
+  contribution_rate: number | null; // contribution / sale_price
+  source_file: string | null;
+  updated_at: string;
 };
 
 export type Promotion = {
