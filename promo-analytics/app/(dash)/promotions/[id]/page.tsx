@@ -6,10 +6,14 @@ import type {
   MeasurementRow,
   PromotionSummary,
   PromotionNote,
+  PlanVsActualRow,
+  PlanVsActualSummary,
+  PlanVsActualOption,
 } from "@/lib/types";
 import { won, wonShort, pct, daysBetween } from "@/lib/format";
 import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
+import Achievement from "./Achievement";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +61,33 @@ export default async function PromotionDetail({
     expected_revenue_total: number | null;
     expected_contribution_total: number | null;
   } | null;
+
+  // 달성률 (S3): 확정 플랜 vs 실적 + 옵션 매핑용 distinct option_info
+  const [
+    { data: pvaSummary },
+    { data: pvaRows },
+    { data: pvaOptions },
+    { data: optInfoRows },
+  ] = await Promise.all([
+    supabase.rpc("plan_vs_actual_summary", { p_id: id }),
+    supabase.rpc("plan_vs_actual", { p_id: id }),
+    supabase.rpc("plan_vs_actual_options", { p_id: id }),
+    supabase
+      .from("promotion_sales")
+      .select("option_info")
+      .eq("promotion_id", id)
+      .not("option_info", "is", null),
+  ]);
+  const achSummary = (pvaSummary?.[0] as PlanVsActualSummary) ?? null;
+  const achRows = (pvaRows as PlanVsActualRow[]) ?? [];
+  const achOptions = (pvaOptions as PlanVsActualOption[]) ?? [];
+  const optionInfos = [
+    ...new Set(
+      ((optInfoRows as { option_info: string | null }[]) ?? [])
+        .map((r) => (r.option_info ?? "").trim())
+        .filter((s) => s.length > 0),
+    ),
+  ].sort();
 
   const mains = rows.filter((r) => r.is_main);
   const chartData = rows
@@ -156,9 +187,6 @@ export default async function PromotionDetail({
                 계산하세요.
               </p>
             )}
-            <p className="mt-1 text-xs text-neutral-300">
-              달성률(계획 대비 실적)은 다음 단계에서 표시됩니다.
-            </p>
           </div>
           <Link
             href={`/promotions/${id}/plan`}
@@ -168,6 +196,15 @@ export default async function PromotionDetail({
           </Link>
         </div>
       </div>
+
+      {/* 달성률 (S3) */}
+      <Achievement
+        promotionId={id}
+        summary={achSummary}
+        rows={achRows}
+        options={achOptions}
+        optionInfos={optionInfos}
+      />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* 측정 테이블 */}
