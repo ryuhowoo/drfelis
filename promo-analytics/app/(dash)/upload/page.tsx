@@ -1205,14 +1205,15 @@ function GuideImportCard() {
 
       {campaigns && campaigns.length > 0 && (
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-sm">
+          <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="text-xs text-neutral-400">
               <tr>
                 <th className="py-1.5 pr-3">코드</th>
                 <th className="py-1.5 pr-3">기간</th>
                 <th className="py-1.5 pr-3 text-right">상품수</th>
                 <th className="py-1.5 pr-3 text-right">Σ판매수량</th>
-                <th className="py-1.5 text-right">Σ매출</th>
+                <th className="py-1.5 pr-3 text-right">Σ매출</th>
+                <th className="py-1.5">읽은 지표</th>
               </tr>
             </thead>
             <tbody>
@@ -1227,7 +1228,10 @@ function GuideImportCard() {
                   <td className="py-1.5 pr-3 text-right tabular-nums">
                     {c.total_qty.toLocaleString()}
                   </td>
-                  <td className="py-1.5 text-right tabular-nums">{won(c.total_revenue)}</td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">{won(c.total_revenue)}</td>
+                  <td className="py-1.5 whitespace-nowrap text-[11px] text-neutral-400">
+                    {c.qty_label} · {c.rev_label}
+                  </td>
                 </tr>
               ))}
             </tbody>
