@@ -15,6 +15,80 @@ import { wonShort } from "@/lib/format";
 
 const BRAND = "#e76f51";
 
+// 목적별 비중 바 (가중 기여매출/공헌) — value 점유율
+export function PurposeShareBars({
+  data,
+}: {
+  data: { purpose: string; value: number }[];
+}) {
+  const sorted = data.filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+  const total = sorted.reduce((s, d) => s + d.value, 0);
+  const items = sorted.slice(0, 8);
+  if (items.length === 0)
+    return <div className="py-6 text-sm text-neutral-300">데이터가 없습니다.</div>;
+  return (
+    <div className="space-y-2.5">
+      {items.map((d) => {
+        const share = total > 0 ? d.value / total : 0;
+        return (
+          <div key={d.purpose}>
+            <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+              <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+                {d.purpose}
+              </span>
+              <span className="shrink-0 text-neutral-500">
+                {wonShort(d.value)} · {Math.round(share * 100)}%
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100">
+              <div className="h-full rounded-full bg-brand-500" style={{ width: `${share * 100}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// 목적별 평균 적합도 바 (0~100) + 데이터부족 배지
+export function PurposeFitBars({
+  data,
+}: {
+  data: { purpose: string; score: number | null; reliable: boolean }[];
+}) {
+  const items = data
+    .filter((d) => d.score != null)
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    .slice(0, 8);
+  if (items.length === 0)
+    return <div className="py-6 text-sm text-neutral-300">적합도 데이터가 없습니다.</div>;
+  return (
+    <div className="space-y-2.5">
+      {items.map((d) => {
+        const s = Math.max(0, Math.min(100, d.score ?? 0));
+        return (
+          <div key={d.purpose}>
+            <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+              <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+                {d.purpose}
+                {!d.reliable && (
+                  <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">
+                    데이터 부족
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 tabular-nums text-neutral-500">{Math.round(s)}</span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100">
+              <div className="h-full rounded-full bg-neutral-700" style={{ width: `${s}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // 캠페인별 달성률 추세 — 매출/공헌 달성률 라인 (확정 플랜 보유, 시작일 순)
 export function AchievementTrend({
   data,

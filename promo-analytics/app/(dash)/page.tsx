@@ -5,6 +5,7 @@ import type {
   PromotionSummary,
   MeasurementRow,
   CampaignAchievement,
+  PurposeMetric,
 } from "@/lib/types";
 import { won, wonShort, pct } from "@/lib/format";
 import {
@@ -13,6 +14,8 @@ import {
   Donut,
   BaselineVsPromo,
   AchievementTrend,
+  PurposeShareBars,
+  PurposeFitBars,
 } from "./DashCharts";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +39,35 @@ type OverallMetrics = {
 
 export default async function Dashboard() {
   const supabase = await createClient();
-  const [{ data: promos }, { data: overallData }, { data: achData }] =
-    await Promise.all([
-      supabase.from("promotions").select("*").order("start_date", { ascending: false }),
-      supabase.rpc("overall_baseline_metrics"),
-      supabase.rpc("campaign_achievements"),
-    ]);
+  const [
+    { data: promos },
+    { data: overallData },
+    { data: achData },
+    { data: pmData },
+  ] = await Promise.all([
+    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
+    supabase.rpc("overall_baseline_metrics"),
+    supabase.rpc("campaign_achievements"),
+    supabase.rpc("purpose_metrics"),
+  ]);
 
   const overall = (overallData?.[0] as OverallMetrics | undefined) ?? null;
+
+  // 목적 슬라이스 (S5.2): 목적별 가중 기여매출/공헌 + 평균 적합도
+  const pm = (pmData as PurposeMetric[]) ?? [];
+  const purposeUplift = pm.map((p) => ({
+    purpose: p.purpose,
+    value: Number(p.weighted_uplift) || 0,
+  }));
+  const purposeContribution = pm.map((p) => ({
+    purpose: p.purpose,
+    value: Number(p.weighted_contribution) || 0,
+  }));
+  const purposeFit = pm.map((p) => ({
+    purpose: p.purpose,
+    score: p.avg_fit_score != null ? Number(p.avg_fit_score) : null,
+    reliable: p.data_reliable,
+  }));
 
   // 달성률 (S4): 확정 플랜 보유 캠페인만, 매출(expected_revenue_total) 가중평균
   const ach = (achData as CampaignAchievement[]) ?? [];
@@ -218,6 +242,27 @@ export default async function Dashboard() {
           </p>
         </Card>
       </div>
+
+      {/* 목적 슬라이스 (S5.2) */}
+      {pm.length > 0 && (
+        <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+          <Card>
+            <CardTitle>목적별 기여 매출 비중</CardTitle>
+            <PurposeShareBars data={purposeUplift} />
+          </Card>
+          <Card>
+            <CardTitle>목적별 공헌이익 비중</CardTitle>
+            <PurposeShareBars data={purposeContribution} />
+          </Card>
+          <Card>
+            <CardTitle>목적별 평균 적합도</CardTitle>
+            <PurposeFitBars data={purposeFit} />
+            <p className="mt-2 text-xs text-neutral-400">
+              같은 목적 캠페인 간 상대 점수(0~100) · 가중치는 캠페인 편집에서 조정
+            </p>
+          </Card>
+        </div>
+      )}
 
       {/* 상시 vs 행사 비교 (비교 기준) */}
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">

@@ -234,6 +234,14 @@ export type PlanVsActualOption = {
 
 // S5: 목적 가중 / 적합도
 export type PurposeWeight = { purpose: string; weight: number };
+export type PurposeMetric = {
+  purpose: string;
+  weighted_uplift: number;
+  weighted_contribution: number;
+  campaign_count: number;
+  avg_fit_score: number | null;
+  data_reliable: boolean;
+};
 export type PurposeFit = {
   purpose: string;
   fit_metric_raw: number | null;
