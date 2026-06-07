@@ -14,6 +14,7 @@ import { won, wonShort, pct, daysBetween } from "@/lib/format";
 import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
 import Achievement from "./Achievement";
+import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,43 @@ export default async function PromotionDetail({
         .filter((s) => s.length > 0),
     ),
   ].sort();
+
+  // 목적별 핵심 지표 (S5.4): 유효 가중치 × 측정·달성률·구매건수
+  const [{ data: ewData }, { data: ocData }] = await Promise.all([
+    supabase.rpc("effective_purpose_weights", { p_id: id }),
+    supabase.from("promotion_sales").select("order_count").eq("promotion_id", id),
+  ]);
+  const orderCount = ((ocData as { order_count: number | null }[]) ?? []).reduce(
+    (s, r) => s + (Number(r.order_count) || 0),
+    0,
+  );
+  const upliftPct =
+    summary && summary.actual_revenue - summary.total_uplift > 0
+      ? summary.total_uplift / (summary.actual_revenue - summary.total_uplift)
+      : null;
+  const purposeRows: PurposeMetricRow[] = (
+    (ewData as { purpose: string; weight: number }[]) ?? []
+  ).map((w) => {
+    const kind: PurposeMetricRow["kind"] =
+      w.purpose === "재고소진"
+        ? "stock"
+        : w.purpose === "브랜딩"
+          ? "branding"
+          : w.purpose === "세일즈"
+            ? "sales"
+            : "other";
+    return {
+      purpose: w.purpose,
+      weight: Number(w.weight),
+      kind,
+      uplift: summary?.total_uplift ?? null,
+      contribution: summary?.contribution ?? null,
+      uplift_pct: upliftPct,
+      ach_qty: achSummary?.ach_qty ?? null,
+      qty_reliable: achSummary?.quantity_reliable ?? false,
+      order_count: orderCount,
+    };
+  });
 
   const mains = rows.filter((r) => r.is_main);
   const chartData = rows
@@ -205,6 +243,9 @@ export default async function PromotionDetail({
         options={achOptions}
         optionInfos={optionInfos}
       />
+
+      {/* 목적별 핵심 지표 (S5.4) */}
+      <PurposeBlock rows={purposeRows} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* 측정 테이블 */}
