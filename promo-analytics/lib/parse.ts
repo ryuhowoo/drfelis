@@ -43,9 +43,19 @@ function pad(n: number | string): string {
   return String(n).padStart(2, "0");
 }
 
+/** xlsx는 바이너리로, CSV(텍스트)는 UTF-8로 디코드해 읽는다. (한글 CSV 깨짐 방지) */
+function readBook(buf: ArrayBuffer): XLSX.WorkBook {
+  const bytes = new Uint8Array(buf);
+  const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b; // 'PK' = xlsx(zip)
+  if (isZip) return XLSX.read(buf, { cellDates: true });
+  let text = new TextDecoder("utf-8").decode(bytes);
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1); // BOM 제거
+  return XLSX.read(text, { type: "string", cellDates: true });
+}
+
 /** 워크북의 첫 시트를 2차원 배열로 */
 function firstSheetRows(buf: ArrayBuffer): unknown[][] {
-  const wb = XLSX.read(buf, { cellDates: true });
+  const wb = readBook(buf);
   const ws = wb.Sheets[wb.SheetNames[0]];
   // defval: "" — 빈 셀을 ""로 채워 희소 배열(구멍) 방지. 헤더에 병합/공백 칸이 있어도
   // header.map(norm)[i]가 undefined가 되지 않아 findCol 등이 크래시하지 않는다.
@@ -54,7 +64,7 @@ function firstSheetRows(buf: ArrayBuffer): unknown[][] {
 
 /** 워크북 객체 (여러 시트를 이름으로 지정해 파싱할 때 한 번만 읽어 재사용) */
 export function readWorkbook(buf: ArrayBuffer): XLSX.WorkBook {
-  return XLSX.read(buf, { cellDates: true });
+  return readBook(buf);
 }
 
 /** 워크북의 시트 이름 목록 */
