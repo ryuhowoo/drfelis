@@ -11,7 +11,7 @@ import type { ParsedPriceConfig } from "@/lib/parse";
 async function logUpload(
   supabase: ReturnType<typeof createClient>,
   entry: {
-    kind: "daily" | "promotion" | "price_master";
+    kind: "daily" | "promotion" | "price_master" | "plan_guide";
     source_file: string;
     detail?: string;
     row_count?: number;
@@ -70,7 +70,7 @@ export default function UploadPage() {
           <UploadCard key={c.key} def={c} />
         ))}
         <PriceMasterCard />
-        <GuideImportCard />
+        <PlanGuideImportCard />
       </div>
       <UploadHistory />
     </div>
@@ -93,6 +93,7 @@ const KIND_LABEL: Record<string, string> = {
   daily: "일별 매출",
   promotion: "캠페인",
   price_master: "가격 마스터",
+  plan_guide: "플랜 가이드",
 };
 
 function UploadHistory() {
@@ -1128,59 +1129,249 @@ function PriceMasterCard() {
 }
 
 // ─────────────────────────────────────────────
-// ⑤ 프로모션 가이드 — 참고용 미리보기 (DB 기록 없음).
-//    가이드는 연도별 표 양식이 제각각이라 실적이 일관되게 잡히지 않으므로 백필 쓰기는 두지 않는다.
-//    실제 적재는 ②(일별)·③(캠페인 매출 export). 가이드는 빠른 확인/참고용.
+// ⑤ 캠페인 플랜 가이드 — 표준 양식(평평한 표) → 캠페인 플랜(예상) 적재.
+//    가이드는 '실적 가설'(옵션·가격·예상 수량/매출/공헌이익). 실적은 ③, 차이는 달성률(S4).
+//    미리보기 → 검수 → draft 플랜 생성/교체. 확정(frozen) 플랜은 보존.
 // ─────────────────────────────────────────────
-function GuideImportCard() {
+function PlanGuideImportCard() {
+  const router = useRouter();
   const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
-  const [campaigns, setCampaigns] = useState<
-    import("@/lib/parseGuide").GuideCampaign[] | null
+  const [camps, setCamps] = useState<
+    import("@/lib/parsePlanGuide").PlanGuideCampaign[] | null
   >(null);
 
   async function handleFile(file: File) {
     try {
-      setCampaigns(null);
+      setCamps(null);
       setP({ phase: "reading", message: `${file.name} 읽는 중…` });
       const buf = await file.arrayBuffer();
-      setP({ phase: "parsing", message: "가이드 파싱 중…" });
-      const { parseCampaignGuide } = await import("@/lib/parseGuide");
-      const found = parseCampaignGuide(buf);
+      setP({ phase: "parsing", message: "플랜 가이드 파싱 중…" });
+      const { parsePlanGuide } = await import("@/lib/parsePlanGuide");
+      const found = parsePlanGuide(buf);
       if (found.length === 0)
-        throw new Error(
-          "캠페인 블록(CF_P 코드 + 상품명·판매수량·매출 표)을 찾지 못했습니다. 프로모션 가이드 워크북이 맞는지 확인하세요.",
-        );
-      setCampaigns(found);
+        throw new Error("표준 양식에서 캠페인을 찾지 못했습니다. 템플릿 컬럼을 확인하세요.");
+      setCamps(found);
       setP({
         phase: "ok",
-        message: `${found.length}개 캠페인 · 상품 ${found.reduce((s, c) => s + c.products.length, 0)}행 인식`,
+        message: `${found.length}개 캠페인 · 옵션 ${found.reduce((s, c) => s + c.options.length, 0)}개 인식. 확인 후 [플랜으로 적재]`,
       });
     } catch (e) {
       setP({ phase: "error", message: errMsg(e) });
     }
   }
 
+  async function commit() {
+    if (!camps) return;
+    const ok = window.confirm(
+      `${camps.length}개 캠페인의 플랜(예상)을 적재합니다.\n` +
+        `· 코드로 캠페인을 찾고 없으면 생성\n` +
+        `· draft 플랜은 교체, 확정(frozen) 플랜은 보존(건너뜀)\n` +
+        `· 실적/달성률은 ③ 매출 export로 별도 채웁니다\n\n진행할까요?`,
+    );
+    if (!ok) return;
+    try {
+      const supabase = createClient();
+      const productsLib = await import("@/lib/products");
+      setP({ phase: "uploading", message: "품목 매칭 중…" });
+
+      const allOptions = camps.flatMap((c) => c.options);
+      const itemCodes = [...new Set(allOptions.map((o) => o.item_code).filter(Boolean))];
+      const byDr = new Map<string, { id: string; base_name: string }>();
+      if (itemCodes.length > 0) {
+        const { data } = await supabase
+          .from("products")
+          .select("id, dr_code, base_name")
+          .in("dr_code", itemCodes);
+        for (const pr of data ?? [])
+          if (pr.dr_code)
+            byDr.set(String(pr.dr_code), { id: pr.id as string, base_name: pr.base_name as string });
+      }
+      const needNames = [
+        ...new Set(
+          allOptions
+            .filter((o) => !(o.item_code && byDr.has(o.item_code)))
+            .map((o) => o.option_label),
+        ),
+      ];
+      const byName =
+        needNames.length > 0
+          ? await productsLib.ensureProducts(supabase, needNames)
+          : new Map<string, string>();
+      const resolve = (o: (typeof allOptions)[number]) => {
+        if (o.item_code && byDr.has(o.item_code)) {
+          const m = byDr.get(o.item_code)!;
+          return { product_id: m.id, base_name: m.base_name };
+        }
+        const id = byName.get(o.option_label);
+        return id ? { product_id: id, base_name: o.option_label } : null;
+      };
+
+      let created = 0,
+        replaced = 0,
+        skipped = 0,
+        failed = 0;
+      for (const [ci, camp] of camps.entries()) {
+        setP({ phase: "uploading", message: `${ci + 1}/${camps.length} 캠페인 플랜 적재 중…` });
+        try {
+          // 캠페인 매칭/생성
+          let promoId: string;
+          const { data: ep } = await supabase
+            .from("promotions")
+            .select("id")
+            .eq("code", camp.code)
+            .limit(1)
+            .maybeSingle();
+          if (ep) promoId = ep.id as string;
+          else {
+            const { data: np, error } = await supabase
+              .from("promotions")
+              .insert({
+                name: camp.code,
+                code: camp.code,
+                start_date: camp.start_date,
+                end_date: camp.end_date,
+              })
+              .select("id")
+              .single();
+            if (error) throw error;
+            promoId = np.id as string;
+          }
+
+          // 현재 플랜
+          const { data: plan } = await supabase
+            .from("campaign_plans")
+            .select("id, status")
+            .eq("promotion_id", promoId)
+            .eq("is_current", true)
+            .maybeSingle();
+          if (plan?.status === "confirmed") {
+            skipped++;
+            continue; // 확정 플랜 보존
+          }
+          let planId: string;
+          if (plan) {
+            planId = plan.id as string;
+            await supabase.from("campaign_plan_options").delete().eq("campaign_plan_id", planId);
+            replaced++;
+          } else {
+            const { data: npl, error } = await supabase
+              .from("campaign_plans")
+              .insert({ promotion_id: promoId, version: 1, is_current: true, status: "draft" })
+              .select("id")
+              .single();
+            if (error) throw error;
+            planId = npl.id as string;
+            created++;
+          }
+
+          let revTotal = 0,
+            contribTotal = 0;
+          for (const [idx, o] of camp.options.entries()) {
+            const prod = resolve(o);
+            if (!prod) {
+              failed++;
+              continue;
+            }
+            revTotal += o.target_revenue;
+            contribTotal += o.contribution;
+            const { data: newOpt, error: oErr } = await supabase
+              .from("campaign_plan_options")
+              .insert({
+                campaign_plan_id: planId,
+                option_label: o.option_label,
+                expected_option_qty: o.expected_qty,
+                is_main: o.is_main,
+                sort: idx,
+                set_price: o.set_price,
+                consumer_total: o.consumer_price > 0 ? o.consumer_price * o.pack_count : null,
+                regular_total: o.regular_price > 0 ? o.regular_price * o.pack_count : null,
+                discount_rate_consumer: o.discount_consumer,
+                discount_rate_regular: o.discount_regular,
+                expected_revenue: o.target_revenue, // 폼 그대로
+                expected_contribution: o.contribution, // 폼 그대로
+                econ: {
+                  총원가: o.total_cost,
+                  물류비: o.logistics,
+                  수수료: o.fee,
+                  광고비: o.ad_cost,
+                  공헌이익률: o.contribution_rate,
+                  프로모션가: o.promo_price,
+                  쿠폰혜택가: o.coupon_price,
+                },
+              })
+              .select("id")
+              .single();
+            if (oErr) throw oErr;
+            const { error: iErr } = await supabase.from("campaign_plan_option_items").insert({
+              campaign_plan_option_id: newOpt.id,
+              product_id: prod.product_id,
+              base_name: prod.base_name,
+              sku_qty_per_option: o.pack_count,
+              unit_sale_price: o.set_price,
+              sort: 0,
+            });
+            if (iErr) throw iErr;
+          }
+          await supabase
+            .from("campaign_plans")
+            .update({
+              expected_revenue_total: revTotal,
+              expected_contribution_total: contribTotal,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", planId);
+        } catch {
+          failed++;
+        }
+      }
+
+      await logUpload(supabase, {
+        kind: "plan_guide",
+        source_file: "캠페인 플랜 가이드",
+        detail: `생성 ${created} · 교체 ${replaced} · 확정보존 ${skipped}${failed ? ` · 실패 ${failed}` : ""}`,
+        row_count: allOptions.length,
+        action: "replace",
+      });
+      setP({
+        phase: "ok",
+        message: `플랜 적재 완료 · 생성 ${created} · 교체 ${replaced} · 확정보존(건너뜀) ${skipped}${failed ? ` · 실패 ${failed}` : ""}`,
+      });
+      setCamps(null);
+      router.refresh();
+    } catch (e) {
+      setP({ phase: "error", message: errMsg(e) });
+    }
+  }
+
+  const busy = p.phase === "reading" || p.phase === "parsing" || p.phase === "uploading";
+
   return (
     <div className="rounded-[24px] bg-white card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">⑤ 프로모션 가이드 (참고용 미리보기)</h2>
+          <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            여러 캠페인이 박스로 쌓인 ‘프로모션 가이드’ 워크북을 빠르게 훑어봅니다.
-            <b> 참고용 미리보기 전용</b>(DB에 쓰지 않음). 가이드는 연도별 표 양식이 제각각이라
-            실적이 일관되게 잡히지 않으므로, <b>실제 적재는 ② 일별 매출 · ③ 캠페인 매출 export</b>로
-            하세요.
+            표준 양식(1행=옵션)으로 캠페인별 <b>예상(가설)</b> — 옵션·가격·예상수량·목표매출·공헌이익을
+            플랜으로 적재합니다. 실제 결과는 ③ 매출 export, 차이는 <b>달성률</b>로 비교돼요. 확정 플랜은
+            보존됩니다.{" "}
+            <a
+              href="/templates/campaign_plan_guide_template.csv"
+              download
+              className="text-brand-600 underline"
+            >
+              표준 템플릿 내려받기
+            </a>
           </p>
         </div>
         <label
           className={`shrink-0 cursor-pointer rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 ${
-            p.phase === "reading" || p.phase === "parsing" ? "pointer-events-none opacity-50" : ""
+            busy ? "pointer-events-none opacity-50" : ""
           }`}
         >
           파일 선택
           <input
             type="file"
-            accept=".xlsx,.xls"
+            accept=".xlsx,.xls,.csv"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -1205,44 +1396,51 @@ function GuideImportCard() {
         </div>
       )}
 
-      {campaigns && campaigns.length > 0 && (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-sm">
-            <thead className="text-xs text-neutral-400">
-              <tr>
-                <th className="py-1.5 pr-3">코드</th>
-                <th className="py-1.5 pr-3">기간</th>
-                <th className="py-1.5 pr-3 text-right">상품수</th>
-                <th className="py-1.5 pr-3 text-right">Σ판매수량</th>
-                <th className="py-1.5 pr-3 text-right">Σ매출</th>
-                <th className="py-1.5">읽은 지표</th>
-              </tr>
-            </thead>
-            <tbody>
-              {campaigns.map((c) => (
-                <tr key={c.code} className="border-t border-neutral-100">
-                  <td className="py-1.5 pr-3 font-medium text-neutral-800">{c.code}</td>
-                  <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
-                    {c.start_date ?? "?"}
-                    {c.end_date ? ` ~ ${c.end_date}` : ""}
-                  </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums">{c.products.length}</td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums">
-                    {c.total_qty.toLocaleString()}
-                  </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums">{won(c.total_revenue)}</td>
-                  <td className="py-1.5 whitespace-nowrap text-[11px] text-neutral-400">
-                    {c.qty_label} · {c.rev_label}
-                  </td>
+      {camps && camps.length > 0 && (
+        <div className="mt-4">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="text-xs text-neutral-400">
+                <tr>
+                  <th className="py-1.5 pr-3">코드</th>
+                  <th className="py-1.5 pr-3">기간</th>
+                  <th className="py-1.5 pr-3 text-right">옵션수</th>
+                  <th className="py-1.5 pr-3 text-right">메인</th>
+                  <th className="py-1.5 pr-3 text-right">Σ예상수량</th>
+                  <th className="py-1.5 text-right">Σ목표매출</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-2 text-[11px] text-neutral-400">
-            인식되는 캠페인은 2023년형(상품명·판매수량·매출) 등 일관 양식뿐입니다. 다른 연도는
-            ‘목표수량’만 있거나 DR코드/달성매출 등 양식이 달라 실적을 안전히 추출하지 못합니다.
-            정확한 적재는 ③ 캠페인 매출 export를 사용하세요.
-          </p>
+              </thead>
+              <tbody>
+                {camps.map((c) => (
+                  <tr key={c.code} className="border-t border-neutral-100">
+                    <td className="py-1.5 pr-3 font-medium text-neutral-800">{c.code}</td>
+                    <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
+                      {c.start_date ?? "?"}
+                      {c.end_date ? ` ~ ${c.end_date}` : ""}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{c.options.length}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{c.main_count}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">
+                      {c.total_qty.toLocaleString()}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums">{won(c.total_target_revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={commit}
+              disabled={busy}
+              className="rounded-full bg-brand-500 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+            >
+              플랜으로 적재
+            </button>
+            <span className="text-[11px] text-neutral-400">
+              메인 = 상시가 할인율 ≥ 15%. 개입수는 옵션명에서 추정합니다.
+            </span>
+          </div>
         </div>
       )}
     </div>
