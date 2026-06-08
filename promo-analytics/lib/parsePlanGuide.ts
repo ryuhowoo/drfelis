@@ -87,8 +87,19 @@ function packFromName(name: string): number {
   return lead ? Math.max(1, Number(lead[1]) || 1) : 1;
 }
 
+// xlsx는 바이너리로, CSV(텍스트)는 UTF-8로 디코드해 읽는다.
+// XLSX.read(ArrayBuffer)는 CSV를 UTF-8로 디코드하지 않아 한글 헤더가 깨지므로 분기.
+function readWorkbook(buf: ArrayBuffer): XLSX.WorkBook {
+  const bytes = new Uint8Array(buf);
+  const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b; // 'PK' = xlsx(zip)
+  if (isZip) return XLSX.read(buf, { cellDates: true });
+  let text = new TextDecoder("utf-8").decode(bytes);
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1); // BOM 제거
+  return XLSX.read(text, { type: "string", cellDates: true });
+}
+
 export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
-  const wb = XLSX.read(buf, { cellDates: true });
+  const wb = readWorkbook(buf);
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {
     header: 1,
