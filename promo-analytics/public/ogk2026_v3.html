@@ -696,10 +696,10 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <table class="tbl" style="margin-top:12px;font-size:12px;">
         <thead><tr><th>분기</th><th>작년 실적</th><th>26년 목표</th><th>주요 동력</th></tr></thead>
         <tbody>
-          <tr><td>Q1</td><td>18.64억</td><td class="hl">23.62억 (실측)</td><td>슈퍼볼·프로모션</td></tr>
-          <tr><td>Q2</td><td>20.03억</td><td class="hl">~27.6억 (4·5월 16.5 + 6월 진행)</td><td>넵다·벌크·케어라인</td></tr>
-          <tr><td>Q3</td><td>24.46억</td><td class="hl">35.64억</td><td>카사바·유산균RN·오메가3·Naver</td></tr>
-          <tr><td>Q4</td><td>26.20억</td><td class="hl">33.22억</td><td>4주년·블프·식기</td></tr>
+          <tr><td>Q1</td><td>18.64억</td><td class="hl">23.62억 (실측)</td><td>플레이레이지·프로바이오틱스·포캣츄</td></tr>
+          <tr><td>Q2</td><td>20.03억</td><td class="hl">~27.6억 (4·5월 16.5 + 6월 진행)</td><td>슈퍼볼대용량·모래벌크업·넵다·브랜드데이</td></tr>
+          <tr><td>Q3</td><td>24.46억</td><td class="hl">35.64억</td><td>케어라인RN·카사바·유산균RN·오메가3·Naver</td></tr>
+          <tr><td>Q4</td><td>26.20억</td><td class="hl">33.22억</td><td>4주년·블프·식기·홀리데이</td></tr>
           <tr><td><strong>합계</strong></td><td>89.33억</td><td class="hl"><strong>120.1억</strong></td><td>—</td></tr>
         </tbody>
       </table>
@@ -2053,23 +2053,35 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   function seedTimeline(){
     const C = Object.fromEntries(EVENT_TYPES.map(t=>[t.id,t.color]));
     const brand = [
+      {label:'카사벤토 리뉴얼',      start:'2026-01-12', end:'2026-01-18', color:C.renewal},
+      {label:'플레이레이지 파자마 NEW', start:'2026-02-02', end:'2026-02-08', color:C.new},
+      {label:'오늘의브랜드 SALES',   start:'2026-02-11', end:'2026-02-17', color:C.sales},
+      {label:'네이버 유산균 런칭',   start:'2026-02-21', end:'2026-02-27', color:C.sales},
+      {label:'프로바이오틱스·포캣츄', start:'2026-03-11', end:'2026-03-17', color:C.sales},
       {label:'고양이의봄',          start:'2026-04-01', end:'2026-04-07', color:C.branding},
-      {label:'슈퍼볼 NEW',          start:'2026-04-13', end:'2026-04-16', color:C.new},
-      {label:'모래 벌크UP 세일',    start:'2026-05-18', end:'2026-05-21', color:C.sales},
+      {label:'슈퍼볼 대용량 NEW',    start:'2026-04-13', end:'2026-04-16', color:C.new},
+      {label:'가족 사진',           start:'2026-05-05', end:'2026-05-08', color:C.branding},
+      {label:'모래 벌크업 세일',     start:'2026-05-18', end:'2026-05-19', color:C.sales},
+      {label:'토탈케어-퍼펙/세플',   start:'2026-06-08', end:'2026-06-14', color:C.sales},
+      {label:'모래 구독 부스트업',   start:'2026-06-15', end:'2026-06-20', color:C.sales},
       {label:'넵다세일',            start:'2026-06-22', end:'2026-07-05', color:C.sales},
-      {label:'브랜드데이',          start:'2026-06-25', end:'2026-06-25', color:C.branding},
-      {label:'케어라인 리뉴얼 런칭',start:'2026-07-06', end:'2026-07-12', color:C.renewal},
-      {label:'멤버스위크',          start:'2026-07-07', end:'2026-07-13', color:C.sales},
-      {label:'카사바 NEW',          start:'2026-07-21', end:'2026-07-27', color:C.new},
-      {label:'워터밤 SALES',        start:'2026-08-01', end:'2026-08-10', color:C.sales},
+      {label:'브랜드데이',          start:'2026-06-25', end:'2026-06-25', color:C.sales},
+      {label:'포캣체크',            start:'2026-07-11', end:'2026-07-17', color:C.branding},
+      {label:'첫구매:퀴즈',         start:'2026-07-21', end:'2026-07-27', color:C.branding},
+      {label:'케어라인 리뉴얼',      start:'2026-07-22', end:'2026-07-31', color:C.renewal},
       {label:'세계고양이의날',      start:'2026-08-08', end:'2026-08-09', color:C.branding},
-      {label:'유산균 RENEWAL',      start:'2026-08-11', end:'2026-08-17', color:C.renewal},
-      {label:'오메가3 NEW',         start:'2026-09-10', end:'2026-09-16', color:C.new},
-      {label:'추석 SALES',          start:'2026-09-17', end:'2026-09-21', color:C.sales},
-      {label:'4주년 SALES',         start:'2026-10-12', end:'2026-10-18', color:C.sales},
+      {label:'워터밤 SALES',        start:'2026-08-11', end:'2026-08-17', color:C.sales},
+      {label:'카사바 런칭 NEW',      start:'2026-08-17', end:'2026-08-23', color:C.new},
+      {label:'유산균 리뉴얼',        start:'2026-08-24', end:'2026-08-31', color:C.renewal},
+      {label:'한국고양이의날',      start:'2026-08-31', end:'2026-09-06', color:C.sales},
+      {label:'추석 맞이',           start:'2026-09-17', end:'2026-09-21', color:C.sales},
+      {label:'오메가3 런칭 NEW',     start:'2026-09-22', end:'2026-09-28', color:C.new},
+      {label:'4주년',              start:'2026-10-12', end:'2026-10-18', color:C.sales},
+      {label:'붕어빵 캣닢 쿠션',     start:'2026-11-11', end:'2026-11-17', color:C.branding},
       {label:'Black Friday',        start:'2026-11-20', end:'2026-11-30', color:C.sales},
       {label:'식기 NEW',            start:'2026-11-23', end:'2026-11-29', color:C.new},
-      {label:'홀리데이',            start:'2026-12-15', end:'2026-12-25', color:C.branding},
+      {label:'홀리데이/크리스마스',  start:'2026-12-15', end:'2026-12-25', color:C.branding},
+      {label:'멤버스위크',          start:'2026-12-07', end:'2026-12-13', color:C.sales},
     ].map(e=>({...e, id:uid(), lane:'brand'}));
     const naver = [
       {label:'라이프위크(펫)',      start:'2026-06-01', end:'2026-06-07'},
