@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import type {
   Promotion,
   PromotionSummary,
-  MeasurementRow,
   CampaignAchievement,
   PurposeMetric,
 } from "@/lib/types";
@@ -37,6 +36,16 @@ type OverallMetrics = {
   lift_ratio: number | null;
 };
 
+// promo.all_campaign_features() 반환 행 (summary + measurement-파생)
+type CampaignFeatureRow = PromotionSummary & {
+  promotion_id: string;
+  baseline_daily: number;
+  actual_daily: number;
+  qty_per_day: number;
+  orders_per_day: number;
+  duration_days: number;
+};
+
 export default async function Dashboard() {
   const supabase = await createClient();
   const [
@@ -44,12 +53,17 @@ export default async function Dashboard() {
     { data: overallData },
     { data: achData },
     { data: pmData },
+    { data: featData },
   ] = await Promise.all([
     supabase.from("promotions").select("*").order("start_date", { ascending: false }),
     supabase.rpc("overall_baseline_metrics"),
     supabase.rpc("campaign_achievements"),
     supabase.rpc("purpose_metrics"),
+    supabase.rpc("all_campaign_features"),
   ]);
+  const featMap = new Map<string, CampaignFeatureRow>(
+    ((featData as CampaignFeatureRow[]) ?? []).map((f) => [f.promotion_id, f]),
+  );
 
   const overall = (overallData?.[0] as OverallMetrics | undefined) ?? null;
 
@@ -84,26 +98,35 @@ export default async function Dashboard() {
     contribution: a.ach_contribution,
   }));
 
-  const rows: Row[] = await Promise.all(
-    (promos ?? []).map(async (p: Promotion) => {
-      const [{ data: s }, { data: m }] = await Promise.all([
-        supabase.rpc("promotion_summary", { p_id: p.id }),
-        supabase.rpc("promotion_measurement", { p_id: p.id }),
-      ]);
-      const meas = (m as MeasurementRow[]) ?? [];
-      const promo_days = meas[0]?.promo_days ?? 1;
-      const baseline_daily = sum(meas.map((x) => x.baseline_daily_revenue));
-      const promo_daily =
-        promo_days > 0 ? sum(meas.map((x) => x.actual_revenue)) / promo_days : 0;
-      return {
-        ...p,
-        summary: (s?.[0] as PromotionSummary) ?? null,
-        baseline_daily,
-        promo_daily,
-        promo_days,
-      };
-    }),
-  );
+  const rows: Row[] = (promos ?? []).map((p: Promotion) => {
+    const f = featMap.get(p.id);
+    if (!f) {
+      return { ...p, summary: null, baseline_daily: 0, promo_daily: 0, promo_days: 1 };
+    }
+    const promo_days = Number(f.promo_days) || 1;
+    // summary 필드만 추려 PromotionSummary 형태로 — 0015 배치 RPC가 동일 출처
+    const summary: PromotionSummary = {
+      promo_days: Number(f.promo_days) || 0,
+      direct_uplift: Number(f.direct_uplift) || 0,
+      halo_uplift: Number(f.halo_uplift) || 0,
+      total_uplift: Number(f.total_uplift) || 0,
+      halo_share: f.halo_share != null ? Number(f.halo_share) : null,
+      actual_revenue: Number(f.actual_revenue) || 0,
+      contribution: Number(f.contribution) || 0,
+      contribution_rate:
+        f.contribution_rate != null ? Number(f.contribution_rate) : null,
+      cold_start_count: Number(f.cold_start_count) || 0,
+      trend_factor: Number(f.trend_factor) || 0,
+      uplift_ci: Number(f.uplift_ci) || 0,
+    };
+    return {
+      ...p,
+      summary,
+      baseline_daily: Number(f.baseline_daily) || 0,
+      promo_daily: Number(f.actual_daily) || 0,
+      promo_days,
+    };
+  });
 
   if (rows.length === 0) return <EmptyState />;
 
