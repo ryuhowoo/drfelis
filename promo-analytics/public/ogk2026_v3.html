@@ -589,7 +589,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
     <div class="card b-7">
       <span class="label">1~5월 월별 성과</span>
       <table class="tbl" style="margin-top:12px;">
-        <thead><tr><th>월</th><th>B2C 매출</th><th>공식몰</th><th>스스</th><th>이익률</th><th>시그널</th></tr></thead>
+        <thead><tr><th>월</th><th>B2C 매출</th><th>공식몰</th><th>스스</th><th>이익률</th><th>신호</th></tr></thead>
         <tbody>
           <tr><td>1월</td><td>8.21억</td><td>2.92억</td><td>5.22억</td><td>27.7%</td><td class="neg">수수료 급등</td></tr>
           <tr><td>2월</td><td>7.78억</td><td>2.58억</td><td>4.79억</td><td>27.3%</td><td class="neg">스스 수수료 16.9%</td></tr>
@@ -695,7 +695,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 
   <div class="bento" style="margin-bottom:16px;">
     <div class="card b-12">
-      <span class="label">분기별 빌드업 — 120억 원 달성 동력</span>
+      <span class="label">분기별 누적 — 120억 원 달성 동력</span>
       <table class="tbl" style="margin-top:12px;font-size:12px;">
         <thead><tr><th>분기</th><th>작년 실적</th><th>26년 목표</th><th>주요 동력</th></tr></thead>
         <tbody>
@@ -708,7 +708,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       </table>
       <div class="insight" style="margin:14px 0 0">
         <span class="tag">검증</span>
-        <p>1분기는 계획대로(23.6억) 달성했지만 4·5월은 목표 미달(4월 98%, 5월 86%). <strong>우리가 못 팔아서가 아니라, 팔 물건(재고·신제품)이 부족했음.</strong> 120억 원은 "되면 좋은 목표"가 아니라 <strong>"하반기 신제품(카사바·오메가3·식기)과 리뉴얼(케어라인·유산균)이 제때 런칭하면 닿는 목표."</strong></p>
+        <p>1분기는 계획대로(23.6억) 달성, 4·5월은 목표 미달(4월 98%, 5월 86%). <strong>우리가 못 팔아서가 아니라 팔 물건(재고·신제품) 부족.</strong> 120억은 "되면 좋은 목표"가 아니라 <strong>"하반기 신제품(카사바·오메가3·식기)과 리뉴얼(케어라인·유산균) 적기 런칭 시 닿는 목표."</strong></p>
       </div>
     </div>
   </div>
@@ -732,10 +732,10 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         <div style="flex:1;min-width:280px">
           <div style="font-size:12px;color:var(--txt-700);line-height:1.85">
             <strong style="color:var(--accent);font-size:13px">11억 원대가 구조적으로 가능하다면!?</strong>
-            <div style="margin-top:8px">① <strong>신제품 3종 = 과거 기록엔 없던 라인.</strong> 9.5억을 찍던 때 카사바·오메가3가 없었음. 라인업이 늘면 한계점도 오름.</div>
+            <div style="margin-top:8px">① <strong>신제품 3종 = 과거엔 없던 제품군.</strong> 9.5억 찍던 시기엔 카사바·오메가3 없었음. 제품군 늘면 한계점도 올라감.</div>
             <div style="margin-top:6px">② <strong>구독 반복매출 ~1.4억/월 바닥.</strong> 과거보다 훨씬 큰 매출 확보 구조.</div>
-            <div style="margin-top:6px">③ <strong>하반기 시즌성 분산.</strong> &#39;25년엔 3주년이 11월 한 달에 몰렸지만, &#39;26년은 <strong>4주년(10월) + 블프(11월)</strong>로 대형 행사가 두 달로 나뉨 → 단일 피크 의존 감소.</div>
-            <div style="margin-top:6px">④ <strong>상반기 +30% 성장.</strong> 성장 모멘텀에서 매출액 성장에 따른 둔화 감안한 절반(+15%)의 기준.</div>
+            <div style="margin-top:6px">③ <strong>하반기 성수기 분산.</strong> &#39;25년엔 3주년이 11월 한 달 집중, &#39;26년은 <strong>4주년(10월) + 블프(11월)</strong>로 두 달에 분산 → 단일 피크 의존 ↓.</div>
+            <div style="margin-top:6px">④ <strong>상반기 +30% 성장.</strong> 그 흐름에서 매출 규모 확대에 따른 둔화 감안해 절반(+15%) 기준.</div>
           </div>
         </div>
       </div>
@@ -751,7 +751,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <span class="label">액션별 기대 증분</span>
       <div style="height:240px;margin-top:12px;"><canvas id="lever-chart"></canvas></div>
       <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:var(--txt-500);line-height:1.7">
-        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">프로모션·캠페인</strong><br>넵다세일, 멤버스위크, 4주년, 블프. 25년에도 행사가 비행사 대비 +30~50% 매출 생성.</div>
+        <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">프로모션·캠페인</strong><br>넵다세일, 멤버스위크, 4주년, 블프. 25년에도 행사기간이 비행사 대비 +30~50% 매출.</div>
         <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">신제품</strong><br>카사바(7월, 런칭 30일 1억), 오메가3(9월). 25년 슈퍼볼·프로바이오 역할.</div>
         <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">구독·전환 구조</strong><br>구독 월매출 1.13→1.5억(+4.8억/연). 퀴즈+상품페이지 정기구독 버튼으로 전환율 개선.</div>
         <div style="flex:1;min-width:200px"><strong style="color:var(--txt-700)">네이버 하반기 수혜</strong><br>펫바우처+N배송 확대. 스스 볼륨 간접 확대.</div>
@@ -794,8 +794,8 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         </div>
       </div>
       <div class="insight" style="margin:16px 0 0">
-        <span class="tag">레퍼런스</span>
-        <p>Aesop처럼 적은 SKU에 깊은 스토리를 입히고, 교육이 프리미엄을 보호하는 구조. 미야옹철 IP로 전문가 포지션 자산 활용.</p>
+        <span class="tag">참고</span>
+        <p>Aesop처럼 적은 SKU에 깊은 스토리, 교육이 프리미엄을 보호하는 구조. 미야옹철 IP로 전문가 포지션 자산 활용.</p>
       </div>
     </div>
   </div>
@@ -804,8 +804,8 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
     <div class="card b-12" style="border-left:1.5px solid var(--accent);background:var(--accent-lt)">
       <span class="label" style="color:var(--accent)">결론 — 두 갈래</span>
       <p style="font-size:14px;color:var(--txt-700);line-height:1.9;margin-top:8px">
-        신제품 적기 런칭 → 매출 상승 리드 <strong>120억에 도전.</strong><br>
-        신제품 런칭 지연 → 매출 포기, <strong>이익 방어 모드로 공헌이익액 36억과 교차구독 증대</strong>
+        신제품 적기 런칭 → 매출 끌어올려 <strong>120억 도전.</strong><br>
+        신제품 런칭 지연 → 매출 포기, <strong>이익 지키기 방식으로 공헌이익액 36억 + 교차구독 증대.</strong>
       </p>
     </div>
   </div>
@@ -945,7 +945,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 
   <div class="bento" style="margin-bottom:16px;">
     <div class="card b-12" style="border-top:1.5px solid var(--navy)">
-      <span class="label" style="color:var(--navy)">"이익률 극대화" 모드 시, 브랜드 팀 액션</span>
+      <span class="label" style="color:var(--navy)">"이익률 극대화" 방식 시, 브랜드 팀 액션</span>
       <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">
         <div style="flex:1.4;min-width:320px">
           <table class="tbl">
@@ -963,12 +963,12 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         </div>
         <div style="flex:1;min-width:260px">
           <div class="warn-box" style="margin:0">
-            <span class="tag">이익률 극대화 모드 가동 시, 기회비용</span>
-            <p>구독·영양·공식몰 비중 상승 액션은 <strong>성장 속도가 매우 느림</strong>(회귀 고객 풀 소진 + 새 고객 1명 데려오는 광고비 발생). 이익률을 올리는 건 <strong>매출 총량 성장 둔화를 감수 = 지금의 이익액 성장을 일부 반납해야만 함</strong></p>
+            <span class="tag">이익률 극대화 방식 가동 시, 기회비용</span>
+            <p>구독·영양·공식몰 비중 상승 액션은 <strong>성장 속도가 매우 느림</strong>(돌아오는 고객층 소진 + 신규 고객 1명당 광고비 발생). 이익률 올리려면 <strong>매출 총량 성장 둔화 감수 = 지금의 이익액 성장 일부 반납</strong>.</p>
           </div>
           <div class="insight" style="margin:12px 0 0">
             <span class="tag">기본 스탠스</span>
-            <p><strong>공헌이익률 30%를 마지노선</strong>, 진짜 목표는 <strong>이익액 36억</strong>. 공헌이익액 35%는 '매출 정체 시' 택하는 <strong>불가피한 구조 전환 옵션.</strong></p>
+            <p><strong>공헌이익률 30%가 최저선</strong>, 진짜 목표는 <strong>이익액 36억</strong>. 공헌이익률 35%는 '매출 정체 시' 택하는 <strong>불가피한 구조 전환 옵션.</strong></p>
           </div>
         </div>
       </div>
@@ -990,7 +990,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       </table>
       <div class="insight" style="margin:14px 0 0">
         <span class="tag">OGK와의 관계</span>
-        <p>모든 실행은 기존 OGK Gate(공헌이익률 30% · 구독 · 해지율 · 캠페인)에 연결된다. <strong>이 마진 엔진 전략은 OGK의 하위 실행 엔진</strong>으로 쓴다.</p>
+        <p>모든 실행은 기존 OGK Gate(공헌이익률 30% · 구독 · 해지율 · 캠페인)와 연결. <strong>이 마진 엔진 전략은 OGK의 하위 실행 엔진</strong>.</p>
       </div>
     </div>
   </div>
@@ -1020,20 +1020,20 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
           <tr>
             <td><strong>(신규) 교차구독</strong></td>
             <td>—</td>
-            <td class="hl">영양 매출 비중 26%→28%→30%</td>
+            <td class="hl">구독 내 영양 매출 비중 26%→28%→30%</td>
             <td>매출과 공헌이익률을 <strong>동시에</strong> 올리는 유일한 레버. 공급과 무관하게 지금 실행 가능</td>
           </tr>
           <tr>
             <td><strong>매출</strong></td>
             <td>절대액 120억 (고정)</td>
-            <td class="hl">신제품이 제때 들어오는지 조건부 + 판매율</td>
-            <td>120억은 하반기 신제품이 제때 들어오느냐가 쥐고 있다. 못 판 것과 팔 게 없던 것을 분리</td>
+            <td class="hl">신제품 적기 입고 조건부 + 판매율</td>
+            <td>120억은 하반기 신제품 입고 시점이 결정. 못 판 것과 팔 게 없던 것 분리</td>
           </tr>
           <tr>
             <td><strong>공헌이익</strong></td>
             <td>이익률 30% (방어선)</td>
             <td class="hl">이익액 36억(목표) + 30%(방어선)</td>
-            <td>이익률만 보면 매출을 줄여도 오른다. 진짜 목표는 <strong>이익액</strong>, 30%는 마지노선</td>
+            <td>이익률만 보면 매출 줄여도 오름. 진짜 목표는 <strong>이익액</strong>, 30%는 최저선</td>
           </tr>
           <tr>
             <td>광고비/매출 · 브랜드 캠페인</td>
@@ -1062,13 +1062,13 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         <strong>현재(5월):</strong> 이익률 31.4% · 공식몰 비중 약 51% (5월 할인 이벤트 일회성, 기준선 ~37%)
       </div>
       <div style="margin-top:10px;padding:10px 12px;background:var(--accent-lt);border-radius:8px;font-size:12px;color:var(--txt-700)">
-        <strong style="color:var(--accent)">연 목표 이익액 36억</strong> (=30%×120억)<br><span style="font-size:10px;color:var(--txt-500)">이익률 30% = 마지노선 · 이익액 = 진짜 목표</span>
+        <strong style="color:var(--accent)">연 목표 이익액 36억</strong> (=30%×120억)<br><span style="font-size:10px;color:var(--txt-500)">이익률 30% = 최저선 · 이익액 = 진짜 목표</span>
       </div>
     </div>
     <!-- Gate 2 : 교차구독 (신규) -->
     <div class="card b-3 gate-card g2">
       <span class="gate-no">Gate 02 · 신규</span>
-      <h3>영양 매출 비중</h3>
+      <h3>구독 내 영양 매출 비중</h3>
       <p style="font-size:12px;color:var(--txt-500);margin:8px 0 14px;font-style:italic">"모래 구독자가 영양으로 넘어오고 있나"</p>
       <table class="tbl" style="font-size:12px;">
         <thead><tr><th>분기</th><th>모래→영양</th></tr></thead>
@@ -1079,7 +1079,8 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         </tbody>
       </table>
       <div style="margin-top:12px;padding:10px 12px;background:var(--bg-alt);border-radius:8px;font-size:12px;color:var(--txt-700)">
-        <strong>현재:</strong> 26%<br><span style="font-size:10px;color:var(--txt-300)">모래단독 2,033명 = 미개척 풀 · 영양마진 55%</span>
+        <strong>현재:</strong> 26%<br><span style="font-size:10px;color:var(--txt-300)">모래단독 2,033명 = 미개척 고객층 · 영양마진 55%</span>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:10px;color:var(--txt-500)">※ 게이트 기준은 <strong>구독 매출 안에서</strong>의 영양 비중. 일반판매(비구독) 영양 비중은 별도 KPI로 관리(보조지표).</div>
       </div>
     </div>
     <!-- Gate 3 : 광고비 (유지) -->
@@ -1121,36 +1122,36 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
   <!-- 매출 = 신제품이 제때 들어오는지 조건부 -->
   <div class="bento" style="margin-bottom:16px;">
     <div class="card b-12" style="border-left:1.5px solid var(--navy);background:var(--navy-lt)">
-      <span class="label" style="color:var(--navy)">매출 게이트는 "신제품이 제때 들어오는지"가 결정한다 — 운영 방식 전환 신호</span>
+      <span class="label" style="color:var(--navy)">매출 게이트 = "신제품 적기 입고 여부"가 결정 — 운영 방식 전환 신호</span>
       <p style="font-size:13px;color:var(--txt-700);line-height:1.85;margin-top:10px">
-        120억은 우리가 게을러서가 아니라 <strong>하반기 증분의 큰 축(카사바·오메가3·유산균)이 제때 들어오느냐</strong>에 달렸다. 그래서 매출은 절대액 대신 아래 두 신호로 본다 — 같은 상황이면 누가 봐도 같은 판정.
+        120억은 우리가 게을러서가 아니라 <strong>하반기 증분의 큰 축(카사바·오메가3·유산균) 적기 입고</strong>에 달림. 그래서 매출은 절대액 대신 아래 두 신호로 봄 — 같은 상황이면 누가 봐도 같은 판정.
       </p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px">
         <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
           <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px">성장 방식 유지</div>
-          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">카사바(7월)·오메가3(9월)·유산균 리뉴얼이 각 <strong>출시 30일 전에 입고·재고 확정</strong> → 매출 풀스윙. 평가 기준은 절대액 페이스.</p>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">카사바(7월)·오메가3(9월)·유산균 리뉴얼이 각 <strong>출시 30일 전에 입고·재고 확정</strong> → 매출 끝까지 밀기. 평가는 절대액 진척도 기준.</p>
         </div>
         <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
           <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:6px">이익 지키기 방식 자동 전환</div>
-          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">출시 30일 전에 입고 미확정 → 그 분기 1차 게이트를 <strong>공헌이익액 + 교차구독</strong>으로 자동 전환. 매출은 "준비된 물량을 얼마나 팔았는지(판매율)"로 평가.</p>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">출시 30일 전 입고 미확정 → 해당 분기 1차 게이트 <strong>공헌이익액 + 교차구독</strong>으로 자동 전환. 매출은 "준비된 물량 대비 판매율"로 평가.</p>
         </div>
       </div>
       <div class="insight" style="margin:14px 0 0">
         <span class="tag">왜 이렇게</span>
-        <p>"안 판 것(우리 책임)"과 "팔 게 없던 것(공급 책임)"을 분리해야, 공급 사고가 우리 성과를 오염시키지 않는다. 모래·퍼펙트·프로바이오틱스는 공급 가능 → 교차구독은 어느 방식에서도 계속 민다.</p>
+        <p>"안 판 것(우리 책임)"과 "팔 게 없던 것(공급 책임)"을 분리해야 공급 사고가 우리 성과 오염 안 됨. 모래·퍼펙트·프로바이오틱스는 공급 가능 → 교차구독은 어느 방식에서도 계속 진행.</p>
       </div>
     </div>
   </div>
 
   <div class="bento" style="margin-bottom:16px;">
     <div class="card b-12">
-      <span class="label">브랜드 가드레일 — 전 분기 적용</span>
-      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 4px">Gate 4(브랜드 캠페인)가 YES로 인정받기 위한 조건. 캠페인 형태와 무관하게 전 분기 콘텐츠에 공통 적용.</p>
+      <span class="label">브랜드 원칙 — 전 분기 적용</span>
+      <p style="font-size:12px;color:var(--txt-500);margin:8px 0 4px">Gate 4(브랜드 캠페인) YES 인정 조건. 캠페인 형태와 무관하게 전 분기 콘텐츠 공통 적용.</p>
       <div class="guard-list">
         <div class="guard-item ok"><strong>브랜드 톤 유지</strong> — 따뜻하지만 전문적, "수의사의 처방전" 결</div>
         <div class="guard-item ok"><strong>미야옹철 전문가 포지션 보호</strong> — IP 훼손 금지</div>
         <div class="guard-item no"><strong>공포 소구 / 긴급성 과장</strong> 메시지 금지</div>
-        <div class="guard-item no"><strong>할인율 전면 노출</strong>이 메인 훅인 상시 광고 콘텐츠 비중 50% 이상 금지</div>
+        <div class="guard-item no"><strong>할인율 전면 노출</strong> 메인인 상시 광고 콘텐츠 50% 이상 금지</div>
       </div>
     </div>
   </div>
@@ -1172,7 +1173,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       </table>
       <div class="insight" style="margin:14px 0 0">
         <span class="tag">읽는 법</span>
-        <p>광고비 1%p 절감과 구독 전환율 1%p 상승이 <strong>거의 같은 무게</strong>다. 퍼포먼스와 CRM이 동시에 작동해야 갭이 닫힌다. 어느 한쪽만으로는 부족하다.</p>
+        <p>광고비 1%p 절감 = 구독 전환율 1%p 상승, <strong>같은 무게</strong>. 퍼포먼스와 CRM이 동시 작동해야 차이가 닫힘. 한쪽만으론 부족.</p>
       </div>
     </div>
     <div class="card b-5" style="border:1px solid var(--burgundy);background:var(--burgundy-lt)">
@@ -1188,9 +1189,9 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
             <div style="font-size:11px;color:var(--txt-500);margin-top:4px">스스 → 공식몰 유입</div>
           </div>
         </div>
-        <p style="font-size:13px;color:var(--txt-700);line-height:1.8">공식몰 D2C 광고비가 스스 매출을 키우는 구조. 역유출이 해소되지 않으면 공식몰 비중 40% 달성은 구조적으로 어렵다.</p>
-        <p style="font-size:12px;color:var(--txt-500);margin-top:12px;line-height:1.8"><strong>대응:</strong> 번들 공식몰 전용 + 퀴즈 경험 차별화 + <strong>역유출 고객 구매 패턴 분석(5월까지)</strong> → 번들 전략 조정 근거로 활용.</p>
-        <p style="font-size:12px;color:var(--txt-500);margin-top:8px"><strong>모니터링:</strong> 월간 역유출률 추적.</p>
+        <p style="font-size:13px;color:var(--txt-700);line-height:1.8">공식몰 자사몰 광고비가 스스 매출 키우는 구조. 역유출 해소 없으면 공식몰 비중 40% 달성 구조적으로 어려움.</p>
+        <p style="font-size:12px;color:var(--txt-500);margin-top:12px;line-height:1.8"><strong>대응:</strong> 번들 공식몰 전용 + 퀴즈 경험 차별화 + <strong>역유출 고객 구매 패턴 분석(5월까지)</strong> → 번들 전략 조정 근거.</p>
+        <p style="font-size:12px;color:var(--txt-500);margin-top:8px"><strong>추적:</strong> 월간 역유출률 모니터.</p>
       </div>
     </div>
   </div>
@@ -1209,26 +1210,26 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
     <div class="card b-4" style="border-top:1.5px solid var(--teal)">
       <span class="gate-no" style="color:var(--teal)">지향 · 우리가 향하는 곳</span>
       <div class="guard-list" style="margin-top:12px">
-        <div class="guard-item ok"><strong>이익률은 지키고(30%), 이익액 36억을 만든다.</strong> 매출 절대치에 목매지 않는다.</div>
-        <div class="guard-item ok"><strong>"수 → 질" 전환.</strong> 구독자 수는 채웠다. 이제 한 명을 더 깊게 — 교차구독.</div>
-        <div class="guard-item ok"><strong>공급이 막혀도 마진은 우리가 만든다.</strong> 고마진 믹스(영양·구독·공식몰)로 체력을 지킨다.</div>
+        <div class="guard-item ok"><strong>이익률 지키고(30%) 이익액 36억 달성.</strong> 매출 절대치에 목매지 않음.</div>
+        <div class="guard-item ok"><strong>"수 → 질" 전환.</strong> 구독자 수는 채움. 이제 한 명을 더 깊게 — 교차구독.</div>
+        <div class="guard-item ok"><strong>공급이 막혀도 마진은 우리가 만듦.</strong> 고마진 조합(영양·구독·공식몰)로 체력 유지.</div>
       </div>
     </div>
     <div class="card b-4" style="border-top:1.5px solid var(--amber)">
       <span class="gate-no" style="color:var(--amber)">주의 · 우리가 조심할 것</span>
       <div class="guard-list" style="margin-top:12px">
-        <div class="guard-item no"><strong>공급이 최대 변수다.</strong> 품절·신제품 지연은 우리 잘못이 아니지만, 핑계로 멈추지도 않는다.</div>
-        <div class="guard-item no"><strong>못 판 것 ≠ 팔 게 없던 것.</strong> 정직하게 구분한다. 서로 탓하지 않기 위한 규칙이다.</div>
-        <div class="guard-item no"><strong>첫구매에 무리한 광고를 쏟지 않는다.</strong> 살 게 모래뿐인 카탈로그로 신규를 끌면 저마진·낮은 만족으로 샌다.</div>
-        <div class="guard-item no"><strong>가설은 가설일 뿐.</strong> 숫자로 검증하고 움직인다. 안 되는 가설은 미련 없이 바꾼다.</div>
+        <div class="guard-item no"><strong>공급이 최대 변수.</strong> 품절·신제품 지연은 우리 잘못 아니지만, 핑계로 멈추지도 않음.</div>
+        <div class="guard-item no"><strong>못 판 것 ≠ 팔 게 없던 것.</strong> 정직하게 구분 — 서로 탓 안 하기 위한 규칙.</div>
+        <div class="guard-item no"><strong>첫구매에 무리한 광고 X.</strong> 살 게 모래뿐인 카탈로그로 신규 끌면 저마진·낮은 만족으로 샘.</div>
+        <div class="guard-item no"><strong>가설은 가설일 뿐.</strong> 숫자로 검증하고 움직임. 안 되는 가설은 미련 없이 교체.</div>
       </div>
     </div>
     <div class="card b-4" style="border-top:1.5px solid var(--accent)">
       <span class="gate-no" style="color:var(--accent)">약속 · 같이 책임지는 법</span>
       <div class="guard-list" style="margin-top:12px">
-        <div class="guard-item ok"><strong>게이트는 줄세우기가 아니다.</strong> YES/NO는 회사의 상태지 개인의 점수가 아니다.</div>
-        <div class="guard-item ok"><strong>결정은 함께, 책임도 함께.</strong> 한 파트의 미달을 다른 파트가 메운다.</div>
-        <div class="guard-item ok"><strong>같은 결과엔 같은 판정.</strong> 주관 해석을 빼서, 누구도 억울하지 않게 한다.</div>
+        <div class="guard-item ok"><strong>게이트는 줄세우기 X.</strong> YES/NO는 회사의 상태이지 개인의 점수 아님.</div>
+        <div class="guard-item ok"><strong>결정도 함께, 책임도 함께.</strong> 한 파트의 미달은 다른 파트가 메움.</div>
+        <div class="guard-item ok"><strong>같은 결과엔 같은 판정.</strong> 주관 해석 배제 — 누구도 억울하지 않게.</div>
       </div>
     </div>
   </div>
@@ -1255,19 +1256,19 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <p style="font-size:20px;font-weight:800;color:var(--accent);margin:8px 0">4~6월</p>
       <div class="big-num" style="font-size:32px">27.63<span class="unit-sm">억 원</span></div>
       <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 9.2억 평균</p>
-      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품 적기 입고 전제. 늦으면 이익 지키기로 전환.</p>
       <div class="div"></div>
-      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>상반기는 구독 구조를 만드는 기간이었다.</strong> 구독 해지율을 크게 낮췄고(14% → 5%대), 구독자 수 목표도 6월에 채운다. 다만 4·5월 매출은 물건 부족으로 목표에 못 미쳤다.</p>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>상반기는 구독 구조를 짠 기간.</strong> 구독 해지율 크게 낮춤(14% → 5%대), 구독자 수 목표는 6월에 채움. 다만 4·5월 매출은 물건 부족으로 목표 미달.</p>
       <div style="margin-top:12px;padding:12px;background:var(--accent-lt);border-radius:8px;border:1px solid var(--accent)">
         <span style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase">1단계 Gate</span>
         <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
           <li>• 이익률 30% + 공식몰 비중 37%</li>
-          <li>• 영양 매출 비중 26% (기준점)</li>
+          <li>• 구독 내 영양 매출 비중 26% (기준점)</li>
           <li>• 광고비/매출 12%</li>
           <li>• 브랜드 캠페인 1회</li>
         </ul>
       </div>
-      <p style="font-size:11px;color:var(--txt-300);margin-top:8px;line-height:1.6">구독자 수 목표(3,430명)는 6월 안에 달성 → 종료. 이제는 '수'가 아니라 교차구독(질)을 본다.</p>
+      <p style="font-size:11px;color:var(--txt-300);margin-top:8px;line-height:1.6">구독자 수 목표(3,430명)는 6월 내 달성 → 종료. 이제는 '수'가 아니라 교차구독(질)이 기준.</p>
     </div>
     <div class="card b-4 phase-card">
       <div class="phase-tag p2">PHASE 2 · 2단계</div>
@@ -1275,14 +1276,14 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <p style="font-size:20px;font-weight:800;color:var(--navy);margin:8px 0">7~9월</p>
       <div class="big-num" style="font-size:32px">35.64<span class="unit-sm">억 원</span></div>
       <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 11.9억 평균</p>
-      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품 적기 입고 전제. 늦으면 이익 지키기로 전환.</p>
       <div class="div"></div>
-      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>신제품 + 구독 엔진 점화.</strong> 카사바(7/21~27), 유산균 리뉴얼(8/11~17), 오메가3(9/10~16) 런칭. 구독 영양 비중 30%. 브랜드 캠페인 누적 2회.</p>
+      <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>신제품 + 구독 엔진 점화.</strong> 카사바(7/21~27), 유산균 리뉴얼(8/11~17), 오메가3(9/10~16) 런칭. 구독 내 영양 비중 28%. 브랜드 캠페인 누적 2회.</p>
       <div style="margin-top:12px;padding:12px;background:var(--navy-lt);border-radius:8px;border:1px solid var(--navy)">
         <span style="font-size:10px;font-weight:700;color:var(--navy);letter-spacing:1px;text-transform:uppercase">2단계 Gate</span>
         <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
           <li>• 이익률 30% + 공식몰 비중 38%</li>
-          <li>• 영양 매출 비중 28%</li>
+          <li>• 구독 내 영양 매출 비중 28%</li>
           <li>• 광고비/매출 12%</li>
           <li>• 브랜드 캠페인 누적 2회</li>
         </ul>
@@ -1294,20 +1295,20 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <p style="font-size:20px;font-weight:800;color:var(--teal);margin:8px 0">10~12월</p>
       <div class="big-num" style="font-size:32px">33.22<span class="unit-sm">억 원</span></div>
       <p style="font-size:12px;color:var(--txt-500);margin:8px 0">월 11.1억 평균</p>
-      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품이 제때 들어온다는 전제. 늦으면 이익 지키기로 바꾼다.</p>
+      <p style="font-size:11px;color:var(--txt-300);margin:-2px 0 6px;line-height:1.6">이 매출은 신제품 적기 입고 전제. 늦으면 이익 지키기로 전환.</p>
       <div class="div"></div>
       <p style="font-size:13px;color:var(--txt-700);line-height:1.8"><strong>성수기 극대화.</strong> 4주년(10/12~18), 블프+식기(11월), 홀리데이 BRAND(12월·매출 기여↓). 매달 들어오는 구독 매출 1.5억. 브랜드 캠페인 3회 완료.</p>
       <div style="margin-top:12px;padding:12px;background:var(--teal-lt);border-radius:8px;border:1px solid var(--teal)">
         <span style="font-size:10px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase">3단계 Gate</span>
         <ul style="font-size:12px;color:var(--txt-700);list-style:none;margin-top:6px;line-height:1.7">
           <li>• 이익률 30% + 공식몰 비중 40%</li>
-          <li>• 영양 매출 비중 30%</li>
+          <li>• 구독 내 영양 매출 비중 30%</li>
           <li>• 광고비/매출 12%</li>
           <li>• 브랜드 캠페인 누적 3회</li>
         </ul>
       </div>
       <div style="margin-top:10px;padding:10px;background:var(--bg-alt);border-radius:8px;font-size:11px;color:var(--txt-500);line-height:1.7">
-        <strong>근거:</strong> 25년 하반기 월평균 8.44억(상반기 대비 +31%). 10~12월 평균 8.73억. YoY 28% 적용 시 ~11.2억/월.
+        <strong>근거:</strong> 25년 하반기 월평균 8.44억(상반기 대비 +31%). 10~12월 평균 8.73억. 작년 대비 +28% 적용 시 ~11.2억/월.
       </div>
     </div>
   </div>
@@ -1331,7 +1332,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <div class="timeline" style="margin-top:16px;">
         <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">7월</div><div class="tl-title">카사바 영양 신제품 출시(공장 입고 확정 시) + 교차구독 캠페인 시작</div><div class="tl-desc">모래만 구독하는 고객에게 "영양 첫 구독 혜택" 제안</div></div>
         <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">8월</div><div class="tl-title">유산균 리뉴얼 출시 + 세계 고양이의 날(8/8) 브랜드 캠페인 <span class="chip chip-b">BRANDING</span></div><div class="tl-desc">브랜드 캠페인 누적 2회 지점</div></div>
-        <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">9월</div><div class="tl-title">오메가3 영양 신제품 출시 + 가을 시즌 묶음(모래+영양) 구독 밀기</div><div class="tl-desc">묶음 구독으로 영양 매출 비중 28% 도달</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-mo">9월</div><div class="tl-title">오메가3 영양 신제품 출시 + 가을 시즌 묶음(모래+영양) 구독 밀기</div><div class="tl-desc">묶음 구독으로 구독 내 영양 매출 비중 28% 도달</div></div>
       </div>
     </div>
   </div>
@@ -1340,9 +1341,9 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
     <div class="card b-6">
       <span class="label">핵심 결정 사항</span>
       <div style="margin-top:12px;font-size:13px;color:var(--txt-700);line-height:2;">
-        <p>신제품은 <strong>출시 30일 전까지 공장 입고가 확정</strong>돼야 일정대로 간다. 안 되면 그 달은 매출 욕심 대신 <strong>이익 지키기 + 교차구독</strong>에 집중.</p>
+        <p>신제품은 <strong>출시 30일 전까지 공장 입고 확정</strong>이 일정 진행 조건. 안 되면 그 달은 매출 욕심 대신 <strong>이익 지키기 + 교차구독</strong> 집중.</p>
         <p>하반기 1순위 = <strong>교차구독</strong>(모래 구독자 → 영양 추가).</p>
-        <p>영양만 구독하는 고객에게는 <strong>모래를 권해 해지를 막는다.</strong></p>
+        <p>영양만 구독하는 고객에겐 <strong>모래 권유로 해지 방어.</strong></p>
       </div>
     </div>
     <div class="card b-6">
@@ -1350,11 +1351,11 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <div style="margin-top:16px;">
         <div style="display:flex;gap:12px;">
           <div style="flex:1;padding:16px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--accent);">
-            <h4 style="color:var(--accent)">트랙 A — 교차구독 늘리기 (유니·마틸다)</h4>
+            <h4 style="color:var(--accent)">트랙 A — 교차구독 확대 (유니·마틸다)</h4>
             <p style="font-size:12px;color:var(--txt-700);margin-top:8px;line-height:1.7">모래 구독자에게 영양 첫 구독 혜택<br>영양 신제품을 구독 상품으로 등록</p>
           </div>
           <div style="flex:1;padding:16px;background:var(--navy-lt);border-radius:10px;border:1px solid var(--navy);">
-            <h4 style="color:var(--navy)">트랙 B — 공식몰 비중 늘리기 (몰갱·브라운)</h4>
+            <h4 style="color:var(--navy)">트랙 B — 공식몰 비중 확대 (몰갱·브라운)</h4>
             <p style="font-size:12px;color:var(--txt-700);margin-top:8px;line-height:1.7">묶음 구독 신청을 쉽게<br>공식몰 광고 비중 확대</p>
           </div>
         </div>
@@ -1377,71 +1378,71 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <!-- 브라운 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">브라운 — 퍼포먼스 <span class="owner">광고비/매출 12% 유지 + 공식몰 매출 비중 늘리기</span></div>
+          <div class="acc-head-left">브라운 — 퍼포먼스 <span class="owner">광고비/매출 12% 유지 + 공식몰 매출 비중 확대</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 공식몰 광고 비중을 늘려 공식몰 매출 비중을 끌어올린다. 신제품 출시하는 달엔 광고를 집중하고, <strong>물건이 부족하거나 출시가 밀린 달엔 광고를 줄여 효율을 지킨다.</strong><br>
-          <strong>점검 신호:</strong> 광고비/매출 13%가 2주 이어지면 즉시 재배분.
+          <strong>7~9월:</strong> 공식몰 광고 비중 확대로 공식몰 매출 비중 견인. 신제품 출시월엔 광고 집중, <strong>물건 부족·출시 지연월엔 광고 축소로 효율 방어.</strong><br>
+          <strong>점검 신호:</strong> 광고비/매출 13% 2주 지속 → 즉시 재배분.
         </div></div>
       </div>
 
       <!-- 유니 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">유니 — CRM <span class="owner">영양 매출 비중 28%(3분기) + 구독 해지율 5% 이하</span></div>
+          <div class="acc-head-left">유니 — CRM <span class="owner">구독 내 영양 비중 28%(3분기) + 구독 해지율 5% 이하</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 핵심은 교차구독. 모래만 구독하는 2,033명에게 <strong>'영양 첫 구독 혜택' 메시지</strong>를 보낸다. 영양만 구독하는 685명에겐 모래를 권해 해지를 막는다.<br>
-          <strong>점검 신호:</strong> 구독 해지율 7%가 2개월 이어지면 긴급 조사.
+          <strong>7~9월:</strong> 핵심은 교차구독. 모래만 구독하는 2,033명에게 <strong>'영양 첫 구독 혜택' 메시지</strong> 발송. 영양만 구독하는 685명에겐 모래 권유로 해지 방어.<br>
+          <strong>점검 신호:</strong> 구독 해지율 7% 2개월 지속 → 긴급 조사.
         </div></div>
       </div>
 
       <!-- 노바·제인 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">노바·제인 — 콘텐츠 <span class="owner">교차구독·캠페인을 돕는 콘텐츠</span></div>
+          <div class="acc-head-left">노바·제인 — 콘텐츠 <span class="owner">교차구독·캠페인 뒷받침 콘텐츠</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> "영양제를 왜 같이 먹여야 하는지"를 알려주는 콘텐츠 3종. 신제품(카사바·오메가3) 소개. 세계 고양이의 날(8/8) 캠페인.<br>
-          <strong>점검 신호:</strong> 영상 조회 1만 미만이면 제목·썸네일 다시.
+          <strong>7~9월:</strong> "영양제를 왜 같이 먹여야 하는지" 콘텐츠 3종. 신제품(카사바·오메가3) 소개. 세계 고양이의 날(8/8) 캠페인.<br>
+          <strong>점검 신호:</strong> 영상 조회 1만 미만 → 제목·썸네일 재작업.
         </div></div>
       </div>
 
       <!-- 마틸다 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">마틸다 — MD <span class="owner">구독 안 영양 비중 30% + 신제품 입고 일정 점검</span></div>
+          <div class="acc-head-left">마틸다 — MD <span class="owner">구독 내 영양 비중 30% + 신제품 입고 일정 점검</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 영양 비중을 3분기 28%, 연말 30%로. 영양 신제품을 구독 상품으로 등록. <strong>매주 공장 입고 일정을 점검해, 출시가 밀릴 것 같으면 가장 먼저 알린다.</strong> 채널별 이익률 마지노선 가격 가이드 유지.<br>
-          <strong>점검 신호:</strong> 영양 비중 27% 미만이 3개월 이어지면 노출 전략 재검토.
+          <strong>7~9월:</strong> 구독 내 영양 비중 3분기 28%, 연말 30% 목표. 영양 신제품을 구독 상품으로 등록. <strong>매주 공장 입고 일정 점검, 출시 지연 조짐 시 1차 공유.</strong> 채널별 이익률 최저선 가격 가이드 유지.<br>
+          <strong>점검 신호:</strong> 영양 비중 27% 미만 3개월 지속 → 노출 전략 재검토.
         </div></div>
       </div>
 
       <!-- 몰갱 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">몰갱 — UX/UI <span class="owner">모래+영양 묶음 구독 신청을 쉽게</span></div>
+          <div class="acc-head-left">몰갱 — UX/UI <span class="owner">모래+영양 묶음 구독 신청 동선 단순화</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 상품페이지·구독 랜딩에서 <strong>모래와 영양을 한 번에 구독 신청</strong>할 수 있게 만든다. 공식몰 구독 화면을 더 쉽게.<br>
-          <strong>점검 신호:</strong> 묶음 구독 신청 화면 이탈이 크면 단계 줄이기.
+          <strong>7~9월:</strong> 상품페이지·구독 랜딩에서 <strong>모래+영양 한 번에 구독 신청</strong> 가능하게 구성. 공식몰 구독 화면 동선 단순화.<br>
+          <strong>점검 신호:</strong> 묶음 구독 신청 이탈률 크면 단계 축소.
         </div></div>
       </div>
 
       <!-- 니나 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">니나 — 디자인 <span class="owner">신제품·교차구독 비주얼</span></div>
+          <div class="acc-head-left">니나 — 디자인 <span class="owner">신제품·교차구독 시안</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 신제품(카사바·오메가3) 패키지와 런칭 페이지. 교차구독 혜택 배너. 세계 고양이의 날 캠페인 비주얼. "따뜻하지만 전문적인" 톤 유지.
+          <strong>7~9월:</strong> 신제품(카사바·오메가3) 패키지 + 런칭 페이지. 교차구독 혜택 배너. 세계 고양이의 날 캠페인 시안. "따뜻하지만 전문적인" 톤 유지.
         </div></div>
       </div>
 
@@ -1452,8 +1453,8 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
-          <strong>7~9월:</strong> 신제품·리뉴얼 관련 문의 응대 스크립트 준비. <strong>구독 해지 사유를 모니터링해, 영양 해지 신호를 일찍 잡아 유니·마틸다에 전달.</strong><br>
-          <strong>점검 신호:</strong> 특정 제품 불만이 주 20건 넘으면 긴급 전달.
+          <strong>7~9월:</strong> 신제품·리뉴얼 문의 응대 스크립트 준비. <strong>구독 해지 사유 추적, 영양 해지 신호 조기 포착 후 유니·마틸다 전달.</strong><br>
+          <strong>점검 신호:</strong> 특정 제품 불만 주 20건 초과 → 긴급 전달.
         </div></div>
       </div>
     </div>
@@ -1463,19 +1464,19 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 <!-- ═══ S8: 리스크 + OGK 센서 ═══ -->
 <section id="s8">
   <p class="section-eye">Section 08</p>
-  <h2 class="section-heading">리스크 레이더 + <em>OGK 센서</em></h2>
+  <h2 class="section-heading">리스크 한눈에 + <em>OGK 센서</em></h2>
 
   <div class="bento">
     <div class="card b-6">
       <span class="label">구조적 리스크</span>
       <div class="risk-grid" style="margin-top:12px;">
-        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>신제품·재고가 제때 안 들어온다(가장 큰 위험).</strong> 지금도 영양·간식 여러 개가 품절. 하반기 매출은 카사바·오메가3·유산균이 제때 들어오느냐에 달렸다.</div>
-        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>하반기 시즈널리티 의존.</strong> 갭의 40%가 10~12월에 집중. 성수기 부진 시 목표 미달.</div>
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>신제품·재고 입고 지연(최대 위험).</strong> 지금도 영양·간식 다수 품절. 하반기 매출은 카사바·오메가3·유산균 적기 입고에 좌우.</div>
+        <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>하반기 계절성 의존.</strong> 차이의 40%가 10~12월 집중. 성수기 부진 시 목표 미달.</div>
         <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>스스 수수료 재상승.</strong> 네이버 펫바우처 하반기 5% 추가 과금. 이익률 30% 방어선 위협.</div>
         <div class="risk-icon" style="color:var(--burgundy)">●</div><div class="risk-txt"><strong>공식몰→스스 역유출(4.67%).</strong> 공식몰 광고비가 스스 매출로 흐르는 구조. 원인 분석(5월) 전까지 번들·퀴즈로 방어.</div>
-        <div class="risk-icon" style="color:var(--amber)">●</div><div class="risk-txt"><strong>구독 해지 반등.</strong> 3월 5.3%는 아직 3개월 데이터. 모래 해지가 다시 올라가면 구독 매출 성장 둔화.</div>
+        <div class="risk-icon" style="color:var(--amber)">●</div><div class="risk-txt"><strong>구독 해지 반등.</strong> 3월 5.3%는 아직 3개월 데이터. 모래 해지 재상승 시 구독 매출 성장 둔화.</div>
         <div class="risk-icon" style="color:var(--amber)">●</div><div class="risk-txt"><strong>마틸다 1인 체제.</strong> 5월 번들+벌크+넵다 동시 집중. 우선순위 관리 필수.</div>
-        <div class="risk-icon" style="color:var(--teal)">●</div><div class="risk-txt"><strong>3월 이익률 30.8%.</strong> 교정이 작동한다는 실증. 유지만 하면 연간 30% 달성 가능.</div>
+        <div class="risk-icon" style="color:var(--teal)">●</div><div class="risk-txt"><strong>3월 이익률 30.8%.</strong> 교정 작동 실증. 유지 시 연간 30% 달성 가능.</div>
       </div>
     </div>
     <div class="card b-6">
@@ -1485,12 +1486,12 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         <tbody>
           <tr><td>신제품 공장 입고</td><td class="neg">출시 30일 전까지 입고 확정 안 됨</td><td>그 달 매출 목표를 내리고, <strong>이익 지키기 + 교차구독</strong>으로 전환</td></tr>
           <tr><td>광고비/매출</td><td class="neg">13% 2주 연속</td><td>즉시 채널별 재배분</td></tr>
-          <tr><td>해지 고객 수</td><td class="neg">전월 대비 +20%</td><td>세그먼트 분석 + 이탈 방어 CRM</td></tr>
+          <tr><td>해지 고객 수</td><td class="neg">전월 대비 +20%</td><td>고객군 분석 + 이탈 방어 CRM</td></tr>
           <tr><td>신규 구독 신청</td><td style="color:var(--amber)">전월 대비 -15% 2주</td><td>퀴즈·상품페이지·웰컴 점검</td></tr>
-          <tr><td>구독 1회 평균 결제액</td><td style="color:var(--amber)">3개월 연속 하락</td><td>구독 상품 구성 리뷰</td></tr>
-          <tr><td>캠페인 가드레일</td><td class="neg">공포소구·할인 전면 노출</td><td>전면 수정 / Gate 4 불인정</td></tr>
-          <tr><td>퀴즈 완료율</td><td style="color:var(--amber)">30% 미만</td><td>질문 수 축소 + UI 간소화</td></tr>
-          <tr><td>제품 불만 VOC</td><td class="neg">해지 사유 중 30% 초과</td><td>응대 가이드 업데이트 + 파트 전달</td></tr>
+          <tr><td>구독 1회 평균 결제액</td><td style="color:var(--amber)">3개월 연속 하락</td><td>구독 상품 구성 재검토</td></tr>
+          <tr><td>캠페인 원칙</td><td class="neg">공포소구·할인 전면 노출</td><td>전면 수정 / Gate 4 불인정</td></tr>
+          <tr><td>퀴즈 완료율</td><td style="color:var(--amber)">30% 미만</td><td>질문 수 축소 + UI 단순화</td></tr>
+          <tr><td>제품 불만 (고객 VOC)</td><td class="neg">해지 사유 중 30% 초과</td><td>응대 가이드 업데이트 + 파트 전달</td></tr>
         </tbody>
       </table>
     </div>
@@ -1498,23 +1499,23 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 
   <div class="bento" style="margin-top:16px;">
     <div class="card b-12" style="border:1px solid var(--navy);background:var(--navy-lt);">
-      <span class="label" style="color:var(--navy)">운영 방식 두 가지 — 매달 1일에 정한다</span>
+      <span class="label" style="color:var(--navy)">운영 방식 두 가지 — 매달 1일 결정</span>
       <p style="font-size:13px;color:var(--txt-700);line-height:1.85;margin-top:10px">
-        매달 1일, <strong>"이번 달 팔 수 있는 물량이 충분한가"</strong>를 보고 둘 중 하나로 운영한다. 같은 상황이면 누가 봐도 같은 판단이 나오게 한다.
+        매달 1일 <strong>"이번 달 판매 가능 물량 충분 여부"</strong> 점검 후 둘 중 하나로 운영. 같은 상황이면 누가 봐도 같은 판단이 나오게 통일.
       </p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px">
         <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px">① 성장 방식 (팔 물건이 충분할 때)</div>
-          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">신제품이 제때 들어옴 → 매출을 끝까지 민다. 평가는 매출 목표 대비.</p>
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px">① 성장 방식 (판매 물량 충분)</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">신제품 적기 입고 → 매출 끝까지 밀기. 평가는 매출 목표 대비.</p>
         </div>
         <div style="padding:16px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:6px">② 이익 지키기 방식 (팔 물건이 부족할 때)</div>
-          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">품절·출시 지연 → 매출 욕심을 내려놓고, <strong>남는 돈(이익액 36억)과 교차구독</strong>을 지킨다. 매출은 "준비된 물량을 얼마나 팔았는지(판매율)"로 평가한다.</p>
+          <div style="font-size:13px;font-weight:700;color:var(--burgundy);margin-bottom:6px">② 이익 지키기 방식 (판매 물량 부족)</div>
+          <p style="font-size:12.5px;color:var(--txt-700);line-height:1.75">품절·출시 지연 → 매출 욕심 내려놓고 <strong>이익액 36억 + 교차구독</strong> 방어. 매출은 "준비된 물량 대비 판매율"로 평가.</p>
         </div>
       </div>
       <div class="insight" style="margin:14px 0 0">
         <span class="tag">왜 이렇게 나누나</span>
-        <p><strong>"안 판 것(우리 책임)"과 "팔 게 없던 것(공장·재고 책임)"을 섞지 않기 위해서다.</strong> 모래·퍼펙트(치킨/연어)·프로바이오틱스는 공급이 되니, 어느 방식이든 교차구독은 계속 민다.</p>
+        <p><strong>"안 판 것(우리 책임)"과 "팔 게 없던 것(공장·재고 책임)" 분리.</strong> 모래·퍼펙트(치킨/연어)·프로바이오틱스는 공급 가능 → 어느 방식이든 교차구독은 계속 진행.</p>
       </div>
     </div>
   </div>
@@ -1566,8 +1567,8 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
       <div style="margin-top:16px;font-size:13px;color:var(--txt-700);line-height:2;">
         <p><strong>주간:</strong> 매출 속도 + 광고비 비율<br><span style="font-size:11px;color:var(--txt-500)">(라플라스)</span></p>
         <p style="margin-top:12px"><strong>격주:</strong> 구독 해지율 + 전환율</p>
-        <p style="margin-top:12px"><strong>월간:</strong> Phase KPI + 수정 트리거 판정</p>
-        <p style="margin-top:12px"><strong>매달 1일:</strong> 이번 달 팔 수 있는 물량 점검 → 성장 방식 / 이익 지키기 방식 결정</p>
+        <p style="margin-top:12px"><strong>월간:</strong> Phase KPI + 수정 발동 조건 판정</p>
+        <p style="margin-top:12px"><strong>매달 1일:</strong> 판매 물량 점검 → 성장 방식 / 이익 지키기 방식 결정</p>
         <p style="margin-top:12px"><strong>Phase 전환점:</strong> 6월 말 리뷰</p>
       </div>
     </div>
@@ -1590,7 +1591,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         </div>
         <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
           <h4>구독자 전용 선체험</h4>
-          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">신제품 정식 출시 전 구독자 대상 선체험. "진료실 환자만 먼저 받는 처방". 구독 유지 인센티브 + UGC 확보.</p>
+          <p style="font-size:12px;color:var(--txt-500);margin-top:6px;line-height:1.7">신제품 정식 출시 전 구독자 대상 선체험. "진료실 환자만 먼저 받는 처방". 구독 유지 혜택 + UGC 확보.</p>
         </div>
         <div style="padding:18px;background:var(--accent-lt);border-radius:10px;border:1px solid var(--border)">
           <h4>1:1 고양이 건강 상담</h4>
@@ -1962,8 +1963,8 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       {key:'cm',  name:'공헌이익률', unit:'%', cmp:'gte', t:{Q2:30,Q3:30,Q4:30}},
       {key:'mall',name:'공식몰 비중', unit:'%', cmp:'gte', t:{Q2:37,Q3:38,Q4:40}},
     ]},
-    {id:'g2',label:'영양 매출 비중',metrics:[
-      {key:'nutri',name:'영양 매출 비중', unit:'%', cmp:'gte', t:{Q2:26,Q3:28,Q4:30}},
+    {id:'g2',label:'구독 내 영양 매출 비중',metrics:[
+      {key:'nutri',name:'구독 내 영양 매출 비중', unit:'%', cmp:'gte', t:{Q2:26,Q3:28,Q4:30}},
     ]},
     {id:'g3',label:'광고비/매출 비율',metrics:[
       {key:'ad',name:'광고비/매출', unit:'%', cmp:'lte', t:{Q2:12,Q3:12,Q4:12}},
