@@ -2168,7 +2168,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     try { localStorage.setItem(KEY,JSON.stringify(D)); } catch(e){}
     if(fbReady && fbRef){
       fbSuppressOnce = true; // 내 쓰기의 에코를 무시
-      fbRef.set(D).catch(e=>{ console.warn('Firebase 저장 실패:',e); setSyncBadge('err'); });
+      fbRef.set(D).catch(e=>{ console.warn('Firebase 저장 실패:',e); setSyncBadge(_isDenied(e)?'denied':'err'); });
       setSyncBadge('save');
     } else {
       setSyncBadge('offline');
@@ -2182,11 +2182,13 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       save:   ['저장 중…',      'var(--accent)'],
       err:    ['저장 실패',      'var(--burgundy)'],
       offline:['오프라인(로컬)','#888'],
+      denied:['저장 안 됨 — DB 규칙 확인','var(--burgundy)'],
       loading:['불러오는 중…',  '#888'],
     };
     const [t,c] = map[state]||map.loading;
     b.textContent = t; b.style.color = c;
   }
+  function _isDenied(e){ return !!(e && (e.code==='PERMISSION_DENIED' || /permission[_ ]?denied/i.test(String(e.message||e)))); }
   let D = loadLocal();  // 즉시 로컬 캐시로 초기화(오프라인 UX)
 
   function initFirebase(){
@@ -2211,7 +2213,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           fbRef.set(D).catch(()=>{});
         }
         setSyncBadge('sync');
-      }, err=>{ console.warn('Firebase 구독 실패:',err); setSyncBadge('offline'); });
+      }, err=>{ console.warn('Firebase 구독 실패:',err); setSyncBadge(_isDenied(err)?'denied':'offline'); });
     } catch(e){ console.warn('Firebase init 실패:',e); setSyncBadge('offline'); }
   }
 
