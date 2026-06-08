@@ -49,6 +49,13 @@ function toNum(v: unknown): number {
 function pad2(n: number | string): string {
   return String(n).padStart(2, "0");
 }
+// '35%' → 0.35, '0%' → 0, '0.35' → 0.35, 빈칸 → null(계산으로 폴백)
+function parsePct(v: unknown): number | null {
+  if (v == null || v === "" || v === "-") return null;
+  const n = toNum(v);
+  if (!Number.isFinite(n)) return null;
+  return n > 1 ? n / 100 : n;
+}
 function toDateStr(v: unknown): string | null {
   if (v == null || v === "") return null;
   if (v instanceof Date)
@@ -116,6 +123,14 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
   let qtyIdx = findCol(H, ["예상수량"]);
   if (qtyIdx < 0) qtyIdx = qtyCols.length >= 2 ? qtyCols[1] : (qtyCols[0] ?? -1);
   if (packIdx < 0) packIdx = qtyCols.length >= 2 ? qtyCols[0] : -1;
+  // 할인율 컬럼(프로모션/쿠폰 두 쌍 가능). 최종(쿠폰=마지막) 값을 입력값으로 사용.
+  const regDiscCols: number[] = [];
+  const conDiscCols: number[] = [];
+  H.forEach((cell, i) => {
+    const nn = norm(cell);
+    if (nn.includes("상시가할인율")) regDiscCols.push(i);
+    else if (nn.includes("소비자가할인율")) conDiscCols.push(i);
+  });
   const c = {
     code: findCol(H, ["코드", "프로모션코드", "캠페인코드"]),
     start: findCol(H, ["시작일", "시작"]),
@@ -137,6 +152,8 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     ad: findCol(H, ["광고비"]),
     contrib: findCol(H, ["공헌이익률"]) >= 0 ? findCol(H, ["공헌이익"]) : findCol(H, ["공헌이익"]),
     contribRate: findCol(H, ["공헌이익률"]),
+    discReg: regDiscCols.length ? regDiscCols[regDiscCols.length - 1] : -1,
+    discCon: conDiscCols.length ? conDiscCols[conDiscCols.length - 1] : -1,
   };
 
   const byCode = new Map<string, PlanGuideCampaign>();
@@ -151,8 +168,11 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     const promo = toNum(r[c.promo]);
     const coupon = c.coupon >= 0 ? toNum(r[c.coupon]) : 0;
     const set_price = coupon > 0 ? coupon : promo;
-    const dRegular = regular > 0 ? (regular - set_price) / regular : null;
-    const dConsumer = consumer > 0 ? (consumer - set_price) / consumer : null;
+    // 입력 할인율 우선, 비면 가격으로 계산
+    const regEntered = c.discReg >= 0 ? parsePct(r[c.discReg]) : null;
+    const conEntered = c.discCon >= 0 ? parsePct(r[c.discCon]) : null;
+    const dRegular = regEntered ?? (regular > 0 ? (regular - set_price) / regular : null);
+    const dConsumer = conEntered ?? (consumer > 0 ? (consumer - set_price) / consumer : null);
     const contribRate = c.contribRate >= 0 ? toNum(r[c.contribRate]) : 0;
 
     const packVal = c.pack >= 0 ? toNum(r[c.pack]) : 0;
