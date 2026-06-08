@@ -1283,8 +1283,9 @@ function PlanGuideImportCard() {
                 is_main: o.is_main,
                 sort: idx,
                 set_price: o.set_price,
-                consumer_total: o.consumer_price > 0 ? o.consumer_price * o.pack_count : null,
-                regular_total: o.regular_price > 0 ? o.regular_price * o.pack_count : null,
+                // 소비자가/상시가는 이미 번들(개입수 반영) 합계 → 그대로
+                consumer_total: o.consumer_price > 0 ? o.consumer_price : null,
+                regular_total: o.regular_price > 0 ? o.regular_price : null,
                 discount_rate_consumer: o.discount_consumer,
                 discount_rate_regular: o.discount_regular,
                 expected_revenue: o.target_revenue, // 폼 그대로
@@ -1307,7 +1308,8 @@ function PlanGuideImportCard() {
               product_id: prod.product_id,
               base_name: prod.base_name,
               sku_qty_per_option: o.pack_count,
-              unit_sale_price: o.set_price,
+              // set_price는 번들 합계 → SKU 단가로 환산
+              unit_sale_price: o.pack_count > 0 ? o.set_price / o.pack_count : o.set_price,
               sort: 0,
             });
             if (iErr) throw iErr;

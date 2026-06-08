@@ -53,10 +53,11 @@ function toDateStr(v: unknown): string | null {
   if (v == null || v === "") return null;
   if (v instanceof Date)
     return `${v.getFullYear()}-${pad2(v.getMonth() + 1)}-${pad2(v.getDate())}`;
-  const s = String(v).trim();
+  // 공백 제거 — '2026. 6. 14.'(점·공백 혼용)도 인식
+  const s = String(v).replace(/\s+/g, "").trim();
   const m = s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
   if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
-  const d = new Date(s);
+  const d = new Date(String(v).trim());
   return isNaN(d.getTime())
     ? null
     : `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -105,6 +106,16 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
       "플랜 가이드 헤더를 찾을 수 없습니다 (코드·상품명·수량·프로모션가 컬럼 필요). 표준 템플릿을 사용하세요.",
     );
   const H = rows[h];
+  // '수량'이 두 번 나오는 실제 양식: 첫 수량=개입수(번들 SKU 수), 둘째 수량=예상 판매수량.
+  // 명시 헤더(개입수/예상수량)가 있으면 우선.
+  const qtyCols: number[] = [];
+  H.forEach((cell, i) => {
+    if (norm(cell) === "수량") qtyCols.push(i);
+  });
+  let packIdx = findCol(H, ["개입수", "번들수량"]);
+  let qtyIdx = findCol(H, ["예상수량"]);
+  if (qtyIdx < 0) qtyIdx = qtyCols.length >= 2 ? qtyCols[1] : (qtyCols[0] ?? -1);
+  if (packIdx < 0) packIdx = qtyCols.length >= 2 ? qtyCols[0] : -1;
   const c = {
     code: findCol(H, ["코드", "프로모션코드", "캠페인코드"]),
     start: findCol(H, ["시작일", "시작"]),
@@ -112,7 +123,8 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     pcode: findCol(H, ["상품코드"]),
     icode: findCol(H, ["품목코드"]),
     name: findCol(H, ["상품명", "옵션명"]),
-    qty: findCol(H, ["예상수량", "수량"]),
+    qty: qtyIdx,
+    pack: packIdx,
     consumer: findCol(H, ["소비자가"]),
     cost: findCol(H, ["원가"]),
     regular: findCol(H, ["상시가"]),
@@ -143,11 +155,12 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     const dConsumer = consumer > 0 ? (consumer - set_price) / consumer : null;
     const contribRate = c.contribRate >= 0 ? toNum(r[c.contribRate]) : 0;
 
+    const packVal = c.pack >= 0 ? toNum(r[c.pack]) : 0;
     const opt: PlanGuideOption = {
       product_code: c.pcode >= 0 ? String(r[c.pcode] ?? "").trim() : "",
       item_code: c.icode >= 0 ? String(r[c.icode] ?? "").trim() : "",
       option_label: name,
-      pack_count: packFromName(name),
+      pack_count: packVal > 0 ? packVal : packFromName(name),
       expected_qty: toNum(r[c.qty]),
       consumer_price: consumer,
       cost: toNum(r[c.cost]),
