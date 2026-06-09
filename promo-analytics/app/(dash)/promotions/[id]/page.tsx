@@ -15,6 +15,7 @@ import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
 import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
+import SkuMatchPanel, { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -64,11 +65,14 @@ export default async function PromotionDetail({
   } | null;
 
   // 달성률 (S3): 확정 플랜 vs 실적 + 옵션 매핑용 distinct option_info
+  // + SKU 매칭 진단 (N4): 플랜·실적 한 표 (draft 도 포함) + 수동 매핑 목록
   const [
     { data: pvaSummary },
     { data: pvaRows },
     { data: pvaOptions },
     { data: optInfoRows },
+    { data: diagRows },
+    { data: skuMaps },
   ] = await Promise.all([
     supabase.rpc("plan_vs_actual_summary", { p_id: id }),
     supabase.rpc("plan_vs_actual", { p_id: id }),
@@ -78,6 +82,11 @@ export default async function PromotionDetail({
       .select("option_info")
       .eq("promotion_id", id)
       .not("option_info", "is", null),
+    supabase.rpc("sku_match_diagnostic", { p_id: id }),
+    supabase
+      .from("promotion_sku_mappings")
+      .select("plan_product_id, actual_product_id")
+      .eq("promotion_id", id),
   ]);
   const achSummary = (pvaSummary?.[0] as PlanVsActualSummary) ?? null;
   const achRows = (pvaRows as PlanVsActualRow[]) ?? [];
@@ -89,6 +98,8 @@ export default async function PromotionDetail({
         .filter((s) => s.length > 0),
     ),
   ].sort();
+  const diagnosticRows = (diagRows as DiagnosticRow[]) ?? [];
+  const skuMappings = (skuMaps as SkuMapping[]) ?? [];
 
   // 목적별 핵심 지표 (S5.4): 유효 가중치 × 측정·달성률·구매건수
   const [{ data: ewData }, { data: ocData }] = await Promise.all([
@@ -243,6 +254,15 @@ export default async function PromotionDetail({
         options={achOptions}
         optionInfos={optionInfos}
       />
+
+      {/* SKU 매칭 진단 (N4) — 플랜·실적 양쪽 SKU 한 표 + 수동 연동 */}
+      {(diagnosticRows.length > 0 || skuMappings.length > 0) && (
+        <SkuMatchPanel
+          promotionId={id}
+          rows={diagnosticRows}
+          mappings={skuMappings}
+        />
+      )}
 
       {/* 목적별 핵심 지표 (S5.4) */}
       <PurposeBlock rows={purposeRows} />
