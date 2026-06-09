@@ -101,7 +101,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <header className="mb-5">
-        <h1 className="text-xl font-semibold tracking-tight">매출 시뮬레이터</h1>
+        <h1 className="text-xl font-semibold tracking-tight">성과 시뮬레이터</h1>
         <p className="mt-1 text-sm text-neutral-500">
           조건을 움직이면 과거 사례 기반으로 <strong>상시 대비 예상 매출</strong>이 즉시 갱신됩니다.
         </p>

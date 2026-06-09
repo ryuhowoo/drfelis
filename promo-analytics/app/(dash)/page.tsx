@@ -188,35 +188,35 @@ export default async function Dashboard() {
       {/* 상단 바 */}
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-white card-soft">
+          <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-canvas card-soft">
             <span className="text-base font-bold leading-none">{now.getDate()}</span>
           </div>
           <div>
-            <div className="text-sm font-semibold">{dateChip}</div>
-            <div className="text-xs text-neutral-400">캠페인 {rows.length}건 분석 중</div>
+            <div className="text-sm font-semibold text-ink">{dateChip}</div>
+            <div className="text-xs text-ink-4">캠페인 {rows.length}건 분석 중</div>
           </div>
         </div>
         <Link
           href="/predict"
-          className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_-10px_var(--color-brand-500)] transition hover:bg-brand-600"
+          className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
         >
-          매출 시뮬레이터 →
+          성과 시뮬레이터 →
         </Link>
       </header>
 
       {/* AI 인사이트 */}
       {best?.summary && (
-        <section className="mb-5 rounded-[28px] bg-white p-6 card-soft">
-          <div className="flex items-center gap-2 text-xs font-semibold text-brand-600">
+        <section className="mb-5 rounded-[28px] bg-canvas p-6 card-soft">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.6px] text-brand-600">
             <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             AI MD 인사이트
           </div>
-          <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-neutral-700">
+          <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-ink-2">
             가장 효과적이었던 건{" "}
             <Link href={`/promotions/${best.id}`} className="font-semibold text-brand-600 hover:underline">
               {best.name}
             </Link>
-            {" "}— 기여 매출 <strong className="text-neutral-900">{won(best.summary.total_uplift)}</strong>
+            {" "}— 기여 매출 <strong className="text-ink">{won(best.summary.total_uplift)}</strong>
             {best.summary.halo_share != null && <>, 간접 비중 {pct(best.summary.halo_share)}</>}.
             {liftRatio != null && (
               <> 캠페인 기간엔 평소(상시 일평균)보다 <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.</>
@@ -246,12 +246,12 @@ export default async function Dashboard() {
             <div className="space-y-3">
               <AchStat label="매출 달성률 (가중)" v={wAchRevenue} primary />
               <AchStat label="공헌이익 달성률 (가중)" v={wAchContribution} />
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-ink-4">
                 확정 플랜 {withPlan.length}건 기준 · 예상매출 가중평균
               </p>
             </div>
           ) : (
-            <p className="py-6 text-sm text-neutral-400">
+            <p className="py-6 text-sm text-ink-4">
               확정 플랜 데이터 없음 — 캠페인 플랜을 확정하면 달성률이 집계됩니다.
             </p>
           )}
@@ -259,9 +259,9 @@ export default async function Dashboard() {
         <Card className="lg:col-span-2">
           <CardTitle>캠페인별 달성률 추세</CardTitle>
           <AchievementTrend data={achTrend} />
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="mt-1 text-xs text-ink-4">
             <span className="text-brand-600">●</span> 매출 달성률{" "}
-            <span className="ml-2 text-neutral-700">●</span> 공헌이익 달성률 · 점선 = 100%(계획 달성)
+            <span className="ml-2 text-ink-2">●</span> 공헌이익 달성률 · 점선 = 100%(계획 달성)
           </p>
         </Card>
       </div>
@@ -280,7 +280,7 @@ export default async function Dashboard() {
           <Card>
             <CardTitle>목적별 평균 적합도</CardTitle>
             <PurposeFitBars data={purposeFit} />
-            <p className="mt-2 text-xs text-neutral-400">
+            <p className="mt-2 text-xs text-ink-4">
               같은 목적 캠페인 간 상대 점수(0~100) · 가중치는 캠페인 편집에서 조정
             </p>
           </Card>
@@ -291,30 +291,32 @@ export default async function Dashboard() {
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardTitle>상시 대비 행사 일매출 (캠페인별)</CardTitle>
-          <p className="-mt-2 mb-3 text-xs text-neutral-400">
-            <span className="font-medium text-neutral-500">상시 일평균</span> = 캠페인 직전 8주의
+          <p className="-mt-2 mb-3 text-xs text-ink-4">
+            <span className="font-medium text-ink-3">상시 일평균</span> = 캠페인 직전 8주의
             비캠페인 일평균 매출 · <span className="font-medium text-brand-600">행사 일평균</span> = 캠페인 기간 매출 ÷ 운영일수
             <span className="block">※ 그 캠페인에 등장한 상품들만 합산한 값 (전 매장 합계 아님)</span>
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
-        <div className="flex flex-col justify-center rounded-[28px] bg-neutral-900 p-5 text-white card-soft">
-          <div className="text-xs text-neutral-400">평소 대비 행사 매출 (전 매장)</div>
-          <div className="mt-1 text-4xl font-bold text-brand-400">
+        <div className="flex flex-col justify-center rounded-[28px] bg-canvas p-5 card-soft">
+          <div className="text-[11px] font-bold uppercase tracking-[1.6px] text-ink-3">
+            평소 대비 행사 매출 (전 매장)
+          </div>
+          <div className="mt-2 text-4xl font-bold tabular-nums text-brand-500">
             {liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
           </div>
           <div className="mt-4 space-y-1.5 text-sm">
             <div className="flex justify-between">
-              <span className="text-neutral-400">상시 일평균</span>
-              <span className="tabular-nums text-white">{wonShort(totalBaselineDaily)}</span>
+              <span className="text-ink-3">상시 일평균</span>
+              <span className="tabular-nums text-ink">{wonShort(totalBaselineDaily)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-400">행사 일평균</span>
-              <span className="font-semibold tabular-nums text-brand-400">{wonShort(totalPromoDaily)}</span>
+              <span className="text-ink-3">행사 일평균</span>
+              <span className="font-semibold tabular-nums text-brand-600">{wonShort(totalPromoDaily)}</span>
             </div>
           </div>
           {overall && (
-            <div className="mt-3 text-[10px] text-neutral-500">
+            <div className="mt-3 text-[10px] text-ink-4">
               {overall.data_start} ~ {overall.data_end} · 비캠페인 {overall.non_promo_days}일 · 캠페인 {overall.promo_days}일
             </div>
           )}
@@ -328,8 +330,8 @@ export default async function Dashboard() {
             <CardTitle className="mb-0">월별 증분 추세</CardTitle>
             {trend != null && (
               <span
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  trend >= 0 ? "bg-brand-50 text-brand-600" : "bg-neutral-100 text-neutral-500"
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold surface-pressed-soft ${
+                  trend >= 0 ? "text-brand-600" : "text-ink-3"
                 }`}
               >
                 {trend >= 0 ? "▲" : "▼"} {pct(Math.abs(trend), 1)}
@@ -339,8 +341,8 @@ export default async function Dashboard() {
           <MonthlyArea data={monthly} />
         </Card>
 
-        <div className="rounded-[28px] bg-neutral-900 p-5 text-white card-soft">
-          <h2 className="mb-3 text-sm font-semibold text-neutral-300">전체 간접 매출 비중</h2>
+        <div className="rounded-[28px] bg-canvas p-5 card-soft">
+          <h2 className="mb-3 text-sm font-semibold text-ink-2">전체 간접 매출 비중</h2>
           <Donut pct={haloShare} label="기타 제품 동반구매 기여" />
         </div>
       </div>
@@ -354,16 +356,16 @@ export default async function Dashboard() {
         <Card className="lg:col-span-2">
           <div className="mb-2 flex items-center justify-between">
             <CardTitle className="mb-0">성과 랭킹</CardTitle>
-            <Link href="/library" className="text-xs text-neutral-400 hover:text-brand-600">
+            <Link href="/library" className="text-xs text-ink-4 hover:text-brand-600">
               전체 보기 →
             </Link>
           </div>
-          <ul className="divide-y divide-neutral-100">
+          <ul className="divide-y divide-[var(--color-line)]/60">
             {ranked.slice(0, 6).map((r, i) => (
               <li key={r.id} className="flex items-center gap-3 py-2.5">
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    i === 0 ? "bg-brand-500 text-white" : "bg-neutral-100 text-neutral-400"
+                    i === 0 ? "bg-brand-500 text-white" : "surface-pressed-soft text-ink-3"
                   }`}
                 >
                   {i + 1}
@@ -371,16 +373,16 @@ export default async function Dashboard() {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/promotions/${r.id}`}
-                    className="block truncate text-sm font-medium text-neutral-800 hover:text-brand-600"
+                    className="block truncate text-sm font-medium text-ink hover:text-brand-600"
                   >
                     {r.name}
                   </Link>
-                  <div className="flex gap-1.5 text-xs text-neutral-400">
+                  <div className="flex gap-1.5 text-xs text-ink-4">
                     <span>{r.start_date.slice(0, 7)}</span>
                     {r.promo_type && <span>· {r.promo_type}</span>}
                   </div>
                 </div>
-                <span className="shrink-0 text-sm font-bold tabular-nums text-neutral-900">
+                <span className="shrink-0 text-sm font-bold tabular-nums text-ink">
                   {wonShort(r.summary?.total_uplift)}
                 </span>
               </li>
@@ -421,15 +423,15 @@ function AchStat({
 }) {
   const color =
     v == null
-      ? "text-neutral-300"
+      ? "text-ink-4"
       : v >= 1
-        ? "text-green-600"
+        ? "text-brand-600"
         : v < 0.7
-          ? "text-red-500"
-          : "text-neutral-900";
+          ? "text-brand-700"
+          : "text-ink";
   return (
     <div>
-      <div className="text-xs text-neutral-400">{label}</div>
+      <div className="text-xs text-ink-4">{label}</div>
       <div className={`mt-0.5 font-bold tabular-nums ${primary ? "text-3xl" : "text-2xl"} ${color}`}>
         {v != null ? pct(v, 0) : "—"}
       </div>
@@ -453,36 +455,36 @@ function Kpi({
   return (
     <div
       className={`rounded-[24px] p-4 sm:p-5 ${
-        brand ? "bg-brand-500 text-white" : "bg-white card-soft"
+        brand ? "bg-brand-500 text-white" : "bg-canvas card-soft"
       }`}
     >
-      <div className={`text-xs ${brand ? "text-brand-100" : "text-neutral-400"}`}>{label}</div>
+      <div className={`text-[11px] font-bold uppercase tracking-[1.4px] ${brand ? "text-brand-100" : "text-ink-3"}`}>{label}</div>
       <div className="mt-2 break-words text-lg font-bold tracking-tight tabular-nums sm:text-2xl">
         <span className={full ? "sm:hidden" : ""}>{value}</span>
         {full && <span className="hidden sm:inline">{full}</span>}
       </div>
-      {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-neutral-400"}`}>{sub}</div>}
+      {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-ink-4"}`}>{sub}</div>}
     </div>
   );
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-[28px] bg-white p-5 card-soft ${className}`}>{children}</div>;
+  return <div className={`rounded-[28px] bg-canvas p-5 card-soft ${className}`}>{children}</div>;
 }
 
 function CardTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <h2 className={`mb-3 text-sm font-semibold text-neutral-700 ${className}`}>{children}</h2>;
+  return <h2 className={`mb-3 text-sm font-semibold text-ink-2 ${className}`}>{children}</h2>;
 }
 
 function EmptyState() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto mt-6 max-w-lg rounded-[28px] bg-white p-8 text-center card-soft">
+      <div className="mx-auto mt-6 max-w-lg rounded-[28px] bg-canvas p-8 text-center card-soft">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-xl text-white">
           ✦
         </div>
-        <p className="text-base font-semibold text-neutral-800">아직 데이터가 없습니다.</p>
-        <p className="mx-auto mt-1 max-w-md text-sm text-neutral-500">
+        <p className="text-base font-semibold text-ink">아직 데이터가 없습니다.</p>
+        <p className="mx-auto mt-1 max-w-md text-sm text-ink-3">
           첨부해주신 마스터·일별 매출·캠페인 데이터를 버튼 한 번으로 적재할 수 있어요.
         </p>
         <Link

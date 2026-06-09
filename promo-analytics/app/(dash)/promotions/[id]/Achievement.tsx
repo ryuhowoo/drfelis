@@ -120,7 +120,11 @@ export default function Achievement({
 
       {/* 옵션 단위 보조 */}
       <div className="mt-4">
-        <h3 className="mb-2 text-xs font-semibold text-neutral-500">옵션 단위 (보조)</h3>
+        <h3 className="mb-1 text-xs font-semibold text-neutral-500">옵션 단위 (보조)</h3>
+        <p className="mb-2 text-[11px] text-neutral-400">
+          SKU 단위 매칭은 품목 코드 기준 자동 — 위 표에 반영됩니다. 옵션 단위는 옵션 라벨↔실적 옵션정보 부분일치로
+          기본 매핑되며, 빗나간 옵션만 수동으로 보정하세요.
+        </p>
         <div className="space-y-2">
           {options.map((o) => (
             <OptionRow
