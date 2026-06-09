@@ -16,6 +16,7 @@ import Notes from "./Notes";
 import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import SkuMatchPanel, { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
+import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,12 @@ export default async function PromotionDetail({
   const summary = (sData?.[0] as PromotionSummary) ?? null;
   const notes = (nData as PromotionNote[]) ?? [];
 
-  // 현재 가격 가이드(플랜) 요약 (S2)
+  // 현재 가격 가이드(플랜) 요약 (S2) + 비교 대상 실적 캠페인 링크 (N4.3)
   const { data: planRow } = await supabase
     .from("campaign_plans")
-    .select("id, version, status, expected_revenue_total, expected_contribution_total")
+    .select(
+      "id, version, status, expected_revenue_total, expected_contribution_total, actual_promotion_id",
+    )
     .eq("promotion_id", id)
     .eq("is_current", true)
     .maybeSingle();
@@ -62,7 +65,14 @@ export default async function PromotionDetail({
     status: string;
     expected_revenue_total: number | null;
     expected_contribution_total: number | null;
+    actual_promotion_id: string | null;
   } | null;
+
+  // 비교 대상 후보 (실적 있는 모든 캠페인)
+  const { data: actualsCandidates } = await supabase.rpc(
+    "campaigns_with_actuals",
+  );
+  const candidates = (actualsCandidates as ActualsCandidate[]) ?? [];
 
   // 달성률 (S3): 확정 플랜 vs 실적 + 옵션 매핑용 distinct option_info
   // + SKU 매칭 진단 (N4): 플랜·실적 한 표 (draft 도 포함) + 수동 매핑 목록
@@ -245,6 +255,15 @@ export default async function PromotionDetail({
           </Link>
         </div>
       </div>
+
+      {/* 비교 대상 실적 캠페인 (N4.3) — 플랜이 있을 때만 */}
+      {plan && (
+        <ActualsLink
+          promotionId={id}
+          currentLinkId={plan.actual_promotion_id}
+          candidates={candidates}
+        />
+      )}
 
       {/* 달성률 (S3) */}
       <Achievement
