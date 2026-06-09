@@ -31,11 +31,17 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={`flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium transition ${
               active
-                ? "bg-brand-500 text-white shadow-[0_8px_20px_-8px_var(--color-brand-500)]"
-                : "text-neutral-500 hover:bg-white hover:text-neutral-900"
+                ? "surface-pressed text-ink"
+                : "text-ink-3 hover:text-ink"
             }`}
           >
-            <svg className="h-[18px] w-[18px] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+            <svg
+              className={`h-[18px] w-[18px] shrink-0 ${active ? "text-brand-500" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.8}
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d={n.icon} />
             </svg>
             {n.label}
@@ -49,12 +55,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-ink text-sm font-bold text-white">
+      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-canvas text-sm font-bold text-brand-600 card-soft">
         P
       </span>
       <span className="leading-tight">
-        <span className="block text-[15px] font-bold tracking-tight">캠페인 애널리틱스</span>
-        <span className="block text-[11px] text-neutral-400">드르펠리스 MD</span>
+        <span className="block text-[15px] font-bold tracking-tight text-ink">캠페인 애널리틱스</span>
+        <span className="block text-[11px] text-ink-4">드르펠리스 MD</span>
       </span>
     </Link>
   );
@@ -63,10 +69,10 @@ function Brand() {
 function UserFooter({ email }: { email?: string }) {
   return (
     <div className="px-5 py-4">
-      <div className="rounded-2xl bg-white/70 px-3 py-2.5">
-        <div className="truncate text-xs font-medium text-neutral-600">{email}</div>
+      <div className="rounded-2xl px-3 py-2.5 surface-pressed-soft">
+        <div className="truncate text-xs font-medium text-ink-2">{email}</div>
         <form action="/auth/signout" method="post">
-          <button className="mt-0.5 text-xs text-neutral-400 hover:text-brand-600">
+          <button className="mt-0.5 text-xs text-ink-4 hover:text-brand-600">
             로그아웃
           </button>
         </form>
@@ -98,12 +104,12 @@ export default function AppShell({
       </aside>
 
       {/* 모바일 상단바 */}
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-canvas/80 px-4 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-canvas/85 px-4 backdrop-blur md:hidden">
         <Brand />
         <button
           onClick={() => setOpen(true)}
           aria-label="메뉴 열기"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-neutral-700 card-soft"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-canvas text-ink-2 card-soft"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -115,13 +121,13 @@ export default function AppShell({
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-canvas py-4 shadow-xl">
+          <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-canvas py-4 card-soft-h">
             <div className="flex items-center justify-between px-5 py-4">
               <Brand />
               <button
                 onClick={() => setOpen(false)}
                 aria-label="메뉴 닫기"
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-neutral-500 hover:bg-white"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-ink-3 hover:text-ink"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -137,7 +143,7 @@ export default function AppShell({
       )}
 
       <main className="min-w-0 flex-1 md:py-4 md:pr-4">
-        <div className="min-h-full md:rounded-[32px] md:bg-white/40 md:card-soft">{children}</div>
+        <div className="min-h-full md:rounded-[32px] md:bg-canvas md:card-soft">{children}</div>
       </main>
     </div>
   );

@@ -23,17 +23,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-50 p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-neutral-900">
+    <main className="flex min-h-screen items-center justify-center bg-canvas p-6">
+      <div className="w-full max-w-sm rounded-[28px] bg-canvas p-8 card-soft">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-canvas text-base font-bold text-brand-600 card-soft">
+          P
+        </div>
+        <h1 className="text-xl font-semibold text-ink">
           캠페인 애널리틱스
         </h1>
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="mt-2 text-sm text-ink-3">
           드르펠리스 사내 전용 · 매출 기여도 측정 · 예측 · 처방
         </p>
 
         {domainError && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-xl px-3 py-2 text-sm text-brand-700 surface-pressed-soft">
             <strong>@drfelis.com</strong> 계정만 접근할 수 있어요.
           </div>
         )}
@@ -41,7 +44,7 @@ export default function LoginPage() {
         <button
           onClick={signIn}
           disabled={loading}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50 disabled:opacity-60"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-canvas px-4 py-2.5 text-sm font-semibold text-ink card-soft transition hover:card-soft-h disabled:opacity-60"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z" />

@@ -6,19 +6,26 @@
    Pretendard 폴백으로 커버. */
 
 @theme {
-  /* 키컬러: 차분한 테라코타 코랄 (쨍하지 않게) */
-  --color-brand-50: #fdf3ef;
-  --color-brand-100: #f9e0d6;
-  --color-brand-200: #f1c0ac;
-  --color-brand-300: #e79e80;
-  --color-brand-400: #e08260;
-  --color-brand-500: #e76f51;
-  --color-brand-600: #d0573a;
-  --color-brand-700: #ab4329;
+  /* 키컬러: 톤다운 코랄 (한 가지 강조색만 — 화려함 억제) */
+  --color-brand-50: #fbf2ed;
+  --color-brand-100: #f5dfd1;
+  --color-brand-200: #ebbfa3;
+  --color-brand-300: #de9c78;
+  --color-brand-400: #d28159;
+  --color-brand-500: #c66a48;
+  --color-brand-600: #ad5436;
+  --color-brand-700: #8a4128;
 
-  /* 따뜻한 캔버스 배경 */
-  --color-canvas: #ecebe7;
-  --color-ink: #211f1d;
+  /* 캔버스: 약간 차가운 라이트 그레이 — 뉴모피즘 듀얼 그림자가 보이게 */
+  --color-canvas: #ECEEF3;
+  --color-surface: #F4F5F9;
+  --color-soft: #E1E4EB;
+  --color-line: #D5D9E1;
+
+  --color-ink: #1B1F2A;
+  --color-ink-2: #3A4254;
+  --color-ink-3: #6A7384;
+  --color-ink-4: #9CA4B4;
 
   --font-sans:
     "Asta Sans Variable", "Pretendard Variable", "Pretendard",
@@ -36,9 +43,40 @@ body {
   color: var(--color-ink);
 }
 
-/* 부드러운 카드 그림자 */
+/* 절제된 뉴모피즘: 듀얼 방향 그림자, 강도는 가이드보다 낮춤 */
 @utility card-soft {
   box-shadow:
-    0 1px 2px rgba(28, 27, 26, 0.04),
-    0 8px 24px -12px rgba(28, 27, 26, 0.12);
+    5px 5px 12px rgba(120, 130, 150, 0.16),
+    -4px -4px 11px rgba(255, 255, 255, 0.82);
+}
+
+@utility card-soft-h {
+  box-shadow:
+    8px 8px 18px rgba(120, 130, 150, 0.22),
+    -6px -6px 14px rgba(255, 255, 255, 0.90);
+}
+
+/* 눌린 표면 — 표 셀, 입력, 인사이트 박스, 선택 상태 */
+@utility surface-pressed {
+  background: var(--color-canvas);
+  box-shadow:
+    inset 3px 3px 6px rgba(120, 130, 150, 0.16),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.70);
+}
+
+@utility surface-pressed-soft {
+  background: var(--color-canvas);
+  box-shadow:
+    inset 2px 2px 4px rgba(120, 130, 150, 0.10),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
