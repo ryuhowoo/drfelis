@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/", label: "대시보드", icon: "M3.5 12l8.5-8 8.5 8M5.5 10.5V19a1 1 0 001 1h3.5v-5h3v5H18a1 1 0 001-1v-8.5" },
-  { href: "/predict", label: "매출 시뮬레이터", icon: "M4 18l5-5 3 3 7-8M21 8v4m0-4h-4" },
+  { href: "/predict", label: "성과 시뮬레이터", icon: "M4 18l5-5 3 3 7-8M21 8v4m0-4h-4" },
   { href: "/prescribe", label: "캠페인 추천", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 104 0M9 5a2 2 0 014 0m-3 8l2 2 3-4" },
   { href: "/library", label: "히스토리 비교/분석", icon: "M4 7h16M4 12h16M4 17h10" },
   { href: "/upload", label: "데이터 업로드", icon: "M12 16V4m0 0l-4 4m4-4l4 4M5 20h14" },
@@ -60,7 +60,7 @@ function Brand() {
       </span>
       <span className="leading-tight">
         <span className="block text-[15px] font-bold tracking-tight text-ink">캠페인 애널리틱스</span>
-        <span className="block text-[11px] text-ink-4">드르펠리스 MD</span>
+        <span className="block text-[11px] text-ink-4">닥터펠리스 MD</span>
       </span>
     </Link>
   );

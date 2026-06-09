@@ -1281,6 +1281,8 @@ function PlanGuideImportCard() {
                 option_label: o.option_label,
                 expected_option_qty: o.expected_qty,
                 is_main: o.is_main,
+                // 옵션 라벨을 매칭 패턴 기본값으로 — 실적 option_info 와 부분일치 자동 시도
+                match_patterns: [o.option_label],
                 sort: idx,
                 set_price: o.set_price,
                 // 소비자가/상시가는 이미 번들(개입수 반영) 합계 → 그대로

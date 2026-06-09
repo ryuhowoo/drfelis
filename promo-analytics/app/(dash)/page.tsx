@@ -200,7 +200,7 @@ export default async function Dashboard() {
           href="/predict"
           className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
         >
-          매출 시뮬레이터 →
+          성과 시뮬레이터 →
         </Link>
       </header>
 

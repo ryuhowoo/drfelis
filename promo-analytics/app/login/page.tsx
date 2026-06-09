@@ -32,7 +32,7 @@ export default function LoginPage() {
           캠페인 애널리틱스
         </h1>
         <p className="mt-2 text-sm text-ink-3">
-          드르펠리스 사내 전용 · 매출 기여도 측정 · 예측 · 처방
+          닥터펠리스 사내 전용 · 매출 기여도 측정 · 예측 · 처방
         </p>
 
         {domainError && (

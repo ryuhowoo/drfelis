@@ -135,6 +135,14 @@ export async function PATCH(
       revTotal += t.expected_revenue;
       contribTotal += t.expected_contribution;
 
+      // 옵션 매칭 패턴 기본값: 빈 배열이면 옵션 라벨을 자동 매칭 후보로.
+      // (DB plan_vs_actual_options: 공백제거 lowercase 부분일치)
+      const defaultPatterns =
+        opt.match_patterns && opt.match_patterns.length > 0
+          ? opt.match_patterns
+          : opt.option_label
+            ? [opt.option_label]
+            : [];
       const { data: newOpt, error: oErr } = await supabase
         .from("campaign_plan_options")
         .insert({
@@ -142,7 +150,7 @@ export async function PATCH(
           option_label: opt.option_label,
           expected_option_qty: opt.expected_option_qty,
           is_main: !!opt.is_main,
-          match_patterns: opt.match_patterns ?? [],
+          match_patterns: defaultPatterns,
           sort: opt.sort ?? idx,
           set_price: t.set_price,
           consumer_total: t.consumer_total,
