@@ -2053,12 +2053,13 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     ]},
     {id:'g2',label:'B2C 영양 매출 비중',metrics:[
       {key:'nutri',name:'B2C 영양 매출 비중', unit:'%', cmp:'gte', t:{Q2:26,Q3:28,Q4:30}},
+      {key:'cross',name:'교차구독 수', unit:'명', cmp:'gte', t:{Q2:273,Q3:400,Q4:500}},
     ]},
     {id:'g3',label:'광고비/매출 비율',metrics:[
       {key:'ad',name:'광고비/매출', unit:'%', cmp:'lte', t:{Q2:12,Q3:12,Q4:12}},
     ]},
     {id:'g4',label:'브랜드 캠페인',metrics:[
-      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', t:{Q2:1,Q3:2,Q4:3}},
+      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', type:'list', t:{Q2:1,Q3:2,Q4:3}},
     ]},
   ];
   const PARTS = ['브라운','유니','노바·제인','마틸다','몰갱','니나','로지','호우'];
@@ -2222,9 +2223,9 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   };
 
   function defaultData() {
-    const kpi = Object.fromEntries(MONTHS.map(m=>[m,{revenue:null,margin:null,subs:null,adRatio:null}]));
+    const kpi = Object.fromEntries(MONTHS.map(m=>[m,{revenue:null,margin:null,cmAmount:null,subs:null,adRatio:null}]));
     // 1~5월 매출(억)·공헌이익률(%) 선반영. subs·adRatio는 null 유지(호우가 별도 입력).
-    for(const m in ACTUALS_H1){ kpi[m].revenue = ACTUALS_H1[m].revenue; kpi[m].margin = ACTUALS_H1[m].margin; }
+    for(const m in ACTUALS_H1){ kpi[m].revenue = ACTUALS_H1[m].revenue; kpi[m].margin = ACTUALS_H1[m].margin; kpi[m].cmAmount = +(ACTUALS_H1[m].revenue*ACTUALS_H1[m].margin/100).toFixed(2); }
     return {
       kpi,
       gates: Object.fromEntries(QUARTERS.map(q=>[q,{g1:'pending',g2:'pending',g3:'pending',g4:'pending'}])),
@@ -2393,6 +2394,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     const rows = MONTHS.map(m=>{
       const k=D.kpi[m]||{};
       const revA=k.revenue, mrgA=k.margin, subA=k.subs, adA=k.adRatio;
+      const cmA=(k.cmAmount!=null)?k.cmAmount:((k.revenue!=null&&k.margin!=null)?+(k.revenue*k.margin/100).toFixed(2):null);
       const revT=REV_TARGET[m], adT=AD_TARGET[m];
       const isQEnd=!!SUBS_GOAL[m], subsG=SUBS_GOAL[m];
       const phColor = PHASES[m]==='P1'?'var(--accent)':PHASES[m]==='P2'?'var(--navy)':'var(--teal)';
@@ -2420,6 +2422,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         <td><span style="font-size:11px;font-weight:700;color:${phColor}">${PHASES[m]}</span></td>
         <td style="color:var(--txt-400)">${revT}억</td>
         ${eCell('revenue',revA,'억',2)}
+        ${eCell('cmAmount',cmA,'억',2)}
         ${eCell('margin',mrgA,'%',1)}
         ${subsCell}
         ${eCell('adRatio',adA,'%',1)}
@@ -2439,10 +2442,11 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     document.getElementById('t-block-b').innerHTML=`
 <div class="tr-sec-title"><span class="ts-eye">KPI</span> 월별 실적 입력 <span class="ts-hint">셀 클릭 → 숫자 입력 → Enter</span></div>
 <div class="card" style="overflow-x:auto">
-  <table class="tbl" style="min-width:680px">
+  <table class="tbl" style="min-width:760px">
     <thead><tr>
       <th>월</th><th>Phase</th><th>매출 목표</th>
       <th>매출 실적<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
+      <th>공헌이익액<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
       <th>공헌이익률<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 30%)</small></th>
       <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(6월 '수' 목표 달성 · 이제 교차구독)</small></th>
       <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
@@ -2458,7 +2462,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           ${totalActual.toFixed(2)}억
           <span style="font-size:10px;font-weight:500;color:var(--txt-400);display:block;margin-top:2px">${enteredCnt}/12개월 · ${achvPct.toFixed(1)}%</span>
         </td>
-        <td colspan="4" style="color:var(--txt-400);font-size:11px;font-weight:500">* 공헌이익률·교차구독·광고비는 월별 개별 관리</td>
+        <td colspan="5" style="color:var(--txt-400);font-size:11px;font-weight:500">* 공헌이익액↔률은 매출 기준 자동 연동 · 광고비는 월별 개별 관리</td>
       </tr>
     </tfoot>
   </table>
@@ -2474,6 +2478,10 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 
   /* ─── Block C: Gate Grid ─── */
   function gateMetricPass(m,q,actual){
+    if(m.type==='list'){
+      const n=String(actual||'').split('\n').map(x=>x.trim()).filter(Boolean).length;
+      return n===0 ? null : n>=m.t[q];
+    }
     if(actual==null || String(actual).trim()==='') return null;
     const a=parseFloat(actual); if(isNaN(a)) return null;
     return m.cmp==='lte' ? a<=m.t[q] : a>=m.t[q];
@@ -2498,6 +2506,13 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           const av = (gv[m.key]!=null) ? gv[m.key] : '';
           const r = gateMetricPass(m,q,av);
           const mColor = r===null ? 'var(--accent)' : (r ? 'var(--teal)' : 'var(--burgundy)');
+          if(m.type==='list'){
+            const cnt=String(av||'').split('\n').map(x=>x.trim()).filter(Boolean).length;
+            return `<div style="margin-top:6px">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt-500);line-height:1.3;margin-bottom:3px"><span>${m.name} <b style="color:var(--txt-400)">\ubaa9\ud45c ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span><b style="color:${mColor}">${cnt}${m.unit}</b></div>
+              <textarea class="t-gate-list" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" rows="3" placeholder="\uce90\ud398\uc778\uba85 \ud55c \uc904\uc5d0 \ud558\ub098" style="width:100%;font-size:11px;color:var(--txt-700);background:var(--bg-alt);border:1px solid var(--border);border-radius:7px;padding:5px 6px;font-family:var(--ff);resize:vertical;line-height:1.5">${esc(String(av))}</textarea>
+            </div>`;
+          }
           return `<div style="display:flex;align-items:center;gap:6px;margin-top:6px">
             <span style="flex:1;text-align:left;font-size:11px;color:var(--txt-500);line-height:1.3">${m.name} <b style="color:var(--txt-400)">\ubaa9\ud45c ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span>
             <input type="text" inputmode="decimal" class="t-gate-val" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" value="${esc(String(av))}" placeholder="\uc2e4\uc801" style="width:60px;flex-shrink:0;text-align:center;font-size:12px;font-weight:700;color:${mColor};background:var(--bg-alt);border:1px solid var(--border);border-radius:7px;padding:4px 4px;font-family:var(--ff)">
@@ -2526,6 +2541,17 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         D.gateVals[q]=D.gateVals[q]||{};
         D.gateVals[q][g]=(D.gateVals[q][g] && typeof D.gateVals[q][g]==='object')?D.gateVals[q][g]:{};
         D.gateVals[q][g][mk]=this.value.trim();
+        const gd=GATE_DEFS.find(x=>x.id===g);
+        D.gates[q][g]=computeGateState(q,gd);
+        saveData(); renderBlockA(); renderBlockC();
+      });
+    });
+    document.querySelectorAll('.t-gate-list').forEach(inp=>{
+      inp.addEventListener('change',function(){
+        const q=this.dataset.q, g=this.dataset.g, mk=this.dataset.m;
+        D.gateVals[q]=D.gateVals[q]||{};
+        D.gateVals[q][g]=(D.gateVals[q][g] && typeof D.gateVals[q][g]==='object')?D.gateVals[q][g]:{};
+        D.gateVals[q][g][mk]=this.value;
         const gd=GATE_DEFS.find(x=>x.id===g);
         D.gates[q][g]=computeGateState(q,gd);
         saveData(); renderBlockA(); renderBlockC();
@@ -2777,6 +2803,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   const popLabel  = document.getElementById('t-pop-label');
   const FIELD_META = {
     revenue:{label:'매출 실적 (억 원)',step:0.01,min:0},
+    cmAmount:{label:'공헌이익액 (억 원)',step:0.01,min:0},
     margin: {label:'공헌이익률 (%)',step:0.1,min:0,max:100},
     subs:   {label:'구독자 수 (명)',step:1,min:0},
     adRatio:{label:'광고비/매출 비율 (%)',step:0.1,min:0,max:100},
@@ -2803,9 +2830,21 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   }
   function savePopover(){
     if(!popState.month||!popState.field) return;
+    const m=popState.month, field=popState.field;
     const v=popInput.value.trim();
-    if(!D.kpi[popState.month]) D.kpi[popState.month]={};
-    D.kpi[popState.month][popState.field]=(v==='')?null:parseFloat(v);
+    if(!D.kpi[m]) D.kpi[m]={};
+    const k=D.kpi[m];
+    k[field]=(v==='')?null:parseFloat(v);
+    // 공헌이익액 ↔ 공헌이익률 자동계산 (매출 기준)
+    const rev=parseFloat(k.revenue);
+    if(field==='margin'){
+      if(k.margin!=null && rev>0) k.cmAmount=+(rev*k.margin/100).toFixed(2);
+    } else if(field==='cmAmount'){
+      if(k.cmAmount!=null && rev>0) k.margin=+(k.cmAmount/rev*100).toFixed(1);
+    } else if(field==='revenue' && rev>0){
+      if(k.margin!=null) k.cmAmount=+(rev*k.margin/100).toFixed(2);
+      else if(k.cmAmount!=null) k.margin=+(k.cmAmount/rev*100).toFixed(1);
+    }
     saveData(); popover.style.display='none';
     renderBlockA(); renderBlockB();
   }
