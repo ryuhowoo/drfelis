@@ -15,6 +15,7 @@ import {
   AchievementTrend,
   PurposeShareBars,
   PurposeFitBars,
+  Spark,
 } from "./DashCharts";
 
 export const dynamic = "force-dynamic";
@@ -145,7 +146,6 @@ export default async function Dashboard() {
   const totalHalo = sum(rows.map((r) => r.summary?.halo_uplift ?? 0));
   const avgDirect = n ? totalDirect / n : 0;
   const avgHalo = n ? totalHalo / n : 0;
-  const avgDuration = n ? sum(rows.map((r) => r.promo_days)) / n : 0;
   const haloShare = totalUplift !== 0 ? totalHalo / totalUplift : null;
 
   // 상시 일평균 vs 행사 일평균 — 데이터 기간 전체에서 일자 단위로 산출 (product 중복 합산 X)
@@ -197,7 +197,7 @@ export default async function Dashboard() {
       {/* 상단 바 */}
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-canvas card-soft">
+          <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl card-soft">
             <span className="text-base font-bold leading-none">{now.getDate()}</span>
           </div>
           <div>
@@ -215,7 +215,7 @@ export default async function Dashboard() {
 
       {/* AI 인사이트 */}
       {best?.summary && (
-        <section className="mb-5 rounded-[28px] bg-canvas p-6 card-soft">
+        <section className="mb-5 rounded-2xl p-6 card-soft">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.6px] text-brand-600">
             <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             AI MD 인사이트
@@ -234,17 +234,38 @@ export default async function Dashboard() {
         </section>
       )}
 
-      {/* KPI Bento */}
+      {/* KPI 타일 (N6 R2.1): 수치 + 전기간 대비 델타 + 스파크라인 + 클릭 드릴 */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Kpi
           label="캠페인 기여 총 매출"
           value={wonShort(totalUplift)}
           full={won(totalUplift)}
+          delta={trend}
+          deltaLabel="전월 대비"
+          spark={monthly.map((m) => ({ v: m.uplift }))}
+          href="/library"
           brand
         />
-        <Kpi label="평균 직접 매출" value={wonShort(avgDirect)} sub={`캠페인 ${n}건 평균`} />
-        <Kpi label="평균 간접 매출" value={wonShort(avgHalo)} sub={`캠페인 ${n}건 평균`} />
-        <Kpi label="평균 운영 기간" value={`${avgDuration.toFixed(1)}일`} sub={`캠페인 ${n}건 평균`} />
+        <Kpi
+          label="매출 달성률 (플랜 가중)"
+          value={wAchRevenue != null ? pct(wAchRevenue, 0) : "—"}
+          delta={wAchRevenue != null ? wAchRevenue - 1 : null}
+          deltaLabel="플랜 대비"
+          spark={achTrend.map((a) => ({ v: a.revenue ?? 0 }))}
+          href="/library"
+        />
+        <Kpi
+          label="평소 대비 행사 매출"
+          value={liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
+          sub="상시 일평균 대비"
+          href="/predict"
+        />
+        <Kpi
+          label="간접 매출 비중"
+          value={haloShare != null ? pct(haloShare, 0) : "—"}
+          sub={`평균 직접 ${wonShort(avgDirect)} · 간접 ${wonShort(avgHalo)}`}
+          href="/library"
+        />
       </div>
 
       {/* 달성률 (계획 대비 실적) — S4 */}
@@ -307,7 +328,7 @@ export default async function Dashboard() {
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
-        <div className="flex flex-col justify-center rounded-[28px] bg-canvas p-5 card-soft">
+        <div className="flex flex-col justify-center rounded-2xl p-5 card-soft">
           <div className="text-[11px] font-bold uppercase tracking-[1.6px] text-ink-3">
             평소 대비 행사 매출 (전 매장)
           </div>
@@ -350,7 +371,7 @@ export default async function Dashboard() {
           <MonthlyArea data={monthly} />
         </Card>
 
-        <div className="rounded-[28px] bg-canvas p-5 card-soft">
+        <div className="rounded-2xl p-5 card-soft">
           <h2 className="mb-3 text-sm font-semibold text-ink-2">전체 간접 매출 비중</h2>
           <Donut pct={haloShare} label="기타 제품 동반구매 기여" />
         </div>
@@ -454,31 +475,69 @@ function Kpi({
   sub,
   full,
   brand,
+  delta,
+  deltaLabel,
+  spark,
+  href,
 }: {
   label: string;
   value: string;
   sub?: string;
   full?: string; // 데스크톱에서 풀 표기 (예: ₩3,409,316,915)
   brand?: boolean;
+  delta?: number | null; // 비율 (예: 0.12 = +12%)
+  deltaLabel?: string;
+  spark?: { v: number }[];
+  href?: string;
 }) {
-  return (
+  const body = (
     <div
-      className={`rounded-[24px] p-4 sm:p-5 ${
-        brand ? "bg-brand-500 text-white" : "bg-canvas card-soft"
+      className={`flex h-full flex-col rounded-2xl p-4 transition sm:p-5 ${
+        brand
+          ? "bg-brand-500 text-white"
+          : "card-soft hover:card-soft-h"
       }`}
     >
-      <div className={`text-[11px] font-bold uppercase tracking-[1.4px] ${brand ? "text-brand-100" : "text-ink-3"}`}>{label}</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className={`text-[11px] font-bold uppercase tracking-[1.4px] ${brand ? "text-brand-100" : "text-ink-3"}`}>{label}</div>
+        {delta != null && Number.isFinite(delta) && (
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+              brand
+                ? "bg-white/15 text-white"
+                : delta >= 0
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-red-50 text-red-600"
+            }`}
+            title={deltaLabel}
+          >
+            {delta >= 0 ? "▲" : "▼"} {pct(Math.abs(delta), 0)}
+          </span>
+        )}
+      </div>
       <div className="mt-2 break-words text-lg font-bold tracking-tight tabular-nums sm:text-2xl">
         <span className={full ? "sm:hidden" : ""}>{value}</span>
         {full && <span className="hidden sm:inline">{full}</span>}
       </div>
       {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-ink-4"}`}>{sub}</div>}
+      {spark && spark.length > 1 && (
+        <div className="mt-auto pt-2">
+          <Spark data={spark} color={brand ? "#ffffff" : "#c66a48"} />
+        </div>
+      )}
     </div>
+  );
+  return href ? (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  ) : (
+    body
   );
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-[28px] bg-canvas p-5 card-soft ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl p-5 card-soft ${className}`}>{children}</div>;
 }
 
 function CardTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -488,7 +547,7 @@ function CardTitle({ children, className = "" }: { children: React.ReactNode; cl
 function EmptyState() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <div className="mx-auto mt-6 max-w-lg rounded-[28px] bg-canvas p-8 text-center card-soft">
+      <div className="mx-auto mt-6 max-w-lg rounded-2xl p-8 text-center card-soft">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-xl text-white">
           ✦
         </div>

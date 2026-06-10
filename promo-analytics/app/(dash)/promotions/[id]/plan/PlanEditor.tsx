@@ -105,7 +105,7 @@ export default function PlanEditor({
   // N5: '플랜 만들기' 자동 draft 생성 제거 — 플랜은 ⑤ 가이드 업로드로만 적재
   if (!plan) {
     return (
-      <div className="mt-6 rounded-[24px] bg-white card-soft p-6">
+      <div className="mt-6 rounded-2xl card-soft p-6">
         <p className="text-sm text-neutral-600">
           이 캠페인에 연결된 가격 가이드(플랜)가 없습니다. 플랜은 업로드 페이지의 ⑤ 캠페인
           플랜 가이드로 적재해요 — 빈 플랜을 자동으로 만들지 않습니다.
@@ -334,7 +334,7 @@ export default function PlanEditor({
 
       {/* SKU 단위 예상 수량 롤업 */}
       {planTotals.skuExpectedQty.size > 0 && (
-        <div className="mt-6 rounded-[20px] bg-white card-soft p-4">
+        <div className="mt-6 rounded-xl card-soft p-4">
           <h3 className="text-sm font-medium">SKU 단위 예상 판매수 (전 옵션 합산)</h3>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -409,7 +409,7 @@ function Stat({
 }) {
   return (
     <div
-      className={`rounded-[20px] p-4 ${primary ? "bg-brand-50" : "bg-white card-soft"}`}
+      className={`rounded-xl p-4 ${primary ? "bg-brand-50" : "card-soft"}`}
     >
       <div className="text-xs text-neutral-500">{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
@@ -441,7 +441,7 @@ function OptionCard({
   onRemoveItem: (itemKey: string) => void;
 }) {
   return (
-    <div className="rounded-[20px] bg-white card-soft p-4">
+    <div className="rounded-xl card-soft p-4">
       <div className="flex flex-wrap items-center gap-2">
         <input
           className="min-w-[10rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm font-medium disabled:bg-neutral-50"

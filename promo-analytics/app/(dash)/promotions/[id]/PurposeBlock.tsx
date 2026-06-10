@@ -20,7 +20,7 @@ export default function PurposeBlock({ rows }: { rows: PurposeMetricRow[] }) {
       <h2 className="mb-2 text-sm font-semibold text-neutral-700">목적별 핵심 지표</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => (
-          <div key={r.purpose} className="rounded-[20px] bg-white p-4 card-soft">
+          <div key={r.purpose} className="rounded-xl p-4 card-soft">
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-sm font-semibold text-neutral-800">
                 {r.purpose}

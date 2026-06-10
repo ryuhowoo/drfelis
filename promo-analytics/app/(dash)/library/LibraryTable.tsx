@@ -169,7 +169,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
       {/* 모바일: 카드 리스트 */}
       <ul className="space-y-2 md:hidden">
         {rows.map((r) => (
-          <li key={r.id} className="rounded-[20px] bg-white p-4 card-soft">
+          <li key={r.id} className="rounded-xl p-4 card-soft">
             <div className="flex items-start gap-3">
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
@@ -234,14 +234,14 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
           </li>
         ))}
         {rows.length === 0 && (
-          <li className="rounded-[20px] bg-white px-4 py-10 text-center text-sm text-neutral-400 card-soft">
+          <li className="rounded-xl px-4 py-10 text-center text-sm text-neutral-400 card-soft">
             조건에 맞는 캠페인이 없습니다.
           </li>
         )}
       </ul>
 
       {/* 데스크톱: 테이블 */}
-      <div className="hidden overflow-x-auto rounded-[24px] bg-white card-soft md:block">
+      <div className="hidden overflow-x-auto rounded-2xl card-soft md:block">
         <table className="w-full min-w-[1000px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>

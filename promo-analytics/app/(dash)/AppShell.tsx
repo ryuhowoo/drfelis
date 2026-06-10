@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import CommandPalette from "./CommandPalette";
 
 const NAV = [
   { href: "/", label: "대시보드", icon: "M3.5 12l8.5-8 8.5 8M5.5 10.5V19a1 1 0 001 1h3.5v-5h3v5H18a1 1 0 001-1v-8.5" },
@@ -31,8 +32,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={`flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-medium transition ${
               active
-                ? "surface-pressed text-ink"
-                : "text-ink-3 hover:text-ink"
+                ? "bg-brand-50 font-semibold text-brand-700"
+                : "text-ink-3 hover:bg-soft hover:text-ink"
             }`}
           >
             <svg
@@ -55,7 +56,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-canvas text-sm font-bold text-brand-600 card-soft">
+      <span className="flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-bold text-brand-600 card-soft">
         P
       </span>
       <span className="leading-tight">
@@ -92,10 +93,25 @@ export default function AppShell({
 
   return (
     <div className="min-h-screen md:flex">
+      <CommandPalette />
       {/* 데스크톱 사이드바 */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col py-4 md:flex">
         <div className="px-5 py-4">
           <Brand />
+        </div>
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-cmdk"))}
+            className="flex w-full items-center justify-between rounded-xl border border-line bg-card px-3 py-2 text-xs text-ink-4 transition hover:text-ink-2"
+          >
+            <span className="flex items-center gap-1.5">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" d="M21 21l-4.3-4.3M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+              </svg>
+              검색
+            </span>
+            <kbd className="rounded border border-line bg-soft px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+          </button>
         </div>
         <NavLinks />
         <div className="mt-auto">
@@ -109,7 +125,7 @@ export default function AppShell({
         <button
           onClick={() => setOpen(true)}
           aria-label="메뉴 열기"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-canvas text-ink-2 card-soft"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl text-ink-2 card-soft"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -121,7 +137,7 @@ export default function AppShell({
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-canvas py-4 card-soft-h">
+          <div className="absolute right-0 top-0 flex h-full w-72 flex-col py-4 card-soft-h">
             <div className="flex items-center justify-between px-5 py-4">
               <Brand />
               <button
@@ -143,7 +159,7 @@ export default function AppShell({
       )}
 
       <main className="min-w-0 flex-1 md:py-4 md:pr-4">
-        <div className="min-h-full md:rounded-[32px] md:bg-canvas md:card-soft">{children}</div>
+        <div className="min-h-full">{children}</div>
       </main>
     </div>
   );

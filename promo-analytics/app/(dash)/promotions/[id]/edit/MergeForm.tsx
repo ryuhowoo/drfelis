@@ -60,7 +60,7 @@ export default function MergeForm({
   }
 
   return (
-    <section className="rounded-[28px] bg-canvas p-6 card-soft">
+    <section className="rounded-2xl p-6 card-soft">
       <h2 className="text-sm font-semibold text-ink-2">캠페인 병합 (고급)</h2>
       <p className="mt-1 text-xs text-ink-4">
         같은 행사인데 가이드(⑤)와 실적(②) 시트가 서로 다른 코드로 업로드돼 별개 캠페인이
@@ -72,7 +72,7 @@ export default function MergeForm({
         <select
           value={targetId}
           onChange={(e) => setTargetId(e.target.value)}
-          className="rounded-xl bg-canvas px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
+          className="rounded-xl px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
         >
           <option value="">병합 대상 캠페인 선택 …</option>
           {candidates.map((c) => (

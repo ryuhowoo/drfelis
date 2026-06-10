@@ -109,7 +109,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-5">
         {/* 컨트롤 */}
-        <section className="rounded-[24px] bg-white p-6 card-soft lg:col-span-2">
+        <section className="rounded-2xl p-6 card-soft lg:col-span-2">
           <Field label="혜택 종류">
             <Chips options={options.benefitTypes} value={promoType} onChange={setPromoType} />
           </Field>
@@ -158,7 +158,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
         </section>
 
         {/* 결과 */}
-        <section className="rounded-[24px] bg-white p-6 card-soft lg:col-span-3">
+        <section className="rounded-2xl p-6 card-soft lg:col-span-3">
           <div className="flex items-start justify-between">
             <div>
               <div className="text-xs text-neutral-400">평소 대비 예상 매출</div>
@@ -190,7 +190,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       </div>
 
       {/* 할인율 곡선 — 스윗스팟 */}
-      <section className="mt-3 rounded-[24px] bg-white p-6 card-soft sm:mt-4">
+      <section className="mt-3 rounded-2xl p-6 card-soft sm:mt-4">
         <div className="flex items-center gap-2">
           <span className="text-xl">🎯</span>
           <h2 className="text-2xl font-bold tracking-tight">스윗스팟 찾기</h2>
@@ -243,7 +243,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
       {/* 시나리오 비교 */}
       {pinned.length > 0 && (
-        <section className="mt-3 rounded-[24px] bg-white p-6 card-soft sm:mt-4">
+        <section className="mt-3 rounded-2xl p-6 card-soft sm:mt-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-neutral-700">시나리오 비교</h2>
             <button onClick={() => setPinned([])} className="text-xs text-neutral-400 hover:text-brand-600">
@@ -269,7 +269,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
       {/* 근거 사례 */}
       {pred.comparables.length > 0 && (
-        <section className="mt-3 rounded-[24px] bg-white p-6 card-soft sm:mt-4">
+        <section className="mt-3 rounded-2xl p-6 card-soft sm:mt-4">
           <h2 className="mb-3 text-sm font-semibold text-neutral-700">근거가 된 유사 사례</h2>
           <ul className="space-y-1.5">
             {pred.comparables.map((c) => (

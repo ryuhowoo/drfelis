@@ -51,7 +51,7 @@ export default function ActualsLink({
   }
 
   return (
-    <section className="mt-6 rounded-[24px] bg-canvas p-5 card-soft">
+    <section className="mt-6 rounded-2xl p-5 card-soft">
       <h2 className="text-sm font-semibold text-ink-2">비교 대상 실적 캠페인</h2>
       <p className="mt-1 text-xs text-ink-4">
         이 캠페인의 플랜을 어느 캠페인의 실적과 비교할지 선택합니다. 기본값은 자기 자신.
@@ -62,7 +62,7 @@ export default function ActualsLink({
         <select
           value={pick}
           onChange={(e) => setPick(e.target.value)}
-          className="rounded-xl bg-canvas px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
+          className="rounded-xl px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
         >
           <option value="">자기 캠페인 실적 (기본)</option>
           {candidates
@@ -88,7 +88,7 @@ export default function ActualsLink({
               save(null);
             }}
             disabled={busy}
-            className="rounded-full bg-canvas px-4 py-2 text-sm font-semibold text-ink-3 card-soft hover:text-ink"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-ink-3 card-soft hover:text-ink"
           >
             기본으로
           </button>
