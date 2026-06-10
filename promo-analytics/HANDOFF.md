@@ -2,6 +2,12 @@
 
 > 새 채팅 세션이 이 한 파일만 읽어도 프로젝트를 이어받을 수 있게 정리.
 > 기획 원문은 저장소 루트 [`SPEC.md`](../SPEC.md), 코드 컨벤션은 [`AGENTS.md`](AGENTS.md).
+>
+> 🔴 **2026-06-09 결정 변경(N5)**: S0 §2-3의 "promotions ─1:1─ campaign_plans" 강결합은 **폐기**됐다.
+> 플랜은 독립 아티팩트(0021: `promotion_id` nullable + 자체 code/명/기간/목표값)이고,
+> 실적과의 비교는 `campaign_plans.actual_promotion_id` 명시적 짝짓기로만 한다.
+> 가이드 임포터는 promotions row를 만들지 않으며(plan-only), '플랜 만들기' 자동 draft 생성은 제거됐다.
+> 상세: 루트 [`N5_단독시작문서.md`](../N5_단독시작문서.md).
 
 ## 0. TL;DR
 
