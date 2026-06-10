@@ -6,6 +6,7 @@ import type {
   CampaignFit,
 } from "@/lib/types";
 import LibraryTable, { type LibraryRow } from "./LibraryTable";
+import LibraryCompare, { type CompareCampaign } from "./LibraryCompare";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ type RollupEntry = {
   features: (PromotionSummary & { promotion_id: string }) | null;
   achievement: CampaignAchievement | null;
   fits: CampaignFit[];
+  daily: { d: string; rev: number; in: boolean }[];
 };
 type LibraryBundle = { promotions: Promotion[]; rollups: RollupEntry[] };
 
@@ -42,6 +44,14 @@ export default async function LibraryPage() {
       })),
     );
   }
+
+  // 비교 오버레이용: 일별 시리즈 보유 캠페인 (이름은 promotions 기준)
+  const dailyMap = new Map(rollups.map((r) => [r.promotion_id, r.daily ?? []]));
+  const compareCampaigns: CompareCampaign[] = (promos ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    daily: dailyMap.get(p.id) ?? [],
+  }));
 
   const rows: LibraryRow[] = (promos ?? []).map((p: Promotion) => {
     const s = sumMap.get(p.id) ?? null;
@@ -76,6 +86,7 @@ export default async function LibraryPage() {
       <p className="mt-1 text-sm text-neutral-500">
         과거 캠페인을 유형·시즈널리티·성과 기준으로 비교·분석하세요.
       </p>
+      <LibraryCompare campaigns={compareCampaigns} />
       <div className="mt-6">
         <LibraryTable data={rows} />
       </div>

@@ -171,6 +171,48 @@ export default function Recommend({ options }: { options: Options }) {
               추천할 사례가 부족합니다. 캠페인 데이터를 더 쌓아주세요.
             </p>
           ) : (
+            <>
+            {/* 후보 비교 (N6 R2.2): 종합 점수·예측 증분을 한눈에 */}
+            {recs.length > 1 && (
+              <div className="mb-4 rounded-2xl p-5 card-soft">
+                <h2 className="text-sm font-semibold text-neutral-700">후보 비교</h2>
+                <div className="mt-3 space-y-2.5">
+                  {recs.map((r, i) => {
+                    const maxUplift = Math.max(...recs.map((x) => x.predicted_uplift), 1);
+                    return (
+                      <div key={i}>
+                        <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+                          <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+                            {i + 1}. {r.promo_type}
+                            {r.discount_rate != null && ` · ${pct(r.discount_rate, 0)}`}
+                          </span>
+                          <span className="shrink-0 text-neutral-500">
+                            점수 {Math.round(r.score)} · 예측 증분 {wonShort(r.predicted_uplift)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-soft">
+                            <div
+                              className={`h-full rounded-full ${i === 0 ? "bg-brand-500" : "bg-brand-200"}`}
+                              style={{ width: `${Math.max(2, Math.min(100, r.score))}%` }}
+                            />
+                          </div>
+                          <div className="h-2 w-24 overflow-hidden rounded-full bg-soft" title="예측 증분 (상대)">
+                            <div
+                              className="h-full rounded-full bg-neutral-400"
+                              style={{ width: `${Math.max(2, (r.predicted_uplift / maxUplift) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-neutral-400">
+                  코랄 = 종합 점수(0~100) · 회색 = 예측 증분(최대 대비)
+                </p>
+              </div>
+            )}
             <div className="space-y-3">
               {recs.map((r, i) => (
                 <div key={i} className={`rounded-2xl p-5 card-soft ${i === 0 ? "ring-2 ring-brand-500" : ""}`}>
@@ -257,6 +299,7 @@ export default function Recommend({ options }: { options: Options }) {
                 </div>
               ))}
             </div>
+            </>
           )}
         </div>
       )}
