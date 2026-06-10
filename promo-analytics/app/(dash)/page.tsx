@@ -192,6 +192,77 @@ export default async function Dashboard() {
   const now = new Date();
   const dateChip = `${now.getMonth() + 1}월 ${now.getDate()}일`;
 
+  // 인사이트 피드 (N6 R3.1): 룰 기반 페이싱·회고·예정 알림 — 제품이 먼저 말 걸기
+  const todayStr = now.toISOString().slice(0, 10);
+  const achByPromo = new Map(ach.map((a) => [a.promotion_id, a]));
+  const dayDiff = (a: string, b: string) =>
+    Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+  type Insight = {
+    severity: "warn" | "ok" | "info";
+    title: string;
+    desc: string;
+    href: string;
+  };
+  const insights: Insight[] = [];
+  for (const r of rows) {
+    const a = achByPromo.get(r.id);
+    if (r.start_date <= todayStr && todayStr <= r.end_date) {
+      // 진행 중: 기간 경과 대비 목표 매출 페이스
+      const total = dayDiff(r.start_date, r.end_date) + 1;
+      const elapsed = Math.min(total, dayDiff(r.start_date, todayStr) + 1);
+      const elapsedRatio = total > 0 ? elapsed / total : 1;
+      if (a?.has_confirmed_plan && a.ach_revenue != null && elapsedRatio > 0) {
+        const pace = a.ach_revenue / elapsedRatio;
+        insights.push({
+          severity: pace < 0.85 ? "warn" : pace >= 1 ? "ok" : "info",
+          title: `${r.name} — 진행 중 (${elapsed}/${total}일차)`,
+          desc: `기간 ${Math.round(elapsedRatio * 100)}% 경과 · 목표 매출 ${Math.round(
+            a.ach_revenue * 100,
+          )}% 달성 — ${pace < 0.85 ? "페이스 부족, 점검 필요" : pace >= 1 ? "순항 중" : "근소하게 뒤처짐"}`,
+          href: `/promotions/${r.id}`,
+        });
+      } else {
+        insights.push({
+          severity: "info",
+          title: `${r.name} — 진행 중 (${elapsed}/${total}일차)`,
+          desc: "확정 플랜이 없어 목표 페이싱을 추적할 수 없습니다. 플랜을 확정하세요.",
+          href: `/promotions/${r.id}/plan`,
+        });
+      }
+    } else if (r.end_date < todayStr && dayDiff(r.end_date, todayStr) <= 14) {
+      // 최근 종료: 자동 회고
+      if (a?.has_confirmed_plan && a.ach_revenue != null) {
+        insights.push({
+          severity: a.ach_revenue >= 1 ? "ok" : "warn",
+          title: `${r.name} — ${dayDiff(r.end_date, todayStr)}일 전 종료`,
+          desc: `최종 매출 달성률 ${Math.round(a.ach_revenue * 100)}% · 기여 매출 ${wonShort(
+            r.summary?.total_uplift,
+          )} — 회고 메모를 남겨두세요.`,
+          href: `/promotions/${r.id}`,
+        });
+      } else if (r.summary) {
+        insights.push({
+          severity: "info",
+          title: `${r.name} — ${dayDiff(r.end_date, todayStr)}일 전 종료`,
+          desc: `기여 매출 ${wonShort(r.summary.total_uplift)} · 공헌이익 ${wonShort(
+            r.summary.contribution,
+          )} — 결과를 확인하세요.`,
+          href: `/promotions/${r.id}`,
+        });
+      }
+    } else if (r.start_date > todayStr && dayDiff(todayStr, r.start_date) <= 7) {
+      insights.push({
+        severity: "info",
+        title: `${r.name} — D-${dayDiff(todayStr, r.start_date)} 시작 예정`,
+        desc: "플랜·메인 상품·목적 가중치를 시작 전에 점검하세요.",
+        href: `/promotions/${r.id}`,
+      });
+    }
+  }
+  const sevRank = { warn: 0, info: 1, ok: 2 } as const;
+  insights.sort((x, y) => sevRank[x.severity] - sevRank[y.severity]);
+  const topInsights = insights.slice(0, 6);
+
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       {/* 상단 바 */}
@@ -231,6 +302,47 @@ export default async function Dashboard() {
               <> 캠페인 기간엔 평소(상시 일평균)보다 <strong className="text-brand-600">{liftRatio.toFixed(1)}배</strong> 더 팔렸어요.</>
             )}
           </p>
+        </section>
+      )}
+
+      {/* 인사이트 피드 (N6 R3.1): 진행 중 페이싱 · 최근 종료 회고 · 시작 예정 */}
+      {topInsights.length > 0 && (
+        <section className="mb-5 rounded-2xl card-soft p-5">
+          <h2 className="text-sm font-semibold text-ink-2">지금 주목할 것</h2>
+          <ul className="mt-3 grid gap-2 lg:grid-cols-2">
+            {topInsights.map((it, i) => (
+              <li key={i}>
+                <Link
+                  href={it.href}
+                  className={`flex h-full items-start gap-2.5 rounded-xl border p-3 transition hover:shadow-sm ${
+                    it.severity === "warn"
+                      ? "border-amber-200 bg-amber-50/60"
+                      : it.severity === "ok"
+                        ? "border-emerald-200 bg-emerald-50/50"
+                        : "border-line bg-soft/50"
+                  }`}
+                >
+                  <span
+                    className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                      it.severity === "warn"
+                        ? "bg-amber-500"
+                        : it.severity === "ok"
+                          ? "bg-emerald-500"
+                          : "bg-ink-4"
+                    }`}
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-semibold text-ink">
+                      {it.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-ink-3">
+                      {it.desc}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
