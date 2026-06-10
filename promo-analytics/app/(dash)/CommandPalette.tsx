@@ -12,6 +12,7 @@ const PAGES = [
   { label: "대시보드", href: "/" },
   { label: "성과 시뮬레이터", href: "/predict" },
   { label: "캠페인 추천", href: "/prescribe" },
+  { label: "플랜 보드", href: "/plans" },
   { label: "히스토리 비교/분석", href: "/library" },
   { label: "데이터 업로드", href: "/upload" },
   { label: "설정", href: "/settings" },
