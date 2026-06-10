@@ -46,29 +46,38 @@ type CampaignFeatureRow = PromotionSummary & {
   duration_days: number;
 };
 
+// 0022 롤업 번들 — 사전 계산된 서빙 테이블에서 1회 왕복으로 읽는다
+type DashboardBundle = {
+  promotions: Promotion[];
+  rollups: {
+    promotion_id: string;
+    features: CampaignFeatureRow | null;
+    achievement: CampaignAchievement | null;
+  }[];
+  overall: OverallMetrics | null;
+  purpose_metrics: PurposeMetric[];
+};
+
 export default async function Dashboard() {
   const supabase = await createClient();
-  const [
-    { data: promos },
-    { data: overallData },
-    { data: achData },
-    { data: pmData },
-    { data: featData },
-  ] = await Promise.all([
-    supabase.from("promotions").select("*").order("start_date", { ascending: false }),
-    supabase.rpc("overall_baseline_metrics"),
-    supabase.rpc("campaign_achievements"),
-    supabase.rpc("purpose_metrics"),
-    supabase.rpc("all_campaign_features"),
-  ]);
+  const { data: bundleData } = await supabase.rpc("dashboard_bundle");
+  const bundle = ((bundleData as DashboardBundle | null) ??
+    {}) as Partial<DashboardBundle>;
+  const promos = bundle.promotions ?? [];
+  const achData = (bundle.rollups ?? [])
+    .map((r) => r.achievement)
+    .filter((a): a is CampaignAchievement => a != null);
+  const pmData = bundle.purpose_metrics ?? [];
   const featMap = new Map<string, CampaignFeatureRow>(
-    ((featData as CampaignFeatureRow[]) ?? []).map((f) => [f.promotion_id, f]),
+    (bundle.rollups ?? [])
+      .filter((r) => r.features != null)
+      .map((r) => [r.promotion_id, r.features as CampaignFeatureRow]),
   );
 
-  const overall = (overallData?.[0] as OverallMetrics | undefined) ?? null;
+  const overall = bundle.overall ?? null;
 
   // 목적 슬라이스 (S5.2): 목적별 가중 기여매출/공헌 + 평균 적합도
-  const pm = (pmData as PurposeMetric[]) ?? [];
+  const pm = pmData;
   const purposeUplift = pm.map((p) => ({
     purpose: p.purpose,
     value: Number(p.weighted_uplift) || 0,
@@ -84,7 +93,7 @@ export default async function Dashboard() {
   }));
 
   // 달성률 (S4): 확정 플랜 보유 캠페인만, 매출(expected_revenue_total) 가중평균
-  const ach = (achData as CampaignAchievement[]) ?? [];
+  const ach = achData;
   const withPlan = ach.filter((a) => a.has_confirmed_plan);
   const wAchRevenue = weightedAvg(
     withPlan.map((a) => ({ v: a.ach_revenue, w: a.expected_revenue_total })),
@@ -98,7 +107,7 @@ export default async function Dashboard() {
     contribution: a.ach_contribution,
   }));
 
-  const rows: Row[] = (promos ?? []).map((p: Promotion) => {
+  const rows: Row[] = promos.map((p: Promotion) => {
     const f = featMap.get(p.id);
     if (!f) {
       return { ...p, summary: null, baseline_daily: 0, promo_daily: 0, promo_days: 1 };

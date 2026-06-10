@@ -9,39 +9,38 @@ import LibraryTable, { type LibraryRow } from "./LibraryTable";
 
 export const dynamic = "force-dynamic";
 
-type BatchSummary = PromotionSummary & { promotion_id: string };
+// 0022 롤업 번들 — 사전 계산된 서빙 테이블에서 1회 왕복으로 읽는다
+type RollupEntry = {
+  promotion_id: string;
+  features: (PromotionSummary & { promotion_id: string }) | null;
+  achievement: CampaignAchievement | null;
+  fits: CampaignFit[];
+};
+type LibraryBundle = { promotions: Promotion[]; rollups: RollupEntry[] };
 
 export default async function LibraryPage() {
   const supabase = await createClient();
-  const [{ data: promos }, { data: sumData }, { data: achData }, { data: fitData }] =
-    await Promise.all([
-      supabase
-        .from("promotions")
-        .select("*")
-        .order("start_date", { ascending: false }),
-      supabase.rpc("all_promotion_summaries"),
-      supabase.rpc("campaign_achievements"),
-      supabase.rpc("campaign_fits"),
-    ]);
-  const sumMap = new Map<string, PromotionSummary>(
-    ((sumData as BatchSummary[]) ?? []).map((s) => [s.promotion_id, s]),
-  );
-  const achMap = new Map<string, CampaignAchievement>(
-    ((achData as CampaignAchievement[]) ?? []).map((a) => [a.promotion_id, a]),
-  );
-  // 캠페인별 목적 적합도 묶기
+  const { data: bundle } = await supabase.rpc("library_bundle");
+  const { promotions: promos = [], rollups = [] } =
+    ((bundle as LibraryBundle | null) ?? {}) as Partial<LibraryBundle>;
+
+  const sumMap = new Map<string, PromotionSummary>();
+  const achMap = new Map<string, CampaignAchievement>();
   const fitMap = new Map<
     string,
     { purpose: string; score: number | null; reliable: boolean }[]
   >();
-  for (const f of (fitData as CampaignFit[]) ?? []) {
-    const arr = fitMap.get(f.promotion_id) ?? [];
-    arr.push({
-      purpose: f.purpose,
-      score: f.fit_score_0_100 != null ? Number(f.fit_score_0_100) : null,
-      reliable: f.data_reliable,
-    });
-    fitMap.set(f.promotion_id, arr);
+  for (const r of rollups) {
+    if (r.features) sumMap.set(r.promotion_id, r.features);
+    if (r.achievement) achMap.set(r.promotion_id, r.achievement);
+    fitMap.set(
+      r.promotion_id,
+      (r.fits ?? []).map((f) => ({
+        purpose: f.purpose,
+        score: f.fit_score_0_100 != null ? Number(f.fit_score_0_100) : null,
+        reliable: f.data_reliable,
+      })),
+    );
   }
 
   const rows: LibraryRow[] = (promos ?? []).map((p: Promotion) => {

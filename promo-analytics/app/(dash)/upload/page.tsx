@@ -17,6 +17,7 @@ async function logUpload(
     row_count?: number;
     total_revenue?: number | null;
     action?: "insert" | "replace";
+    codes?: string[]; // 영향받은 캠페인 코드 — 캠페인 상세 '데이터 출처' 역추적용 (R1.3)
   },
 ) {
   try {
@@ -28,6 +29,13 @@ async function logUpload(
       window.dispatchEvent(new Event("upload-done"));
   } catch {
     /* 이력 기록 실패는 무시 */
+  }
+  try {
+    // 롤업 프리웜 (R1.1): 업로드 직후 재계산해 다음 페이지 조회를 즉시 로딩으로.
+    // 실패해도 무시 — 트리거 dirty 플래그 + 읽기 시점 ensure가 안전망.
+    await supabase.rpc("refresh_rollups");
+  } catch {
+    /* 프리웜 실패는 무시 */
   }
 }
 
@@ -474,6 +482,7 @@ function UploadCard({ def }: { def: CardDef }) {
           row_count: done,
           total_revenue: newRevenue,
           action: "replace",
+          codes: code ? [code] : undefined,
         });
         setP({ phase: "ok", message: `${name} 실적 백필 완료 · ${done}행. 상세로 이동합니다…` });
         router.push(`/promotions/${existing.id}`);
@@ -533,6 +542,7 @@ function UploadCard({ def }: { def: CardDef }) {
         row_count: done,
         total_revenue: newRevenue,
         action: "insert",
+        codes: code ? [code] : undefined,
       });
       setP({ phase: "ok", message: `${name} 생성 완료 · ${done}행. 상세로 이동합니다…` });
       router.push(`/promotions/${promo.id}/edit`);
@@ -1137,6 +1147,7 @@ function PriceMasterCard() {
 function PlanGuideImportCard() {
   const router = useRouter();
   const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
+  const [fileName, setFileName] = useState<string | null>(null);
   const [camps, setCamps] = useState<
     import("@/lib/parsePlanGuide").PlanGuideCampaign[] | null
   >(null);
@@ -1144,6 +1155,7 @@ function PlanGuideImportCard() {
   async function handleFile(file: File) {
     try {
       setCamps(null);
+      setFileName(file.name); // 원본 파일명 보존 — 이력에 그대로 남긴다 (R1.3)
       setP({ phase: "reading", message: `${file.name} 읽는 중…` });
       const buf = await file.arrayBuffer();
       setP({ phase: "parsing", message: "플랜 가이드 파싱 중…" });
@@ -1323,10 +1335,11 @@ function PlanGuideImportCard() {
 
       await logUpload(supabase, {
         kind: "plan_guide",
-        source_file: "캠페인 플랜 가이드",
-        detail: `생성 ${created} · 교체 ${replaced} · 확정보존 ${skipped}${failed ? ` · 실패 ${failed}` : ""}`,
+        source_file: fileName ?? "캠페인 플랜 가이드",
+        detail: `생성 ${created} · 교체 ${replaced} · 확정보존 ${skipped}${failed ? ` · 실패 ${failed}` : ""} · ${camps.map((c) => c.code).join(", ")}`,
         row_count: allOptions.length,
         action: "replace",
+        codes: camps.map((c) => c.code).filter(Boolean),
       });
       setP({
         phase: "ok",
