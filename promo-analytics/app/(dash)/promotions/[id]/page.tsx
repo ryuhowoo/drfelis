@@ -20,6 +20,43 @@ import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
 
 export const dynamic = "force-dynamic";
 
+// 0022 롤업 번들 — 13개 쿼리(4블록 순차)를 1회 왕복으로 통합
+type DetailBundle = {
+  promo: Promotion | null;
+  rollup: {
+    features: PromotionSummary | null;
+    measurement: MeasurementRow[];
+    pva_summary: PlanVsActualSummary | null;
+    pva_rows: PlanVsActualRow[];
+    pva_options: PlanVsActualOption[];
+    diagnostic: DiagnosticRow[];
+  } | null;
+  notes: PromotionNote[];
+  plan: {
+    version: number;
+    status: string;
+    expected_revenue_total: number | null;
+    expected_contribution_total: number | null;
+    actual_promotion_id: string | null;
+  } | null;
+  candidates: ActualsCandidate[];
+  option_infos: string[];
+  order_count: number;
+  mappings: SkuMapping[];
+  weights: { purpose: string; weight: number }[];
+  sources: UploadSource[];
+};
+
+type UploadSource = {
+  id: string;
+  kind: string;
+  source_file: string;
+  detail: string | null;
+  row_count: number | null;
+  action: string | null;
+  created_at: string;
+};
+
 export default async function PromotionDetail({
   params,
 }: {
@@ -28,105 +65,41 @@ export default async function PromotionDetail({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: promo } = await supabase
-    .from("promotions")
-    .select("*")
-    .eq("id", id)
-    .single<Promotion>();
+  const { data: bundleData } = await supabase.rpc("promotion_detail_bundle", {
+    p_id: id,
+  });
+  const bundle = (bundleData as DetailBundle | null) ?? null;
+  const promo = bundle?.promo ?? null;
   if (!promo) notFound();
 
-  const [{ data: mData }, { data: sData }, { data: nData }] = await Promise.all([
-    supabase.rpc("promotion_measurement", { p_id: id }),
-    supabase.rpc("promotion_summary", { p_id: id }),
-    supabase
-      .from("promotion_notes")
-      .select("*")
-      .eq("promotion_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
-
-  const rows = ((mData as MeasurementRow[]) ?? []).sort(
+  const rows = (bundle?.rollup?.measurement ?? []).sort(
     (a, b) => b.uplift_revenue - a.uplift_revenue,
   );
-  const summary = (sData?.[0] as PromotionSummary) ?? null;
-  const notes = (nData as PromotionNote[]) ?? [];
+  const summary = bundle?.rollup?.features ?? null;
+  const notes = bundle?.notes ?? [];
+  const plan = bundle?.plan ?? null;
+  const candidates = bundle?.candidates ?? [];
 
-  // 현재 가격 가이드(플랜) 요약 (S2) + 비교 대상 실적 캠페인 링크 (N4.3)
-  const { data: planRow } = await supabase
-    .from("campaign_plans")
-    .select(
-      "id, version, status, expected_revenue_total, expected_contribution_total, actual_promotion_id",
-    )
-    .eq("promotion_id", id)
-    .eq("is_current", true)
-    .maybeSingle();
-  const plan = planRow as {
-    version: number;
-    status: string;
-    expected_revenue_total: number | null;
-    expected_contribution_total: number | null;
-    actual_promotion_id: string | null;
-  } | null;
-
-  // 비교 대상 후보 (실적 있는 모든 캠페인)
-  const { data: actualsCandidates } = await supabase.rpc(
-    "campaigns_with_actuals",
-  );
-  const candidates = (actualsCandidates as ActualsCandidate[]) ?? [];
-
-  // 달성률 (S3): 확정 플랜 vs 실적 + 옵션 매핑용 distinct option_info
-  // + SKU 매칭 진단 (N4): 플랜·실적 한 표 (draft 도 포함) + 수동 매핑 목록
-  const [
-    { data: pvaSummary },
-    { data: pvaRows },
-    { data: pvaOptions },
-    { data: optInfoRows },
-    { data: diagRows },
-    { data: skuMaps },
-  ] = await Promise.all([
-    supabase.rpc("plan_vs_actual_summary", { p_id: id }),
-    supabase.rpc("plan_vs_actual", { p_id: id }),
-    supabase.rpc("plan_vs_actual_options", { p_id: id }),
-    supabase
-      .from("promotion_sales")
-      .select("option_info")
-      .eq("promotion_id", id)
-      .not("option_info", "is", null),
-    supabase.rpc("sku_match_diagnostic", { p_id: id }),
-    supabase
-      .from("promotion_sku_mappings")
-      .select("plan_product_id, actual_product_id")
-      .eq("promotion_id", id),
-  ]);
-  const achSummary = (pvaSummary?.[0] as PlanVsActualSummary) ?? null;
-  const achRows = (pvaRows as PlanVsActualRow[]) ?? [];
-  const achOptions = (pvaOptions as PlanVsActualOption[]) ?? [];
+  const achSummary = bundle?.rollup?.pva_summary ?? null;
+  const achRows = bundle?.rollup?.pva_rows ?? [];
+  const achOptions = bundle?.rollup?.pva_options ?? [];
   const optionInfos = [
     ...new Set(
-      ((optInfoRows as { option_info: string | null }[]) ?? [])
-        .map((r) => (r.option_info ?? "").trim())
-        .filter((s) => s.length > 0),
+      (bundle?.option_infos ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
     ),
   ].sort();
-  const diagnosticRows = (diagRows as DiagnosticRow[]) ?? [];
-  const skuMappings = (skuMaps as SkuMapping[]) ?? [];
+  const diagnosticRows = bundle?.rollup?.diagnostic ?? [];
+  const skuMappings = bundle?.mappings ?? [];
+  const sources = bundle?.sources ?? [];
 
   // 목적별 핵심 지표 (S5.4): 유효 가중치 × 측정·달성률·구매건수
-  const [{ data: ewData }, { data: ocData }] = await Promise.all([
-    supabase.rpc("effective_purpose_weights", { p_id: id }),
-    supabase.from("promotion_sales").select("order_count").eq("promotion_id", id),
-  ]);
-  const orderCount = ((ocData as { order_count: number | null }[]) ?? []).reduce(
-    (s, r) => s + (Number(r.order_count) || 0),
-    0,
-  );
+  const ewData = bundle?.weights ?? [];
+  const orderCount = Number(bundle?.order_count) || 0;
   const upliftPct =
     summary && summary.actual_revenue - summary.total_uplift > 0
       ? summary.total_uplift / (summary.actual_revenue - summary.total_uplift)
       : null;
-  const purposeRows: PurposeMetricRow[] = (
-    (ewData as { purpose: string; weight: number }[]) ?? []
-  ).map((w) => {
+  const purposeRows: PurposeMetricRow[] = ewData.map((w) => {
     const kind: PurposeMetricRow["kind"] =
       w.purpose === "재고소진"
         ? "stock"
@@ -256,13 +229,52 @@ export default async function PromotionDetail({
         </div>
       </div>
 
-      {/* 비교 대상 실적 캠페인 (N4.3) — 플랜이 있을 때만 */}
-      {plan && (
-        <ActualsLink
-          promotionId={id}
-          currentLinkId={plan.actual_promotion_id}
-          candidates={candidates}
-        />
+      {/* 연동 센터 (N6 R1.4) — 비교 대상·SKU 매칭·병합을 한 곳에서 */}
+      {(plan || diagnosticRows.length > 0 || skuMappings.length > 0) && (
+        <section className="mt-6 rounded-[24px] bg-white card-soft p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-neutral-700">
+                플랜 ↔ 실적 연동 센터
+              </h2>
+              {plan && !plan.actual_promotion_id && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                  비교 대상 미지정
+                </span>
+              )}
+              {diagnosticRows.some((r) => r.side !== "both" && !r.is_mapped) && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                  미매칭 SKU{" "}
+                  {diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped).length}
+                </span>
+              )}
+            </div>
+            <Link
+              href={`/promotions/${id}/edit`}
+              className="text-xs text-neutral-400 hover:text-brand-600 hover:underline"
+            >
+              중복 캠페인이 있나요? 병합 도구 →
+            </Link>
+          </div>
+          <p className="mt-1 text-xs text-neutral-400">
+            플랜이 비교할 실적 캠페인과 SKU 매칭을 여기서 한 번에 끝내세요. 연동이 끝나면
+            아래 달성률이 자동으로 채워집니다.
+          </p>
+          {plan && (
+            <ActualsLink
+              promotionId={id}
+              currentLinkId={plan.actual_promotion_id}
+              candidates={candidates}
+            />
+          )}
+          {(diagnosticRows.length > 0 || skuMappings.length > 0) && (
+            <SkuMatchPanel
+              promotionId={id}
+              rows={diagnosticRows}
+              mappings={skuMappings}
+            />
+          )}
+        </section>
       )}
 
       {/* 달성률 (S3) */}
@@ -273,15 +285,6 @@ export default async function PromotionDetail({
         options={achOptions}
         optionInfos={optionInfos}
       />
-
-      {/* SKU 매칭 진단 (N4) — 플랜·실적 양쪽 SKU 한 표 + 수동 연동 */}
-      {(diagnosticRows.length > 0 || skuMappings.length > 0) && (
-        <SkuMatchPanel
-          promotionId={id}
-          rows={diagnosticRows}
-          mappings={skuMappings}
-        />
-      )}
 
       {/* 목적별 핵심 지표 (S5.4) */}
       <PurposeBlock rows={purposeRows} />
@@ -410,6 +413,30 @@ export default async function PromotionDetail({
               </p>
             )}
           </div>
+
+          {/* 데이터 출처 (N6 R1.3) — 이 캠페인을 만들거나 갱신한 업로드 파일 */}
+          {sources.length > 0 && (
+            <div className="mt-4 rounded-[24px] bg-white card-soft p-4">
+              <div className="text-xs text-neutral-500">데이터 출처 (업로드 파일)</div>
+              <ul className="mt-1.5 space-y-1.5 text-sm">
+                {sources.slice(0, 5).map((s) => (
+                  <li key={s.id} className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 truncate text-neutral-700" title={s.source_file}>
+                      {s.source_file}
+                    </span>
+                    <span className="shrink-0 text-[11px] text-neutral-400">
+                      {s.kind === "plan_guide" ? "플랜" : s.kind === "promotion" ? "실적" : s.kind}
+                      {" · "}
+                      {new Date(s.created_at).toLocaleDateString("ko-KR", {
+                        month: "2-digit",
+                        day: "2-digit",
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       </div>
 

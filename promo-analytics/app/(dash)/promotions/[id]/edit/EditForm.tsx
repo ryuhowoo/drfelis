@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { Promotion } from "@/lib/types";
 import { wonShort } from "@/lib/format";
 
@@ -103,10 +104,14 @@ export default function EditForm({
       }),
     });
     setSaving(false);
-    if (res.ok) router.push(`/promotions/${promo.id}`);
-    else {
+    if (res.ok) {
+      toast.success("저장됐습니다");
+      router.push(`/promotions/${promo.id}`);
+    } else {
       const d = await res.json().catch(() => ({}));
-      alert(d.error ?? "저장 실패 (마이그레이션이 적용됐는지 확인하세요)");
+      toast.error(d.error ?? "저장 실패 (마이그레이션이 적용됐는지 확인하세요)", {
+        action: { label: "다시 시도", onClick: () => save() },
+      });
     }
   }
 
@@ -121,7 +126,9 @@ export default function EditForm({
       router.refresh();
     } else {
       const d = await res.json().catch(() => ({}));
-      alert(d.error ?? "삭제 실패");
+      toast.error(d.error ?? "삭제 실패", {
+        action: { label: "다시 시도", onClick: () => remove() },
+      });
     }
   }
 
