@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { CampaignPlan, RateCard } from "@/lib/types";
@@ -101,36 +102,20 @@ export default function PlanEditor({
       ? rateCardMult(rateCard)
       : 0.715;
 
-  // ── 플랜 없음 → 생성 ──────────────────────────
-  async function createPlan() {
-    setBusy(true);
-    setMsg(null);
-    try {
-      const res = await fetch(`/api/promotions/${promotionId}/plan`, { method: "POST" });
-      if (!res.ok) throw new Error((await res.json()).error ?? "생성 실패");
-      router.refresh();
-    } catch (e) {
-      setMsg({ kind: "err", text: e instanceof Error ? e.message : "생성 실패" });
-    } finally {
-      setBusy(false);
-    }
-  }
-
+  // N5: '플랜 만들기' 자동 draft 생성 제거 — 플랜은 ⑤ 가이드 업로드로만 적재
   if (!plan) {
     return (
       <div className="mt-6 rounded-[24px] bg-white card-soft p-6">
         <p className="text-sm text-neutral-600">
-          아직 가격 가이드(플랜)가 없습니다. 옵션(다중 SKU 묶음)을 짜서 예상 매출·공헌이익을
-          미리 계산해 보세요.
+          이 캠페인에 연결된 가격 가이드(플랜)가 없습니다. 플랜은 업로드 페이지의 ⑤ 캠페인
+          플랜 가이드로 적재해요 — 빈 플랜을 자동으로 만들지 않습니다.
         </p>
-        <button
-          onClick={createPlan}
-          disabled={busy}
-          className="mt-4 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
+        <Link
+          href="/upload"
+          className="mt-4 inline-block rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
-          플랜 만들기
-        </button>
-        {msg && <p className="mt-2 text-sm text-red-600">{msg.text}</p>}
+          업로드로 이동
+        </Link>
       </div>
     );
   }

@@ -1130,7 +1130,8 @@ function PriceMasterCard() {
 
 // ─────────────────────────────────────────────
 // ⑤ 캠페인 플랜 가이드 — 표준 양식(평평한 표) → 캠페인 플랜(예상) 적재.
-//    가이드는 '실적 가설'(옵션·가격·예상 수량/매출/공헌이익). 실적은 ③, 차이는 달성률(S4).
+//    가이드는 '실적 가설'(옵션·가격·예상 수량/매출/공헌이익). 실적은 ③, 차이는 달성률.
+//    N5: 플랜/실적 분리 — promotions row는 생성하지 않고 campaign_plans(독립)만 적재.
 //    미리보기 → 검수 → draft 플랜 생성/교체. 확정(frozen) 플랜은 보존.
 // ─────────────────────────────────────────────
 function PlanGuideImportCard() {
@@ -1164,9 +1165,9 @@ function PlanGuideImportCard() {
     if (!camps) return;
     const ok = window.confirm(
       `${camps.length}개 캠페인의 플랜(예상)을 적재합니다.\n` +
-        `· 코드로 캠페인을 찾고 없으면 생성\n` +
+        `· 플랜 row만 생성 — 캠페인(실적)은 만들지 않습니다 (플랜/실적 분리)\n` +
         `· draft 플랜은 교체, 확정(frozen) 플랜은 보존(건너뜀)\n` +
-        `· 실적/달성률은 ③ 매출 export로 별도 채웁니다\n\n진행할까요?`,
+        `· 실적은 ③ 매출 export로 별도 적층, 비교는 명시적 짝짓기로\n\n진행할까요?`,
     );
     if (!ok) return;
     try {
@@ -1213,37 +1214,15 @@ function PlanGuideImportCard() {
       for (const [ci, camp] of camps.entries()) {
         setP({ phase: "uploading", message: `${ci + 1}/${camps.length} 캠페인 플랜 적재 중…` });
         try {
-          // 캠페인 매칭/생성
-          let promoId: string;
-          const { data: ep } = await supabase
-            .from("promotions")
-            .select("id")
-            .eq("code", camp.code)
-            .limit(1)
-            .maybeSingle();
-          if (ep) promoId = ep.id as string;
-          else {
-            const { data: np, error } = await supabase
-              .from("promotions")
-              .insert({
-                name: camp.code,
-                code: camp.code,
-                start_date: camp.start_date,
-                end_date: camp.end_date,
-              })
-              .select("id")
-              .single();
-            if (error) throw error;
-            promoId = np.id as string;
-          }
-
-          // 현재 플랜
-          const { data: plan } = await supabase
+          // N5: promotions 미생성 — 플랜을 코드로 직접 lookup (plan-only 적재)
+          const { data: plans } = await supabase
             .from("campaign_plans")
             .select("id, status")
-            .eq("promotion_id", promoId)
+            .eq("code", camp.code)
             .eq("is_current", true)
-            .maybeSingle();
+            .order("created_at", { ascending: false })
+            .limit(1);
+          const plan = plans?.[0] ?? null;
           if (plan?.status === "confirmed") {
             skipped++;
             continue; // 확정 플랜 보존
@@ -1256,7 +1235,15 @@ function PlanGuideImportCard() {
           } else {
             const { data: npl, error } = await supabase
               .from("campaign_plans")
-              .insert({ promotion_id: promoId, version: 1, is_current: true, status: "draft" })
+              .insert({
+                code: camp.code,
+                name: camp.code,
+                start_date: camp.start_date,
+                end_date: camp.end_date,
+                version: 1,
+                is_current: true,
+                status: "draft",
+              })
               .select("id")
               .single();
             if (error) throw error;
@@ -1319,6 +1306,11 @@ function PlanGuideImportCard() {
           await supabase
             .from("campaign_plans")
             .update({
+              start_date: camp.start_date,
+              end_date: camp.end_date,
+              // 플랜 헤더 목표값 = 가이드 폼값 합 (재계산 금지)
+              target_revenue: revTotal,
+              target_contribution: contribTotal,
               expected_revenue_total: revTotal,
               expected_contribution_total: contribTotal,
               updated_at: new Date().toISOString(),
@@ -1356,8 +1348,8 @@ function PlanGuideImportCard() {
           <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>
           <p className="mt-1 text-sm text-neutral-500">
             표준 양식(1행=옵션)으로 캠페인별 <b>예상(가설)</b> — 옵션·가격·예상수량·목표매출·공헌이익을
-            플랜으로 적재합니다. 실제 결과는 ③ 매출 export, 차이는 <b>달성률</b>로 비교돼요. 확정 플랜은
-            보존됩니다.{" "}
+            플랜으로 적재합니다. 캠페인(실적) row는 만들지 않아요 — 실적은 ③ 매출 export로 별도
+            적층되고, 차이는 <b>달성률</b>로 비교돼요. 확정 플랜은 보존됩니다.{" "}
             <a
               href="/templates/campaign_plan_guide_template.csv"
               download

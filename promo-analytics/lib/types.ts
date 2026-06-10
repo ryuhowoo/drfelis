@@ -134,7 +134,17 @@ export type RateCardSnapshot = {
 
 export type CampaignPlan = {
   id: string;
-  promotion_id: string;
+  // N5(0021): 플랜은 독립 아티팩트 — promotion_id는 레거시 링크(nullable)
+  promotion_id: string | null;
+  code: string | null;
+  name: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  channel: string | null;
+  target_revenue: number | null; // 플랜 헤더 목표매출 (폼값)
+  target_contribution: number | null; // 플랜 공헌이익 (폼값)
+  target_contribution_rate: number | null; // 폼값
+  actual_promotion_id: string | null; // 실적 비교용 명시적 짝짓기 링크
   version: number;
   is_current: boolean;
   status: "draft" | "confirmed";
