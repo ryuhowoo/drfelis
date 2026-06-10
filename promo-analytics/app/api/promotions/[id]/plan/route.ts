@@ -20,40 +20,9 @@ type OptionIn = {
   items: ItemIn[];
 };
 
-// 현재 플랜 보장: 플랜이 하나도 없으면 version=1 draft(current) 생성, 있으면 최신 버전 반환
-export async function POST(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-
-    const { data: existing, error: exErr } = await supabase
-      .from("campaign_plans")
-      .select("id, version")
-      .eq("promotion_id", id)
-      .order("version", { ascending: false })
-      .limit(1);
-    if (exErr) throw exErr;
-    if (existing && existing.length > 0) {
-      return NextResponse.json({ plan_id: existing[0].id, created: false });
-    }
-
-    const { data: created, error: cErr } = await supabase
-      .from("campaign_plans")
-      .insert({ promotion_id: id, version: 1, is_current: true, status: "draft" })
-      .select("id")
-      .single();
-    if (cErr) throw cErr;
-    return NextResponse.json({ plan_id: created.id, created: true });
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "플랜 생성 실패" },
-      { status: 500 },
-    );
-  }
-}
+// N5: POST(빈 draft 자동 생성)는 제거됐다 — 플랜은 ⑤ 가이드 업로드로만 생성(plan-only).
+// 급소 2(N5_단독시작문서.md §7): '플랜 만들기' 클릭만으로 빈 draft가 생겨
+// 플랜/실적 머지 거부의 근본 원인이었음.
 
 // draft 옵션/아이템 전체 교체 저장 + 라이브 롤업 계산 (confirmed 면 거부)
 export async function PATCH(
