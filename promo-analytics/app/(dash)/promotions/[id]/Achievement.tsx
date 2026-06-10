@@ -27,7 +27,7 @@ export default function Achievement({
     return (
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성률 (계획 대비 실적)</h2>
-        <div className="rounded-[24px] bg-white card-soft p-6 text-sm text-neutral-500">
+        <div className="rounded-2xl card-soft p-6 text-sm text-neutral-500">
           확정된 가격 가이드(플랜)가 없습니다.{" "}
           <Link href={`/promotions/${promotionId}/plan`} className="text-brand-600 hover:underline">
             플랜을 확정
@@ -71,7 +71,7 @@ export default function Achievement({
       </div>
 
       {/* SKU 단위 가이드 vs 실적 */}
-      <div className="mt-4 overflow-x-auto rounded-[24px] bg-white card-soft">
+      <div className="mt-4 overflow-x-auto rounded-2xl card-soft">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
             <tr>
@@ -142,7 +142,7 @@ export default function Achievement({
 
       {/* 계획 외 판매 */}
       {unplanned.length > 0 && (
-        <details className="mt-4 rounded-[20px] bg-amber-50/60 p-4">
+        <details className="mt-4 rounded-xl bg-amber-50/60 p-4">
           <summary className="cursor-pointer text-sm font-medium text-amber-800">
             계획 외 판매 — {unplanned.length}개 SKU · 매출 {wonShort(summary.unplanned_revenue)} · 공헌{" "}
             {wonShort(summary.unplanned_contribution)}
@@ -195,7 +195,7 @@ function AchCard({
 }) {
   const fmt = isQty ? num : wonShort;
   return (
-    <div className={`rounded-[20px] p-4 ${primary ? "bg-brand-50" : "bg-white card-soft"}`}>
+    <div className={`rounded-xl p-4 ${primary ? "bg-brand-50" : "card-soft"}`}>
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-neutral-500">{label}</span>
         {lowData && (
@@ -258,7 +258,7 @@ function OptionRow({
   }
 
   return (
-    <div className="rounded-[16px] bg-white card-soft p-3">
+    <div className="rounded-[16px] card-soft p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{opt.option_label}</span>

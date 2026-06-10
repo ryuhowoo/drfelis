@@ -196,7 +196,7 @@ export default async function PromotionDetail({
       </div>
 
       {/* 가격 가이드(플랜) 요약 + CTA */}
-      <div className="mt-6 rounded-[24px] bg-white card-soft p-5">
+      <div className="mt-6 rounded-2xl card-soft p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-neutral-700">가격 가이드(플랜)</h2>
@@ -231,7 +231,7 @@ export default async function PromotionDetail({
 
       {/* 연동 센터 (N6 R1.4) — 비교 대상·SKU 매칭·병합을 한 곳에서 */}
       {(plan || diagnosticRows.length > 0 || skuMappings.length > 0) && (
-        <section className="mt-6 rounded-[24px] bg-white card-soft p-5">
+        <section className="mt-6 rounded-2xl card-soft p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold text-neutral-700">
@@ -295,7 +295,7 @@ export default async function PromotionDetail({
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">
             상품별 증분 측정
           </h2>
-          <div className="overflow-x-auto rounded-[24px] bg-white card-soft">
+          <div className="overflow-x-auto rounded-2xl card-soft">
             <table className="w-full min-w-[760px] text-sm">
               <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
                 <tr>
@@ -387,11 +387,11 @@ export default async function PromotionDetail({
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">
             증분 Top 10 (검정=메인 · 회색=후광)
           </h2>
-          <div className="rounded-[24px] bg-white card-soft p-4">
+          <div className="rounded-2xl card-soft p-4">
             <UpliftChart data={chartData} />
           </div>
 
-          <div className="mt-4 rounded-[24px] bg-white card-soft p-4">
+          <div className="mt-4 rounded-2xl card-soft p-4">
             <div className="text-xs text-neutral-500">메인 상품</div>
             {mains.length > 0 ? (
               <ul className="mt-1.5 space-y-1 text-sm">
@@ -416,7 +416,7 @@ export default async function PromotionDetail({
 
           {/* 데이터 출처 (N6 R1.3) — 이 캠페인을 만들거나 갱신한 업로드 파일 */}
           {sources.length > 0 && (
-            <div className="mt-4 rounded-[24px] bg-white card-soft p-4">
+            <div className="mt-4 rounded-2xl card-soft p-4">
               <div className="text-xs text-neutral-500">데이터 출처 (업로드 파일)</div>
               <ul className="mt-1.5 space-y-1.5 text-sm">
                 {sources.slice(0, 5).map((s) => (
@@ -487,7 +487,7 @@ function MeasurementBanner({
   if (chips.length === 0) return null;
 
   return (
-    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-[20px] bg-white card-soft px-4 py-3">
+    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl card-soft px-4 py-3">
       <span className="text-xs font-medium text-neutral-500">측정 보정</span>
       {chips.map((c) => (
         <span

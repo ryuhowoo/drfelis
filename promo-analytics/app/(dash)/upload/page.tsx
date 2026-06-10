@@ -127,7 +127,7 @@ function UploadHistory() {
   }, [load]);
 
   return (
-    <div className="mt-6 rounded-[24px] bg-white card-soft p-5">
+    <div className="mt-6 rounded-2xl card-soft p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-medium">연동 이력</h2>
         <button
@@ -561,7 +561,7 @@ function UploadCard({ def }: { def: CardDef }) {
     p.total && p.total > 0 && p.done != null ? Math.round((p.done / p.total) * 100) : null;
 
   return (
-    <div className="rounded-[24px] bg-white card-soft p-5">
+    <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-medium">{def.title}</h2>
@@ -942,7 +942,7 @@ function PriceMasterCard() {
       : null;
 
   return (
-    <div className="rounded-[24px] bg-white card-soft p-5">
+    <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-medium">④ 가격 마스터 (가격가이드 워크북)</h2>
@@ -1355,7 +1355,7 @@ function PlanGuideImportCard() {
   const busy = p.phase === "reading" || p.phase === "parsing" || p.phase === "uploading";
 
   return (
-    <div className="rounded-[24px] bg-white card-soft p-5">
+    <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>

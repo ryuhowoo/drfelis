@@ -5,8 +5,13 @@
    빌드 시 외부 네트워크(Google Fonts) 의존 없음. 한글은 ASTA Sans 자체 글리프 +
    Pretendard 폴백으로 커버. */
 
+/* N6 R2.1: 뉴모피즘 → 모던 플랫 (밀도 우선).
+   클래스명(card-soft 등)은 유지하고 의미만 재정의 — 전 화면 일괄 전환.
+   상용 애널리틱스 표준: 중립 캔버스 + 흰 카드 + 헤어라인 보더 + 절제된 그림자,
+   강조는 코랄 단일색. */
+
 @theme {
-  /* 키컬러: 톤다운 코랄 (한 가지 강조색만 — 화려함 억제) */
+  /* 키컬러: 톤다운 코랄 (단일 강조색) */
   --color-brand-50: #fbf2ed;
   --color-brand-100: #f5dfd1;
   --color-brand-200: #ebbfa3;
@@ -16,11 +21,12 @@
   --color-brand-600: #ad5436;
   --color-brand-700: #8a4128;
 
-  /* 캔버스: 약간 차가운 라이트 그레이 — 뉴모피즘 듀얼 그림자가 보이게 */
-  --color-canvas: #ECEEF3;
-  --color-surface: #F4F5F9;
-  --color-soft: #E1E4EB;
-  --color-line: #D5D9E1;
+  /* 캔버스/표면: 흰 카드가 떠 보이는 옅은 중립 회색 */
+  --color-canvas: #F6F7F9;
+  --color-card: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-soft: #EEF0F4;
+  --color-line: #E4E7EC;
 
   --color-ink: #1B1F2A;
   --color-ink-2: #3A4254;
@@ -41,34 +47,35 @@ html {
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
 }
 
-/* 절제된 뉴모피즘: 듀얼 방향 그림자, 강도는 가이드보다 낮춤 */
+:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
+}
+
+/* 카드: 흰 표면 + 헤어라인 + 미세 그림자 */
 @utility card-soft {
-  box-shadow:
-    5px 5px 12px rgba(120, 130, 150, 0.16),
-    -4px -4px 11px rgba(255, 255, 255, 0.82);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
 @utility card-soft-h {
-  box-shadow:
-    8px 8px 18px rgba(120, 130, 150, 0.22),
-    -6px -6px 14px rgba(255, 255, 255, 0.90);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
 }
 
-/* 눌린 표면 — 표 셀, 입력, 인사이트 박스, 선택 상태 */
+/* (구)눌린 표면 → 음각 대신 옅은 채움 — 선택 상태·칩·입력 배경 */
 @utility surface-pressed {
-  background: var(--color-canvas);
-  box-shadow:
-    inset 3px 3px 6px rgba(120, 130, 150, 0.16),
-    inset -3px -3px 6px rgba(255, 255, 255, 0.70);
+  background: var(--color-soft);
+  border: 1px solid var(--color-line);
 }
 
 @utility surface-pressed-soft {
-  background: var(--color-canvas);
-  box-shadow:
-    inset 2px 2px 4px rgba(120, 130, 150, 0.10),
-    inset -2px -2px 4px rgba(255, 255, 255, 0.55);
+  background: var(--color-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {

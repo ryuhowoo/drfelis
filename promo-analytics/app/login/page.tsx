@@ -24,8 +24,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-canvas p-6">
-      <div className="w-full max-w-sm rounded-[28px] bg-canvas p-8 card-soft">
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-canvas text-base font-bold text-brand-600 card-soft">
+      <div className="w-full max-w-sm rounded-2xl p-8 card-soft">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl text-base font-bold text-brand-600 card-soft">
           P
         </div>
         <h1 className="text-xl font-semibold text-ink">
@@ -44,7 +44,7 @@ export default function LoginPage() {
         <button
           onClick={signIn}
           disabled={loading}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-canvas px-4 py-2.5 text-sm font-semibold text-ink card-soft transition hover:card-soft-h disabled:opacity-60"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-ink card-soft transition hover:card-soft-h disabled:opacity-60"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z" />

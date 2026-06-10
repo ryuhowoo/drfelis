@@ -109,13 +109,13 @@ export default function SkuMatchPanel({
 
       {/* 수동 매핑 추가 */}
       {(planOnly.length > 0 || actualOnly.length > 0) && (
-        <div className="mt-4 rounded-[20px] bg-canvas p-4 card-soft">
+        <div className="mt-4 rounded-xl p-4 card-soft">
           <h3 className="mb-2 text-xs font-semibold text-ink-2">수동 매핑 추가</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1fr_auto]">
             <select
               value={planPick}
               onChange={(e) => setPlanPick(e.target.value)}
-              className="rounded-xl bg-canvas px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
+              className="rounded-xl px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
             >
               <option value="">플랜 SKU 선택 …</option>
               {planOnly.map((r) => (
@@ -128,7 +128,7 @@ export default function SkuMatchPanel({
             <select
               value={actualPick}
               onChange={(e) => setActualPick(e.target.value)}
-              className="rounded-xl bg-canvas px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
+              className="rounded-xl px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
             >
               <option value="">실적 SKU 선택 …</option>
               {actualOnly.map((r) => (
@@ -151,7 +151,7 @@ export default function SkuMatchPanel({
 
       {/* 현재 매핑 목록 */}
       {mappings.length > 0 && (
-        <div className="mt-3 rounded-[20px] bg-canvas p-4 card-soft">
+        <div className="mt-3 rounded-xl p-4 card-soft">
           <h3 className="mb-2 text-xs font-semibold text-ink-2">
             현재 매핑 ({mappings.length}건)
           </h3>
@@ -186,7 +186,7 @@ export default function SkuMatchPanel({
       )}
 
       {/* SKU 진단 표 */}
-      <div className="mt-3 overflow-x-auto rounded-[20px] bg-canvas card-soft">
+      <div className="mt-3 overflow-x-auto rounded-xl card-soft">
         <table className="w-full min-w-[640px] text-xs">
           <thead className="text-left text-ink-4">
             <tr>
@@ -255,7 +255,7 @@ function Stat({
 }) {
   const color = tone === "ok" ? "text-brand-600" : "text-ink-2";
   return (
-    <div className="rounded-[20px] bg-canvas p-4 card-soft">
+    <div className="rounded-xl p-4 card-soft">
       <div className="text-[11px] font-semibold uppercase tracking-[1.4px] text-ink-4">
         {label}
       </div>

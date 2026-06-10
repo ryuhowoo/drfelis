@@ -305,3 +305,36 @@ export function Donut({
     </div>
   );
 }
+
+// KPI 타일용 미니 스파크라인 (N6 R2.1) — 축·툴팁 없는 추세 실루엣
+export function Spark({
+  data,
+  color = BRAND,
+}: {
+  data: { v: number }[];
+  color?: string;
+}) {
+  if (data.length < 2) return null;
+  return (
+    <div className="pointer-events-none h-9 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="v"
+            stroke={color}
+            strokeWidth={1.6}
+            fill={`url(#spark-${color.replace("#", "")})`}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

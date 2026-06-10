@@ -123,7 +123,7 @@ export default function Recommend({ options }: { options: Options }) {
       </div>
 
       {/* 입력 — 선택된 목표마다 목표값 */}
-      <div className="mt-4 rounded-[24px] bg-white p-5 card-soft">
+      <div className="mt-4 rounded-2xl p-5 card-soft">
         <div className="grid gap-4 sm:grid-cols-2">
           {selected.map((g) => {
             const def = GOALS.find((x) => x.key === g)!;
@@ -167,13 +167,13 @@ export default function Recommend({ options }: { options: Options }) {
       {recs && (
         <div className="mt-6">
           {recs.length === 0 ? (
-            <p className="rounded-[24px] border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
+            <p className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
               추천할 사례가 부족합니다. 캠페인 데이터를 더 쌓아주세요.
             </p>
           ) : (
             <div className="space-y-3">
               {recs.map((r, i) => (
-                <div key={i} className={`rounded-[24px] bg-white p-5 card-soft ${i === 0 ? "ring-2 ring-brand-500" : ""}`}>
+                <div key={i} className={`rounded-2xl p-5 card-soft ${i === 0 ? "ring-2 ring-brand-500" : ""}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

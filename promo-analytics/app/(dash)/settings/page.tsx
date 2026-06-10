@@ -56,7 +56,7 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
   }
 
   return (
-    <div className="rounded-[24px] bg-white p-5 card-soft">
+    <div className="rounded-2xl p-5 card-soft">
       <h2 className="text-sm font-semibold text-neutral-700">{title}</h2>
       <p className="mt-0.5 text-xs text-neutral-400">{hint}</p>
 
