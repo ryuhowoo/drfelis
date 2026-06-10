@@ -17,6 +17,7 @@ import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import SkuMatchPanel, { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
+import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,13 @@ export const dynamic = "force-dynamic";
 type DetailBundle = {
   promo: Promotion | null;
   rollup: {
-    features: PromotionSummary | null;
+    features: (PromotionSummary & { baseline_daily?: number }) | null;
     measurement: MeasurementRow[];
     pva_summary: PlanVsActualSummary | null;
     pva_rows: PlanVsActualRow[];
     pva_options: PlanVsActualOption[];
     diagnostic: DiagnosticRow[];
+    daily: DailyPoint[];
   } | null;
   notes: PromotionNote[];
   plan: {
@@ -194,6 +196,16 @@ export default async function PromotionDetail({
           }
         />
       </div>
+
+      {/* 일별 매출 시계열 (N6 R2.2) — 평시 8주 맥락 + 캠페인 강조 + 브러시 줌 */}
+      <CampaignTrend
+        data={bundle?.rollup?.daily ?? []}
+        baselineDaily={
+          bundle?.rollup?.features?.baseline_daily != null
+            ? Number(bundle.rollup.features.baseline_daily)
+            : null
+        }
+      />
 
       {/* 가격 가이드(플랜) 요약 + CTA */}
       <div className="mt-6 rounded-2xl card-soft p-5">

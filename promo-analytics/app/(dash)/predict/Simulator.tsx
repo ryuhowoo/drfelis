@@ -7,6 +7,8 @@ import {
   LineChart,
   ReferenceDot,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -238,6 +240,77 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
             <Line type="monotone" dataKey="uplift" stroke={BRAND} strokeWidth={2.5} dot={{ r: 0 }} activeDot={{ r: 5 }} />
             <ReferenceDot x={discount} y={curUplift} r={6} fill={BRAND} stroke="#fff" strokeWidth={2} />
           </LineChart>
+        </ResponsiveContainer>
+
+        {/* 과거 캠페인 분포 (N6 R2.2): 내 조건이 과거 어디쯤인지 */}
+        <p className="mb-2 mt-5 text-xs font-medium text-neutral-500">
+          과거 캠페인 분포 — 할인율 × 일평균 증분
+          <span className="ml-2 font-normal text-neutral-400">
+            (코랄 = 같은 혜택 유형 · 회색 = 기타 · ◎ = 현재 조건)
+          </span>
+        </p>
+        <ResponsiveContainer width="100%" height={200}>
+          <ScatterChart margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+            <XAxis
+              type="number"
+              dataKey="x"
+              name="할인율"
+              domain={[0, 70]}
+              tickFormatter={(d) => `${d}%`}
+              fontSize={11}
+              stroke="#bcb8b3"
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              name="일평균 증분"
+              tickFormatter={(v) => wonShort(v)}
+              fontSize={11}
+              stroke="#bcb8b3"
+              tickLine={false}
+              axisLine={false}
+              width={56}
+            />
+            <Tooltip
+              cursor={{ strokeDasharray: "4 4" }}
+              formatter={(v, key) =>
+                [key === "y" ? wonShort(Number(v)) : `${v}%`, key === "y" ? "일평균 증분" : "할인율"] as [string, string]
+              }
+              labelFormatter={() => ""}
+              content={({ payload }) => {
+                const p = payload?.[0]?.payload as { name?: string; x: number; y: number } | undefined;
+                if (!p) return null;
+                return (
+                  <div className="rounded-xl border border-line bg-card px-3 py-2 text-xs shadow-md">
+                    <div className="font-medium text-ink">{p.name ?? "현재 조건"}</div>
+                    <div className="mt-0.5 text-ink-3">할인 {p.x}% · 일평균 증분 {wonShort(p.y)}</div>
+                  </div>
+                );
+              }}
+            />
+            <Scatter
+              data={cases
+                .filter((c) => c.discount_rate != null && c.promo_type !== promoType)
+                .map((c) => ({ x: Math.round((c.discount_rate ?? 0) * 100), y: c.uplift_per_day, name: c.name }))}
+              fill="#C7CCD6"
+              isAnimationActive={false}
+            />
+            <Scatter
+              data={cases
+                .filter((c) => c.discount_rate != null && c.promo_type === promoType)
+                .map((c) => ({ x: Math.round((c.discount_rate ?? 0) * 100), y: c.uplift_per_day, name: c.name }))}
+              fill={BRAND}
+              isAnimationActive={false}
+            />
+            <Scatter
+              data={[{ x: discount, y: days > 0 ? curUplift / days : curUplift, name: "현재 조건 (예측)" }]}
+              fill="#1B1F2A"
+              shape="diamond"
+              isAnimationActive={false}
+            />
+          </ScatterChart>
         </ResponsiveContainer>
       </section>
 
