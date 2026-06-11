@@ -67,9 +67,14 @@ export default async function PromotionDetail({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: bundleData } = await supabase.rpc("promotion_detail_bundle", {
-    p_id: id,
-  });
+  const { data: bundleData, error: bundleError } = await supabase.rpc(
+    "promotion_detail_bundle",
+    { p_id: id },
+  );
+  // RPC 실패(타임아웃 등)는 '캠페인 없음'이 아니다 — 404 대신 에러 바운더리로.
+  if (bundleError) {
+    throw new Error(`분석 데이터를 불러오지 못했습니다: ${bundleError.message}`);
+  }
   const bundle = (bundleData as DetailBundle | null) ?? null;
   const promo = bundle?.promo ?? null;
   if (!promo) notFound();
