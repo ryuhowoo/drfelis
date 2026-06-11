@@ -58,11 +58,11 @@ export default function ActualsLink({
         가이드(⑤)와 실적(②)이 서로 다른 코드로 업로드된 경우 다른 캠페인을 지정해 짝지어
         비교하세요. 모든 달성률·진단이 선택한 실적 기준으로 다시 계산됩니다.
       </p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+      <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
         <select
           value={pick}
           onChange={(e) => setPick(e.target.value)}
-          className="rounded-xl px-3 py-2 text-sm surface-pressed-soft focus:outline-none"
+          className="w-full min-w-0 truncate rounded-xl border border-line bg-card px-3 py-2 text-sm focus:outline-none"
         >
           <option value="">자기 캠페인 실적 (기본)</option>
           {candidates

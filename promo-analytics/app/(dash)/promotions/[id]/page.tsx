@@ -42,6 +42,7 @@ type DetailBundle = {
     actual_promotion_id: string | null;
   } | null;
   candidates: ActualsCandidate[];
+  linked_plans: { plan_id: string; code: string | null; name: string | null; promotion_id: string | null }[];
   option_infos: string[];
   order_count: number;
   mappings: SkuMapping[];
@@ -86,6 +87,10 @@ export default async function PromotionDetail({
   const notes = bundle?.notes ?? [];
   const plan = bundle?.plan ?? null;
   const candidates = bundle?.candidates ?? [];
+  const linkedPlans = bundle?.linked_plans ?? [];
+  const linkedActualName = plan?.actual_promotion_id
+    ? candidates.find((c) => c.id === plan.actual_promotion_id)?.name ?? null
+    : null;
 
   const achSummary = bundle?.rollup?.pva_summary ?? null;
   const achRows = bundle?.rollup?.pva_rows ?? [];
@@ -167,6 +172,33 @@ export default async function PromotionDetail({
         </Link>
       </header>
 
+      {/* 역링크 (N6): 이 캠페인의 실적을 비교 대상으로 쓰는 플랜 안내 —
+          "플랜은 저쪽 캠페인에 있다"를 명시해 어디서 매칭할지 혼란 제거 */}
+      {linkedPlans.length > 0 && (
+        <div className="mb-5 rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-ink-2">
+          이 캠페인의 실적은{" "}
+          {linkedPlans.map((lp, i) => (
+            <span key={lp.plan_id}>
+              {i > 0 && ", "}
+              {lp.promotion_id ? (
+                <Link
+                  href={`/promotions/${lp.promotion_id}`}
+                  className="font-semibold text-brand-700 hover:underline"
+                >
+                  {lp.name ?? lp.code} 플랜
+                </Link>
+              ) : (
+                <Link href="/plans" className="font-semibold text-brand-700 hover:underline">
+                  {lp.name ?? lp.code} 플랜
+                </Link>
+              )}
+            </span>
+          ))}
+          의 비교 대상입니다. <strong>플랜 vs 실적 비교·SKU 매칭은 플랜이 있는 캠페인에서</strong>{" "}
+          진행하세요.
+        </div>
+      )}
+
       {!hasBaseline && (
         <div className="mb-5 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
           직전 8주 baseline 데이터가 부족합니다. <strong>일별 매출 추이</strong>를
@@ -230,7 +262,14 @@ export default async function PromotionDetail({
                 · 예상 매출 {won(plan.expected_revenue_total)} · 예상 공헌이익{" "}
                 {won(plan.expected_contribution_total)}
               </p>
-            ) : (
+            ) : null}
+            {plan && plan.status !== "confirmed" && (
+              <p className="mt-1 text-xs text-amber-700">
+                draft 상태 — 플랜을 <strong>확정</strong>해야 달성률 집계와 홈 페이싱
+                알림에 포함됩니다. (플랜 편집 → 확정)
+              </p>
+            )}
+            {!plan && (
               <p className="mt-1 text-sm text-neutral-500">
                 아직 플랜이 없습니다. 옵션(다중 SKU 묶음)·예상 세트수로 예상 성과를 미리
                 계산하세요.
@@ -273,10 +312,18 @@ export default async function PromotionDetail({
               중복 캠페인이 있나요? 병합 도구 →
             </Link>
           </div>
-          <p className="mt-1 text-xs text-neutral-400">
-            플랜이 비교할 실적 캠페인과 SKU 매칭을 여기서 한 번에 끝내세요. 연동이 끝나면
-            아래 달성률이 자동으로 채워집니다.
-          </p>
+          {linkedActualName ? (
+            <p className="mt-1 text-xs text-ink-3">
+              비교 구도: <strong className="text-ink">이 캠페인의 플랜</strong> ↔{" "}
+              <strong className="text-brand-700">{linkedActualName}</strong> 실적 —
+              아래 달성률·SKU 매칭이 모두 이 구도 기준으로 계산됩니다.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-neutral-400">
+              플랜이 비교할 실적 캠페인과 SKU 매칭을 여기서 한 번에 끝내세요. 연동이 끝나면
+              아래 달성률이 자동으로 채워집니다.
+            </p>
+          )}
           {plan && (
             <ActualsLink
               promotionId={id}
