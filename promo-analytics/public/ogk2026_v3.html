@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 :root {
@@ -520,6 +521,19 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
 </style>
 </head>
 <body>
+<!-- ═══ AUTH GATE (@drfelis.com Google 로그인 필수) ═══ -->
+<div id="auth-gate" style="position:fixed;inset:0;background:#1A1714;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;font-family:var(--ff)">
+  <p style="font-size:11px;letter-spacing:5px;text-transform:uppercase;color:#B85C38;margin-bottom:24px">Dr. Felis 2026</p>
+  <h1 style="font-size:clamp(26px,3.5vw,40px);font-weight:800;margin-bottom:10px;text-align:center;letter-spacing:-.02em">OGK 전략 · 트래커</h1>
+  <p style="font-size:14px;color:rgba(255,255,255,.55);margin-bottom:36px;text-align:center;line-height:1.7"><strong style="color:#fff">@drfelis.com</strong> 계정으로 로그인하세요<br><span style="font-size:12px;color:rgba(255,255,255,.35)">사내 전용 — 외부 접근 차단</span></p>
+  <button id="auth-gate-btn" style="background:#fff;color:#1a1714;border:none;border-radius:8px;padding:13px 22px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:var(--ff);transition:transform .15s,box-shadow .15s;box-shadow:0 4px 16px rgba(0,0,0,.3)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 22px rgba(0,0,0,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,.3)'">
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.26c-.806.54-1.836.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+    Google로 로그인
+  </button>
+  <p id="auth-gate-msg" style="color:#E09B74;font-size:12.5px;margin-top:20px;min-height:18px;text-align:center;max-width:380px;line-height:1.6"></p>
+  <p style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.25);margin-top:48px">drfelis-ogk-tracker · v3</p>
+</div>
+
 <div class="top-tab-bar">
   <button class="tab-btn active" data-tab="strategy">전략 문서</button>
   <button class="tab-btn" data-tab="tracker">2026 트래커</button>
@@ -2211,30 +2225,78 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   function _isDenied(e){ return !!(e && (e.code==='PERMISSION_DENIED' || /permission[_ ]?denied/i.test(String(e.message||e)))); }
   let D = loadLocal();  // 즉시 로컬 캐시로 초기화(오프라인 UX)
 
+  /* ─── Auth Gate (@drfelis.com Google 로그인 필수) ─── */
+  const ALLOWED_DOMAIN = 'drfelis.com';
+  function _showGate(msg){
+    const g = document.getElementById('auth-gate'); if(g) g.style.display='flex';
+    const m = document.getElementById('auth-gate-msg'); if(m) m.textContent = msg || '';
+  }
+  function _hideGate(){
+    const g = document.getElementById('auth-gate'); if(g) g.style.display='none';
+  }
+  function _gateBtnState(loading){
+    const b = document.getElementById('auth-gate-btn'); if(!b) return;
+    b.disabled = !!loading;
+    b.style.opacity = loading ? '.6' : '1';
+    b.style.cursor = loading ? 'wait' : 'pointer';
+  }
+  function _connectDB(){
+    if(fbDB) return;
+    fbDB = firebase.database();
+    fbRef = fbDB.ref(FB_PATH);
+    fbRef.on('value', snap=>{
+      fbReady = true;
+      if(fbSuppressOnce){ fbSuppressOnce=false; setSyncBadge('sync'); return; }
+      const incoming = snap.val();
+      if(incoming){
+        D = mergeData(incoming);
+        try { localStorage.setItem(KEY,JSON.stringify(D)); } catch(e){}
+        if(typeof renderAll==='function') renderAll();
+      } else {
+        // 서버 empty → 로컬 캐시를 초기 업로드
+        fbSuppressOnce = true;
+        fbRef.set(D).catch(()=>{});
+      }
+      setSyncBadge('sync');
+    }, err=>{ console.warn('Firebase 구독 실패:',err); setSyncBadge(_isDenied(err)?'denied':'offline'); });
+  }
+  function _signInWithGoogle(){
+    _gateBtnState(true);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ hd: ALLOWED_DOMAIN, prompt:'select_account' });
+    firebase.auth().signInWithPopup(provider).catch(err=>{
+      _gateBtnState(false);
+      const code = err && err.code || '';
+      if(code==='auth/popup-closed-by-user' || code==='auth/cancelled-popup-request') return _showGate('');
+      _showGate('로그인 실패: ' + (err && err.message || code || '알 수 없는 오류'));
+    });
+  }
+
   function initFirebase(){
     try {
-      if(typeof firebase==='undefined'){ setSyncBadge('offline'); return; }
+      if(typeof firebase==='undefined'){ setSyncBadge('offline'); _showGate('Firebase SDK 로드 실패 — 네트워크 확인'); return; }
       firebase.initializeApp(FB_CONFIG);
-      fbDB = firebase.database();
-      fbRef = fbDB.ref(FB_PATH);
       setSyncBadge('loading');
-      // 실시간 구독: 다른 기기/브라우저 변경도 즉시 반영
-      fbRef.on('value', snap=>{
-        fbReady = true;
-        if(fbSuppressOnce){ fbSuppressOnce=false; setSyncBadge('sync'); return; }
-        const incoming = snap.val();
-        if(incoming){
-          D = mergeData(incoming);
-          try { localStorage.setItem(KEY,JSON.stringify(D)); } catch(e){}
-          if(typeof renderAll==='function') renderAll();
+      // Auth 상태 감시: @drfelis.com 인증 통과 시에만 DB 연결
+      firebase.auth().onAuthStateChanged(user=>{
+        if(user && user.email && user.email.toLowerCase().endsWith('@'+ALLOWED_DOMAIN)){
+          _hideGate(); _gateBtnState(false);
+          _connectDB();
+        } else if(user){
+          // 도메인 불일치 → 즉시 로그아웃 + 안내
+          const wrong = user.email || '(이메일 없음)';
+          firebase.auth().signOut().finally(()=>{
+            _gateBtnState(false);
+            _showGate('이 계정(' + wrong + ')은 접근 권한이 없음 — @' + ALLOWED_DOMAIN + ' 계정으로 로그인 필요');
+          });
         } else {
-          // 서버 empty → 로컬 캐시를 초기 업로드
-          fbSuppressOnce = true;
-          fbRef.set(D).catch(()=>{});
+          _gateBtnState(false);
+          _showGate('');
         }
-        setSyncBadge('sync');
-      }, err=>{ console.warn('Firebase 구독 실패:',err); setSyncBadge(_isDenied(err)?'denied':'offline'); });
-    } catch(e){ console.warn('Firebase init 실패:',e); setSyncBadge('offline'); }
+      });
+      const btn = document.getElementById('auth-gate-btn');
+      if(btn) btn.addEventListener('click', _signInWithGoogle);
+    } catch(e){ console.warn('Firebase init 실패:',e); setSyncBadge('offline'); _showGate('초기화 실패: ' + (e && e.message || e)); }
   }
 
   /* ─── Tab switching ─── */
