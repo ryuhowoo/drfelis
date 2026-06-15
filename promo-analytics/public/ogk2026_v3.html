@@ -2004,7 +2004,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       {key:'ad',name:'광고비/매출', unit:'%', cmp:'lte', t:{Q2:12,Q3:12,Q4:12}},
     ]},
     {id:'g4',label:'브랜드 캠페인',metrics:[
-      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', type:'entries', t:{Q2:1,Q3:2,Q4:3}},
+      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', type:'entries', cumulative:true, t:{Q2:1,Q3:2,Q4:3}},
     ]},
   ];
   const PARTS = ['브라운','유니','노바','마틸다','몰갱','니나','로지','호우'];
@@ -2418,8 +2418,8 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         ${eCell('cmAmount',cmA,'억',2)}
         ${eCell('margin',mrgA,'%',1)}
         ${subsCell}
-        ${eCell('adRatio',adA,'%',1)}
         ${eCell('churn',k.churn,'%',1)}
+        ${eCell('adRatio',adA,'%',1)}
         <td>${statusHtml}</td>
       </tr>`;
     }).join('');
@@ -2443,8 +2443,8 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       <th>공헌이익액<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
       <th>공헌이익률<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 30%)</small></th>
       <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(6월 '수' 목표 달성 · 이제 교차구독)</small></th>
-      <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
       <th>구독 해지율<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 ≤5%)</small></th>
+      <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
       <th>상태</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -2482,10 +2482,21 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     const a=parseFloat(actual); if(isNaN(a)) return null;
     return m.cmp==='lte' ? a<=m.t[q] : a>=m.t[q];
   }
+  function _arrify(v){ return Array.isArray(v)?v:(typeof v==='string'&&v?v.split('\n'):[]); }
+  function _cntNE(arr){ return arr.map(x=>String(x).trim()).filter(Boolean).length; }
+  function gateEntCount(gid,mk,q,cumulative){
+    const at=qq=>_cntNE(_arrify(D.gateVals&&D.gateVals[qq]&&D.gateVals[qq][gid]&&D.gateVals[qq][gid][mk]));
+    if(!cumulative) return at(q);
+    let n=0; for(const qq of QUARTERS){ n+=at(qq); if(qq===q) break; } return n;
+  }
   function computeGateState(q,gd){
-    const gv=(D.gateVals&&D.gateVals[q]&&D.gateVals[q][gd.id])||{};
     let anyEmpty=false, allPass=true;
-    gd.metrics.forEach(m=>{ const r=gateMetricPass(m,q,gv[m.key]); if(r===null) anyEmpty=true; else if(!r) allPass=false; });
+    gd.metrics.forEach(m=>{
+      let r;
+      if(m.type==='entries'){ const cnt=gateEntCount(gd.id,m.key,q,m.cumulative); r = cnt===0 ? null : cnt>=m.t[q]; }
+      else { const gv=(D.gateVals&&D.gateVals[q]&&D.gateVals[q][gd.id])||{}; r=gateMetricPass(m,q,gv[m.key]); }
+      if(r===null) anyEmpty=true; else if(!r) allPass=false;
+    });
     return anyEmpty ? 'pending' : (allPass ? 'pass' : 'fail');
   }
   function renderBlockC(){
@@ -2503,14 +2514,23 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           const r = gateMetricPass(m,q,av);
           const mColor = r===null ? 'var(--accent)' : (r ? 'var(--teal)' : 'var(--burgundy)');
           if(m.type==='entries'){
-            const arr=Array.isArray(av)?av:(typeof av==='string'&&av?av.split('\n'):[]);
-            const cnt=arr.map(x=>String(x).trim()).filter(Boolean).length;
-            const rows=arr.map((val,idx)=>`<div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+            const own=_arrify(av);
+            const cnt=gateEntCount(gd.id,m.key,q,m.cumulative);
+            const er=cnt===0?null:cnt>=m.t[q];
+            const eColor=er===null?'var(--accent)':(er?'var(--teal)':'var(--burgundy)');
+            let carried='';
+            if(m.cumulative){ const qi=QUARTERS.indexOf(q);
+              for(let j=0;j<qi;j++){ const pq=QUARTERS[j];
+                _arrify(D.gateVals&&D.gateVals[pq]&&D.gateVals[pq][gd.id]&&D.gateVals[pq][gd.id][m.key]).forEach(v=>{ if(String(v).trim()) carried+=`<div style="margin-top:4px"><span style="display:block;font-size:11px;color:var(--txt-400);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.75" title="${esc(String(v))} (${pq} 이월)">${esc(String(v))} <b style="color:var(--txt-300);font-weight:700;font-size:9px">·${pq}</b></span></div>`; });
+              }
+            }
+            const rows=own.map((val,idx)=>`<div style="display:flex;align-items:center;gap:4px;margin-top:4px">
               <input type="text" class="t-gate-ent" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" data-i="${idx}" value="${esc(String(val))}" placeholder="캠페인명" style="flex:1;min-width:0;font-size:11px;color:var(--txt-700);background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:var(--ff)">
               <button class="t-gate-ent-del" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" data-i="${idx}" title="삭제" style="flex-shrink:0;background:none;border:none;color:var(--txt-300);cursor:pointer;font-size:12px;padding:2px 4px;line-height:1">\u2715</button>
             </div>`).join('');
             return `<div style="margin-top:6px">
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt-500);line-height:1.3;margin-bottom:2px"><span>${m.name} <b style="color:var(--txt-400)">목표 ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span><b style="color:${mColor}">${cnt}${m.unit}</b></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt-500);line-height:1.3;margin-bottom:2px"><span>${m.name} <b style="color:var(--txt-400)">목표 ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span><b style="color:${eColor}">${cnt}${m.unit}</b></div>
+              ${carried}
               ${rows}
               <button class="t-gate-ent-add" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" style="margin-top:4px;font-size:11px;color:var(--accent);background:none;border:1px dashed var(--border-md);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:var(--ff)">+ 캠페인 추가</button>
             </div>`;
