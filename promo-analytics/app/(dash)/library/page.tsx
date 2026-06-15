@@ -18,7 +18,8 @@ type RollupEntry = {
   fits: CampaignFit[];
   daily: { d: string; rev: number; in: boolean }[];
 };
-type LibraryBundle = { promotions: Promotion[]; rollups: RollupEntry[] };
+type StagedPromotion = Promotion & { stage?: "plan" | "actual" | "linked" | "empty" };
+type LibraryBundle = { promotions: StagedPromotion[]; rollups: RollupEntry[] };
 
 export default async function LibraryPage() {
   const supabase = await createClient();
@@ -53,12 +54,13 @@ export default async function LibraryPage() {
     daily: dailyMap.get(p.id) ?? [],
   }));
 
-  const rows: LibraryRow[] = (promos ?? []).map((p: Promotion) => {
+  const rows: LibraryRow[] = (promos ?? []).map((p: StagedPromotion) => {
     const s = sumMap.get(p.id) ?? null;
     const a = achMap.get(p.id) ?? null;
     return {
       id: p.id,
       name: p.name,
+      stage: p.stage ?? "actual",
       start_date: p.start_date,
       end_date: p.end_date,
       promo_type: p.promo_type,
