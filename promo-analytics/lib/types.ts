@@ -227,6 +227,14 @@ export type PlanVsActualSummary = {
   unplanned_sku_count: number | null;
   quantity_reliable: boolean | null;
   snapshot_mult: number | null;
+  // N8: 매출 중심(전체) 모델
+  subscription_revenue: number | null;
+  main_revenue: number | null;
+  halo_revenue: number | null; // 함께 구매(비메인·구독제외) 매출
+  campaign_revenue_total: number | null; // 구독 제외 전체
+  revenue_ach_total: number | null; // 전체 / 목표
+  contribution_total: number | null;
+  contribution_ach_total: number | null;
 };
 
 export type PlanVsActualOption = {
