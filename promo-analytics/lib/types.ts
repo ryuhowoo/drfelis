@@ -232,11 +232,16 @@ export type PlanVsActualSummary = {
 export type PlanVsActualOption = {
   option_id: string;
   option_label: string;
+  // N7 P2: 구성 기반 파생 표시·식별 (라벨 단독 금지 — 2개입/6개입·세트가 구분)
+  display_label: string | null;
+  option_signature: string | null;
   expected_option_qty: number;
   expected_revenue: number | null;
   expected_contribution: number | null;
   match_patterns: string[];
   matched: boolean;
+  // N7 P2: 'routed'(구성·묶음 자동 라우팅) | 'manual'(수동 패턴) | 'none'(미매칭/저신뢰)
+  match_source: "routed" | "manual" | "none";
   actual_revenue: number;
   actual_qty: number;
   ach_revenue: number | null;
