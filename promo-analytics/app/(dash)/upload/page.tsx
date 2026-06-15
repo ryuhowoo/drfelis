@@ -276,21 +276,17 @@ function UploadCard({ def }: { def: CardDef }) {
           const deltaPct =
             oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
 
-          // 불변식 위반(±5% 초과)이면 중단 — 백필은 수량·옵션만 채우고 총매출은 동일해야 함
-          if (Math.abs(deltaPct) > 5) {
-            throw new Error(
-              `백필 중단: 교체 시 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
-                `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
-                `백필은 수량·옵션정보만 채워야 하며 같은 기간 총매출은 동일해야 합니다. 파일/기간을 확인하세요.`,
-            );
-          }
-
+          // 교환·환불·취소가 나중에 잡히면 동기간 총매출이 정당하게 바뀜 → 최신 파일로 교체.
+          // (구) 하드 차단 폐기 — 큰 변동(±5% 초과)은 확인창에 경고만 띄우고 진행은 사용자가 결정.
+          const bigDelta = Math.abs(deltaPct) > 5;
           const ok = window.confirm(
             `백필(소스 교체) — 기간 ${minDate} ~ ${maxDate}\n` +
               `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
               `신규 ${rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
-              `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
-              `이 기간·상품의 기존 행을 모두 삭제하고 새 파일로 교체합니다 (누적 아님). 진행할까요?`,
+              `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)` +
+              (bigDelta ? `  ⚠️ 변동이 큽니다 — 파일·기간이 맞는지 확인` : ``) +
+              `\n\n교환·환불·취소는 나중에 반영되어 동기간 매출이 달라질 수 있습니다 — 최신 파일이 기준입니다.\n` +
+              `이 기간·상품의 기존 행을 모두 삭제하고 최신 파일로 교체합니다 (누적 아님). 진행할까요?`,
           );
           if (!ok) {
             setP({ phase: "idle", message: "취소됨" });
@@ -427,19 +423,16 @@ function UploadCard({ def }: { def: CardDef }) {
         const delta = newRevenue - oldRevenue;
         const deltaPct =
           oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
-        if (Math.abs(deltaPct) > 5) {
-          throw new Error(
-            `백필 중단: 캠페인 실적 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
-              `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
-              `백필은 수량·옵션정보만 채워야 하며 실적 매출은 동일해야 합니다. 파일을 확인하세요.`,
-          );
-        }
+        // 교환·환불·취소 반영으로 실적 매출이 정당하게 바뀜 → 최신 파일로 교체(하드 차단 폐기).
+        const bigDelta = Math.abs(deltaPct) > 5;
         const ok = window.confirm(
           `백필(캠페인 실적 교체) — ${name}\n` +
             `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
             `신규 ${parsed.rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
-            `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
-            `이 캠페인의 기존 실적을 삭제하고 교체합니다. 확정 플랜(frozen)은 그대로 보존됩니다.\n` +
+            `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)` +
+            (bigDelta ? `  ⚠️ 변동이 큽니다 — 파일이 맞는지 확인` : ``) +
+            `\n\n교환·환불·취소는 나중에 반영되어 실적 매출이 달라질 수 있습니다 — 최신 파일이 기준입니다.\n` +
+            `이 캠페인의 기존 실적을 삭제하고 최신 파일로 교체합니다. 확정 플랜(frozen)은 그대로 보존됩니다.\n` +
             `진행할까요? (취소 시 중단 — 중복 캠페인을 만들지 않습니다)`,
         );
         if (!ok) {
