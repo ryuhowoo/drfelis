@@ -1195,10 +1195,10 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
         </div></div>
       </div>
 
-      <!-- 노바·제인 -->
+      <!-- 노바 -->
       <div class="acc-item">
         <div class="acc-head">
-          <div class="acc-head-left">노바·제인 — 콘텐츠 <span class="owner">교차구독·캠페인 뒷받침 콘텐츠</span></div>
+          <div class="acc-head-left">노바 — 콘텐츠 <span class="owner">교차구독·캠페인 뒷받침 콘텐츠</span></div>
           <span class="acc-arrow">▼</span>
         </div>
         <div class="acc-body"><div class="acc-inner">
@@ -1578,7 +1578,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
             <span style="font-size:18px;color:var(--accent);font-weight:800">4</span>
-            <div><strong>노바·제인:</strong> '영양제 왜 같이 먹이나' <strong>콘텐츠 3종</strong></div>
+            <div><strong>노바:</strong> '영양제 왜 같이 먹이나' <strong>콘텐츠 3종</strong></div>
           </div>
           <div style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg-alt);border-radius:10px;">
             <span style="font-size:18px;color:var(--accent);font-weight:800">5</span>
@@ -1667,7 +1667,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
     <div class="t-field"><label>파트</label>
       <select id="t-modal-part">
         <option>브라운 (퍼포먼스)</option><option>유니 (CRM)</option>
-        <option>노바·제인 (콘텐츠)</option><option>마틸다 (MD)</option>
+        <option>노바 (콘텐츠)</option><option>마틸다 (MD)</option>
         <option>몰갱 (UX/UI)</option><option>니나 (디자인)</option>
         <option>로지 (CX)</option><option>호우 (퀴즈 PO)</option>
         <option>브랜드팀 전체</option>
@@ -2004,10 +2004,10 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       {key:'ad',name:'광고비/매출', unit:'%', cmp:'lte', t:{Q2:12,Q3:12,Q4:12}},
     ]},
     {id:'g4',label:'브랜드 캠페인',metrics:[
-      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', type:'list', t:{Q2:1,Q3:2,Q4:3}},
+      {key:'camp',name:'캠페인 누적', unit:'회', cmp:'gte', type:'entries', t:{Q2:1,Q3:2,Q4:3}},
     ]},
   ];
-  const PARTS = ['브라운','유니','노바·제인','마틸다','몰갱','니나','로지','호우'];
+  const PARTS = ['브라운','유니','노바','마틸다','몰갱','니나','로지','호우'];
   const TASKS_INIT = {
     '브라운':{
       '2026-04':['스스 SA 감액 2주차 판정 → 매출 하락 10% 이내면 유지','슈퍼볼 런칭 광고 집행'],
@@ -2023,7 +2023,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       '2026-07':['구독 영양 비중 증대 CRM 설계'],'2026-08':['카사바 구매자 → 구독 전환 CRM'],'2026-09':['오메가3 런칭 CRM + 구독 연동'],
       '2026-10':['4주년 구독 업셀 CRM'],'2026-11':['블프 윈백 CRM'],'2026-12':['홀리데이 구독 선물 CRM'],
     },
-    '노바·제인':{
+    '노바':{
       '2026-04':['모래 "처방이유" 3종 제작 (60초 미야옹철 영상 + 성분해설 + UGC 프레임)','슈퍼볼 런칭 콘텐츠'],
       '2026-05':['가족사진 캠페인 콘텐츠','퀴즈 결과 페이지 카피','넵다 소재 (채널별 분리)'],
       '2026-06':['브랜딩 캠페인 콘텐츠 (Q2 캠페인 1회)','영양케어 처방이유 3종 (케어라인 리뉴얼 연동)'],
@@ -2471,8 +2471,9 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 
   /* ─── Block C: Gate Grid ─── */
   function gateMetricPass(m,q,actual){
-    if(m.type==='list'){
-      const n=String(actual||'').split('\n').map(x=>x.trim()).filter(Boolean).length;
+    if(m.type==='entries'){
+      const arr=Array.isArray(actual)?actual:(typeof actual==='string'&&actual?actual.split('\n'):[]);
+      const n=arr.map(x=>String(x).trim()).filter(Boolean).length;
       return n===0 ? null : n>=m.t[q];
     }
     if(actual==null || String(actual).trim()==='') return null;
@@ -2499,11 +2500,17 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           const av = (gv[m.key]!=null) ? gv[m.key] : '';
           const r = gateMetricPass(m,q,av);
           const mColor = r===null ? 'var(--accent)' : (r ? 'var(--teal)' : 'var(--burgundy)');
-          if(m.type==='list'){
-            const cnt=String(av||'').split('\n').map(x=>x.trim()).filter(Boolean).length;
+          if(m.type==='entries'){
+            const arr=Array.isArray(av)?av:(typeof av==='string'&&av?av.split('\n'):[]);
+            const cnt=arr.map(x=>String(x).trim()).filter(Boolean).length;
+            const rows=arr.map((val,idx)=>`<div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+              <input type="text" class="t-gate-ent" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" data-i="${idx}" value="${esc(String(val))}" placeholder="캠페인명" style="flex:1;min-width:0;font-size:11px;color:var(--txt-700);background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:var(--ff)">
+              <button class="t-gate-ent-del" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" data-i="${idx}" title="삭제" style="flex-shrink:0;background:none;border:none;color:var(--txt-300);cursor:pointer;font-size:12px;padding:2px 4px;line-height:1">\u2715</button>
+            </div>`).join('');
             return `<div style="margin-top:6px">
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt-500);line-height:1.3;margin-bottom:3px"><span>${m.name} <b style="color:var(--txt-400)">\ubaa9\ud45c ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span><b style="color:${mColor}">${cnt}${m.unit}</b></div>
-              <textarea class="t-gate-list" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" rows="3" placeholder="\uce90\ud398\uc778\uba85 \ud55c \uc904\uc5d0 \ud558\ub098" style="width:100%;font-size:11px;color:var(--txt-700);background:var(--bg-alt);border:1px solid var(--border);border-radius:7px;padding:5px 6px;font-family:var(--ff);resize:vertical;line-height:1.5">${esc(String(av))}</textarea>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt-500);line-height:1.3;margin-bottom:2px"><span>${m.name} <b style="color:var(--txt-400)">목표 ${cmpSym(m.cmp)}${m.t[q]}${m.unit}</b></span><b style="color:${mColor}">${cnt}${m.unit}</b></div>
+              ${rows}
+              <button class="t-gate-ent-add" data-q="${q}" data-g="${gd.id}" data-m="${m.key}" style="margin-top:4px;font-size:11px;color:var(--accent);background:none;border:1px dashed var(--border-md);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:var(--ff)">+ 캠페인 추가</button>
             </div>`;
           }
           return `<div style="display:flex;align-items:center;gap:6px;margin-top:6px">
@@ -2539,16 +2546,22 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         saveData(); renderBlockA(); renderBlockC();
       });
     });
-    document.querySelectorAll('.t-gate-list').forEach(inp=>{
-      inp.addEventListener('change',function(){
-        const q=this.dataset.q, g=this.dataset.g, mk=this.dataset.m;
-        D.gateVals[q]=D.gateVals[q]||{};
-        D.gateVals[q][g]=(D.gateVals[q][g] && typeof D.gateVals[q][g]==='object')?D.gateVals[q][g]:{};
-        D.gateVals[q][g][mk]=this.value;
-        const gd=GATE_DEFS.find(x=>x.id===g);
-        D.gates[q][g]=computeGateState(q,gd);
-        saveData(); renderBlockA(); renderBlockC();
-      });
+    function _entArr(q,g,mk){
+      D.gateVals[q]=D.gateVals[q]||{};
+      D.gateVals[q][g]=(D.gateVals[q][g] && typeof D.gateVals[q][g]==='object')?D.gateVals[q][g]:{};
+      let cur=D.gateVals[q][g][mk];
+      if(!Array.isArray(cur)) cur=(typeof cur==='string'&&cur)?cur.split('\n'):[];
+      D.gateVals[q][g][mk]=cur; return cur;
+    }
+    function _entCommit(q,g){ const gd=GATE_DEFS.find(x=>x.id===g); D.gates[q][g]=computeGateState(q,gd); saveData(); renderBlockA(); renderBlockC(); }
+    document.querySelectorAll('.t-gate-ent').forEach(inp=>{
+      inp.addEventListener('change',function(){ const a=_entArr(this.dataset.q,this.dataset.g,this.dataset.m); a[+this.dataset.i]=this.value; _entCommit(this.dataset.q,this.dataset.g); });
+    });
+    document.querySelectorAll('.t-gate-ent-del').forEach(b=>{
+      b.addEventListener('click',function(){ const a=_entArr(this.dataset.q,this.dataset.g,this.dataset.m); a.splice(+this.dataset.i,1); _entCommit(this.dataset.q,this.dataset.g); });
+    });
+    document.querySelectorAll('.t-gate-ent-add').forEach(b=>{
+      b.addEventListener('click',function(){ const a=_entArr(this.dataset.q,this.dataset.g,this.dataset.m); a.push(''); _entCommit(this.dataset.q,this.dataset.g); });
     });
   }
 
