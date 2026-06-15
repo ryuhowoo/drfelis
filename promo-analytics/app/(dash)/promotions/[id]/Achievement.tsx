@@ -54,9 +54,15 @@ export default function Achievement({
 
   const planRows = rows.filter((r) => r.status !== "unplanned");
   const unplanned = rows.filter((r) => r.status === "unplanned");
-  // 함께 구매(메인 외) — 매출 큰 순, 상위 8개만 노출 + 나머지는 합산 1줄
+  // 함께 구매(메인 외) — 정기구독 상품은 제외(별도 섹션에서 다룸). 매출 큰 순, 상위 8개 + 나머지 합산.
+  const subIds = new Set(
+    diagnosticRows.filter((d) => d.is_subscription).map((d) => d.product_id),
+  );
+  const haloAll = unplanned.filter((r) => !subIds.has(r.product_id));
+  const haloRevTotal = haloAll.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
+  const haloContribTotal = haloAll.reduce((s, r) => s + (r.actual_contribution ?? 0), 0);
   const HALO_TOP = 8;
-  const haloSorted = [...unplanned].sort(
+  const haloSorted = [...haloAll].sort(
     (a, b) => (b.actual_revenue ?? 0) - (a.actual_revenue ?? 0),
   );
   const haloHead = haloSorted.slice(0, HALO_TOP);
@@ -225,13 +231,13 @@ export default function Achievement({
           )}
 
           {/* 계획 외 판매 */}
-          {hasConfirmed && unplanned.length > 0 && (
+          {hasConfirmed && haloAll.length > 0 && (
             <details className="mt-4 rounded-xl bg-amber-50/60 p-4">
               <summary className="cursor-pointer text-sm font-medium text-amber-800">
-                함께 구매 (메인 외) — {unplanned.length}개 SKU · 매출 {wonShort(summary!.unplanned_revenue)} · 공헌{" "}
-                {wonShort(summary!.unplanned_contribution)}
+                함께 구매 (메인 외) — {haloAll.length}개 SKU · 매출 {wonShort(haloRevTotal)} · 공헌{" "}
+                {wonShort(haloContribTotal)}
                 <span className="ml-1 text-xs font-normal text-amber-600">
-                  (매출 큰 순 · 달성률 분모에서 제외)
+                  (정기구독 제외 · 매출 큰 순 · 달성률 분모에서 제외)
                 </span>
               </summary>
               <div className="mt-3 overflow-x-auto">
