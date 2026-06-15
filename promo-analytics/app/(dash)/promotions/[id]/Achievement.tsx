@@ -60,31 +60,52 @@ export default function Achievement({
     <section className="mt-6">
       <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성 & 매칭 (계획 대비 실적)</h2>
 
-      {/* 총 달성률 (SKU 기준 1차 진실) */}
+      {/* 달성 카드 (N8 매출 중심): 매출은 전체 실적/목표, 수량은 메인 제품 */}
       {hasConfirmed ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <AchCard
-            label="매출 달성률"
-            ach={summary!.ach_revenue}
-            actual={summary!.actual_revenue_total}
-            expected={summary!.expected_revenue_total}
-            primary
-          />
-          <AchCard
-            label="수량 달성률"
-            ach={summary!.ach_qty}
-            actual={summary!.actual_qty_total}
-            expected={summary!.expected_qty_total}
-            isQty
-            lowData={summary!.quantity_reliable === false}
-          />
-          <AchCard
-            label="공헌이익 달성률"
-            ach={summary!.ach_contribution}
-            actual={summary!.actual_contribution_total}
-            expected={summary!.expected_contribution_total}
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <AchCard
+              label="캠페인 매출 달성 (전체)"
+              ach={summary!.revenue_ach_total}
+              actual={summary!.campaign_revenue_total}
+              expected={summary!.expected_revenue_total}
+              primary
+            />
+            <AchCard
+              label="메인 제품 수량 달성"
+              ach={summary!.ach_qty}
+              actual={summary!.actual_qty_total}
+              expected={summary!.expected_qty_total}
+              isQty
+              lowData={summary!.quantity_reliable === false}
+            />
+            <AchCard
+              label="공헌이익 달성 (전체)"
+              ach={summary!.contribution_ach_total}
+              actual={summary!.contribution_total}
+              expected={summary!.expected_contribution_total}
+            />
+          </div>
+          {/* 매출 구성: 메인 + 함께 구매 (구독 제외) */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-soft px-4 py-2.5 text-[11px] text-ink-3">
+            <span>
+              메인 제품 매출 <strong className="text-ink">{wonShort(summary!.main_revenue)}</strong>
+            </span>
+            <span className="text-ink-4">＋</span>
+            <span>
+              함께 구매 매출{" "}
+              <strong className="text-brand-700">{wonShort(summary!.halo_revenue)}</strong>
+              <span className="text-ink-4"> (메인 외 동반구매)</span>
+            </span>
+            <span className="text-ink-4">＝</span>
+            <span>
+              전체 <strong className="text-ink">{wonShort(summary!.campaign_revenue_total)}</strong>
+            </span>
+            {(summary!.subscription_revenue ?? 0) > 0 && (
+              <span className="text-ink-4">· 구독 {wonShort(summary!.subscription_revenue)} 제외</span>
+            )}
+          </div>
+        </>
       ) : (
         <p className="rounded-xl card-soft px-4 py-3 text-xs text-neutral-500">
           확정 플랜이 아니라 총 달성률은 미표시 — 아래에서 SKU 매칭만 정리할 수 있습니다.{" "}
@@ -118,8 +139,20 @@ export default function Achievement({
       {tab === "sku" ? (
         <div className="mt-3">
           <p className="mb-2 text-[11px] text-neutral-400">
-            품목(SKU) 단위가 달성도의 1차 기준입니다 — 품목 코드·정규화 이름으로 자동 매칭되며, 빗나간 것만 아래에서 보정하세요.
+            매출 달성은 위 카드의 <strong>캠페인 전체(함께 구매 포함)</strong> 기준입니다. 여기 SKU 표는 <strong>메인 제품이 예상수량만큼 팔렸는지</strong>를 봅니다 — 품목 코드·정규화 이름으로 자동 매칭, 빗나간 것만 아래에서 보정하세요.
           </p>
+
+          {/* 메인 제품 예상 vs 실제 수량 — 막대 + 부족분 강조 (한눈에) */}
+          {hasConfirmed && planRows.length > 0 && (
+            <div className="mb-3 rounded-2xl card-soft p-4">
+              <div className="mb-2.5 text-xs font-medium text-ink-2">메인 제품 수량: 예상 vs 실제</div>
+              <ul className="space-y-2.5">
+                {planRows.map((r) => (
+                  <QtyBar key={r.product_id} row={r} />
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* SKU 단위 가이드 vs 실적 */}
           {hasConfirmed && (
@@ -269,6 +302,44 @@ function AchCard({
         {fmt(actual)} / {fmt(expected)}
       </div>
     </div>
+  );
+}
+
+// 메인 제품 예상 vs 실제 수량 막대 — 달성률·부족분 강조
+function QtyBar({ row }: { row: PlanVsActualRow }) {
+  const exp = row.expected_qty ?? 0;
+  const act = row.actual_qty ?? 0;
+  const ratio = exp > 0 ? act / exp : null;
+  const fill = exp > 0 ? Math.min(100, (act / exp) * 100) : act > 0 ? 100 : 0;
+  const over = ratio != null && ratio >= 1;
+  const short = exp - act;
+  return (
+    <li>
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="min-w-0 truncate text-ink-2" title={row.base_name}>
+          {row.base_name}
+        </span>
+        <span className="shrink-0 tabular-nums text-ink-3">
+          {num(act)} / {num(exp)}
+          {ratio != null && (
+            <span className={`ml-1.5 font-semibold ${over ? "text-green-600" : "text-amber-600"}`}>
+              {pct(ratio, 0)}
+            </span>
+          )}
+        </span>
+      </div>
+      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+        <div
+          className={`h-full rounded-full ${over ? "bg-green-500" : "bg-amber-400"}`}
+          style={{ width: `${fill}%` }}
+        />
+      </div>
+      {!over && exp > 0 && short > 0 && (
+        <div className="mt-0.5 text-[10px] font-medium text-amber-600">
+          예상 대비 {num(short)}개 부족
+        </div>
+      )}
+    </li>
   );
 }
 
