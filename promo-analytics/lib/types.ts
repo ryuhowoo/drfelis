@@ -249,7 +249,7 @@ export type PlanVsActualOption = {
   match_patterns: string[];
   matched: boolean;
   // N7 P2: 'routed'(구성·묶음 자동 라우팅) | 'manual'(수동 패턴) | 'none'(미매칭/저신뢰)
-  match_source: "routed" | "manual" | "none";
+  match_source: "routed" | "sku" | "manual" | "none";
   actual_revenue: number;
   actual_qty: number;
   ach_revenue: number | null;
