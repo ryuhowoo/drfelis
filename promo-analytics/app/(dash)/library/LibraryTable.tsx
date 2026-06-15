@@ -4,9 +4,22 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { wonShort, pct } from "@/lib/format";
 
+export type CampaignStage = "plan" | "actual" | "linked" | "empty";
+
+export const STAGE_META: Record<
+  CampaignStage,
+  { label: string; cls: string }
+> = {
+  linked: { label: "플랜+실적", cls: "bg-emerald-50 text-emerald-700" },
+  actual: { label: "실적만", cls: "bg-soft text-ink-3" },
+  plan: { label: "플랜만", cls: "bg-amber-50 text-amber-700" },
+  empty: { label: "빈 캠페인", cls: "bg-soft text-ink-4" },
+};
+
 export type LibraryRow = {
   id: string;
   name: string;
+  stage: CampaignStage;
   start_date: string;
   end_date: string;
   promo_type: string | null;
@@ -53,11 +66,20 @@ function rowFitScore(r: LibraryRow, filter: string[]): number {
   return scores.length ? Math.max(...scores) : -1;
 }
 
+type StageFilter = "all" | "linked" | "actual" | "plan";
+
 export default function LibraryTable({ data }: { data: LibraryRow[] }) {
   const [type, setType] = useState("");
   const [season, setSeason] = useState("");
   const [sort, setSort] = useState<SortKey>("score");
   const [purposeFilter, setPurposeFilter] = useState<string[]>([]);
+  const [stage, setStage] = useState<StageFilter>("all");
+
+  const stageCounts = useMemo(() => {
+    const c = { linked: 0, actual: 0, plan: 0 };
+    for (const d of data) if (d.stage in c) c[d.stage as keyof typeof c]++;
+    return c;
+  }, [data]);
 
   const types = useMemo(
     () => [...new Set(data.map((d) => d.promo_type).filter(Boolean) as string[])],
@@ -95,6 +117,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
 
   const rows = useMemo(() => {
     const filtered = scored
+      .filter((d) => (stage === "all" ? true : d.stage === stage))
       .filter((d) => (type ? d.promo_type === type : true))
       .filter((d) => (season ? d.season_tag === season : true))
       .filter((d) =>
@@ -110,10 +133,32 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
     return filtered.sort(
       (a, b) => ((b[sort] as number) ?? 0) - ((a[sort] as number) ?? 0),
     );
-  }, [scored, type, season, sort, purposeFilter]);
+  }, [scored, stage, type, season, sort, purposeFilter]);
 
   return (
     <div>
+      {/* 생애주기 세그먼트 — 플랜+실적 / 실적만 / 플랜만 구분 */}
+      <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-soft p-1 text-sm font-medium w-fit">
+        {(
+          [
+            { key: "all", label: `전체 ${data.length}` },
+            { key: "linked", label: `플랜+실적 ${stageCounts.linked}` },
+            { key: "actual", label: `실적만 ${stageCounts.actual}` },
+            { key: "plan", label: `플랜만 ${stageCounts.plan}` },
+          ] as { key: StageFilter; label: string }[]
+        ).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setStage(t.key)}
+            className={`rounded-lg px-3.5 py-1.5 transition ${
+              stage === t.key ? "card-soft text-ink" : "text-ink-3 hover:text-ink"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Select value={type} onChange={setType} placeholder="혜택종류 전체" options={types} />
         <Select value={season} onChange={setSeason} placeholder="시즈널리티 전체" options={seasons} />
@@ -183,12 +228,15 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 {r.score}
               </span>
               <div className="min-w-0 flex-1">
-                <Link
-                  href={`/promotions/${r.id}`}
-                  className="block truncate text-[15px] font-semibold text-neutral-900 hover:text-brand-600"
-                >
-                  {r.name}
-                </Link>
+                <div className="flex items-center gap-1.5">
+                  <Link
+                    href={`/promotions/${r.id}`}
+                    className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-900 hover:text-brand-600"
+                  >
+                    {r.name}
+                  </Link>
+                  <StageBadge stage={r.stage} />
+                </div>
                 <div className="mt-0.5 text-xs text-neutral-400">
                   {r.start_date} ~ {r.end_date}
                 </div>
@@ -268,9 +316,12 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <Link href={`/promotions/${r.id}`} className="font-medium text-neutral-900 hover:text-brand-600">
-                    {r.name}
-                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    <Link href={`/promotions/${r.id}`} className="font-medium text-neutral-900 hover:text-brand-600">
+                      {r.name}
+                    </Link>
+                    <StageBadge stage={r.stage} />
+                  </div>
                   <div className="text-xs text-neutral-400">{r.start_date}~{r.end_date}</div>
                   {r.purpose && <div className="text-xs text-neutral-400">목적: {r.purpose}</div>}
                 </td>
@@ -314,6 +365,16 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
         종합점수 = 공헌이익 40% · 일평균 기여 30% · 효율(기여/할인깊이) 20% · 간접비중 10% (전체 대비 상대 점수)
       </p>
     </div>
+  );
+}
+
+function StageBadge({ stage }: { stage: CampaignStage }) {
+  const m = STAGE_META[stage];
+  if (!m) return null;
+  return (
+    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${m.cls}`}>
+      {m.label}
+    </span>
   );
 }
 
