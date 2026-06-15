@@ -2697,12 +2697,15 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         ends[r]=e; out.push({...ev,row:r,s,e});
       } return out;
     }
-    let zoom=3;
-    function draw(ppd){
+    let zoom=1;
+    function curPpd(){ const o=document.getElementById('tl-outer'); const ow=(o&&o.clientWidth)?o.clientWidth:900; return Math.max((ow-50)/365,0.5)*zoom; }
+    function draw(){
       const inner=document.getElementById('tl-inner');
       if(!inner) return;
-      const PAD=30, AX=105, RH=18, GAP=3;
+      const ppd=curPpd();
+      const PAD=30, AX=110, RH=15, GAP=15;
       inner.style.width=(Math.round(365*ppd)+PAD+20)+'px';
+      inner.style.height='205px';
       let h='';
       for(let m=0;m<12;m++){
         const x=Math.round(MONTH_DAYS[m]*ppd)+PAD;
@@ -2710,6 +2713,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         h+=`<div style="position:absolute;left:${x}px;width:${xn-x}px;top:0;bottom:0;background:${m%2?'rgba(0,0,0,0)':'rgba(0,0,0,.025)'};border-left:1px solid rgba(0,0,0,.07)"></div>`;
         h+=`<div style="position:absolute;left:${x+Math.round((xn-x)/2)}px;top:${AX+4}px;transform:translateX(-50%);font-size:9px;color:var(--txt-400);white-space:nowrap">${MONTH_NAMES[m]}</div>`;
       }
+      if(ppd*7>=22){ for(let d=7; d<365; d+=7){ const wx=Math.round(d*ppd)+PAD; h+=`<div style="position:absolute;left:${wx}px;top:0;bottom:0;width:1px;background:rgba(0,0,0,.05)"></div>`; } }
       h+=`<div style="position:absolute;left:${PAD}px;right:0;top:${AX}px;height:1px;background:var(--txt-200)"></div>`;
       const fmtDate=s=>{const [,mm,dd]=s.split('-');return parseInt(mm)+'/'+parseInt(dd);};
       const fmtRange=(s,e)=>s===e?fmtDate(s):fmtDate(s)+' ~ '+fmtDate(e);
@@ -2719,6 +2723,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         const y=AX-(RH+GAP)*(ev.row+1)-2;
         const range=fmtRange(ev.start,ev.end);
         h+=`<div data-id="${ev.id}" data-label="${esc(ev.label)}" data-date="${range}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${RH}px;background:${ev.color||'#B85C38'};border-radius:3px;font-size:9px;font-weight:700;color:#fff;padding:0 4px;line-height:${RH}px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.9;cursor:pointer">${esc(ev.label)}</div>`;
+        if(w>=44) h+=`<div style="position:absolute;left:${x}px;top:${y+RH+1}px;font-size:8.5px;color:var(--txt-400);white-space:nowrap;pointer-events:none">${range}</div>`;
       }
       for(const ev of assignRows(NAVER_EVENTS,2)){
         const x=Math.round(ev.s*ppd)+PAD;
@@ -2726,6 +2731,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         const y=AX+18+(RH+GAP)*ev.row;
         const range=fmtRange(ev.start,ev.end);
         h+=`<div data-id="${ev.id}" data-label="${esc(ev.label)}" data-date="${range}" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${RH}px;background:${ev.color||'#C08A4A'};border-radius:3px;font-size:9px;font-weight:700;color:#fff;padding:0 4px;line-height:${RH}px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.85;cursor:pointer">${esc(ev.label)}</div>`;
+        if(w>=44) h+=`<div style="position:absolute;left:${x}px;top:${y+RH+1}px;font-size:8.5px;color:var(--txt-400);white-space:nowrap;pointer-events:none">${range}</div>`;
       }
       const td=doy(new Date().toISOString().slice(0,10));
       const tx=Math.round(td*ppd)+PAD;
@@ -2737,13 +2743,13 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 <div class="tr-sec-title" style="flex-wrap:wrap;gap:8px">
   <div style="display:flex;align-items:center;gap:8px"><span class="ts-eye">TIMELINE</span> 2026 캠페인 타임라인</div>
   <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-    <span style="font-size:10px;color:var(--txt-400)">축척</span>
-    <input type="range" id="tl-zoom" min="1" max="9" step=".2" value="3" style="width:90px;accent-color:var(--accent)">
-    <button id="tl-today-btn" class="tr-add-btn" style="padding:4px 10px;font-size:11px">오늘로</button>
+    <span style="font-size:10px;color:var(--txt-400)">확대</span>
+    <input type="range" id="tl-zoom" min="1" max="5" step="0.25" value="1" style="width:90px;accent-color:var(--accent)">
+    <button id="tl-today-btn" style="padding:4px 12px;font-size:11px;font-weight:600;color:var(--txt-500);background:var(--bg-alt);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--ff)">오늘로</button>
     <button id="tl-add-btn" class="t-btn-add" style="padding:4px 10px;font-size:11px">+ 캠페인 추가</button>
   </div>
 </div>
-<div style="font-size:10px;color:var(--txt-300);margin:-2px 0 6px;padding-left:2px">캠페인 바를 클릭하면 수정·삭제할 수 있습니다.</div>
+<div style="font-size:10px;color:var(--txt-300);margin:-2px 0 6px;padding-left:2px">캠페인 바를 클릭하면 수정·삭제. 확대하면 주 단위 눈금과 기간이 표시됩니다.</div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--txt-400);margin-bottom:8px;padding-left:2px">
   <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#B85C38;vertical-align:middle;margin-right:3px"></span>SALES</span>
   <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8C6E52;vertical-align:middle;margin-right:3px"></span>NEW 제품</span>
@@ -2754,17 +2760,17 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
 </div>
 <div id="tl-outer"><div id="tl-inner"></div></div>
 <div id="tl-tip" style="display:none;position:fixed;z-index:9999;background:rgba(20,20,20,.92);color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:nowrap;max-width:260px;white-space:normal;line-height:1.4"></div>`;
-    draw(zoom);
+    draw();
     function scrollToToday(){
       const outer=document.getElementById('tl-outer');
       if(!outer) return;
       const PAD=30;
       const td=doy(new Date().toISOString().slice(0,10));
-      outer.scrollLeft=Math.round(td*zoom)+PAD-outer.clientWidth/2;
+      outer.scrollLeft=Math.round(td*curPpd())+PAD-outer.clientWidth/2;
     }
     setTimeout(scrollToToday,60);
     document.getElementById('tl-zoom').addEventListener('input',function(){
-      zoom=parseFloat(this.value); draw(zoom); scrollToToday();
+      zoom=parseFloat(this.value); draw(); scrollToToday();
     });
     document.getElementById('tl-today-btn').addEventListener('click',scrollToToday);
     document.getElementById('tl-add-btn').addEventListener('click',()=>openTlModal(null));
