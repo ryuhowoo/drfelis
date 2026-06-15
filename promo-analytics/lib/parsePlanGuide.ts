@@ -3,11 +3,19 @@ import * as XLSX from "xlsx";
 // 표준 '캠페인 플랜 가이드' 양식 파서 — 평평한 한 표(1행 = 옵션 1개).
 // 가이드(가설) → 캠페인 플랜(예상)으로 적재하기 위한 입력.
 
+// 한 옵션을 구성하는 단일 SKU(품목) 1건. 단품 옵션은 components 길이 1, 혼합 옵션은 N.
+export type PlanComponent = {
+  item_code: string; // 품목코드 (products.dr_code 매칭 키). 없으면 name 으로 매칭.
+  name: string; // 이름 폴백 (단품 옵션명 등). 구성 컬럼에서 온 경우 빈 문자열.
+  qty: number; // 이 SKU 의 옵션당 수량 (sku_qty_per_option)
+};
+
 export type PlanGuideOption = {
   product_code: string; // 상품코드
   item_code: string; // 품목코드 (products.dr_code 매칭 키)
   option_label: string; // 상품명(옵션명, 개입수 포함)
   pack_count: number; // 개입수 (옵션명에서 파싱)
+  components: PlanComponent[]; // N7: 구성(다구성 지원). 단품이면 1건.
   expected_qty: number; // 수량(예상 판매수량, 옵션)
   consumer_price: number;
   cost: number;
@@ -77,6 +85,23 @@ function findCol(header: unknown[], cands: string[]): number {
   for (let i = 0; i < normed.length; i++)
     if (cands.some((c) => normed[i].includes(norm(c)) && normed[i] !== "")) return i;
   return -1;
+}
+
+// '구성' 컬럼 파싱 (A안): "품목코드:수량, 품목코드:수량" → 컴포넌트 배열.
+// 구분자 관용: 항목 = 콤마/세미콜론/줄바꿈, 코드↔수량 = ':' '*' 'x' '×' '@'. 수량 생략 시 1.
+function parseComponents(raw: unknown): PlanComponent[] {
+  const s = String(raw ?? "").trim();
+  if (!s) return [];
+  const out: PlanComponent[] = [];
+  for (const part of s.split(/[,;\n]+/)) {
+    const seg = part.trim();
+    if (!seg) continue;
+    const m = seg.match(/^(.+?)\s*[:*x×@]\s*([\d.]+)\s*$/i);
+    const code = (m ? m[1] : seg).trim();
+    const qty = m ? Math.max(1, toNum(m[2]) || 1) : 1;
+    if (code) out.push({ item_code: code, name: "", qty });
+  }
+  return out;
 }
 
 // 옵션명에서 개입수(번들 SKU 수) 추정: [4팩], 2박스, 6팩, N입/개/묶음/구성 → N. 없으면 1.
@@ -149,6 +174,7 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     pcode: findCol(H, ["상품코드"]),
     icode: findCol(H, ["품목코드"]),
     name: findCol(H, ["상품명", "옵션명"]),
+    components: findCol(H, ["구성", "구성품", "구성내역", "구성품목"]),
     qty: qtyIdx,
     pack: packIdx,
     consumer: findCol(H, ["소비자가"]),
@@ -187,11 +213,20 @@ export function parsePlanGuide(buf: ArrayBuffer): PlanGuideCampaign[] {
     const contribRate = c.contribRate >= 0 ? toNum(r[c.contribRate]) : 0;
 
     const packVal = c.pack >= 0 ? toNum(r[c.pack]) : 0;
+    const pack_count = packVal > 0 ? packVal : packFromName(name);
+    const item_code = c.icode >= 0 ? String(r[c.icode] ?? "").trim() : "";
+    // 구성 컬럼이 있고 값이 있으면 다구성으로, 없으면 현행 단품(품목코드 또는 옵션명) 1건.
+    const parsed = c.components >= 0 ? parseComponents(r[c.components]) : [];
+    const components: PlanComponent[] =
+      parsed.length > 0
+        ? parsed
+        : [{ item_code, name: item_code ? "" : name, qty: pack_count }];
     const opt: PlanGuideOption = {
       product_code: c.pcode >= 0 ? String(r[c.pcode] ?? "").trim() : "",
-      item_code: c.icode >= 0 ? String(r[c.icode] ?? "").trim() : "",
+      item_code,
       option_label: name,
-      pack_count: packVal > 0 ? packVal : packFromName(name),
+      pack_count,
+      components,
       expected_qty: toNum(r[c.qty]),
       consumer_price: consumer,
       cost: toNum(r[c.cost]),

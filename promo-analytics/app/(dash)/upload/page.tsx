@@ -1188,7 +1188,9 @@ function PlanGuideImportCard() {
       setP({ phase: "uploading", message: "품목 매칭 중…" });
 
       const allOptions = camps.flatMap((c) => c.options);
-      const itemCodes = [...new Set(allOptions.map((o) => o.item_code).filter(Boolean))];
+      // N7: 옵션은 1..N 구성(컴포넌트)으로 — 품목코드 기준 매칭, 단품은 옵션명 폴백
+      const allComps = allOptions.flatMap((o) => o.components);
+      const itemCodes = [...new Set(allComps.map((cp) => cp.item_code).filter(Boolean))];
       const byDr = new Map<string, { id: string; base_name: string }>();
       if (itemCodes.length > 0) {
         const { data } = await supabase
@@ -1201,22 +1203,25 @@ function PlanGuideImportCard() {
       }
       const needNames = [
         ...new Set(
-          allOptions
-            .filter((o) => !(o.item_code && byDr.has(o.item_code)))
-            .map((o) => o.option_label),
+          allComps
+            .filter((cp) => !(cp.item_code && byDr.has(cp.item_code)) && cp.name)
+            .map((cp) => cp.name),
         ),
       ];
       const byName =
         needNames.length > 0
           ? await productsLib.ensureProducts(supabase, needNames)
           : new Map<string, string>();
-      const resolve = (o: (typeof allOptions)[number]) => {
-        if (o.item_code && byDr.has(o.item_code)) {
-          const m = byDr.get(o.item_code)!;
+      const resolveComp = (comp: { item_code: string; name: string; qty: number }) => {
+        if (comp.item_code && byDr.has(comp.item_code)) {
+          const m = byDr.get(comp.item_code)!;
           return { product_id: m.id, base_name: m.base_name };
         }
-        const id = byName.get(o.option_label);
-        return id ? { product_id: id, base_name: o.option_label } : null;
+        if (comp.name) {
+          const id = byName.get(comp.name);
+          if (id) return { product_id: id, base_name: comp.name };
+        }
+        return null;
       };
 
       let created = 0,
@@ -1266,8 +1271,11 @@ function PlanGuideImportCard() {
           let revTotal = 0,
             contribTotal = 0;
           for (const [idx, o] of camp.options.entries()) {
-            const prod = resolve(o);
-            if (!prod) {
+            // 구성 컴포넌트별 SKU 매칭 — 하나라도 잡히면 진행(부분 매칭 허용), 전무하면 실패
+            const resolved = o.components
+              .map((comp) => ({ qty: comp.qty, prod: resolveComp(comp) }))
+              .filter((x) => x.prod !== null);
+            if (resolved.length === 0) {
               failed++;
               continue;
             }
@@ -1304,15 +1312,19 @@ function PlanGuideImportCard() {
               .select("id")
               .single();
             if (oErr) throw oErr;
-            const { error: iErr } = await supabase.from("campaign_plan_option_items").insert({
+            // set_price(번들 합계)를 구성 수량 비중으로 SKU 단가 환산
+            const totalQty = resolved.reduce((s, x) => s + (x.qty || 0), 0) || 1;
+            const items = resolved.map((x, si) => ({
               campaign_plan_option_id: newOpt.id,
-              product_id: prod.product_id,
-              base_name: prod.base_name,
-              sku_qty_per_option: o.pack_count,
-              // set_price는 번들 합계 → SKU 단가로 환산
-              unit_sale_price: o.pack_count > 0 ? o.set_price / o.pack_count : o.set_price,
-              sort: 0,
-            });
+              product_id: x.prod!.product_id,
+              base_name: x.prod!.base_name,
+              sku_qty_per_option: x.qty,
+              unit_sale_price: o.set_price > 0 ? o.set_price / totalQty : o.set_price,
+              sort: si,
+            }));
+            const { error: iErr } = await supabase
+              .from("campaign_plan_option_items")
+              .insert(items);
             if (iErr) throw iErr;
           }
           await supabase
