@@ -101,10 +101,19 @@ export default function Achievement({
             <span>
               전체 <strong className="text-ink">{wonShort(summary!.campaign_revenue_total)}</strong>
             </span>
-            {(summary!.subscription_revenue ?? 0) > 0 && (
-              <span className="text-ink-4">· 구독 {wonShort(summary!.subscription_revenue)} 제외</span>
-            )}
           </div>
+          {(summary!.subscription_revenue ?? 0) > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/60 px-4 py-2.5 text-xs">
+              <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                정기구독
+              </span>
+              <span className="text-ink-2">
+                정기구독 매출{" "}
+                <strong className="text-violet-700">{wonShort(summary!.subscription_revenue)}</strong>
+              </span>
+              <span className="text-ink-4">— 달성률·함께 구매 계산에서 제외(별도 집계)</span>
+            </div>
+          )}
         </>
       ) : (
         <p className="rounded-xl card-soft px-4 py-3 text-xs text-neutral-500">
