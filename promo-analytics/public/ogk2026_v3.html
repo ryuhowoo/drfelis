@@ -1505,7 +1505,7 @@ input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-ligh
                 <tr><td>②</td><td>모래↔영양 교차구독 (양방향)</td><td>마진 업셀 + 계속 쓰게 만드는 힘 보강</td><td>구독 내 영양 비중 26%→30% (g2 견인)</td><td>마틸다·유니</td></tr>
                 <tr><td>③</td><td>영양 객단가 번들</td><td>직접 인상 없이 실효단가↑</td><td>B2C 영양 비중 ↑ (g2 직접 견인)</td><td>마틸다</td></tr>
                 <tr><td>④</td><td>카사바·오메가3 영양 구독 SKU 런칭</td><td>고마진 구독 풀 확장(질+양)</td><td>신제품 구독 전환</td><td>전체</td></tr>
-                <tr><td>⑤</td><td>공식몰 비중 확대</td><td>혼합 마진 견인</td><td>공식몰 비중 51%→60%+</td><td>전체</td></tr>
+                <tr><td>⑤</td><td>공식몰 비중 확대</td><td>혼합 마진 견인 (스스 볼륨 유지 범위 내)</td><td>공식몰 비중 37%→40% (게이트 정합)</td><td>전체</td></tr>
               </tbody>
             </table>
             <div class="insight" style="margin:14px 0 0">
@@ -2168,7 +2168,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
   };
 
   function defaultData() {
-    const kpi = Object.fromEntries(MONTHS.map(m=>[m,{revenue:null,margin:null,cmAmount:null,subs:null,adRatio:null}]));
+    const kpi = Object.fromEntries(MONTHS.map(m=>[m,{revenue:null,margin:null,cmAmount:null,subs:null,adRatio:null,churn:null}]));
     // 1~5월 매출(억)·공헌이익률(%) 선반영. subs·adRatio는 null 유지(호우가 별도 입력).
     for(const m in ACTUALS_H1){ kpi[m].revenue = ACTUALS_H1[m].revenue; kpi[m].margin = ACTUALS_H1[m].margin; kpi[m].cmAmount = +(ACTUALS_H1[m].revenue*ACTUALS_H1[m].margin/100).toFixed(2); }
     return {
@@ -2419,6 +2419,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
         ${eCell('margin',mrgA,'%',1)}
         ${subsCell}
         ${eCell('adRatio',adA,'%',1)}
+        ${eCell('churn',k.churn,'%',1)}
         <td>${statusHtml}</td>
       </tr>`;
     }).join('');
@@ -2435,7 +2436,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     document.getElementById('t-block-b').innerHTML=`
 <div class="tr-sec-title"><span class="ts-eye">KPI</span> 월별 실적 입력 <span class="ts-hint">셀 클릭 → 숫자 입력 → Enter</span></div>
 <div class="card" style="overflow-x:auto">
-  <table class="tbl" style="min-width:760px">
+  <table class="tbl" style="min-width:850px">
     <thead><tr>
       <th>월</th><th>Phase</th><th>매출 목표</th>
       <th>매출 실적<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(억 원)</small></th>
@@ -2443,6 +2444,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
       <th>공헌이익률<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 30%)</small></th>
       <th>구독자 수<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(6월 '수' 목표 달성 · 이제 교차구독)</small></th>
       <th>광고비/매출<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(%)</small></th>
+      <th>구독 해지율<br><small style="font-weight:400;text-transform:none;letter-spacing:0">(목표 ≤5%)</small></th>
       <th>상태</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -2455,7 +2457,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
           ${totalActual.toFixed(2)}억
           <span style="font-size:10px;font-weight:500;color:var(--txt-400);display:block;margin-top:2px">${enteredCnt}/12개월 · ${achvPct.toFixed(1)}%</span>
         </td>
-        <td colspan="5" style="color:var(--txt-400);font-size:11px;font-weight:500">* 공헌이익액↔률은 매출 기준 자동 연동 · 광고비는 월별 개별 관리</td>
+        <td colspan="6" style="color:var(--txt-400);font-size:11px;font-weight:500">* 공헌이익액↔률은 매출 기준 자동 연동 · 광고비·해지율은 월별 개별 관리</td>
       </tr>
     </tfoot>
   </table>
@@ -2819,6 +2821,7 @@ document.querySelectorAll('.big-num').forEach(el => numObs.observe(el));
     margin: {label:'공헌이익률 (%)',step:0.1,min:0,max:100},
     subs:   {label:'구독자 수 (명)',step:1,min:0},
     adRatio:{label:'광고비/매출 비율 (%)',step:0.1,min:0,max:100},
+    churn:{label:'구독 해지율 (%)',step:0.1,min:0,max:100},
   };
   let popState={month:null,field:null};
 
