@@ -15,7 +15,7 @@ import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
 import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
-import SkuMatchPanel, { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
+import { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
 import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 
@@ -285,23 +285,15 @@ export default async function PromotionDetail({
         </div>
       </div>
 
-      {/* 연동 센터 (N6 R1.4) — 비교 대상·SKU 매칭·병합을 한 곳에서 */}
-      {(plan || diagnosticRows.length > 0 || skuMappings.length > 0) && (
+      {/* 비교 대상 연동 — 어떤 실적 캠페인과 비교할지 선택 (SKU 매칭은 아래 달성 블록으로 통합) */}
+      {plan && (
         <section className="mt-6 rounded-2xl card-soft p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-neutral-700">
-                플랜 ↔ 실적 연동 센터
-              </h2>
-              {plan && !plan.actual_promotion_id && (
+              <h2 className="text-sm font-semibold text-neutral-700">비교 대상 연동</h2>
+              {!plan.actual_promotion_id && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
                   비교 대상 미지정
-                </span>
-              )}
-              {diagnosticRows.some((r) => r.side !== "both" && !r.is_mapped) && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                  미매칭 SKU{" "}
-                  {diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped).length}
                 </span>
               )}
             </div>
@@ -316,38 +308,30 @@ export default async function PromotionDetail({
             <p className="mt-1 text-xs text-ink-3">
               비교 구도: <strong className="text-ink">이 캠페인의 플랜</strong> ↔{" "}
               <strong className="text-brand-700">{linkedActualName}</strong> 실적 —
-              아래 달성률·SKU 매칭이 모두 이 구도 기준으로 계산됩니다.
+              아래 달성 블록이 이 구도 기준으로 계산됩니다.
             </p>
           ) : (
             <p className="mt-1 text-xs text-neutral-400">
-              플랜이 비교할 실적 캠페인과 SKU 매칭을 여기서 한 번에 끝내세요. 연동이 끝나면
-              아래 달성률이 자동으로 채워집니다.
+              비교할 실적 캠페인을 지정하면 아래 달성 블록이 자동으로 채워집니다. SKU·옵션 매칭은 달성 블록에서 보정하세요.
             </p>
           )}
-          {plan && (
-            <ActualsLink
-              promotionId={id}
-              currentLinkId={plan.actual_promotion_id}
-              candidates={candidates}
-            />
-          )}
-          {(diagnosticRows.length > 0 || skuMappings.length > 0) && (
-            <SkuMatchPanel
-              promotionId={id}
-              rows={diagnosticRows}
-              mappings={skuMappings}
-            />
-          )}
+          <ActualsLink
+            promotionId={id}
+            currentLinkId={plan.actual_promotion_id}
+            candidates={candidates}
+          />
         </section>
       )}
 
-      {/* 달성률 (S3) */}
+      {/* 달성 & 매칭 (S3 + N7 P3 통합) */}
       <Achievement
         promotionId={id}
         summary={achSummary}
         rows={achRows}
         options={achOptions}
         optionInfos={optionInfos}
+        diagnosticRows={diagnosticRows}
+        skuMappings={skuMappings}
       />
 
       {/* 목적별 핵심 지표 (S5.4) */}
