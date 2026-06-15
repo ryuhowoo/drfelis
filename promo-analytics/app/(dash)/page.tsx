@@ -57,6 +57,7 @@ type DashboardBundle = {
   }[];
   overall: OverallMetrics | null;
   purpose_metrics: PurposeMetric[];
+  meta: { stale: boolean; refreshed_at: string | null } | null;
 };
 
 export default async function Dashboard() {
@@ -64,6 +65,7 @@ export default async function Dashboard() {
   const { data: bundleData } = await supabase.rpc("dashboard_bundle");
   const bundle = ((bundleData as DashboardBundle | null) ??
     {}) as Partial<DashboardBundle>;
+  const stale = bundle.meta?.stale ?? false;
   const promos = bundle.promotions ?? [];
   const achData = (bundle.rollups ?? [])
     .map((r) => r.achievement)
@@ -283,6 +285,14 @@ export default async function Dashboard() {
           성과 시뮬레이터 →
         </Link>
       </header>
+
+      {stale && (
+        <div className="mb-5 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-2.5 text-xs text-amber-800">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+          방금 업로드·연동한 데이터로 분석을 갱신하는 중입니다. 아래 수치는 직전 기준이며
+          1~2분 내 자동 반영됩니다.
+        </div>
+      )}
 
       {/* AI 인사이트 */}
       {best?.summary && (
