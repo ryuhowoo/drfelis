@@ -16,6 +16,7 @@ export type DiagnosticRow = {
   actual_qty: number | null;
   actual_revenue: number | null;
   is_mapped: boolean;
+  is_subscription: boolean;
 };
 
 export type SkuMapping = {
@@ -89,6 +90,23 @@ export default function SkuMatchPanel({
       return;
     }
     toast.success(`${nameOf(planPid)} 연동됨`);
+    router.refresh();
+  }
+
+  async function toggleSubscription(productId: string, next: boolean) {
+    setBusyKey(productId);
+    const res = await fetch(`/api/products/subscription`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ product_id: productId, is_subscription: next }),
+    });
+    setBusyKey(null);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      toast.error(j.error ?? "구독 지정 실패");
+      return;
+    }
+    toast.success(next ? "정기구독으로 지정됨" : "정기구독 해제됨");
     router.refresh();
   }
 
@@ -257,6 +275,7 @@ export default function SkuMatchPanel({
                     <th className="px-2 py-2 text-right font-medium">기대매출</th>
                     <th className="px-2 py-2 text-right font-medium">실수량</th>
                     <th className="px-2 py-2 text-right font-medium">실매출</th>
+                    <th className="px-2 py-2 text-center font-medium">정기구독</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -283,11 +302,25 @@ export default function SkuMatchPanel({
                       <td className="px-2 py-2 text-right text-ink-3">
                         {r.actual_revenue ? won(r.actual_revenue) : "—"}
                       </td>
+                      <td className="px-2 py-2 text-center">
+                        <button
+                          onClick={() => toggleSubscription(r.product_id, !r.is_subscription)}
+                          disabled={busyKey === r.product_id}
+                          title="정기구독 상품으로 지정하면 달성률에서 제외되고 별도 표기됩니다"
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            r.is_subscription
+                              ? "bg-violet-100 text-violet-700"
+                              : "bg-soft text-ink-4 hover:text-ink-2"
+                          }`}
+                        >
+                          {r.is_subscription ? "✓ 구독" : "구독 지정"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-2 py-6 text-center text-ink-4">
+                      <td colSpan={7} className="px-2 py-6 text-center text-ink-4">
                         {query ? "검색 결과가 없습니다." : "플랜·실적 모두 없습니다."}
                       </td>
                     </tr>
