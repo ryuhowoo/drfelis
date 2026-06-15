@@ -54,6 +54,15 @@ export default function Achievement({
 
   const planRows = rows.filter((r) => r.status !== "unplanned");
   const unplanned = rows.filter((r) => r.status === "unplanned");
+  // 함께 구매(메인 외) — 매출 큰 순, 상위 8개만 노출 + 나머지는 합산 1줄
+  const HALO_TOP = 8;
+  const haloSorted = [...unplanned].sort(
+    (a, b) => (b.actual_revenue ?? 0) - (a.actual_revenue ?? 0),
+  );
+  const haloHead = haloSorted.slice(0, HALO_TOP);
+  const haloRest = haloSorted.slice(HALO_TOP);
+  const haloRestRev = haloRest.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
+  const haloRestQty = haloRest.reduce((s, r) => s + (r.actual_qty ?? 0), 0);
   const unmatched = diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped).length;
 
   return (
@@ -84,6 +93,11 @@ export default function Achievement({
               ach={summary!.contribution_ach_total}
               actual={summary!.contribution_total}
               expected={summary!.expected_contribution_total}
+              note={
+                (summary!.expected_contribution_total ?? 0) <= 0
+                  ? "기대 공헌이 0 이하 — 플랜 원가/판매가 확인 필요"
+                  : undefined
+              }
             />
           </div>
           {/* 매출 구성: 메인 + 함께 구매 (구독 제외) */}
@@ -214,29 +228,36 @@ export default function Achievement({
           {hasConfirmed && unplanned.length > 0 && (
             <details className="mt-4 rounded-xl bg-amber-50/60 p-4">
               <summary className="cursor-pointer text-sm font-medium text-amber-800">
-                계획 외 판매 — {unplanned.length}개 SKU · 매출 {wonShort(summary!.unplanned_revenue)} · 공헌{" "}
+                함께 구매 (메인 외) — {unplanned.length}개 SKU · 매출 {wonShort(summary!.unplanned_revenue)} · 공헌{" "}
                 {wonShort(summary!.unplanned_contribution)}
                 <span className="ml-1 text-xs font-normal text-amber-600">
-                  (전체 달성률 분모에서 제외)
+                  (매출 큰 순 · 달성률 분모에서 제외)
                 </span>
               </summary>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="text-amber-700/70">
                     <tr>
-                      <th className="py-1 pr-3">SKU</th>
+                      <th className="py-1 pr-3">SKU (함께 구매 Top)</th>
                       <th className="py-1 pr-3 text-right">실 매출</th>
                       <th className="py-1 text-right">실 수량</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {unplanned.map((r) => (
+                    {haloHead.map((r) => (
                       <tr key={r.product_id} className="border-t border-amber-100">
                         <td className="py-1 pr-3">{r.base_name}</td>
                         <td className="py-1 pr-3 text-right">{won(r.actual_revenue)}</td>
                         <td className="py-1 text-right">{num(r.actual_qty)}</td>
                       </tr>
                     ))}
+                    {haloRest.length > 0 && (
+                      <tr className="border-t border-amber-100 text-amber-700/80">
+                        <td className="py-1 pr-3">외 {haloRest.length}개 SKU</td>
+                        <td className="py-1 pr-3 text-right">{won(haloRestRev)}</td>
+                        <td className="py-1 text-right">{num(haloRestQty)}</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -275,6 +296,7 @@ function AchCard({
   primary,
   isQty,
   lowData,
+  note,
 }: {
   label: string;
   ach: number | null;
@@ -283,6 +305,7 @@ function AchCard({
   primary?: boolean;
   isQty?: boolean;
   lowData?: boolean;
+  note?: string;
 }) {
   const fmt = isQty ? num : wonShort;
   return (
@@ -296,11 +319,12 @@ function AchCard({
         )}
       </div>
       <div className="mt-1 text-2xl font-semibold">
-        {ach != null ? pct(ach, 0) : "—"}
+        {ach != null ? pct(ach, 0) : note ? <span className="text-base text-amber-600">계산 불가</span> : "—"}
       </div>
       <div className="mt-0.5 text-xs text-neutral-400">
         {fmt(actual)} / {fmt(expected)}
       </div>
+      {note && <div className="mt-1 text-[10px] leading-tight text-amber-600">{note}</div>}
     </div>
   );
 }
