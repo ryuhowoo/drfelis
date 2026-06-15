@@ -14,7 +14,7 @@
 - **작업 브랜치**: `claude/n5-plan-separation-10ikew` (계속 이 브랜치 사용). main에 squash 머지 반복 중.
 - **Supabase**: project_id `mlbtnnchbpctgjjawkue` (이름 "ryuhowoo-CXdashboard"), 스키마 **`promo`**.
   - 마이그레이션은 MCP `apply_migration`으로 **운영 DB에 직접 적용** + 같은 SQL을 `promo-analytics/supabase/migrations/000N_*.sql` 파일로 커밋(이중 기록).
-  - 현재 최신 마이그레이션: **0029_campaign_stage**. 다음은 0030부터.
+  - 현재 최신 마이그레이션: **0030_n7_matching_model** (N7 P1, 적용·커밋 완료). 다음은 0031부터.
 - **Vercel**: project `df-promo-dsbd`, team `team_NakdS71OJZl5NgmF18BQ2ZGb`, 프로덕션 `https://df-promo-dsbd.vercel.app`. PR마다 프리뷰 자동 빌드.
 - **PR 흐름**: 브랜치 푸시 → GitHub MCP로 draft PR → Vercel Ready 웹훅 확인 → squash 머지 → `git fetch origin main && git reset --hard origin/main`로 동기화.
 
@@ -47,6 +47,15 @@
 3. `parsePlanGuide.ts`: '구성(품목코드:수량,…)' 컬럼 있으면 components로 파싱, 없으면 현행 단품+혼합행 추론. 임포터가 items 다건 insert.
 4. 적재 후 `refresh_rollups(true)` + 번들 검증.
 → 이후 P2(달성 계산: SKU 1차/옵션 부가 RPC 재작성) → P3(UI: 구성·묶음 표시, 매칭 패널 SKU/옵션 탭) → P4(오염 옵션 보정/재임포트).
+
+### P1 진행 상황 (2026-06-15 완료)
+- 작업 브랜치: `claude/confident-dijkstra-d8zx86` (이 세션 지정 브랜치 — 핸드오프의 n5-plan-separation 과 다름).
+- **마이그레이션 0030_n7_matching_model** (운영 DB 적용 + 파일 커밋, 비파괴):
+  - `promotion_sales.pack_size int` + `promo.parse_pack(text)`(묶음수 best-effort: %·기간·중량 토큰 제거 후 첫 묶음단위(박스/개입/팩/…) 앞 숫자; 포/스틱/P 등 내용물단위 제외) + 과거 5,604행 백필(null 0). 신규/변경행은 BEFORE 트리거 자동 채움.
+  - `campaign_plan_options.option_signature`(구성=품목+개입수 정렬 md5) + `display_label`(구성×개입수 + 세트가 — 2개입/6개입 구분). `campaign_plan_option_items` 변경 시 AFTER 트리거가 두 파생값 재계산. 기존 38옵션 백필.
+- **임포터**(`lib/parsePlanGuide.ts` + `upload/page.tsx`): '구성'(품목코드:수량,…) 컬럼 파싱 → `components[]`. 없으면 현행 단품 1건 폴백. 커밋 시 옵션당 컴포넌트 N건 item insert(부분매칭 허용, set_price를 수량비중으로 SKU단가 환산).
+- 적재 후 `refresh_rollups(true)` 강제 + `rollup_state` fresh 확인(version=built_version). 기존 달성 RPC는 pack_size 미참조 → 현재 수치 불변.
+- **P2 시작점**: `plan_vs_actual`/`plan_vs_actual_options`(0018·이후)에서 실적 SKU 수량을 `quantity × pack_size`로 환산해 플랜 SKU 단위와 정합. 옵션 달성은 `option_signature` 기준 best-effort.
 
 ## 7. 확정된 설계 결정 (N7 §8 요약)
 1. 달성도 1차 진실 = **SKU(품목) 단위**, 옵션(묶음)은 부가 best-effort (실적 자유텍스트라 묶음 완전매칭 불가).
