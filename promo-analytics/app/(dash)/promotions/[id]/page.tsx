@@ -160,10 +160,13 @@ export default async function PromotionDetail({
   const unmatchedCount = diagnosticRows.filter(
     (r) => r.side !== "both" && !r.is_mapped && !r.is_subscription,
   ).length;
+  // self-비교(기본): 가이드·실적이 같은 코드로 올라와 실 매출이 이미 잡히면
+  // 명시적 짝짓기(actual_promotion_id)가 없어도 "실적 연결"은 충족된 것으로 본다.
+  const hasSelfActuals = (achSummary?.campaign_revenue_total ?? 0) > 0;
   const wfInput = {
     hasPlan: !!plan,
     planConfirmed: plan?.status === "confirmed",
-    hasActualLink: !!plan?.actual_promotion_id,
+    hasActualLink: !!plan?.actual_promotion_id || hasSelfActuals,
     hasActualData: !!achSummary?.has_confirmed_plan,
     unmatchedCount,
     expectedContribution:
