@@ -23,6 +23,7 @@ export default function Achievement({
   optionInfos,
   diagnosticRows,
   skuMappings,
+  hideSummaryCards,
 }: {
   promotionId: string;
   summary: PlanVsActualSummary | null;
@@ -31,6 +32,7 @@ export default function Achievement({
   optionInfos: string[];
   diagnosticRows: DiagnosticRow[];
   skuMappings: SkuMapping[];
+  hideSummaryCards?: boolean; // Layer A 히어로 KPI와 중복 방지
 }) {
   const [tab, setTab] = useState<"sku" | "option">("sku");
 
@@ -78,34 +80,36 @@ export default function Achievement({
       {/* 달성 카드 (N8 매출 중심): 매출은 전체 실적/목표, 수량은 메인 제품 */}
       {hasConfirmed ? (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <AchCard
-              label="캠페인 매출 달성 (전체)"
-              ach={summary!.revenue_ach_total}
-              actual={summary!.campaign_revenue_total}
-              expected={summary!.expected_revenue_total}
-              primary
-            />
-            <AchCard
-              label="메인 제품 수량 달성"
-              ach={summary!.ach_qty}
-              actual={summary!.actual_qty_total}
-              expected={summary!.expected_qty_total}
-              isQty
-              lowData={summary!.quantity_reliable === false}
-            />
-            <AchCard
-              label="공헌이익 달성 (전체)"
-              ach={summary!.contribution_ach_total}
-              actual={summary!.contribution_total}
-              expected={summary!.expected_contribution_total}
-              note={
-                (summary!.expected_contribution_total ?? 0) <= 0
-                  ? "기대 공헌이 0 이하 — 플랜 원가/판매가 확인 필요"
-                  : undefined
-              }
-            />
-          </div>
+          {!hideSummaryCards && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <AchCard
+                label="캠페인 매출 달성 (전체)"
+                ach={summary!.revenue_ach_total}
+                actual={summary!.campaign_revenue_total}
+                expected={summary!.expected_revenue_total}
+                primary
+              />
+              <AchCard
+                label="메인 제품 수량 달성"
+                ach={summary!.ach_qty}
+                actual={summary!.actual_qty_total}
+                expected={summary!.expected_qty_total}
+                isQty
+                lowData={summary!.quantity_reliable === false}
+              />
+              <AchCard
+                label="공헌이익 달성 (전체)"
+                ach={summary!.contribution_ach_total}
+                actual={summary!.contribution_total}
+                expected={summary!.expected_contribution_total}
+                note={
+                  (summary!.expected_contribution_total ?? 0) <= 0
+                    ? "기대 공헌이 0 이하 — 플랜 원가/판매가 확인 필요"
+                    : undefined
+                }
+              />
+            </div>
+          )}
           {/* 매출 구성: 메인 + 함께 구매 (구독 제외) */}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-soft px-4 py-2.5 text-[11px] text-ink-3">
             <span>
