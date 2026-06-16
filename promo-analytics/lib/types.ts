@@ -235,6 +235,9 @@ export type PlanVsActualSummary = {
   revenue_ach_total: number | null; // 전체 / 목표
   contribution_total: number | null;
   contribution_ach_total: number | null;
+  // N12: '메인 제품 수량 달성' 카드 표시용 — 계획 SKU의 상시/구독 수량 분해(predict 미사용)
+  main_nonsub_qty: number | null;
+  main_subscription_qty: number | null;
 };
 
 export type PlanVsActualOption = {
