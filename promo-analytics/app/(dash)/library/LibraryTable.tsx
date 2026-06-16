@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { wonShort, pct } from "@/lib/format";
 import { useUrlState } from "@/hooks/useUrlState";
+import { parseSeedQuery } from "@/lib/scenario";
+import { InlineAlert } from "@/components/ui";
 
 export type CampaignStage = "plan" | "actual" | "linked" | "empty";
 
@@ -147,8 +149,31 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
     );
   }, [scored, stage, type, season, sort, purposeFilter]);
 
+  // PR7: 시뮬레이터/추천에서 넘어온 "플랜 조건" 배너 — 적용할 캠페인 선택 유도
+  const [seed, setSeed] = useState<ReturnType<typeof parseSeedQuery>>(null);
+  useEffect(() => {
+    setSeed(parseSeedQuery(window.location.search));
+  }, []);
+
   return (
     <div>
+      {seed?.active && (
+        <InlineAlert
+          tone="brand"
+          title="추천 조건으로 플랜 시작"
+          action={
+            <button onClick={() => setSeed(null)} className="text-[11px] text-ink-4 underline hover:text-ink-2">
+              닫기
+            </button>
+          }
+          className="mb-4"
+        >
+          {seed.promoType || "전체"}
+          {` · ${seed.discount}% 할인 · ${seed.days}일`}
+          {seed.season ? ` · ${seed.season}` : ""} — 이 조건을 적용할 캠페인을 아래에서 선택해 상세로 들어간 뒤 ‘가격 가이드(플랜)’를 작성하세요.
+        </InlineAlert>
+      )}
+
       {/* 생애주기 세그먼트 — 플랜+실적 / 실적만 / 플랜만 구분 */}
       <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-soft p-1 text-sm font-medium w-fit">
         {(
