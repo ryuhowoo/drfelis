@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { wonShort, pct } from "@/lib/format";
+import { useUrlState } from "@/hooks/useUrlState";
 
 export type CampaignStage = "plan" | "actual" | "linked" | "empty";
 
@@ -69,11 +70,20 @@ function rowFitScore(r: LibraryRow, filter: string[]): number {
 type StageFilter = "all" | "linked" | "actual" | "plan";
 
 export default function LibraryTable({ data }: { data: LibraryRow[] }) {
-  const [type, setType] = useState("");
-  const [season, setSeason] = useState("");
-  const [sort, setSort] = useState<SortKey>("score");
-  const [purposeFilter, setPurposeFilter] = useState<string[]>([]);
-  const [stage, setStage] = useState<StageFilter>("all");
+  // PR6: 필터/정렬을 URL에 보존 — 링크 복사 시 같은 결과 복원
+  const [f, setF, clearF] = useUrlState({
+    type: "",
+    season: "",
+    sort: "score",
+    stage: "all",
+    purpose: [] as string[],
+  });
+  const type = f.type;
+  const season = f.season;
+  const sort = f.sort as SortKey;
+  const stage = f.stage as StageFilter;
+  const purposeFilter = f.purpose;
+  const anyFilter = !!(type || season || stage !== "all" || purposeFilter.length || sort !== "score");
 
   const stageCounts = useMemo(() => {
     const c = { linked: 0, actual: 0, plan: 0 };
@@ -94,9 +104,11 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
     [data],
   );
   const togglePurpose = (p: string) =>
-    setPurposeFilter((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
-    );
+    setF({
+      purpose: purposeFilter.includes(p)
+        ? purposeFilter.filter((x) => x !== p)
+        : [...purposeFilter, p],
+    });
 
   // 종합 점수 = 공헌이익 0.4 · 일평균 기여 0.3 · 효율(기여/할인) 0.2 · 간접비중 0.1
   const scored = useMemo<Scored[]>(() => {
@@ -149,7 +161,8 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
         ).map((t) => (
           <button
             key={t.key}
-            onClick={() => setStage(t.key)}
+            onClick={() => setF({ stage: t.key })}
+            aria-pressed={stage === t.key}
             className={`rounded-lg px-3.5 py-1.5 transition ${
               stage === t.key ? "card-soft text-ink" : "text-ink-3 hover:text-ink"
             }`}
@@ -160,14 +173,20 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select value={type} onChange={setType} placeholder="혜택종류 전체" options={types} />
-        <Select value={season} onChange={setSeason} placeholder="시즈널리티 전체" options={seasons} />
+        <Select value={type} onChange={(v) => setF({ type: v })} placeholder="혜택종류 전체" options={types} />
+        <Select value={season} onChange={(v) => setF({ season: v })} placeholder="시즈널리티 전체" options={seasons} />
+        {anyFilter && (
+          <button onClick={clearF} className="text-xs text-ink-4 underline hover:text-ink-2">
+            필터 초기화
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-1 text-xs text-neutral-500">
           정렬:
           {SORTS.map((s) => (
             <button
               key={s.key}
-              onClick={() => setSort(s.key)}
+              onClick={() => setF({ sort: s.key })}
+              aria-pressed={sort === s.key}
               className={`rounded-full px-2.5 py-1 ${
                 sort === s.key ? "bg-brand-500 text-white" : "text-neutral-600 hover:bg-neutral-100"
               }`}
@@ -198,7 +217,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
             ))}
             {purposeFilter.length > 0 && (
               <button
-                onClick={() => setPurposeFilter([])}
+                onClick={() => setF({ purpose: [] })}
                 className="text-xs text-neutral-400 hover:text-neutral-600"
               >
                 초기화
