@@ -178,10 +178,12 @@ export default async function PromotionDetail({
   const workflow = deriveWorkflow(wfInput);
   const actions = deriveActions(wfInput, { promotionId: id });
   const basePath = `/promotions/${id}`;
-  const qtyShort =
-    achSummary && (achSummary.expected_qty_total ?? 0) - (achSummary.actual_qty_total ?? 0) > 0
-      ? `${num((achSummary.expected_qty_total ?? 0) - (achSummary.actual_qty_total ?? 0))}개 부족`
-      : undefined;
+  // '메인 제품 수량 달성' — 상시(단건) 기준을 주값으로, 구독분은 보조 표기 (N12)
+  const mainSubQty = achSummary?.main_subscription_qty ?? 0;
+  const mainNonsubQty = achSummary?.main_nonsub_qty ?? 0;
+  const expQty = achSummary?.expected_qty_total ?? 0;
+  const sangsiRatio = achSummary && expQty > 0 ? mainNonsubQty / expQty : null;
+  const qtyShort = expQty - mainNonsubQty > 0 ? `${num(expQty - mainNonsubQty)}개 부족` : undefined;
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
@@ -246,10 +248,10 @@ export default async function PromotionDetail({
           />
           <ProgressMetric
             label="메인 제품 수량 달성"
-            ratio={achSummary.ach_qty}
-            valueLabel={num(achSummary.actual_qty_total)}
-            targetLabel={num(achSummary.expected_qty_total)}
-            caption="메인 제품만 (예상수량 대비)"
+            ratio={sangsiRatio}
+            valueLabel={num(mainNonsubQty)}
+            targetLabel={num(expQty)}
+            caption={`상시(단건) 기준${mainSubQty > 0 ? ` · 구독 ${num(mainSubQty)}개 별도` : ""}`}
             delta={qtyShort}
           />
           <ProgressMetric

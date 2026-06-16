@@ -101,11 +101,20 @@ export default function Achievement({
               />
               <AchCard
                 label="메인 제품 수량 달성"
-                ach={summary!.ach_qty}
-                actual={summary!.actual_qty_total}
+                ach={
+                  (summary!.expected_qty_total ?? 0) > 0
+                    ? (summary!.main_nonsub_qty ?? 0) / (summary!.expected_qty_total ?? 1)
+                    : null
+                }
+                actual={summary!.main_nonsub_qty}
                 expected={summary!.expected_qty_total}
                 isQty
                 lowData={summary!.quantity_reliable === false}
+                note={
+                  (summary!.main_subscription_qty ?? 0) > 0
+                    ? `상시 기준 · 구독 ${num(summary!.main_subscription_qty)}개 별도`
+                    : undefined
+                }
               />
               <AchCard
                 label="공헌이익 달성 (전체)"
