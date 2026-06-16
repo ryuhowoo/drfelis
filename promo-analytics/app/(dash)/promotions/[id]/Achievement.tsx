@@ -59,11 +59,19 @@ export default function Achievement({
 
   const planRows = rows.filter((r) => r.status !== "unplanned");
   const unplanned = rows.filter((r) => r.status === "unplanned");
-  // 함께 구매(메인 외) — 정기구독 상품은 제외(별도 섹션에서 다룸). 매출 큰 순, 상위 8개 + 나머지 합산.
-  const subIds = new Set(
-    diagnosticRows.filter((d) => d.is_subscription).map((d) => d.product_id),
-  );
-  const haloAll = unplanned.filter((r) => !subIds.has(r.product_id));
+  // 함께 구매(메인 외) — 정기구독은 제외(별도 섹션). 단, 구독은 주문라인 단위이므로
+  // 같은 제품이 상시+구독으로 섞일 수 있다. '진단 행이 전부 구독'인 제품만 제외하고
+  // 섞인 제품의 상시분은 함께 구매에 남긴다. 매출 큰 순, 상위 8개 + 나머지 합산.
+  const fullSubIds = new Set<string>();
+  {
+    const byPid = new Map<string, boolean[]>();
+    for (const d of diagnosticRows) {
+      const arr = byPid.get(d.product_id) ?? byPid.set(d.product_id, []).get(d.product_id)!;
+      arr.push(d.is_subscription);
+    }
+    for (const [pid, flags] of byPid) if (flags.length > 0 && flags.every(Boolean)) fullSubIds.add(pid);
+  }
+  const haloAll = unplanned.filter((r) => !fullSubIds.has(r.product_id));
   const haloRevTotal = haloAll.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
   const haloContribTotal = haloAll.reduce((s, r) => s + (r.actual_contribution ?? 0), 0);
   const HALO_TOP = 8;

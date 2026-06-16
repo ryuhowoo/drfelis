@@ -17,7 +17,8 @@ export type DiagnosticRow = {
   actual_qty: number | null;
   actual_revenue: number | null;
   is_mapped: boolean;
-  is_subscription: boolean;
+  is_subscription: boolean; // 라인 파생(상시/구독 분리) — 섞인 제품은 2행
+  is_subscription_override: boolean; // products.is_subscription(수동 전체지정)
 };
 
 export type SkuMapping = { plan_product_id: string; actual_product_id: string };
@@ -134,11 +135,17 @@ export default function SkuMatchPanel({
     });
   }
 
+  // 제품 전체 구독 오버라이드 토글 (products.is_subscription). 자동 감지(개월)와 별개.
   function toggleSubscription(pid: string, next: boolean) {
     const snap = localRows;
     run({
       key: `sub:${pid}`,
-      apply: () => setLocalRows((rs) => rs.map((r) => (r.product_id === pid ? { ...r, is_subscription: next } : r))),
+      apply: () =>
+        setLocalRows((rs) =>
+          rs.map((r) =>
+            r.product_id === pid ? { ...r, is_subscription: next, is_subscription_override: next } : r,
+          ),
+        ),
       rollback: () => setLocalRows(snap),
       request: () =>
         fetch(`/api/products/subscription`, {
@@ -295,7 +302,7 @@ export default function SkuMatchPanel({
                 </thead>
                 <tbody>
                   {filtered.map((r) => (
-                    <tr key={r.product_id} className="border-t border-line/60">
+                    <tr key={`${r.product_id}:${r.is_subscription}`} className="border-t border-line/60">
                       <td className="px-2 py-2">
                         <SideBadge side={r.side} isMapped={r.is_mapped} />
                       </td>
@@ -308,18 +315,11 @@ export default function SkuMatchPanel({
                       <td className="px-2 py-2 text-right text-ink-3">{r.actual_qty ? num(r.actual_qty) : "—"}</td>
                       <td className="px-2 py-2 text-right text-ink-3">{r.actual_revenue ? won(r.actual_revenue) : "—"}</td>
                       <td className="px-2 py-2 text-center">
-                        <button
-                          onClick={() => toggleSubscription(r.product_id, !r.is_subscription)}
-                          disabled={pending === `sub:${r.product_id}`}
-                          aria-pressed={r.is_subscription}
-                          title="정기구독 상품으로 지정하면 달성률에서 제외되고 별도 표기됩니다"
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                            r.is_subscription ? "bg-subscription-soft text-subscription" : "bg-soft text-ink-4 hover:text-ink-2",
-                          )}
-                        >
-                          {r.is_subscription ? "✓ 구독" : "구독 지정"}
-                        </button>
+                        <SubscriptionCell
+                          row={r}
+                          busy={pending === `sub:${r.product_id}`}
+                          onToggle={(next) => toggleSubscription(r.product_id, next)}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -337,6 +337,54 @@ export default function SkuMatchPanel({
         )}
       </div>
     </section>
+  );
+}
+
+// 정기구독 칼럼 — 상시/정기구독 라벨 + 수동 오버라이드.
+// · 구독·자동(개월 감지): 읽기전용 배지  · 구독·수동(오버라이드): 해제 토글
+// · 상시: 클릭하면 이 상품 전체를 구독으로 지정(오버라이드)
+function SubscriptionCell({
+  row,
+  busy,
+  onToggle,
+}: {
+  row: DiagnosticRow;
+  busy: boolean;
+  onToggle: (next: boolean) => void;
+}) {
+  if (row.is_subscription) {
+    if (row.is_subscription_override) {
+      return (
+        <button
+          onClick={() => onToggle(false)}
+          disabled={busy}
+          aria-pressed
+          title="이 상품 전체가 정기구독으로 수동 지정됨 — 클릭하면 해제"
+          className="rounded-full bg-subscription-soft px-2 py-0.5 text-[10px] font-medium text-subscription"
+        >
+          ✓ 정기구독 <span className="opacity-70">수동</span>
+        </button>
+      );
+    }
+    return (
+      <span
+        title="option_info 배송주기(개월)로 자동 감지 — 달성률에서 제외, 별도 집계"
+        className="inline-block rounded-full bg-subscription-soft px-2 py-0.5 text-[10px] font-medium text-subscription"
+      >
+        정기구독 <span className="opacity-70">자동</span>
+      </span>
+    );
+  }
+  return (
+    <button
+      onClick={() => onToggle(true)}
+      disabled={busy}
+      aria-pressed={false}
+      title="상시(단건) 판매 — 클릭하면 이 상품 전체를 정기구독으로 지정(오버라이드)"
+      className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-medium text-ink-4 hover:text-subscription"
+    >
+      상시
+    </button>
   );
 }
 
