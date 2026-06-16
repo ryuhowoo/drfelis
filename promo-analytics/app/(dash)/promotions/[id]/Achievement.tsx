@@ -38,6 +38,9 @@ export default function Achievement({
 
   const hasConfirmed = !!summary?.has_confirmed_plan;
   const hasMatchData = diagnosticRows.length > 0 || skuMappings.length > 0;
+  const unmatched = diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped).length;
+  // 미매칭 있으면 매칭 보정 패널 자동 펼침 (지시서 §3) — 이후 사용자 토글 가능
+  const [matchOpen, setMatchOpen] = useState(unmatched > 0);
 
   if (!hasConfirmed && !hasMatchData && options.length === 0) {
     return (
@@ -71,7 +74,6 @@ export default function Achievement({
   const haloRest = haloSorted.slice(HALO_TOP);
   const haloRestRev = haloRest.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
   const haloRestQty = haloRest.reduce((s, r) => s + (r.actual_qty ?? 0), 0);
-  const unmatched = diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped).length;
 
   return (
     <section className="mt-6">
@@ -221,9 +223,13 @@ export default function Achievement({
             </div>
           )}
 
-          {/* SKU 매칭 보정 — 기본 접힘 (요약 우선) */}
+          {/* SKU 매칭 보정 — 미매칭 있으면 자동 펼침, 없으면 접힘 (사용자 토글 가능) */}
           {hasMatchData && (
-            <details className="mt-3 rounded-xl card-soft">
+            <details
+              open={matchOpen}
+              onToggle={(e) => setMatchOpen(e.currentTarget.open)}
+              className="mt-3 rounded-xl card-soft"
+            >
               <summary className="cursor-pointer px-4 py-3 text-xs font-semibold text-ink-2">
                 SKU 매칭 보정{unmatched > 0 ? ` · 미매칭 ${unmatched}` : ""}
                 <span className="ml-1 font-normal text-ink-4">(자동 매칭이 빗나간 경우에만)</span>
