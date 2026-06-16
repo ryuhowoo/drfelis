@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,8 @@ import {
   type PlanItemInput,
 } from "@/lib/plan";
 import { won, pct, num } from "@/lib/format";
+import { validatePlan } from "@/lib/plan-validation";
+import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
 
 export type EditorItem = {
   product_id: string;
@@ -94,6 +96,19 @@ export default function PlanEditor({
   const [options, setOptions] = useState<OptState[]>(() => toState(initialOptions));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "err" | "ok"; text: string } | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // 저장되지 않은 변경이 있으면 이탈 경고
+  useEffect(() => {
+    if (!dirty) return;
+    const h = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [dirty]);
 
   const confirmed = plan?.status === "confirmed";
   const mult = confirmed
@@ -143,12 +158,20 @@ export default function PlanEditor({
     })),
   );
 
+  // ── 인라인 검증 (확정 전 오류 발견) ──────────
+  const validation = validatePlan(options, mult);
+
   // ── 상태 변경 헬퍼 ───────────────────────────
-  const patchOption = (key: string, patch: Partial<OptState>) =>
+  const patchOption = (key: string, patch: Partial<OptState>) => {
+    setDirty(true);
     setOptions((prev) => prev.map((o) => (o.key === key ? { ...o, ...patch } : o)));
-  const removeOption = (key: string) =>
+  };
+  const removeOption = (key: string) => {
+    setDirty(true);
     setOptions((prev) => prev.filter((o) => o.key !== key));
-  const addOption = () =>
+  };
+  const addOption = () => {
+    setDirty(true);
     setOptions((prev) => [
       ...prev,
       {
@@ -160,7 +183,9 @@ export default function PlanEditor({
         items: [],
       },
     ]);
-  const patchItem = (optKey: string, itemKey: string, patch: Partial<ItemState>) =>
+  };
+  const patchItem = (optKey: string, itemKey: string, patch: Partial<ItemState>) => {
+    setDirty(true);
     setOptions((prev) =>
       prev.map((o) =>
         o.key === optKey
@@ -168,14 +193,18 @@ export default function PlanEditor({
           : o,
       ),
     );
-  const removeItem = (optKey: string, itemKey: string) =>
+  };
+  const removeItem = (optKey: string, itemKey: string) => {
+    setDirty(true);
     setOptions((prev) =>
       prev.map((o) =>
         o.key === optKey ? { ...o, items: o.items.filter((it) => it.key !== itemKey) } : o,
       ),
     );
+  };
 
   function addItem(optKey: string, it: ItemState) {
+    setDirty(true);
     setOptions((prev) =>
       prev.map((o) => (o.key === optKey ? { ...o, items: [...o.items, it] } : o)),
     );
@@ -220,26 +249,23 @@ export default function PlanEditor({
     setMsg(null);
     const ok = await save();
     if (ok) {
+      setDirty(false);
       setMsg({ kind: "ok", text: "draft 저장 완료" });
       router.refresh();
     }
     setBusy(false);
   }
 
-  async function onConfirm() {
-    if (
-      !window.confirm(
-        "확정하면 rate card·가격·원가가 동결되고 수정이 잠깁니다.\n" +
-          "확정 후 수정은 '새 버전'으로만 가능합니다. 확정할까요?",
-      )
-    )
-      return;
+  // 확정 검토 dialog에서 호출 (window.confirm 대체)
+  async function doConfirm() {
+    setConfirmOpen(false);
     setBusy(true);
     setMsg(null);
     if (!(await save())) {
       setBusy(false);
       return;
     }
+    setDirty(false);
     const res = await fetch(`/api/promotions/${promotionId}/plan/confirm`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -290,6 +316,21 @@ export default function PlanEditor({
           공헌이익 승수 mult = {mult.toFixed(3)}
           {confirmed && plan.confirmed_at ? " · 동결됨" : " · 라이브"}
         </span>
+        {!confirmed && (
+          <span
+            className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              msg?.kind === "err"
+                ? "bg-danger-soft text-danger"
+                : busy
+                  ? "bg-soft text-ink-3"
+                  : dirty
+                    ? "bg-warning-soft text-warning"
+                    : "bg-success-soft text-success"
+            }`}
+          >
+            {msg?.kind === "err" ? "저장 실패" : busy ? "저장 중…" : dirty ? "저장되지 않은 변경" : "저장됨"}
+          </span>
+        )}
       </div>
 
       {/* 플랜 합계 */}
@@ -303,23 +344,59 @@ export default function PlanEditor({
         />
       </div>
 
+      {/* 검증 요약 (확정 전 오류 발견) */}
+      {!confirmed && (validation.errorCount > 0 || validation.warnCount > 0) && (
+        <div className="mt-4">
+          <InlineAlert
+            tone={validation.errorCount > 0 ? "danger" : "warning"}
+            title={`검증 — 오류 ${validation.errorCount} · 경고 ${validation.warnCount}`}
+          >
+            {validation.errorCount > 0
+              ? "오류를 해결해야 확정할 수 있습니다."
+              : "경고가 있어도 확정은 가능하나 확인을 권장합니다."}
+            {validation.plan.map((p, j) => (
+              <span key={j} className="mt-0.5 block">
+                · {p.message}
+              </span>
+            ))}
+          </InlineAlert>
+        </div>
+      )}
+
       {/* 옵션들 */}
       <div className="mt-5 space-y-4">
-        {options.map((o, i) => (
-          <OptionCard
-            key={o.key}
-            opt={o}
-            totals={optionResults[i]}
-            mult={mult}
-            qtyHint={qtyHint}
-            readOnly={confirmed}
-            onPatch={(patch) => patchOption(o.key, patch)}
-            onRemove={() => removeOption(o.key)}
-            onAddItem={(it) => addItem(o.key, it)}
-            onPatchItem={(itemKey, patch) => patchItem(o.key, itemKey, patch)}
-            onRemoveItem={(itemKey) => removeItem(o.key, itemKey)}
-          />
-        ))}
+        {options.map((o, i) => {
+          const issues = validation.byOption[o.key] ?? [];
+          return (
+            <div key={o.key}>
+              <OptionCard
+                opt={o}
+                totals={optionResults[i]}
+                mult={mult}
+                qtyHint={qtyHint}
+                readOnly={confirmed}
+                invalid={issues.some((x) => x.level === "error")}
+                onPatch={(patch) => patchOption(o.key, patch)}
+                onRemove={() => removeOption(o.key)}
+                onAddItem={(it) => addItem(o.key, it)}
+                onPatchItem={(itemKey, patch) => patchItem(o.key, itemKey, patch)}
+                onRemoveItem={(itemKey) => removeItem(o.key, itemKey)}
+              />
+              {issues.length > 0 && (
+                <ul className="mt-1 space-y-0.5 px-1">
+                  {issues.map((iss, j) => (
+                    <li
+                      key={j}
+                      className={`text-[11px] ${iss.level === "error" ? "text-danger" : "text-warning"}`}
+                    >
+                      {iss.level === "error" ? "✕" : "⚠"} {iss.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {!confirmed && (
@@ -377,8 +454,9 @@ export default function PlanEditor({
               draft 저장
             </button>
             <button
-              onClick={onConfirm}
-              disabled={busy}
+              onClick={() => setConfirmOpen(true)}
+              disabled={busy || validation.errorCount > 0}
+              title={validation.errorCount > 0 ? "오류를 먼저 해결하세요" : undefined}
               className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
             >
               확정
@@ -388,12 +466,57 @@ export default function PlanEditor({
       </div>
 
       {msg && (
-        <p
-          className={`mt-3 text-sm ${msg.kind === "err" ? "text-red-600" : "text-green-600"}`}
-        >
+        <p className={`mt-3 text-sm ${msg.kind === "err" ? "text-danger" : "text-success"}`}>
           {msg.text}
         </p>
       )}
+
+      {/* 확정 검토 dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader
+            title="플랜 확정"
+            description="확정하면 rate card·가격·원가가 동결되고 수정이 잠깁니다. 이후 수정은 '새 버전'으로만 가능합니다."
+          />
+          <dl className="space-y-1.5 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-ink-3">목표 매출</dt>
+              <dd className="font-semibold tabular-nums text-ink">{won(planTotals.expected_revenue_total)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-ink-3">목표 공헌이익</dt>
+              <dd className="font-semibold tabular-nums text-ink">{won(planTotals.expected_contribution_total)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-ink-3">옵션 수</dt>
+              <dd className="tabular-nums text-ink-2">{num(options.length)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-ink-3">메인 제품</dt>
+              <dd className="text-ink-2">
+                {options.filter((o) => o.is_main).length > 0
+                  ? `${num(options.filter((o) => o.is_main).length)}개 지정`
+                  : "미지정"}
+              </dd>
+            </div>
+          </dl>
+          {validation.warnCount > 0 && (
+            <div className="mt-3">
+              <InlineAlert tone="warning" title={`경고 ${validation.warnCount}개`}>
+                경고가 있어도 확정은 가능합니다. 확인 후 진행하세요.
+              </InlineAlert>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={doConfirm} disabled={busy}>
+              확정
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -423,6 +546,7 @@ function OptionCard({
   mult,
   qtyHint,
   readOnly,
+  invalid,
   onPatch,
   onRemove,
   onAddItem,
@@ -434,6 +558,7 @@ function OptionCard({
   mult: number;
   qtyHint?: QtyHint;
   readOnly: boolean;
+  invalid?: boolean;
   onPatch: (patch: Partial<OptState>) => void;
   onRemove: () => void;
   onAddItem: (it: ItemState) => void;
@@ -441,7 +566,7 @@ function OptionCard({
   onRemoveItem: (itemKey: string) => void;
 }) {
   return (
-    <div className="rounded-xl card-soft p-4">
+    <div className={`rounded-xl card-soft p-4 ${invalid ? "ring-1 ring-danger/40" : ""}`}>
       <div className="flex flex-wrap items-center gap-2">
         <input
           className="min-w-[10rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm font-medium disabled:bg-neutral-50"
