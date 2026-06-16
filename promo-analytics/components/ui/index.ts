@@ -18,3 +18,4 @@ export { SegmentedControl, type SegmentOption } from "./SegmentedControl";
 export { InlineAlert } from "./InlineAlert";
 export { Skeleton } from "./Skeleton";
 export { EmptyState } from "./EmptyState";
+export { CountUp } from "./CountUp";
