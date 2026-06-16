@@ -33,10 +33,42 @@
   --color-ink-3: #6A7384;
   --color-ink-4: #9CA4B4;
 
+  /* PR1: 의미 기반 상태 토큰 (text=base, *-soft=배경). 화면별 임의 색 지정 대체. */
+  --color-success: #0f9d6b;
+  --color-success-soft: #e7f7f0;
+  --color-warning: #b9770b;
+  --color-warning-soft: #fcf3e2;
+  --color-danger: #d64545;
+  --color-danger-soft: #fdecec;
+  --color-info: #2f6db0;
+  --color-info-soft: #eaf2fb;
+  --color-subscription: #7c5cdb;
+  --color-subscription-soft: #f1edfb;
+  --color-matched: #0f9d6b;
+  --color-matched-soft: #e7f7f0;
+  --color-unmatched: #6A7384;
+  --color-unmatched-soft: #EEF0F4;
+  --color-draft: #b9770b;
+  --color-draft-soft: #fcf3e2;
+  --color-confirmed: #0f9d6b;
+  --color-confirmed-soft: #e7f7f0;
+
+  /* PR1: 모션 토큰 — 의미 있는 상태 변화에만 사용. reduced-motion에서 자동 무력화. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0.2, 1.2);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
   --font-sans:
     "Asta Sans Variable", "Pretendard Variable", "Pretendard",
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
     ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --duration-instant: 100ms;
+  --duration-fast: 160ms;
+  --duration-normal: 240ms;
+  --duration-slow: 360ms;
 }
 
 html {
@@ -78,6 +110,29 @@ body {
   background: var(--color-soft);
 }
 
+/* PR1: 모션 키프레임 — 상태/계층 전환 설명용 (장식 아님). reduced-motion에서 무력화됨. */
+@keyframes ui-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes ui-dialog-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ui-dialog-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+@keyframes ui-drawer-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes ui-drawer-out-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes ui-drawer-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes ui-drawer-out-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes ui-success-flash {
+  0% { background-color: var(--color-success-soft); }
+  100% { background-color: transparent; }
+}
+@utility row-success-flash {
+  animation: ui-success-flash var(--duration-slow) var(--ease-standard);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -85,5 +140,6 @@ body {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
