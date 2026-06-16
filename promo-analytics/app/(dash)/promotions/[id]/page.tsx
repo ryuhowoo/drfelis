@@ -257,7 +257,7 @@ export default async function PromotionDetail({
             ratio={achSummary.contribution_ach_total}
             valueLabel={wonShort(achSummary.contribution_total)}
             targetLabel={wonShort(achSummary.expected_contribution_total)}
-            caption="전체 실적 기준"
+            caption="전체 실적 기준 · 구독 제외"
             note={
               (achSummary.expected_contribution_total ?? 0) <= 0
                 ? "원가/판매가 확인 필요"
