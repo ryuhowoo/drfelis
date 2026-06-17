@@ -62,7 +62,7 @@ const CARDS: CardDef[] = [
   {
     key: "promotion",
     title: "③ 캠페인 시트",
-    desc: "캠페인 기간 실적(전 제품). 같은 코드의 캠페인이 있으면 실적을 교체(백필)하고 확정 플랜은 보존합니다. 없으면 새로 생성합니다.",
+    desc: "캠페인 기간 실적(전 제품). 파일명의 캠페인 코드(CF_P_…)로 캠페인을 식별 — 같은 코드의 가이드(⑤)·실적(②)은 자동으로 한 캠페인에 결속됩니다(비교연결·병합 불필요). 같은 코드가 있으면 실적을 교체(백필)하고 확정 플랜은 보존, 없으면 새로 생성합니다.",
   },
 ];
 
@@ -374,6 +374,10 @@ function UploadCard({ def }: { def: CardDef }) {
           fee: r.fee,
           cost: r.cost,
           quantity: r.quantity,
+          // N13 P2: 리치 export 선택 필드(없으면 null) — 구독 양성신호·번들 식별·재파생용
+          order_type: r.order_type,
+          sale_option_code: r.sale_option_code,
+          raw: r.composition ? { composition: r.composition } : null,
         }));
 
       // 기존 캠페인 탐지 (코드 우선, 없으면 이름) — 있으면 N1 백필(실적 교체)
@@ -508,6 +512,10 @@ function UploadCard({ def }: { def: CardDef }) {
         if (error) throw error;
         done += batch.length;
       }
+
+      // N13: 실적옵션 구조화(시그니처/구독/매칭) — 신규 캠페인은 직접 insert라 명시 호출
+      // (교체 경로는 replace_promotion_sales RPC가 내부에서 호출). 실패해도 적재는 유효.
+      await supabase.rpc("rebuild_sale_options", { p_promotion_id: promo.id });
 
       await logUpload(supabase, {
         kind: "promotion",

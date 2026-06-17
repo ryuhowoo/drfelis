@@ -20,6 +20,7 @@ import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
+import OptionContribution, { type OptionContribRow } from "./OptionContribution";
 import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 import { CampaignWorkflowBar } from "./CampaignWorkflowBar";
 import { ActionPanel } from "./ActionPanel";
@@ -108,6 +109,9 @@ export default async function PromotionDetail({
   const achSummary = bundle?.rollup?.pva_summary ?? null;
   const achRows = bundle?.rollup?.pva_rows ?? [];
   const achOptions = bundle?.rollup?.pva_options ?? [];
+  // N13 P2: 옵션 단위 실측 공헌 분해 (마이그레이션 미적용 시 함수 부재 → 조용히 빈 배열)
+  const { data: contribData } = await supabase.rpc("sale_option_contribution", { p_id: id });
+  const optionContribs = (contribData as OptionContribRow[] | null) ?? [];
   const optionInfos = [
     ...new Set(
       (bundle?.option_infos ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
@@ -453,32 +457,42 @@ export default async function PromotionDetail({
             </div>
 
             {plan && (
-              <section className="mb-4 rounded-2xl card-soft p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-ink-2">비교 대상 연결</h2>
+              // N13 P3: 정상 경로는 ②실적·⑤가이드를 같은 코드로 업로드해 자동 결속하는 것.
+              // 비교 대상 연결/병합은 코드가 어긋난 레거시 보정용 → 보정·관리자 도구로 격하.
+              // 결속이 이미 충족(linkedActualName)이면 접어두고, 미충족일 때만 펼쳐 노출.
+              <details
+                className="mb-4 rounded-2xl card-soft p-5 [&_summary]:cursor-pointer"
+                open={!linkedActualName}
+              >
+                <summary className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <h2 className="inline text-sm font-semibold text-ink-2">
+                      비교 대상 연결 <span className="font-normal text-ink-4">· 보정·관리자용</span>
+                    </h2>
                     {!plan.actual_promotion_id && (
                       <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
                         비교 대상 미지정
                       </span>
                     )}
-                  </div>
+                  </span>
                   <Link href={`/promotions/${id}/edit`} className="text-xs text-ink-4 hover:text-brand-600 hover:underline">
-                    중복 캠페인이 있나요? 병합 도구 →
+                    중복 캠페인 정리(병합) →
                   </Link>
-                </div>
+                </summary>
                 {linkedActualName ? (
-                  <p className="mt-1 text-xs text-ink-3">
+                  <p className="mt-2 text-xs text-ink-3">
                     비교 구도: <strong className="text-ink">이 캠페인의 플랜</strong> ↔{" "}
                     <strong className="text-brand-700">{linkedActualName}</strong> 실적.
+                    정상 결속됨 — 코드가 어긋났을 때만 아래에서 보정하세요.
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-ink-4">
-                    비교할 실적 캠페인을 지정하면 아래 달성 블록이 자동으로 채워집니다.
+                  <p className="mt-2 text-xs text-ink-4">
+                    정상 경로는 실적(②)·가이드(⑤)를 <strong>같은 캠페인 코드</strong>로 올려 자동
+                    결속하는 것입니다. 코드가 달라 자동 결속이 안 된 경우에만, 비교할 실적 캠페인을 직접 지정하세요.
                   </p>
                 )}
                 <ActualsLink promotionId={id} currentLinkId={plan.actual_promotion_id} candidates={candidates} />
-              </section>
+              </details>
             )}
 
             <Achievement
@@ -490,6 +504,11 @@ export default async function PromotionDetail({
               diagnosticRows={diagnosticRows}
               skuMappings={skuMappings}
               hideSummaryCards
+            />
+
+            <OptionContribution
+              rows={optionContribs}
+              groundTruth={promo.contribution_amount ?? null}
             />
           </div>
         )}

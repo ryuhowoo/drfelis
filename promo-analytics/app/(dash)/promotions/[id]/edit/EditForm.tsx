@@ -47,6 +47,9 @@ export default function EditForm({
   const [contribution, setContribution] = useState(
     promo.contribution_amount != null ? String(promo.contribution_amount) : "",
   );
+  const [adSpend, setAdSpend] = useState(
+    promo.ad_spend != null ? String(promo.ad_spend) : "",
+  );
   const [mainIds, setMainIds] = useState<string[]>(initialMainIds);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -100,6 +103,7 @@ export default function EditForm({
         end_date: endDate,
         benefits: Object.keys(benefits).length ? benefits : null,
         contribution_amount: contribution ? Number(contribution.replace(/[^0-9.-]/g, "")) : null,
+        ad_spend: adSpend ? Number(adSpend.replace(/[^0-9.-]/g, "")) : null,
         main_product_ids: mainIds,
       }),
     });
@@ -225,18 +229,34 @@ export default function EditForm({
           </Field>
         </div>
 
-        <Field label="공헌이익액 (직접 입력)">
-          <input
-            value={contribution}
-            onChange={(e) => setContribution(e.target.value)}
-            inputMode="numeric"
-            placeholder="예: 12000000"
-            className={inputCls}
-          />
-          <p className="mt-1 text-xs text-neutral-400">
-            자동 계산된 공헌이익률이 부정확할 때, 실제 공헌이익액을 직접 입력하면 이 값이 우선 사용됩니다.
-          </p>
-        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="전체 공헌이익액 (직접 입력)">
+            <input
+              value={contribution}
+              onChange={(e) => setContribution(e.target.value)}
+              inputMode="numeric"
+              placeholder="예: 12000000"
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-neutral-400">
+              기간 내 공식몰 <b>전체</b> 공헌이익액(정기구독 포함). 옵션 단위 분해 합과 대조하는
+              기준값으로 쓰입니다.
+            </p>
+          </Field>
+          <Field label="실제 광고비 (직접 입력)">
+            <input
+              value={adSpend}
+              onChange={(e) => setAdSpend(e.target.value)}
+              inputMode="numeric"
+              placeholder="예: 3000000"
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-neutral-400">
+              캠페인 실제 광고비. 옵션별 공헌이익 분해 시 매출 비중으로 배분합니다(미입력 시 레이트카드
+              광고율 적용).
+            </p>
+          </Field>
+        </div>
 
         <Field label={`메인 상품 지정 (${mainIds.length}/${products.length}개 선택)`}>
           <label className="mb-2 flex cursor-pointer items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700">

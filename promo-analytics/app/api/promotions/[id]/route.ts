@@ -29,6 +29,7 @@ export async function PATCH(
       "channel",
       "benefits",
       "contribution_amount",
+      "ad_spend",
       "notes",
       "start_date",
       "end_date",
