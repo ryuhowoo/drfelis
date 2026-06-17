@@ -5,55 +5,83 @@
    빌드 시 외부 네트워크(Google Fonts) 의존 없음. 한글은 ASTA Sans 자체 글리프 +
    Pretendard 폴백으로 커버. */
 
-/* N6 R2.1: 뉴모피즘 → 모던 플랫 (밀도 우선).
+/* =========================================================================
+   Dr.Felis — Neo Organic Dashboard
+   컨셉: 70% 신뢰감 · 20% 프리미엄 · 10% 귀여움.
+   따뜻한 아이보리 라이트모드 + 민트/그린 프라이머리 + 소프트 블루 세컨더리.
+   Bento Grid · Organic Card · 은은한 glassmorphism(AI 카드 한정) · spring 모션.
    클래스명(card-soft 등)은 유지하고 의미만 재정의 — 전 화면 일괄 전환.
-   상용 애널리틱스 표준: 중립 캔버스 + 흰 카드 + 헤어라인 보더 + 절제된 그림자,
-   강조는 코랄 단일색. */
+   ========================================================================= */
 
 @theme {
-  /* 키컬러: 톤다운 코랄 (단일 강조색) */
-  --color-brand-50: #fbf2ed;
-  --color-brand-100: #f5dfd1;
-  --color-brand-200: #ebbfa3;
-  --color-brand-300: #de9c78;
-  --color-brand-400: #d28159;
-  --color-brand-500: #c66a48;
-  --color-brand-600: #ad5436;
-  --color-brand-700: #8a4128;
+  /* ── 프라이머리: Dr.Felis Green / Mint (신뢰감·프리미엄 단일 강조) ───────── */
+  --color-brand-50: #e9f6ef;
+  --color-brand-100: #ccebdd;
+  --color-brand-200: #9ddcc1;
+  --color-brand-300: #66c8a1;
+  --color-brand-400: #2fae82;
+  --color-brand-500: #14916a;
+  --color-brand-600: #0c7556;
+  --color-brand-700: #0a5c45;
 
-  /* 캔버스/표면: 흰 카드가 떠 보이는 옅은 중립 회색 */
-  --color-canvas: #F6F7F9;
-  --color-card: #FFFFFF;
-  --color-surface: #FFFFFF;
-  --color-soft: #EEF0F4;
-  --color-line: #E4E7EC;
+  /* ── 세컨더리: Soft Blue (보조 강조·정보) ─────────────────────────────── */
+  --color-secondary-50: #eef4fb;
+  --color-secondary-100: #d8e6f6;
+  --color-secondary-200: #b7d0ee;
+  --color-secondary-300: #9bc0ea;
+  --color-secondary-400: #6f9fd8;
+  --color-secondary-500: #5388c8;
+  --color-secondary-600: #3a6cab;
+  --color-secondary-700: #2c5388;
 
-  --color-ink: #1B1F2A;
-  --color-ink-2: #3A4254;
-  --color-ink-3: #6A7384;
-  --color-ink-4: #9CA4B4;
+  /* ── 캔버스/표면: 따뜻한 아이보리 · 오프화이트 ───────────────────────── */
+  --color-canvas: #f9f7f2;
+  --color-canvas-2: #fcfcfa;
+  --color-card: #ffffff;
+  --color-surface: #ffffff;
+  --color-soft: #f3f0e8;
+  --color-line: rgba(20, 30, 40, 0.08);
+  --color-line-strong: rgba(20, 30, 40, 0.14);
 
-  /* PR1: 의미 기반 상태 토큰 (text=base, *-soft=배경). 화면별 임의 색 지정 대체. */
-  --color-success: #0f9d6b;
-  --color-success-soft: #e7f7f0;
-  --color-warning: #b9770b;
-  --color-warning-soft: #fcf3e2;
-  --color-danger: #d64545;
-  --color-danger-soft: #fdecec;
-  --color-info: #2f6db0;
+  /* ── 텍스트: Deep Navy / Charcoal 계열 ───────────────────────────────── */
+  --color-ink: #18222e;
+  --color-ink-2: #38424f;
+  --color-ink-3: #687486;
+  --color-ink-4: #9aa5b2;
+
+  /* ── 의미 기반 상태 토큰 (text=base, *-soft=배경) ────────────────────── */
+  --color-success: #119a68; /* Fresh Green */
+  --color-success-soft: #e6f6ee;
+  --color-warning: #c0751c; /* 따뜻한 Amber/Coral */
+  --color-warning-soft: #fbeede;
+  --color-danger: #d65a4e; /* 따뜻한 Coral */
+  --color-danger-soft: #fce9e6;
+  --color-info: #3a6cab; /* Soft Blue */
   --color-info-soft: #eaf2fb;
-  --color-subscription: #7c5cdb;
-  --color-subscription-soft: #f1edfb;
-  --color-matched: #0f9d6b;
-  --color-matched-soft: #e7f7f0;
-  --color-unmatched: #6A7384;
-  --color-unmatched-soft: #EEF0F4;
-  --color-draft: #b9770b;
-  --color-draft-soft: #fcf3e2;
-  --color-confirmed: #0f9d6b;
-  --color-confirmed-soft: #e7f7f0;
+  --color-subscription: #2c8aa8; /* 보라 → 차분한 Teal-Blue (보라색 지양) */
+  --color-subscription-soft: #e4f2f6;
+  --color-matched: #119a68;
+  --color-matched-soft: #e6f6ee;
+  --color-unmatched: #687486;
+  --color-unmatched-soft: #f3f0e8;
+  --color-draft: #c0751c;
+  --color-draft-soft: #fbeede;
+  --color-confirmed: #119a68;
+  --color-confirmed-soft: #e6f6ee;
 
-  /* PR1: 모션 토큰 — 의미 있는 상태 변화에만 사용. reduced-motion에서 자동 무력화. */
+  /* ── Organic radius: 18~28px 범위 (Tailwind rounded-* 토큰 재정의) ───── */
+  --radius-lg: 0.875rem; /* 14px */
+  --radius-xl: 1.125rem; /* 18px */
+  --radius-2xl: 1.375rem; /* 22px */
+  --radius-3xl: 1.75rem; /* 28px */
+
+  /* ── Soft / depth 그림자 (따뜻한 잉크 틴트) ─────────────────────────── */
+  --shadow-soft: 0 1px 2px rgba(24, 34, 46, 0.04), 0 12px 30px -20px rgba(24, 34, 46, 0.24);
+  --shadow-float: 0 2px 6px rgba(24, 34, 46, 0.06), 0 26px 50px -26px rgba(24, 34, 46, 0.3);
+  --shadow-glass: 0 1px 2px rgba(24, 34, 46, 0.04), 0 22px 48px -26px rgba(20, 145, 106, 0.34);
+
+  /* ── 모션 토큰 — spring-like easing 기본값 ──────────────────────────── */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0.2, 1.2);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -77,7 +105,12 @@ html {
 }
 
 body {
-  background: var(--color-canvas);
+  /* 따뜻한 아이보리 + 은은한 유기적 라이트 글로우 (코너 hotspot) */
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(1100px 620px at 8% -8%, rgba(20, 145, 106, 0.06), transparent 60%),
+    radial-gradient(900px 560px at 100% 0%, rgba(83, 136, 200, 0.05), transparent 55%);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;
 }
@@ -87,30 +120,175 @@ body {
   outline-offset: 2px;
 }
 
-/* 카드: 흰 표면 + 헤어라인 + 미세 그림자 */
+/* ── 카드: 흰 표면 + 미세 그라데이션 + 부드러운 보더 + soft shadow ──────────
+   hover 시 살짝 떠오르는 느낌(spring). 클래스명은 기존 유지. */
 @utility card-soft {
   background-color: var(--color-card);
+  background-image: linear-gradient(177deg, #ffffff 0%, #fbfaf5 100%);
   border: 1px solid var(--color-line);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--duration-normal) var(--ease-spring),
+    box-shadow var(--duration-normal) var(--ease-spring);
 }
-
 @utility card-soft-h {
   background-color: var(--color-card);
+  background-image: linear-gradient(177deg, #ffffff 0%, #faf8f2 100%);
   border: 1px solid var(--color-line);
-  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-float);
+  transition:
+    transform var(--duration-normal) var(--ease-spring),
+    box-shadow var(--duration-normal) var(--ease-spring);
 }
 
-/* (구)눌린 표면 → 음각 대신 옅은 채움 — 선택 상태·칩·입력 배경 */
+/* 카드 hover lift (과하지 않게) */
+.card-soft:hover,
+.card-soft-h:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-float);
+}
+
+/* (구)눌린 표면 → 음각 대신 따뜻한 옅은 채움 — 선택 상태·칩·입력 배경 */
 @utility surface-pressed {
   background: var(--color-soft);
   border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
 }
-
 @utility surface-pressed-soft {
   background: var(--color-soft);
 }
 
-/* PR1: 모션 키프레임 — 상태/계층 전환 설명용 (장식 아님). reduced-motion에서 무력화됨. */
+/* ── Glassmorphism — AI Insight / 추천 액션 카드 한정 (과하지 않게) ──────── */
+@utility card-glass {
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.86) 0%, rgba(233, 246, 239, 0.62) 100%);
+  background-color: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-glass);
+  transition:
+    transform var(--duration-normal) var(--ease-spring),
+    box-shadow var(--duration-normal) var(--ease-spring);
+}
+.card-glass:hover {
+  transform: translateY(-3px);
+}
+
+/* ── Organic blob highlight — 일부 카드 배경에만 은은하게 ────────────────── */
+.blob-soft {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.blob-soft::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -55%;
+  right: -12%;
+  width: 58%;
+  height: 150%;
+  background: radial-gradient(ellipse at center, rgba(20, 145, 106, 0.12), transparent 68%);
+  pointer-events: none;
+}
+.blob-soft::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: -60%;
+  left: -10%;
+  width: 50%;
+  height: 150%;
+  background: radial-gradient(ellipse at center, rgba(83, 136, 200, 0.1), transparent 70%);
+  pointer-events: none;
+}
+/* 강조(그린 솔리드) 카드 위에서의 밝은 하이라이트 변형 */
+.blob-bright {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.blob-bright::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -50%;
+  right: -18%;
+  width: 60%;
+  height: 150%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.28), transparent 66%);
+  pointer-events: none;
+}
+.blob-bright > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Shimmer / moving highlight — AI Insight 카드 강조 ───────────────────── */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    105deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.0) 64%
+  );
+  transform: translateX(-130%);
+  animation: ui-shimmer 6s var(--ease-spring) infinite;
+  pointer-events: none;
+}
+@keyframes ui-shimmer {
+  0% { transform: translateX(-130%); }
+  55%, 100% { transform: translateX(130%); }
+}
+
+/* ── Bento 진입 모션 — 자식 카드가 40~80ms 간격으로 순차 등장 ───────────── */
+@keyframes bento-rise {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.bento-in > * {
+  /* backwards: 지연 동안 from(숨김) 유지하되, 종료 후엔 통제권을 놔줘 hover lift가 살아있게 */
+  animation: bento-rise 0.6s var(--ease-spring) backwards;
+}
+.bento-in > *:nth-child(1) { animation-delay: 0ms; }
+.bento-in > *:nth-child(2) { animation-delay: 60ms; }
+.bento-in > *:nth-child(3) { animation-delay: 120ms; }
+.bento-in > *:nth-child(4) { animation-delay: 180ms; }
+.bento-in > *:nth-child(5) { animation-delay: 240ms; }
+.bento-in > *:nth-child(6) { animation-delay: 300ms; }
+.bento-in > *:nth-child(7) { animation-delay: 360ms; }
+.bento-in > *:nth-child(8) { animation-delay: 420ms; }
+.bento-in > *:nth-child(9) { animation-delay: 480ms; }
+.bento-in > *:nth-child(10) { animation-delay: 540ms; }
+.bento-in > *:nth-child(n + 11) { animation-delay: 600ms; }
+
+/* 단일 블록(섹션) 자체의 부드러운 등장 */
+.rise-in {
+  animation: bento-rise 0.6s var(--ease-spring) backwards;
+}
+
+/* 숫자 카운트업 느낌의 부드러운 시각 전환 (수치 강조 진입) */
+@keyframes value-pop {
+  from { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.value-pop {
+  animation: value-pop 0.7s var(--ease-spring) backwards;
+}
+
+/* ── 모션 키프레임 — 상태/계층 전환 설명용. reduced-motion에서 무력화됨. ──── */
 @keyframes ui-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ui-overlay-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes ui-dialog-in {
@@ -141,5 +319,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
+  }
+  .card-soft:hover,
+  .card-soft-h:hover,
+  .card-glass:hover {
+    transform: none;
   }
 }
