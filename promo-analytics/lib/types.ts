@@ -227,16 +227,32 @@ export type PlanVsActualSummary = {
   unplanned_sku_count: number | null;
   quantity_reliable: boolean | null;
   snapshot_mult: number | null;
+  // N8: 매출 중심(전체) 모델
+  subscription_revenue: number | null;
+  main_revenue: number | null;
+  halo_revenue: number | null; // 함께 구매(비메인·구독제외) 매출
+  campaign_revenue_total: number | null; // 구독 제외 전체
+  revenue_ach_total: number | null; // 전체 / 목표
+  contribution_total: number | null;
+  contribution_ach_total: number | null;
+  // N12: '메인 제품 수량 달성' 카드 표시용 — 계획 SKU의 상시/구독 수량 분해(predict 미사용)
+  main_nonsub_qty: number | null;
+  main_subscription_qty: number | null;
 };
 
 export type PlanVsActualOption = {
   option_id: string;
   option_label: string;
+  // N7 P2: 구성 기반 파생 표시·식별 (라벨 단독 금지 — 2개입/6개입·세트가 구분)
+  display_label: string | null;
+  option_signature: string | null;
   expected_option_qty: number;
   expected_revenue: number | null;
   expected_contribution: number | null;
   match_patterns: string[];
   matched: boolean;
+  // N7 P2: 'routed'(구성·묶음 자동 라우팅) | 'manual'(수동 패턴) | 'none'(미매칭/저신뢰)
+  match_source: "routed" | "sku" | "manual" | "none";
   actual_revenue: number;
   actual_qty: number;
   ach_revenue: number | null;

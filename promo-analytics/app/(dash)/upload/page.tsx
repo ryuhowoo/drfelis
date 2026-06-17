@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { won, pct } from "@/lib/format";
 import type { ParsedPriceConfig } from "@/lib/parse";
+import { useReplaceConfirm } from "./useReplaceConfirm";
 
 // 업로드 이력 기록 — 연동 파일명·시간·종류·행수를 남긴다(업데이트 참고용).
 // 실패해도 업로드 자체를 막지 않는다(best-effort).
@@ -205,6 +206,7 @@ type Progress = {
 function UploadCard({ def }: { def: CardDef }) {
   const router = useRouter();
   const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
+  const { confirm, element: replaceDialog } = useReplaceConfirm();
 
   async function handleFile(file: File) {
     try {
@@ -257,9 +259,8 @@ function UploadCard({ def }: { def: CardDef }) {
           .in("base_name", baseNamesList);
         if (cntErr) throw cntErr;
 
+        let oldRevenue = 0;
         if (oldCount && oldCount > 0) {
-          // 기존 총매출 합산(페이지네이션) — 불변식(총매출 동일) 확인용
-          let oldRevenue = 0;
           const size = 1000;
           for (let from = 0; from < oldCount; from += size) {
             const { data, error } = await supabase
@@ -272,48 +273,14 @@ function UploadCard({ def }: { def: CardDef }) {
             if (error) throw error;
             for (const r of data ?? []) oldRevenue += Number(r.revenue) || 0;
           }
-          const delta = newRevenue - oldRevenue;
-          const deltaPct =
-            oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
-
-          // 불변식 위반(±5% 초과)이면 중단 — 백필은 수량·옵션만 채우고 총매출은 동일해야 함
-          if (Math.abs(deltaPct) > 5) {
-            throw new Error(
-              `백필 중단: 교체 시 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
-                `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
-                `백필은 수량·옵션정보만 채워야 하며 같은 기간 총매출은 동일해야 합니다. 파일/기간을 확인하세요.`,
-            );
-          }
-
-          const ok = window.confirm(
-            `백필(소스 교체) — 기간 ${minDate} ~ ${maxDate}\n` +
-              `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
-              `신규 ${rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
-              `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
-              `이 기간·상품의 기존 행을 모두 삭제하고 새 파일로 교체합니다 (누적 아님). 진행할까요?`,
-          );
-          if (!ok) {
-            setP({ phase: "idle", message: "취소됨" });
-            return;
-          }
-
-          setP({ phase: "uploading", message: `기존 ${oldCount.toLocaleString()}행 삭제 중…` });
-          const { error: delErr } = await supabase
-            .from("daily_sales")
-            .delete()
-            .gte("sale_date", minDate)
-            .lte("sale_date", maxDate)
-            .in("base_name", baseNamesList);
-          if (delErr) throw delErr;
         }
 
+        // 상품 매칭 + 레코드 빌드 (DB 변경 전 — 미리보기에 매칭 통계 포함)
         setP({ phase: "uploading", message: `상품 매칭 중… (${rows.length}행)` });
         const productMap = await products.ensureProducts(
           supabase,
           rows.map((r) => r.base_name),
         );
-
-        // 파일 내부 동일 키(일자·상품·옵션) 합산 — 한 배치에 중복 키가 있으면 upsert가 실패하므로 방어.
         const dedup = new Map<
           string,
           { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
@@ -333,21 +300,40 @@ function UploadCard({ def }: { def: CardDef }) {
         }
         const records = [...dedup.values()];
 
-        const batches = products.chunk(records, 1000);
-        let done = 0;
-        for (const [i, batch] of batches.entries()) {
-          setP({
-            phase: "uploading",
-            message: `${i + 1}/${batches.length} 배치 적재 중…`,
-            done,
-            total: records.length,
+        // 교체 검토 (DB 변경 전 영향 확인) — window.confirm 대신 앱 내부 dialog
+        if (oldCount && oldCount > 0) {
+          const ok = await confirm({
+            title: "일별 매출 — 같은 기간·상품 교체",
+            period: `${minDate} ~ ${maxDate}`,
+            oldCount,
+            oldRevenue,
+            newCount: records.length,
+            newRevenue,
+            matchedSkus: productMap.size,
+            totalSkus: baseNamesList.length,
+            note: "교환·환불·취소 반영 — 최신 파일을 기준으로 같은 기간·상품을 교체합니다(누적 아님). 삭제+삽입이 한 번에(원자적) 처리되어 부분 반영이 없습니다.",
           });
-          const { error } = await supabase
-            .from("daily_sales")
-            .upsert(batch, { onConflict: "sale_date,base_name,option_info" });
-          if (error) throw error;
-          done += batch.length;
+          if (!ok) {
+            setP({ phase: "idle", message: "취소됨" });
+            return;
+          }
         }
+
+        // 원자적 교체 (삭제+삽입 한 트랜잭션 — 부분 반영 불가)
+        setP({
+          phase: "uploading",
+          message: `최신 파일로 교체 중… (${records.length}행)`,
+          done: 0,
+          total: records.length,
+        });
+        const { data: inserted, error: rpcErr } = await supabase.rpc("replace_daily_sales", {
+          p_min: minDate,
+          p_max: maxDate,
+          p_base_names: baseNamesList,
+          p_rows: records,
+        });
+        if (rpcErr) throw rpcErr;
+        const done = Number(inserted) || records.length;
 
         const dates = rows.map((r) => r.sale_date).sort();
         await logUpload(supabase, {
@@ -424,56 +410,44 @@ function UploadCard({ def }: { def: CardDef }) {
           (s, r) => s + (Number(r.revenue) || 0),
           0,
         );
-        const delta = newRevenue - oldRevenue;
-        const deltaPct =
-          oldRevenue > 0 ? (delta / oldRevenue) * 100 : newRevenue > 0 ? 100 : 0;
-        if (Math.abs(deltaPct) > 5) {
-          throw new Error(
-            `백필 중단: 캠페인 실적 총매출이 ${deltaPct.toFixed(1)}% 변동합니다 ` +
-              `(기존 ₩${Math.round(oldRevenue).toLocaleString()} → 신규 ₩${Math.round(newRevenue).toLocaleString()}). ` +
-              `백필은 수량·옵션정보만 채워야 하며 실적 매출은 동일해야 합니다. 파일을 확인하세요.`,
-          );
-        }
-        const ok = window.confirm(
-          `백필(캠페인 실적 교체) — ${name}\n` +
-            `기존 ${oldCount.toLocaleString()}건 · 총매출 ₩${Math.round(oldRevenue).toLocaleString()}\n` +
-            `신규 ${parsed.rows.length.toLocaleString()}건 · 총매출 ₩${Math.round(newRevenue).toLocaleString()}\n` +
-            `매출 차이 ₩${Math.round(delta).toLocaleString()} (${deltaPct.toFixed(1)}%)\n\n` +
-            `이 캠페인의 기존 실적을 삭제하고 교체합니다. 확정 플랜(frozen)은 그대로 보존됩니다.\n` +
-            `진행할까요? (취소 시 중단 — 중복 캠페인을 만들지 않습니다)`,
-        );
-        if (!ok) {
-          setP({ phase: "idle", message: "취소됨" });
-          return;
-        }
-
+        // 상품 매칭 + 레코드 빌드 (DB 변경 전 — 미리보기 매칭 통계)
         setP({ phase: "uploading", message: "상품 매칭 중…" });
         const productMap = await products.ensureProducts(
           supabase,
           parsed.rows.map((r) => r.base_name),
         );
-
-        setP({ phase: "uploading", message: `기존 실적 ${oldCount.toLocaleString()}행 삭제 중…` });
-        const { error: delErr } = await supabase
-          .from("promotion_sales")
-          .delete()
-          .eq("promotion_id", existing.id);
-        if (delErr) throw delErr;
-
         const records = buildRecords(existing.id, productMap);
-        const batches = products.chunk(records, 1000);
-        let done = 0;
-        for (const [i, batch] of batches.entries()) {
-          setP({
-            phase: "uploading",
-            message: `${i + 1}/${batches.length} 배치 적재 중…`,
-            done,
-            total: records.length,
-          });
-          const { error } = await supabase.from("promotion_sales").insert(batch);
-          if (error) throw error;
-          done += batch.length;
+        const totalSkus = new Set(parsed.rows.map((r) => r.base_name)).size;
+
+        // 교체 검토 (DB 변경 전) — window.confirm 대신 앱 내부 dialog
+        const ok = await confirm({
+          title: `캠페인 실적 교체 — ${name}`,
+          oldCount,
+          oldRevenue,
+          newCount: parsed.rows.length,
+          newRevenue,
+          matchedSkus: productMap.size,
+          totalSkus,
+          note: "이 캠페인의 기존 실적을 최신 파일로 교체합니다. 확정 플랜(frozen)·기대값은 보존됩니다. 삭제+삽입이 한 번에(원자적) 처리되어 부분 반영이 없습니다.",
+        });
+        if (!ok) {
+          setP({ phase: "idle", message: "취소됨" });
+          return;
         }
+
+        // 원자적 교체 (삭제+삽입 한 트랜잭션 — pack_size 트리거 자동 채움)
+        setP({
+          phase: "uploading",
+          message: `최신 파일로 교체 중… (${records.length}행)`,
+          done: 0,
+          total: records.length,
+        });
+        const { data: insertedN, error: rpcErr } = await supabase.rpc("replace_promotion_sales", {
+          p_promotion_id: existing.id,
+          p_rows: records,
+        });
+        if (rpcErr) throw rpcErr;
+        const done = Number(insertedN) || records.length;
 
         await logUpload(supabase, {
           kind: "promotion",
@@ -562,6 +536,7 @@ function UploadCard({ def }: { def: CardDef }) {
 
   return (
     <div className="rounded-2xl card-soft p-5">
+      {replaceDialog}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-medium">{def.title}</h2>
