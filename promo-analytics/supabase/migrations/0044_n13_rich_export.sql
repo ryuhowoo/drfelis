@@ -84,8 +84,8 @@ begin
       coalesce(pr.base_name, ps.base_name) as bname,
       coalesce(ps.pack_size, 1) as pack,
       coalesce(pr.is_subscription, false) as prod_sub,
-      (coalesce(ps.option_info, '') ~ '(정기|구독)') as kw_sub,
-      (ps.order_type = 'subscription') as ord_sub,
+      coalesce(ps.option_info, '') ~ '(정기|구독)' as kw_sub,
+      coalesce(ps.order_type = 'subscription', false) as ord_sub,  -- NULL 가드(order_type null)
       (regexp_match(coalesce(ps.option_info, ''), '([0-9]+)\s*개월'))[1]::int as term,
       ps.option_info, ps.revenue, ps.quantity, ps.cost, ps.fee, ps.order_count
     from promo.promotion_sales ps
@@ -116,7 +116,7 @@ begin
     (promotion_id, option_code, label, label_raw, match_signature, pack_size, term_months,
      is_subscription, sub_source, revenue, quantity, cost, fee, order_count)
   select p_promotion_id, g.code, g.label, g.label_raw, m.sig, g.pack, g.term,
-    (g.prod_sub or g.kw_sub or g.ord_sub),
+    coalesce(g.prod_sub or g.kw_sub or g.ord_sub, false),
     case when g.ord_sub then 'export' when g.prod_sub then 'product'
          when g.kw_sub then 'derived' else null end,
     g.rev, g.qty, g.cost, g.fee, g.oc
@@ -221,3 +221,12 @@ $$;
 
 grant execute on all functions in schema promo to authenticated;
 notify pgrst, 'reload schema';
+
+-- rebuild 로직이 0042 대비 바뀌었으니(옵션코드 묶음·주문유형 신호) 전 캠페인 재구성
+do $$
+declare r record;
+begin
+  for r in select id from promo.promotions loop
+    perform promo.rebuild_sale_options(r.id);
+  end loop;
+end $$;
