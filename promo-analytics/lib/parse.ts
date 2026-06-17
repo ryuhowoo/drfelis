@@ -181,7 +181,20 @@ export type PromoSalesRow = {
   fee: number;
   cost: number;
   quantity: number;
+  // N13 P2: 리치 export(선택) — 없으면 null
+  order_type: "subscription" | "onetime" | null; // 주문유형(정기/일반)
+  sale_option_code: string | null; // 옵션코드
+  composition: string | null; // 구성(SKU:qty) 원문 — 향후 정밀 시그니처용
 };
+
+/** 주문유형 셀(정기/일반/구독/onetime…)을 표준값으로 정규화 */
+function normOrderType(v: unknown): "subscription" | "onetime" | null {
+  const s = String(v ?? "").replace(/\s+/g, "");
+  if (!s) return null;
+  if (/정기|구독|subscription/i.test(s)) return "subscription";
+  if (/일반|단건|단품|1회|onetime|일회/i.test(s)) return "onetime";
+  return null;
+}
 
 export type ParsedPromotion = {
   start_date: string | null;
@@ -207,6 +220,10 @@ export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
   const cFee = findCol(header, ["수수료"]);
   const cCost = findCol(header, ["원가"]);
   const cQty = findCol(header, ["판매수량", "수량"]);
+  // N13 P2: 리치 export 선택 컬럼 — 없으면 -1 → null로 채움(하위호환)
+  const cOrderType = findCol(header, ["주문유형", "주문형태", "정기여부", "구독여부"]);
+  const cOptCode = findCol(header, ["옵션코드", "옵션번호", "옵션id"]);
+  const cComp = findCol(header, ["구성", "구성정보", "세트구성"]);
 
   let start: string | null = null;
   let end: string | null = null;
@@ -238,6 +255,9 @@ export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
       fee: toNum(r[cFee]),
       cost: toNum(r[cCost]),
       quantity: toNum(r[cQty]),
+      order_type: cOrderType >= 0 ? normOrderType(r[cOrderType]) : null,
+      sale_option_code: cOptCode >= 0 ? String(r[cOptCode] ?? "").trim() || null : null,
+      composition: cComp >= 0 ? String(r[cComp] ?? "").trim() || null : null,
     });
   }
   return { start_date: start, end_date: end, rows: out };

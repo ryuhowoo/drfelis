@@ -58,6 +58,7 @@ export type Promotion = {
   season_tag: string | null;
   benefits: Benefits | null;
   contribution_amount: number | null;
+  ad_spend: number | null;
   notes: string | null;
   created_at: string;
 };
