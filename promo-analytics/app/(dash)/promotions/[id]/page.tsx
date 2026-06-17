@@ -20,6 +20,7 @@ import Achievement from "./Achievement";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
+import OptionContribution, { type OptionContribRow } from "./OptionContribution";
 import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 import { CampaignWorkflowBar } from "./CampaignWorkflowBar";
 import { ActionPanel } from "./ActionPanel";
@@ -108,6 +109,9 @@ export default async function PromotionDetail({
   const achSummary = bundle?.rollup?.pva_summary ?? null;
   const achRows = bundle?.rollup?.pva_rows ?? [];
   const achOptions = bundle?.rollup?.pva_options ?? [];
+  // N13 P2: 옵션 단위 실측 공헌 분해 (마이그레이션 미적용 시 함수 부재 → 조용히 빈 배열)
+  const { data: contribData } = await supabase.rpc("sale_option_contribution", { p_id: id });
+  const optionContribs = (contribData as OptionContribRow[] | null) ?? [];
   const optionInfos = [
     ...new Set(
       (bundle?.option_infos ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
@@ -500,6 +504,11 @@ export default async function PromotionDetail({
               diagnosticRows={diagnosticRows}
               skuMappings={skuMappings}
               hideSummaryCards
+            />
+
+            <OptionContribution
+              rows={optionContribs}
+              groundTruth={promo.contribution_amount ?? null}
             />
           </div>
         )}
