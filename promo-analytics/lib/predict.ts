@@ -46,7 +46,8 @@ export type Prediction = {
   expected_promo_daily: number; // 행사 일평균(예상)
   lift_ratio: number | null; // 평소 대비 배수
   expected_contribution_rate: number | null; // 예상 공헌이익률
-  expected_contribution: number; // 예상 공헌이익(기간)
+  expected_uplift_contribution: number | null; // 증분(기여) 공헌이익 = 증분일평균×일수×율
+  expected_total_contribution: number | null; // 전체 예상 공헌이익 = 행사일평균×일수×율 (baseline 포함)
   confidence: "높음" | "보통" | "낮음";
   confidence_score: number; // 0~1
   comparables: Comparable[];
@@ -95,6 +96,20 @@ function wavg(items: Comparable[], pick: (c: Comparable) => number | null): numb
     w += cw;
   }
   return w > 0 ? s / w : 0;
+}
+
+// null 보존 가중평균 — 유효값이 하나도 없으면 0이 아니라 null('데이터 부족')을 반환.
+function wavgN(items: Comparable[], pick: (c: Comparable) => number | null): number | null {
+  let s = 0, w = 0, any = false;
+  for (const c of items) {
+    const v = pick(c);
+    if (v == null) continue;
+    any = true;
+    const cw = caseWeight(c);
+    s += v * cw;
+    w += cw;
+  }
+  return any && w > 0 ? s / w : null;
 }
 
 // 두 케이스/스펙의 유사도 (0~1)
@@ -153,7 +168,11 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
     const avgPerDay = mean((c) => c.uplift_per_day);
     const baseDaily = mean((c) => c.baseline_daily);
     const promoDaily = baseDaily + avgPerDay;
-    const cr = mean((c) => c.contribution_rate);
+    // 공헌율은 null 보존 — 유효 사례가 없으면 '데이터 부족'(null)
+    const crVals = valid
+      .map((c) => c.contribution_rate)
+      .filter((x): x is number => x != null);
+    const cr = crVals.length ? crVals.reduce((a, b) => a + b, 0) / crVals.length : null;
     const expected = avgPerDay * spec.duration_days;
     return {
       expected_uplift: expected,
@@ -163,8 +182,9 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
       expected_baseline_daily: baseDaily,
       expected_promo_daily: promoDaily,
       lift_ratio: baseDaily > 0 ? promoDaily / baseDaily : null,
-      expected_contribution_rate: cr || null,
-      expected_contribution: promoDaily * spec.duration_days * cr,
+      expected_contribution_rate: cr,
+      expected_uplift_contribution: cr != null ? avgPerDay * spec.duration_days * cr : null,
+      expected_total_contribution: cr != null ? promoDaily * spec.duration_days * cr : null,
       confidence: "낮음",
       confidence_score: 0.2,
       comparables: [],
@@ -201,7 +221,7 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
 
   const baseDaily = wavg(top, (c) => c.baseline_daily);
   const promoDaily = baseDaily + perDay;
-  const cr = wavg(top, (c) => c.contribution_rate);
+  const cr = wavgN(top, (c) => c.contribution_rate);
 
   return {
     expected_uplift: expected,
@@ -211,8 +231,9 @@ export function predict(spec: PredictionSpec, cases: CaseFeature[]): Prediction 
     expected_baseline_daily: baseDaily,
     expected_promo_daily: promoDaily,
     lift_ratio: baseDaily > 0 ? promoDaily / baseDaily : null,
-    expected_contribution_rate: cr || null,
-    expected_contribution: promoDaily * spec.duration_days * cr,
+    expected_contribution_rate: cr,
+    expected_uplift_contribution: cr != null ? perDay * spec.duration_days * cr : null,
+    expected_total_contribution: cr != null ? promoDaily * spec.duration_days * cr : null,
     confidence,
     confidence_score: cScore,
     comparables: top,

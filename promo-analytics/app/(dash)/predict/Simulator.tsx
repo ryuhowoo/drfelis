@@ -80,7 +80,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       out.push({
         discount: d,
         uplift: Math.round(p.expected_uplift),
-        contribution: Math.round(p.expected_contribution),
+        contribution: Math.round(p.expected_uplift_contribution ?? 0),
       });
     }
     return out;
@@ -262,10 +262,18 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
               <CountUp value={curUplift} format={won} />
             </Mini>
             <Mini
-              label="예상 공헌이익"
-              sub={pred.expected_contribution_rate != null ? `이익률 ${pct(pred.expected_contribution_rate)}` : undefined}
+              label="예상 공헌이익 (기여)"
+              sub={
+                pred.expected_total_contribution != null
+                  ? `전체 ${wonShort(pred.expected_total_contribution)}${pred.expected_contribution_rate != null ? ` · 이익률 ${pct(pred.expected_contribution_rate)}` : ""}`
+                  : "데이터 부족"
+              }
             >
-              <CountUp value={pred.expected_contribution} format={wonShort} />
+              {pred.expected_uplift_contribution != null ? (
+                <CountUp value={pred.expected_uplift_contribution} format={wonShort} />
+              ) : (
+                <span className="text-neutral-400">—</span>
+              )}
             </Mini>
             <Mini label="예상 범위">{`${wonShort(pred.low)}~${wonShort(pred.high)}`}</Mini>
           </div>
@@ -416,14 +424,14 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
             <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-600">
               <span>배수 <strong className="text-neutral-900">{pred.lift_ratio != null ? `${pred.lift_ratio.toFixed(1)}배` : "—"}</strong></span>
               <span>증분 <strong className="text-neutral-900">{wonShort(pred.expected_uplift)}</strong></span>
-              <span>공헌이익 <strong className="text-neutral-900">{wonShort(pred.expected_contribution)}</strong></span>
+              <span>공헌이익(기여) <strong className="text-neutral-900">{wonShort(pred.expected_uplift_contribution ?? 0)}</strong></span>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {scenarioRows.map(({ s, p }) => {
               const dUplift = diffPct(pred.expected_uplift, p.expected_uplift);
-              const dContrib = diffPct(pred.expected_contribution, p.expected_contribution);
+              const dContrib = diffPct(pred.expected_uplift_contribution ?? 0, p.expected_uplift_contribution ?? 0);
               return (
                 <div key={s.id} className="rounded-2xl bg-neutral-50 p-4">
                   <div className="flex items-start justify-between gap-1">
@@ -447,7 +455,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
                   </div>
                   <div className="mt-2 space-y-1 text-xs text-neutral-500">
                     <CompareRow label="증분" value={wonShort(p.expected_uplift)} delta={dUplift} />
-                    <CompareRow label="공헌이익" value={wonShort(p.expected_contribution)} delta={dContrib} />
+                    <CompareRow label="공헌이익(기여)" value={wonShort(p.expected_uplift_contribution ?? 0)} delta={dContrib} />
                   </div>
                   <button
                     onClick={() => applyScenario(s)}
