@@ -17,6 +17,7 @@ import { deriveWorkflow, deriveActions } from "@/lib/campaign-workflow";
 import UpliftChart from "./UpliftChart";
 import Notes from "./Notes";
 import Achievement from "./Achievement";
+import PerformanceUpload from "./PerformanceUpload";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
 import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
@@ -289,6 +290,11 @@ export default async function PromotionDetail({
 
       <div className="mt-4">
         <ActionPanel actions={actions} basePath={basePath} />
+      </div>
+
+      {/* 6단계 — 캠페인에 직접 성과 추가 (라플라스 양식 → 자동 분류) */}
+      <div className="mt-4">
+        <PerformanceUpload promotionId={id} hasActuals={hasSelfActuals} />
       </div>
 
       {/* Layer C — 심층 분석 (탭, URL 보존, 선택 탭만 렌더) */}
