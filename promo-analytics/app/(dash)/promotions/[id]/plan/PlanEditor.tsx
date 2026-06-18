@@ -16,6 +16,7 @@ import { won, pct, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
 import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
 import PlanTemplatePanel from "./PlanTemplatePanel";
+import SubProductSuggest, { type Bench } from "./SubProductSuggest";
 
 export type EditorItem = {
   product_id: string;
@@ -216,6 +217,33 @@ export default function PlanEditor({
         is_main: false,
         match_patterns: [],
         items: [],
+      },
+    ]);
+  };
+  // Phase 4 — 벤치마크 추천 서브상품을 옵션단가·예상수량·원가 prefilled로 한 번에 추가
+  const addSubOption = (b: Bench) => {
+    setDirty(true);
+    setOptions((prev) => [
+      ...prev,
+      {
+        key: uid(),
+        option_label: b.base_name,
+        expected_option_qty: Math.round(b.avg_qty) || 0,
+        is_main: false,
+        match_patterns: [],
+        items: [
+          {
+            key: uid(),
+            product_id: b.product_id,
+            base_name: b.base_name,
+            sku_qty_per_option: 1,
+            unit_sale_price: Math.round(b.avg_unit_price) || 0,
+            source_config_id: null,
+            consumer_price: b.consumer_price,
+            regular_price: b.regular_price,
+            cost: b.cost,
+          },
+        ],
       },
     ]);
   };
@@ -493,13 +521,19 @@ export default function PlanEditor({
       </div>
 
       {!confirmed && (
-        <button
-          onClick={addOption}
-          disabled={busy}
-          className="mt-4 rounded-xl border border-dashed border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
-        >
-          + 옵션 추가
-        </button>
+        <>
+          <SubProductSuggest
+            existingProductIds={options.flatMap((o) => o.items.map((it) => it.product_id))}
+            onAdd={addSubOption}
+          />
+          <button
+            onClick={addOption}
+            disabled={busy}
+            className="mt-4 rounded-xl border border-dashed border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+          >
+            + 빈 옵션 추가
+          </button>
+        </>
       )}
 
       {/* SKU 단위 예상 수량 롤업 */}
