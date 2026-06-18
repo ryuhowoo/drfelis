@@ -12,6 +12,10 @@ type Body = {
   end_date: string;
   purposes: string[]; // 세일즈/브랜딩/재고소진 (1~3개)
   weights: Record<string, number>; // 목적별 1~10 정수
+  // 엄선 메타(예측에 실효) — 선택
+  promo_type?: string | null;
+  season_tag?: string | null;
+  discount_rate?: number | null; // 0~1
 };
 
 export async function POST(req: Request) {
@@ -32,6 +36,9 @@ export async function POST(req: Request) {
     const supabase = await createClient();
 
     // 1) 프로모션 메타
+    const promoType = (body.promo_type ?? "").trim() || null;
+    const seasonTag = (body.season_tag ?? "").trim() || null;
+    const dr = body.discount_rate != null && body.discount_rate > 0 ? body.discount_rate : null;
     const { data: promo, error: pErr } = await supabase
       .from("promotions")
       .insert({
@@ -40,6 +47,9 @@ export async function POST(req: Request) {
         end_date,
         purposes,
         purpose: purposes[0], // 레거시 단일 목적 = 주목적
+        promo_type: promoType,
+        season_tag: seasonTag,
+        benefits: dr != null ? { discount_rate: dr } : null,
       })
       .select("id")
       .single();
