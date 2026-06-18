@@ -12,6 +12,7 @@ import {
   discountFromPrice,
   priceFromDiscount,
   type PlanItemInput,
+  type CouponSpec,
 } from "@/lib/plan";
 import { won, pct, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
@@ -85,15 +86,28 @@ export default function PlanEditor({
   initialOptions,
   rateCard,
   qtyHint,
+  purposes,
 }: {
   promotionId: string;
   plan: CampaignPlan | null;
   initialOptions: EditorOption[];
   rateCard: RateCard | null;
   qtyHint?: QtyHint;
+  purposes?: string[];
 }) {
   const router = useRouter();
   const [options, setOptions] = useState<OptState[]>(() => toState(initialOptions));
+  // 플랜(캠페인) 단위 조건부 쿠폰 — UI는 할인율을 %로 입력
+  const planC = plan as (CampaignPlan & {
+    coupon_min_order?: number | null;
+    coupon_rate?: number | null;
+    coupon_max?: number | null;
+  }) | null;
+  const [coupon, setCoupon] = useState(() => ({
+    min: Number(planC?.coupon_min_order ?? 0) || 0,
+    ratePct: (Number(planC?.coupon_rate ?? 0) || 0) * 100,
+    max: Number(planC?.coupon_max ?? 0) || 0,
+  }));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "err" | "ok"; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -135,6 +149,16 @@ export default function PlanEditor({
     );
   }
 
+  // 쿠폰 스펙 (할인율>0일 때만 적용)
+  const couponSpec: CouponSpec =
+    coupon.ratePct > 0
+      ? {
+          min_order_amount: coupon.min,
+          discount_rate: coupon.ratePct / 100,
+          max_discount_amount: coupon.max,
+        }
+      : null;
+
   // ── 라이브 롤업 ──────────────────────────────
   const optionResults = options.map((o) => {
     const inputs: PlanItemInput[] = o.items.map((it) => ({
@@ -144,7 +168,7 @@ export default function PlanEditor({
       regular_price: it.regular_price,
       cost: it.cost,
     }));
-    return computeOptionTotals(inputs, mult, o.expected_option_qty);
+    return computeOptionTotals(inputs, mult, o.expected_option_qty, couponSpec);
   });
   const planTotals = computePlanTotals(
     options.map((o, i) => ({
@@ -156,6 +180,18 @@ export default function PlanEditor({
         sku_qty_per_option: it.sku_qty_per_option,
       })),
     })),
+  );
+  // 목적별 총합 — 구매건수(=Σ옵션 세트수)·판매수량(=Σ SKU 단위)·공헌이익률·쿠폰 할인 총액
+  const expOrderCount = options.reduce((s, o) => s + (o.expected_option_qty || 0), 0);
+  let expSkuUnits = 0;
+  for (const v of planTotals.skuExpectedQty.values()) expSkuUnits += v.qty;
+  const contribRate =
+    planTotals.expected_revenue_total > 0
+      ? planTotals.expected_contribution_total / planTotals.expected_revenue_total
+      : null;
+  const couponTotal = optionResults.reduce(
+    (s, r, i) => s + r.coupon_discount * (options[i].expected_option_qty || 0),
+    0,
   );
 
   // ── 인라인 검증 (확정 전 오류 발견) ──────────
@@ -214,6 +250,7 @@ export default function PlanEditor({
   function payload() {
     return {
       plan_id: plan!.id,
+      coupon: { min_order: coupon.min, rate: coupon.ratePct / 100, max: coupon.max },
       options: options.map((o, i) => ({
         option_label: o.option_label,
         expected_option_qty: o.expected_option_qty,
@@ -333,15 +370,69 @@ export default function PlanEditor({
         )}
       </div>
 
-      {/* 플랜 합계 */}
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="예상 매출 합계" value={won(planTotals.expected_revenue_total)} primary />
-        <Stat label="예상 공헌이익 합계" value={won(planTotals.expected_contribution_total)} />
-        <Stat label="옵션 수" value={num(options.length)} />
-        <Stat
-          label="SKU 종류"
-          value={num(planTotals.skuExpectedQty.size)}
-        />
+      {/* 플랜 목적 + 목적별 총합 헤더 */}
+      <div className="mt-4 rounded-2xl card-soft p-5">
+        {purposes && purposes.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-medium text-ink-4">목적</span>
+            {purposes.map((p) => (
+              <span key={p} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <Stat label="예상 매출액" value={won(planTotals.expected_revenue_total)} primary />
+          <Stat label="구매건수 (세트)" value={num(expOrderCount)} />
+          <Stat label="판매수량 (SKU)" value={num(expSkuUnits)} />
+          <Stat label="공헌이익액" value={won(planTotals.expected_contribution_total)} />
+          <Stat label="공헌이익률" value={contribRate != null ? pct(contribRate, 1) : "—"} />
+        </div>
+        <div className="mt-2 text-[11px] text-ink-4">
+          옵션 {num(options.length)}종 · SKU {num(planTotals.skuExpectedQty.size)}종
+          {couponTotal > 0 && <> · 쿠폰 할인 반영 −{won(couponTotal)}</>}
+        </div>
+      </div>
+
+      {/* 추가 할인 쿠폰 (플랜 단위 · N원 이상 n% 최대 n원) */}
+      <div className="mt-3 rounded-2xl card-soft p-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-ink-2">추가 할인 쿠폰</h3>
+          <span className="text-[11px] text-ink-4">옵션 혜택가가 기준액 이상이면 자동 적용</span>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <label className="block">
+            <span className="block text-[11px] font-medium text-ink-4">기준액 (원 이상)</span>
+            <input
+              type="number" inputMode="numeric" min={0} disabled={confirmed}
+              value={coupon.min || ""}
+              onChange={(e) => { setCoupon((c) => ({ ...c, min: Math.max(0, Number(e.target.value) || 0) })); setDirty(true); }}
+              placeholder="예: 50000"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-[11px] font-medium text-ink-4">할인율 (%)</span>
+            <input
+              type="number" inputMode="decimal" min={0} max={100} disabled={confirmed}
+              value={coupon.ratePct || ""}
+              onChange={(e) => { setCoupon((c) => ({ ...c, ratePct: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })); setDirty(true); }}
+              placeholder="예: 10"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-[11px] font-medium text-ink-4">최대 할인 (원, 0=무제한)</span>
+            <input
+              type="number" inputMode="numeric" min={0} disabled={confirmed}
+              value={coupon.max || ""}
+              onChange={(e) => { setCoupon((c) => ({ ...c, max: Math.max(0, Number(e.target.value) || 0) })); setDirty(true); }}
+              placeholder="예: 10000"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
+            />
+          </label>
+        </div>
       </div>
 
       {/* 검증 요약 (확정 전 오류 발견) */}

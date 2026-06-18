@@ -26,7 +26,7 @@ export default async function PlanPage({
 
   const { data: promo } = await supabase
     .from("promotions")
-    .select("id, name, start_date, end_date")
+    .select("id, name, start_date, end_date, purposes")
     .eq("id", id)
     .single();
   if (!promo) notFound();
@@ -181,6 +181,7 @@ export default async function PlanPage({
         initialOptions={options}
         rateCard={(rc as RateCard) ?? null}
         qtyHint={qtyHint}
+        purposes={(promo.purposes as string[] | null) ?? []}
       />
 
       {plan && (
