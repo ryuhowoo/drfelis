@@ -31,8 +31,20 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const body = (await req.json()) as { plan_id: string; options: OptionIn[] };
+    const body = (await req.json()) as {
+      plan_id: string;
+      options: OptionIn[];
+      coupon?: { min_order: number; rate: number; max: number };
+    };
     const { plan_id, options } = body;
+    const couponSpec =
+      body.coupon && body.coupon.rate > 0
+        ? {
+            min_order_amount: Number(body.coupon.min_order) || 0,
+            discount_rate: Number(body.coupon.rate) || 0,
+            max_discount_amount: Number(body.coupon.max) || 0,
+          }
+        : null;
     const supabase = await createClient();
 
     const { data: plan, error: pErr } = await supabase
@@ -100,7 +112,7 @@ export async function PATCH(
           cost: pm?.cost ?? null,
         };
       });
-      const t = computeOptionTotals(itemInputs, mult, opt.expected_option_qty);
+      const t = computeOptionTotals(itemInputs, mult, opt.expected_option_qty, couponSpec);
       revTotal += t.expected_revenue;
       contribTotal += t.expected_contribution;
 
@@ -156,6 +168,9 @@ export async function PATCH(
       .update({
         expected_revenue_total: revTotal,
         expected_contribution_total: contribTotal,
+        coupon_min_order: couponSpec?.min_order_amount ?? 0,
+        coupon_rate: couponSpec?.discount_rate ?? 0,
+        coupon_max: couponSpec?.max_discount_amount ?? 0,
         updated_at: new Date().toISOString(),
       })
       .eq("id", plan_id);
