@@ -17,6 +17,7 @@ import { validatePlan } from "@/lib/plan-validation";
 import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
 import PlanTemplatePanel from "./PlanTemplatePanel";
 import SubProductSuggest, { type Bench } from "./SubProductSuggest";
+import { downloadPlanXlsx, type ExportOption } from "@/lib/plan-export";
 
 export type EditorItem = {
   product_id: string;
@@ -344,6 +345,41 @@ export default function PlanEditor({
     setBusy(false);
   }
 
+  function exportXlsx() {
+    const exOptions: ExportOption[] = options.map((o, i) => {
+      const t = optionResults[i];
+      return {
+        label: o.option_label || `옵션 ${i + 1}`,
+        is_main: o.is_main,
+        expected_option_qty: o.expected_option_qty,
+        net_price: t.net_price,
+        discount_rate_consumer: t.discount_rate_consumer_net ?? t.discount_rate_consumer,
+        expected_revenue: t.expected_revenue,
+        expected_contribution: t.expected_contribution,
+        items: o.items.map((it) => ({
+          base_name: it.base_name,
+          sku_qty: it.sku_qty_per_option,
+          unit_price: it.unit_sale_price,
+          cost: it.cost,
+          consumer_price: it.consumer_price,
+        })),
+      };
+    });
+    downloadPlanXlsx(
+      `plan-v${plan!.version}.xlsx`,
+      `플랜 v${plan!.version}`,
+      exOptions,
+      {
+        revenue: planTotals.expected_revenue_total,
+        order_count: expOrderCount,
+        sku_units: expSkuUnits,
+        contribution: planTotals.expected_contribution_total,
+        contribution_rate: contribRate,
+      },
+      couponSpec ? { min: coupon.min, ratePct: coupon.ratePct, max: coupon.max } : null,
+    );
+  }
+
   async function onClone() {
     setBusy(true);
     setMsg(null);
@@ -563,6 +599,14 @@ export default function PlanEditor({
 
       {/* 액션 */}
       <div className="mt-6 flex flex-wrap gap-2">
+        <button
+          onClick={exportXlsx}
+          disabled={options.length === 0}
+          className="rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink-2 hover:bg-soft disabled:opacity-50"
+          title="현재 플랜을 Excel로 내려받기"
+        >
+          ⬇ Excel 내보내기
+        </button>
         {confirmed ? (
           <button
             onClick={onClone}
