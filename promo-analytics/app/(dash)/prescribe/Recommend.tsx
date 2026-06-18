@@ -280,7 +280,15 @@ export default function Recommend({ options }: { options: Options }) {
 
                       <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
                         <span>예상 증분: {wonShort(r.predicted_uplift)}</span>
-                        <span>예상 공헌이익: {wonShort(r.predicted_contribution)}</span>
+                        <span>
+                          공헌이익(기여):{" "}
+                          {r.predicted_uplift_contribution != null
+                            ? wonShort(r.predicted_uplift_contribution)
+                            : "데이터 부족"}
+                          {r.predicted_total_contribution != null
+                            ? ` · 전체 ${wonShort(r.predicted_total_contribution)}`
+                            : ""}
+                        </span>
                         <span>근거 {r.sample}건</span>
                       </div>
                       {r.examples.length > 0 && (
