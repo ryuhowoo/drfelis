@@ -9,8 +9,6 @@ import {
   computeOptionTotals,
   computePlanTotals,
   rateCardMult,
-  discountFromPrice,
-  priceFromDiscount,
   type PlanItemInput,
   type CouponSpec,
 } from "@/lib/plan";
@@ -406,10 +404,10 @@ export default function PlanEditor({
           <label className="block">
             <span className="block text-[11px] font-medium text-ink-4">기준액 (원 이상)</span>
             <input
-              type="number" inputMode="numeric" min={0} disabled={confirmed}
-              value={coupon.min || ""}
-              onChange={(e) => { setCoupon((c) => ({ ...c, min: Math.max(0, Number(e.target.value) || 0) })); setDirty(true); }}
-              placeholder="예: 50000"
+              type="text" inputMode="numeric" disabled={confirmed}
+              value={coupon.min ? coupon.min.toLocaleString("ko-KR") : ""}
+              onChange={(e) => { const v = Number(e.target.value.replace(/[^0-9]/g, "")) || 0; setCoupon((c) => ({ ...c, min: v })); setDirty(true); }}
+              placeholder="예: 50,000"
               className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
             />
           </label>
@@ -426,10 +424,10 @@ export default function PlanEditor({
           <label className="block">
             <span className="block text-[11px] font-medium text-ink-4">최대 할인 (원, 0=무제한)</span>
             <input
-              type="number" inputMode="numeric" min={0} disabled={confirmed}
-              value={coupon.max || ""}
-              onChange={(e) => { setCoupon((c) => ({ ...c, max: Math.max(0, Number(e.target.value) || 0) })); setDirty(true); }}
-              placeholder="예: 10000"
+              type="text" inputMode="numeric" disabled={confirmed}
+              value={coupon.max ? coupon.max.toLocaleString("ko-KR") : ""}
+              onChange={(e) => { const v = Number(e.target.value.replace(/[^0-9]/g, "")) || 0; setCoupon((c) => ({ ...c, max: v })); setDirty(true); }}
+              placeholder="예: 10,000"
               className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
             />
           </label>
@@ -660,6 +658,37 @@ function OptionCard({
   onPatchItem: (itemKey: string, patch: Partial<ItemState>) => void;
   onRemoveItem: (itemKey: string) => void;
 }) {
+  // 옵션 단가/할인율을 '주 입력'으로 — 입력 시 SKU 단가들을 비례 스케일해
+  // set_price=Σ(sku×price) 계약을 유지(백엔드 무변). 입력 중 jitter 방지로 blur 시 적용.
+  const [priceDraft, setPriceDraft] = useState<string | null>(null);
+  const [discDraft, setDiscDraft] = useState<string | null>(null);
+
+  function applyOptionPrice(newPrice: number) {
+    const items = opt.items;
+    if (items.length === 0 || !(newPrice >= 0)) return;
+    const cur = totals.set_price;
+    if (cur > 0) {
+      const f = newPrice / cur;
+      items.forEach((it) =>
+        onPatchItem(it.key, { unit_sale_price: Math.max(0, Math.round(it.unit_sale_price * f)), source_config_id: null }),
+      );
+    } else if (totals.consumer_total > 0) {
+      items.forEach((it) => {
+        const share = ((it.consumer_price ?? 0) * (it.sku_qty_per_option || 0)) / totals.consumer_total;
+        const q = Math.max(1, it.sku_qty_per_option || 1);
+        onPatchItem(it.key, { unit_sale_price: Math.round((newPrice * share) / q), source_config_id: null });
+      });
+    } else {
+      const totalQty = items.reduce((s, it) => s + (it.sku_qty_per_option || 0), 0) || items.length;
+      const perUnit = Math.round(newPrice / totalQty);
+      items.forEach((it) => onPatchItem(it.key, { unit_sale_price: perUnit, source_config_id: null }));
+    }
+  }
+  function applyDiscount(ratePct: number) {
+    if (totals.consumer_total <= 0) return;
+    applyOptionPrice(Math.round(totals.consumer_total * (1 - ratePct / 100)));
+  }
+
   return (
     <div className={`rounded-xl card-soft p-4 ${invalid ? "ring-1 ring-danger/40" : ""}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -712,22 +741,53 @@ function OptionCard({
         )}
       </div>
 
-      {/* 옵션 롤업 */}
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-600">
-        <span>
-          세트 단가 <b>{won(totals.set_price)}</b>
-        </span>
-        <span>할인(소비자) {pct(totals.discount_rate_consumer)}</span>
-        <span>할인(상시) {pct(totals.discount_rate_regular)}</span>
-        <span>
-          예상매출 <b>{won(totals.expected_revenue)}</b>
-        </span>
-        <span>
-          예상공헌 <b>{won(totals.expected_contribution)}</b>
-        </span>
-        {totals.free_shipping && (
-          <span className="rounded bg-sky-100 px-1 text-sky-700">무배</span>
-        )}
+      {/* 옵션 단가·할인율 = 주 입력. 예상 매출·공헌은 자동 계산. */}
+      <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl surface-pressed-soft p-3 sm:grid-cols-4">
+        <label className="block">
+          <span className="block text-[11px] font-medium text-ink-4">옵션 단가</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            disabled={readOnly || opt.items.length === 0}
+            value={priceDraft ?? (totals.set_price ? totals.set_price.toLocaleString("ko-KR") : "")}
+            onChange={(e) => setPriceDraft(e.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={() => { if (priceDraft != null) { applyOptionPrice(Number(priceDraft) || 0); setPriceDraft(null); } }}
+            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+            placeholder="옵션 판매가"
+            className="mt-0.5 w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm font-semibold tabular-nums text-ink outline-none focus:border-brand-400 disabled:opacity-60"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-[11px] font-medium text-ink-4">할인율(소비자)</span>
+          <div className="mt-0.5 flex items-center gap-1">
+            <input
+              type="number"
+              step="0.1"
+              min={0}
+              max={100}
+              disabled={readOnly || totals.consumer_total <= 0}
+              value={discDraft ?? (totals.discount_rate_consumer != null ? +(totals.discount_rate_consumer * 100).toFixed(1) : "")}
+              onChange={(e) => setDiscDraft(e.target.value)}
+              onBlur={() => { if (discDraft != null) { applyDiscount(Number(discDraft) || 0); setDiscDraft(null); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+              className="w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-right text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:opacity-60"
+            />
+            <span className="text-xs text-ink-4">%</span>
+          </div>
+        </label>
+        <div>
+          <span className="block text-[11px] font-medium text-ink-4">예상 매출</span>
+          <div className="mt-0.5 py-1.5 text-sm font-bold tabular-nums text-ink">{won(totals.expected_revenue)}</div>
+        </div>
+        <div>
+          <span className="block text-[11px] font-medium text-ink-4">예상 공헌이익</span>
+          <div className="mt-0.5 flex items-center gap-1.5 py-1.5">
+            <span className="text-sm font-bold tabular-nums text-ink">{won(totals.expected_contribution)}</span>
+            {totals.free_shipping && (
+              <span className="rounded bg-secondary-100 px-1 text-[10px] text-secondary-700">무배</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 아이템(BOM) */}
@@ -735,10 +795,9 @@ function OptionCard({
         <table className="w-full text-left text-sm">
           <thead className="text-neutral-400">
             <tr>
-              <th className="py-1 pr-3">SKU</th>
+              <th className="py-1 pr-3">SKU (구성)</th>
               <th className="py-1 pr-2 text-right">세트당 수량</th>
-              <th className="py-1 pr-2 text-right">단가</th>
-              <th className="py-1 pr-2 text-right">할인율(소비자)</th>
+              <th className="py-1 pr-2 text-right">원가</th>
               <th className="py-1"></th>
             </tr>
           </thead>
@@ -747,7 +806,6 @@ function OptionCard({
               <ItemRow
                 key={it.key}
                 it={it}
-                optItemCount={opt.items.length}
                 readOnly={readOnly}
                 onPatch={(patch) => onPatchItem(it.key, patch)}
                 onRemove={() => onRemoveItem(it.key)}
@@ -755,7 +813,7 @@ function OptionCard({
             ))}
             {opt.items.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-2 text-xs text-neutral-400">
+                <td colSpan={4} className="py-2 text-xs text-neutral-400">
                   구성 SKU가 없습니다. 아래에서 추가하세요.
                 </td>
               </tr>
@@ -766,7 +824,7 @@ function OptionCard({
 
       {!readOnly && <AddSku onAdd={onAddItem} />}
       <p className="mt-1 text-[11px] text-neutral-400">
-        공헌이익 = 세트단가 × {mult.toFixed(3)} − Σ(원가 × 수량). 물류비 12% 포함 고정.
+        옵션 단가·할인율을 직접 입력하세요(매출 구동). SKU는 구성(수량)·원가만. 공헌이익 = 옵션단가 × {mult.toFixed(3)} − Σ(원가 × 수량).
       </p>
     </div>
   );
@@ -774,49 +832,19 @@ function OptionCard({
 
 function ItemRow({
   it,
-  optItemCount,
   readOnly,
   onPatch,
   onRemove,
 }: {
   it: ItemState;
-  optItemCount: number;
   readOnly: boolean;
   onPatch: (patch: Partial<ItemState>) => void;
   onRemove: () => void;
 }) {
-  const disc = discountFromPrice(it.consumer_price ?? 0, it.unit_sale_price);
-  const canLoadBundle = optItemCount === 1 && it.sku_qty_per_option >= 2;
-
-  async function loadBundle() {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("product_price_configs")
-      .select("id, sale_price, pack_count")
-      .eq("product_id", it.product_id)
-      .eq("pack_count", it.sku_qty_per_option)
-      .limit(1)
-      .maybeSingle();
-    if (data?.sale_price)
-      onPatch({
-        unit_sale_price: Math.round(Number(data.sale_price) / it.sku_qty_per_option),
-        source_config_id: data.id as string,
-      });
-  }
-
+  // SKU 행 = 구성(수량) + 원가만. 개별 단가/할인율은 옵션 단가로 일원화(숨김).
   return (
     <tr className="border-t border-neutral-100 align-top">
-      <td className="py-1 pr-3">
-        <div>{it.base_name}</div>
-        {canLoadBundle && !readOnly && (
-          <button
-            onClick={loadBundle}
-            className="mt-0.5 text-[11px] text-brand-600 hover:underline"
-          >
-            {it.sku_qty_per_option}묶음가 불러오기 (÷{it.sku_qty_per_option})
-          </button>
-        )}
-      </td>
+      <td className="py-1 pr-3">{it.base_name}</td>
       <td className="py-1 pr-2 text-right">
         <input
           type="number"
@@ -826,36 +854,7 @@ function ItemRow({
           onChange={(e) => onPatch({ sku_qty_per_option: Number(e.target.value) || 0 })}
         />
       </td>
-      <td className="py-1 pr-2 text-right">
-        <input
-          type="number"
-          className="w-24 rounded border border-neutral-200 px-1.5 py-1 text-right disabled:bg-neutral-50"
-          value={it.unit_sale_price || 0}
-          disabled={readOnly}
-          onChange={(e) =>
-            onPatch({ unit_sale_price: Number(e.target.value) || 0, source_config_id: null })
-          }
-        />
-      </td>
-      <td className="py-1 pr-2 text-right">
-        <input
-          type="number"
-          step="0.1"
-          className="w-16 rounded border border-neutral-200 px-1.5 py-1 text-right disabled:bg-neutral-50"
-          value={disc != null ? +(disc * 100).toFixed(1) : ""}
-          disabled={readOnly || !it.consumer_price}
-          onChange={(e) =>
-            onPatch({
-              unit_sale_price: priceFromDiscount(
-                it.consumer_price ?? 0,
-                (Number(e.target.value) || 0) / 100,
-              ),
-              source_config_id: null,
-            })
-          }
-        />
-        <span className="ml-0.5 text-xs text-neutral-400">%</span>
-      </td>
+      <td className="py-1 pr-2 text-right tabular-nums text-neutral-500">{won(it.cost)}</td>
       <td className="py-1 text-right">
         {!readOnly && (
           <button
@@ -896,8 +895,12 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
       .from("products")
       .select("id, base_name, dr_code, consumer_price, regular_price, cost")
       .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
-      .limit(8);
-    setHits((data as SearchHit[]) ?? []);
+      .limit(20);
+    // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 실적에서 이름만 자동생성된 것) 숨김
+    const clear = ((data as SearchHit[]) ?? []).filter(
+      (h) => h.dr_code || h.consumer_price || h.regular_price,
+    );
+    setHits(clear.slice(0, 8));
     setOpen(true);
   }
 
