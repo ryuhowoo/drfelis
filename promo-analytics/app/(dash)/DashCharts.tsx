@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
-const BRAND = "#e76f51";
+const BRAND = "#14916a"; // Dr.Felis mint-green (brand-500)
 
 // 목적별 비중 바 (가중 기여매출/공헌) — value 점유율
 export function PurposeShareBars({
@@ -130,8 +130,8 @@ export function AchievementTrend({
           }
           contentStyle={{ borderRadius: 14, border: "none", boxShadow: "0 8px 24px -8px rgba(0,0,0,.2)", fontSize: 12 }}
         />
-        <Line type="monotone" dataKey="revenue" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} connectNulls />
-        <Line type="monotone" dataKey="contribution" stroke="#2f2d2b" strokeWidth={2} dot={{ r: 2 }} connectNulls />
+        <Line type="monotone" dataKey="revenue" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
+        <Line type="monotone" dataKey="contribution" stroke="#38424f" strokeWidth={2} dot={{ r: 2 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -180,6 +180,8 @@ export function MonthlyArea({
           fill="url(#upliftFill)"
           dot={{ r: 0 }}
           activeDot={{ r: 5, fill: BRAND, strokeWidth: 0 }}
+          animationDuration={1100}
+          animationEasing="ease-out"
         />
       </AreaChart>
     </ResponsiveContainer>
@@ -196,7 +198,7 @@ export function Concentric({
   if (items.length === 0)
     return <div className="text-sm text-neutral-300">데이터가 없습니다.</div>;
   const max = items[0].value;
-  const shades = ["#ffd9c8", "#ffb293", "#ff8255", BRAND];
+  const shades = ["#cdebdd", "#9ddcc1", "#4cbb93", BRAND];
   const baseShade = (i: number) => shades[Math.min(i, shades.length - 1)];
 
   return (
@@ -295,7 +297,7 @@ export function Donut({
     <div className="flex h-full flex-col items-center justify-center">
       <div
         className="relative flex h-28 w-28 items-center justify-center rounded-full"
-        style={{ background: `conic-gradient(${BRAND} ${deg}deg, #2f2d2b 0deg)` }}
+        style={{ background: `conic-gradient(${BRAND} ${deg}deg, #ece7dc 0deg)` }}
       >
         <div className="flex h-[88px] w-[88px] flex-col items-center justify-center rounded-full bg-ink text-white">
           <span className="text-xl font-bold">{pct != null ? Math.round(pct * 100) : "—"}%</span>

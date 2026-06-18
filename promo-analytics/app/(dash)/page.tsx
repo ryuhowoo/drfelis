@@ -280,7 +280,7 @@ export default async function Dashboard() {
         </div>
         <Link
           href="/predict"
-          className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
+          className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-float"
         >
           성과 시뮬레이터 →
         </Link>
@@ -296,7 +296,7 @@ export default async function Dashboard() {
 
       {/* AI 인사이트 */}
       {best?.summary && (
-        <section className="mb-5 rounded-2xl p-6 card-soft">
+        <section className="mb-5 rounded-2xl p-6 card-glass shimmer blob-soft rise-in">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.6px] text-brand-600">
             <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
             AI MD 인사이트
@@ -317,9 +317,9 @@ export default async function Dashboard() {
 
       {/* 인사이트 피드 (N6 R3.1): 진행 중 페이싱 · 최근 종료 회고 · 시작 예정 */}
       {topInsights.length > 0 && (
-        <section className="mb-5 rounded-2xl card-soft p-5">
+        <section className="mb-5 rounded-2xl card-soft p-5 rise-in">
           <h2 className="text-sm font-semibold text-ink-2">지금 주목할 것</h2>
-          <ul className="mt-3 grid gap-2 lg:grid-cols-2">
+          <ul className="mt-3 grid gap-2.5 lg:grid-cols-2 bento-in">
             {topInsights.map((it, i) => (
               <li key={i}>
                 <Link
@@ -357,7 +357,7 @@ export default async function Dashboard() {
       )}
 
       {/* KPI 타일 (N6 R2.1): 수치 + 전기간 대비 델타 + 스파크라인 + 클릭 드릴 */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4 bento-in">
         <Kpi
           label="캠페인 기여 총 매출"
           value={wonShort(totalUplift)}
@@ -391,7 +391,7 @@ export default async function Dashboard() {
       </div>
 
       {/* 달성률 (계획 대비 실적) — S4 */}
-      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card>
           <CardTitle>최근 캠페인 평균 달성률</CardTitle>
           {withPlan.length > 0 ? (
@@ -420,7 +420,7 @@ export default async function Dashboard() {
 
       {/* 목적 슬라이스 (S5.2) */}
       {pm.length > 0 && (
-        <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
           <Card>
             <CardTitle>목적별 기여 매출 비중</CardTitle>
             <PurposeShareBars data={purposeUplift} />
@@ -440,7 +440,7 @@ export default async function Dashboard() {
       )}
 
       {/* 상시 vs 행사 비교 (비교 기준) */}
-      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card className="lg:col-span-2">
           <CardTitle>상시 대비 행사 일매출 (캠페인별)</CardTitle>
           <p className="-mt-2 mb-3 text-xs text-ink-4">
@@ -450,11 +450,11 @@ export default async function Dashboard() {
           </p>
           <BaselineVsPromo data={compData} />
         </Card>
-        <div className="flex flex-col justify-center rounded-2xl p-5 card-soft">
+        <div className="flex flex-col justify-center rounded-2xl p-5 card-soft blob-soft">
           <div className="text-[11px] font-bold uppercase tracking-[1.6px] text-ink-3">
             평소 대비 행사 매출 (전 매장)
           </div>
-          <div className="mt-2 text-4xl font-bold tabular-nums text-brand-500">
+          <div className="mt-2 text-4xl font-bold tabular-nums text-brand-500 value-pop">
             {liftRatio != null ? `${liftRatio.toFixed(1)}배` : "—"}
           </div>
           <div className="mt-4 space-y-1.5 text-sm">
@@ -476,7 +476,7 @@ export default async function Dashboard() {
       </div>
 
       {/* 차트 Bento */}
-      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card className="lg:col-span-2">
           <div className="mb-1 flex items-center justify-between">
             <CardTitle className="mb-0">월별 증분 추세</CardTitle>
@@ -499,7 +499,7 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card>
           <CardTitle>혜택 유형별 증분</CardTitle>
           <Concentric data={typeData} />
@@ -614,9 +614,9 @@ function Kpi({
 }) {
   const body = (
     <div
-      className={`flex h-full flex-col rounded-2xl p-4 transition sm:p-5 ${
+      className={`flex h-full flex-col rounded-2xl p-4 transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:p-5 ${
         brand
-          ? "bg-brand-500 text-white"
+          ? "bg-brand-500 text-white shadow-float blob-bright hover:-translate-y-0.5"
           : "card-soft hover:card-soft-h"
       }`}
     >
@@ -644,7 +644,7 @@ function Kpi({
       {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-ink-4"}`}>{sub}</div>}
       {spark && spark.length > 1 && (
         <div className="mt-auto pt-2">
-          <Spark data={spark} color={brand ? "#ffffff" : "#c66a48"} />
+          <Spark data={spark} color={brand ? "#ffffff" : "#14916a"} />
         </div>
       )}
     </div>
