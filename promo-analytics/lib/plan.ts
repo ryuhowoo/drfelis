@@ -35,23 +35,45 @@ export type PlanItemInput = {
   cost: number | null; // 원가(VAT+)
 };
 
+/** 플랜(캠페인) 단위 조건부 쿠폰: "N원 이상 주문 시 n% 할인(최대 n원)".
+   옵션 혜택가(set_price)가 기준액 이상일 때만 할인율 적용, 상한 캡. null=쿠폰 없음. */
+export type CouponSpec = {
+  min_order_amount: number; // N원 이상 (0 = 조건 없음)
+  discount_rate: number; // n% (0~1)
+  max_discount_amount: number; // 최대 n원 (0 = 캡 없음)
+} | null;
+
+/** 옵션 혜택가에 쿠폰을 적용한 할인액 (기준 미달=0, 상한 캡, 원 단위 반올림) */
+export function couponDiscount(setPrice: number, coupon: CouponSpec): number {
+  if (!coupon || !(coupon.discount_rate > 0)) return 0;
+  if (setPrice < (coupon.min_order_amount || 0)) return 0;
+  const raw = setPrice * coupon.discount_rate;
+  const capped =
+    coupon.max_discount_amount > 0 ? Math.min(raw, coupon.max_discount_amount) : raw;
+  return Math.round(capped);
+}
+
 export type OptionTotals = {
-  set_price: number; // Σ(sku_qty × unit_sale_price)
+  set_price: number; // Σ(sku_qty × unit_sale_price) — 쿠폰 전 세트 단가
+  coupon_discount: number; // 이 옵션에 적용된 쿠폰 할인액 (없으면 0)
+  net_price: number; // set_price − coupon_discount — 쿠폰 적용 후 실혜택가
   consumer_total: number; // Σ(consumer_price × sku_qty)
   regular_total: number; // Σ(regular_price × sku_qty)
   cost_total: number; // Σ(cost × sku_qty)
-  discount_rate_consumer: number | null;
+  discount_rate_consumer: number | null; // 쿠폰 전 기준 할인율
   discount_rate_regular: number | null;
-  expected_revenue: number;
-  expected_contribution: number;
+  discount_rate_consumer_net: number | null; // 쿠폰 포함 최종 할인율
+  expected_revenue: number; // net_price × qty
+  expected_contribution: number; // (net_price × mult − cost_total) × qty
   free_shipping: boolean;
 };
 
-/** 옵션 1개 롤업: 세트 단가·할인율 이중표기·예상 매출/공헌 */
+/** 옵션 1개 롤업: 세트 단가·할인율 이중표기·예상 매출/공헌. coupon=null이면 기존과 동일. */
 export function computeOptionTotals(
   items: PlanItemInput[],
   mult: number,
   qty: number,
+  coupon: CouponSpec = null,
 ): OptionTotals {
   let set_price = 0;
   let consumer_total = 0;
@@ -65,17 +87,23 @@ export function computeOptionTotals(
     cost_total += q * (it.cost || 0);
   }
   const expQty = qty || 0;
+  const coupon_discount = couponDiscount(set_price, coupon);
+  const net_price = set_price - coupon_discount;
   return {
     set_price,
+    coupon_discount,
+    net_price,
     consumer_total,
     regular_total,
     cost_total,
     discount_rate_consumer: consumer_total > 0 ? 1 - set_price / consumer_total : null,
     discount_rate_regular: regular_total > 0 ? 1 - set_price / regular_total : null,
-    expected_revenue: set_price * expQty,
+    discount_rate_consumer_net:
+      consumer_total > 0 ? 1 - net_price / consumer_total : null,
+    expected_revenue: net_price * expQty,
     // 물류비 12%는 mult에 일괄 반영 — 무료배송 여부와 무관하게 고정
-    expected_contribution: (set_price * mult - cost_total) * expQty,
-    free_shipping: set_price >= FREE_SHIP_THRESHOLD,
+    expected_contribution: (net_price * mult - cost_total) * expQty,
+    free_shipping: net_price >= FREE_SHIP_THRESHOLD,
   };
 }
 
