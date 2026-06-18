@@ -266,7 +266,8 @@ export type GoalRec = {
   metric_per_day: number; // 목적 지표 일평균
   predicted_metric: number; // 기간 환산 목적 지표
   predicted_uplift: number;
-  predicted_contribution: number;
+  predicted_uplift_contribution: number | null; // 증분(기여) 공헌 = 증분일평균×율×일수
+  predicted_total_contribution: number | null; // 전체 예상 공헌 = 공헌일평균×일수 (baseline 포함)
   contribution_rate: number | null;
   score: number; // 종합 점수 0~100
   confidence: "높음" | "보통" | "낮음";
@@ -374,7 +375,10 @@ export function recommendByGoal(
       metric_per_day: r.metric_per_day,
       predicted_metric,
       predicted_uplift: r.uplift_per_day * durationDays,
-      predicted_contribution: r.contribution_per_day * durationDays,
+      predicted_uplift_contribution:
+        r.contribution_rate != null ? r.uplift_per_day * r.contribution_rate * durationDays : null,
+      predicted_total_contribution:
+        r.contribution_rate != null ? r.contribution_per_day * durationDays : null,
       contribution_rate: r.contribution_rate,
       score: Math.round(score),
       confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
@@ -512,7 +516,10 @@ export function recommendByGoals(
       metric_per_day: primary.metric_per_day,
       predicted_metric: primary.predicted_metric,
       predicted_uplift: r.uplift_per_day * durationDays,
-      predicted_contribution: r.contribution_per_day * durationDays,
+      predicted_uplift_contribution:
+        r.contribution_rate != null ? r.uplift_per_day * r.contribution_rate * durationDays : null,
+      predicted_total_contribution:
+        r.contribution_rate != null ? r.contribution_per_day * durationDays : null,
       contribution_rate: r.contribution_rate,
       score: Math.round(score),
       confidence: cScore >= 0.66 ? "높음" : cScore >= 0.4 ? "보통" : "낮음",
