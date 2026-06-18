@@ -278,12 +278,20 @@ export default async function Dashboard() {
             <div className="text-xs text-ink-4">캠페인 {rows.length}건 분석 중</div>
           </div>
         </div>
-        <Link
-          href="/predict"
-          className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-float"
-        >
-          성과 시뮬레이터 →
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/campaigns/new"
+            className="rounded-full border border-line bg-card px-5 py-2.5 text-sm font-semibold text-ink-2 shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:text-ink hover:shadow-float"
+          >
+            + 새 캠페인
+          </Link>
+          <Link
+            href="/predict"
+            className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-float"
+          >
+            성과 시뮬레이터 →
+          </Link>
+        </div>
       </header>
 
       {stale && (
