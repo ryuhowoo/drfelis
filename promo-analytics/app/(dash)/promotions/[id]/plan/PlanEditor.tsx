@@ -17,6 +17,7 @@ import {
 import { won, pct, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
 import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
+import PlanTemplatePanel from "./PlanTemplatePanel";
 
 export type EditorItem = {
   product_id: string;
@@ -434,6 +435,9 @@ export default function PlanEditor({
           </label>
         </div>
       </div>
+
+      {/* 이전 플랜 추천 (draft에서만) */}
+      {!confirmed && <PlanTemplatePanel promotionId={promotionId} />}
 
       {/* 검증 요약 (확정 전 오류 발견) */}
       {!confirmed && (validation.errorCount > 0 || validation.warnCount > 0) && (
