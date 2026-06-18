@@ -20,7 +20,7 @@ import Achievement from "./Achievement";
 import PerformanceUpload from "./PerformanceUpload";
 import PurposeBlock, { type PurposeMetricRow } from "./PurposeBlock";
 import { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
-import ActualsLink, { type ActualsCandidate } from "./ActualsLink";
+import { type ActualsCandidate } from "./ActualsLink";
 import OptionContribution, { type OptionContribRow } from "./OptionContribution";
 import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 import { CampaignWorkflowBar } from "./CampaignWorkflowBar";
@@ -101,11 +101,7 @@ export default async function PromotionDetail({
   const summary = bundle?.rollup?.features ?? null;
   const notes = bundle?.notes ?? [];
   const plan = bundle?.plan ?? null;
-  const candidates = bundle?.candidates ?? [];
   const linkedPlans = bundle?.linked_plans ?? [];
-  const linkedActualName = plan?.actual_promotion_id
-    ? candidates.find((c) => c.id === plan.actual_promotion_id)?.name ?? null
-    : null;
 
   const achSummary = bundle?.rollup?.pva_summary ?? null;
   const achRows = bundle?.rollup?.pva_rows ?? [];
@@ -162,17 +158,16 @@ export default async function PromotionDetail({
 
   // ── 생애주기 워크플로 + 즉시 조치 (Layer A/B) ────────────────
   const today = new Date().toISOString().slice(0, 10);
-  const unmatchedCount = diagnosticRows.filter(
-    (r) => r.side !== "both" && !r.is_mapped && !r.is_subscription,
-  ).length;
-  // self-비교(기본): 가이드·실적이 같은 코드로 올라와 실 매출이 이미 잡히면
-  // 명시적 짝짓기(actual_promotion_id)가 없어도 "실적 연결"은 충족된 것으로 본다.
-  const hasSelfActuals = (achSummary?.campaign_revenue_total ?? 0) > 0;
+  // 새 모델: 성과는 이 캠페인에 직접 올린다. 성과(실 매출)가 실제로 있을 때만
+  // 매칭·달성 관련 UI를 노출한다 (성과 0인데 미매칭/실적연결 노티 X).
+  const hasActuals = (achSummary?.campaign_revenue_total ?? 0) > 0;
+  const unmatchedCount = hasActuals
+    ? diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped && !r.is_subscription).length
+    : 0;
   const wfInput = {
     hasPlan: !!plan,
     planConfirmed: plan?.status === "confirmed",
-    hasActualLink: !!plan?.actual_promotion_id || hasSelfActuals,
-    hasActualData: !!achSummary?.has_confirmed_plan,
+    hasActuals,
     unmatchedCount,
     expectedContribution:
       achSummary?.expected_contribution_total ?? plan?.expected_contribution_total ?? null,
@@ -236,7 +231,7 @@ export default async function PromotionDetail({
       {/* Layer A — 생애주기 + 핵심 결과 + 즉시 조치 */}
       <CampaignWorkflowBar steps={workflow} basePath={basePath} />
 
-      {wfInput.hasActualData && achSummary ? (
+      {hasActuals && achSummary ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <ProgressMetric
             label="캠페인 매출 달성 (전체)"
@@ -275,7 +270,7 @@ export default async function PromotionDetail({
       ) : (
         <InlineAlert
           tone="info"
-          title="확정 플랜 + 실적 연결 시 달성 KPI가 표시됩니다"
+          title={plan ? "성과 시트를 올리면 달성 KPI가 채워집니다" : "플랜을 먼저 작성하세요"}
           action={
             <Link href={`${basePath}/plan`} className="rounded-lg bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-ink-2 hover:bg-card">
               {plan ? "플랜 편집" : "플랜 만들기"} →
@@ -283,7 +278,7 @@ export default async function PromotionDetail({
           }
         >
           {plan
-            ? `플랜 v${plan.version} · ${plan.status === "confirmed" ? "확정됨" : "draft"} · 예상 매출 ${won(plan.expected_revenue_total)}`
+            ? `플랜 v${plan.version} · ${plan.status === "confirmed" ? "확정됨" : "draft"} · 예상 매출 ${won(plan.expected_revenue_total)} — 아래 '성과 추가'에서 동기간 매출을 업로드하세요.`
             : "옵션·예상 세트수로 예상 성과를 미리 계산하세요."}
         </InlineAlert>
       )}
@@ -294,7 +289,7 @@ export default async function PromotionDetail({
 
       {/* 6단계 — 캠페인에 직접 성과 추가 (라플라스 양식 → 자동 분류) */}
       <div className="mt-4">
-        <PerformanceUpload promotionId={id} hasActuals={hasSelfActuals} />
+        <PerformanceUpload promotionId={id} hasActuals={hasActuals} />
       </div>
 
       {/* Layer C — 심층 분석 (탭, URL 보존, 선택 탭만 렌더) */}
@@ -304,8 +299,9 @@ export default async function PromotionDetail({
         {view === "overview" && (
           <div>
             {!hasBaseline && (
-              <div className="mb-4 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
-                직전 8주 baseline 데이터가 부족합니다. <strong>일별 매출 추이</strong>를 충분히 업로드하면 증분이 정확해집니다.
+              <div className="mb-4 rounded-lg bg-info-soft px-4 py-3 text-sm text-info">
+                baseline(직전 8주 일평균)이 얕아 증분 정확도가 낮을 수 있습니다 — <strong>차단되지 않으며</strong>,
+                일별 매출 추이가 쌓이면 자동으로 정확해집니다.
               </div>
             )}
             <MeasurementBanner summary={summary} rows={rows} />
@@ -462,60 +458,39 @@ export default async function PromotionDetail({
               </div>
             </div>
 
-            {plan && (
-              // N13 P3: 정상 경로는 ②실적·⑤가이드를 같은 코드로 업로드해 자동 결속하는 것.
-              // 비교 대상 연결/병합은 코드가 어긋난 레거시 보정용 → 보정·관리자 도구로 격하.
-              // 결속이 이미 충족(linkedActualName)이면 접어두고, 미충족일 때만 펼쳐 노출.
-              <details
-                className="mb-4 rounded-2xl card-soft p-5 [&_summary]:cursor-pointer"
-                open={!linkedActualName}
-              >
-                <summary className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <h2 className="inline text-sm font-semibold text-ink-2">
-                      비교 대상 연결 <span className="font-normal text-ink-4">· 보정·관리자용</span>
-                    </h2>
-                    {!plan.actual_promotion_id && (
-                      <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
-                        비교 대상 미지정
-                      </span>
-                    )}
-                  </span>
-                  <Link href={`/promotions/${id}/edit`} className="text-xs text-ink-4 hover:text-brand-600 hover:underline">
-                    중복 캠페인 정리(병합) →
-                  </Link>
-                </summary>
-                {linkedActualName ? (
-                  <p className="mt-2 text-xs text-ink-3">
-                    비교 구도: <strong className="text-ink">이 캠페인의 플랜</strong> ↔{" "}
-                    <strong className="text-brand-700">{linkedActualName}</strong> 실적.
-                    정상 결속됨 — 코드가 어긋났을 때만 아래에서 보정하세요.
-                  </p>
-                ) : (
-                  <p className="mt-2 text-xs text-ink-4">
-                    정상 경로는 실적(②)·가이드(⑤)를 <strong>같은 캠페인 코드</strong>로 올려 자동
-                    결속하는 것입니다. 코드가 달라 자동 결속이 안 된 경우에만, 비교할 실적 캠페인을 직접 지정하세요.
-                  </p>
-                )}
-                <ActualsLink promotionId={id} currentLinkId={plan.actual_promotion_id} candidates={candidates} />
-              </details>
+            {hasActuals ? (
+              <>
+                <Achievement
+                  promotionId={id}
+                  summary={achSummary}
+                  rows={achRows}
+                  options={achOptions}
+                  optionInfos={optionInfos}
+                  diagnosticRows={diagnosticRows}
+                  skuMappings={skuMappings}
+                  hideSummaryCards
+                />
+
+                <OptionContribution
+                  rows={optionContribs}
+                  groundTruth={promo.contribution_amount ?? null}
+                />
+              </>
+            ) : (
+              <div className="rounded-2xl card-soft p-6 text-center">
+                <p className="text-sm font-medium text-ink">아직 성과가 없습니다.</p>
+                <p className="mx-auto mt-1 max-w-md text-sm text-ink-4">
+                  캠페인 종료 후 <strong>성과 개요</strong> 탭의 '성과 추가'에서 동기간 매출 시트를 올리면
+                  옵션/SKU별 달성률과 구독 제외 분석이 여기 표시됩니다.
+                </p>
+                <Link
+                  href={`${basePath}`}
+                  className="mt-4 inline-block rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-600"
+                >
+                  성과 추가로 가기 →
+                </Link>
+              </div>
             )}
-
-            <Achievement
-              promotionId={id}
-              summary={achSummary}
-              rows={achRows}
-              options={achOptions}
-              optionInfos={optionInfos}
-              diagnosticRows={diagnosticRows}
-              skuMappings={skuMappings}
-              hideSummaryCards
-            />
-
-            <OptionContribution
-              rows={optionContribs}
-              groundTruth={promo.contribution_amount ?? null}
-            />
           </div>
         )}
 
