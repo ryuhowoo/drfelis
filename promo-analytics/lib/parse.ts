@@ -100,6 +100,14 @@ function findHeaderRowAll(rows: unknown[][], keys: string[], maxScan = 20): numb
   return -1;
 }
 
+/** 상품명 컬럼 선택: 기초상품명(정규화명) 우선, 없으면 마케팅 상품명 폴백.
+   같은 시트에 '상품명'과 '기초 상품명'이 둘 다 있을 때 findCol이 먼저 나오는
+   '상품명'(예: "[정기구독] 모래 4.3kg/8.3kg")을 집어 SKU 매칭이 깨지던 문제 방지. */
+function preferBaseName(header: unknown[]): number {
+  const base = findCol(header, ["기초상품명"]);
+  return base >= 0 ? base : findCol(header, ["상품명"]);
+}
+
 /** 행에 데이터가 한 칸이라도 있는지 (빈 행을 skip 카운트에서 제외) */
 function rowHasData(r: unknown[]): boolean {
   return r.some((c) => String(c ?? "").trim() !== "");
@@ -147,7 +155,7 @@ export function parseDailySales(buf: ArrayBuffer): DailyRow[] {
     );
   const header = rows[h];
   const cDate = findCol(header, ["일자"]);
-  const cName = findCol(header, ["기초상품명", "상품명"]);
+  const cName = preferBaseName(header);
   const cOpt = findCol(header, ["옵션정보", "옵션"]);
   const cRev = findCol(header, ["결제금액"]);
   const cQty = findCol(header, ["판매수량", "수량"]);
@@ -212,7 +220,9 @@ export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
     );
   const header = rows[h];
   const cPeriod = findCol(header, ["일자"]);
-  const cName = findCol(header, ["기초상품명", "상품명"]);
+  // 기초상품명(플랫폼 정규화명)을 최우선 — 마케팅 '상품명'([정기구독]·[4+4]…)이 함께 와도
+  // SKU가 빠진 마케팅명 대신 깨끗한 기초상품명으로 매칭(정확도↑). 없으면 상품명 폴백.
+  const cName = preferBaseName(header);
   const cOpt = findCol(header, ["옵션정보", "옵션"]);
   const cRev = findCol(header, ["결제금액"]);
   const cCnt = findCol(header, ["결제건수", "건수"]);
@@ -221,7 +231,10 @@ export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
   const cCost = findCol(header, ["원가"]);
   const cQty = findCol(header, ["판매수량", "수량"]);
   // N13 P2: 리치 export 선택 컬럼 — 없으면 -1 → null로 채움(하위호환)
-  const cOrderType = findCol(header, ["주문유형", "주문형태", "정기여부", "구독여부"]);
+  // '일반/정기 배송'(닥터펠리스 채널별 매출 export 헤더)까지 인식 → 구독 정확 분류.
+  const cOrderType = findCol(header, [
+    "주문유형", "주문형태", "정기여부", "구독여부", "일반/정기 배송", "일반/정기",
+  ]);
   const cOptCode = findCol(header, ["옵션코드", "옵션번호", "옵션id"]);
   const cComp = findCol(header, ["구성", "구성정보", "세트구성"]);
 
