@@ -1112,7 +1112,7 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
       .select("id, base_name, dr_code, consumer_price, regular_price, cost")
       .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
       .limit(20);
-    // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 실적에서 이름만 자동생성된 것) 숨김
+    // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 성과에서 이름만 자동생성된 것) 숨김
     const clear = ((data as SearchHit[]) ?? []).filter(
       (h) => h.dr_code || h.consumer_price || h.regular_price,
     );

@@ -132,7 +132,7 @@ export default function OptionContribution({
       </div>
       <p className="mt-2 text-[11px] text-ink-4">
         물류비는 매출의 12%(레이트카드)로 일괄 반영. 광고비는 캠페인 실제 광고비를 매출 비중으로
-        배분(미입력 시 레이트카드 광고율). 수수료·원가는 실적 실측값.
+        배분(미입력 시 레이트카드 광고율). 수수료·원가는 성과 실측값.
       </p>
     </section>
   );

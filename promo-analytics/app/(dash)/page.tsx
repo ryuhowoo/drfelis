@@ -398,7 +398,7 @@ export default async function Dashboard() {
         />
       </div>
 
-      {/* 달성률 (계획 대비 실적) — S4 */}
+      {/* 달성률 (계획 대비 성과) — S4 */}
       <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card>
           <CardTitle>최근 캠페인 평균 달성률</CardTitle>

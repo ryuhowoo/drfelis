@@ -8,7 +8,7 @@ import { ensureProducts } from "@/lib/products";
 
 // 캠페인에 직접 성과 추가 (6단계) — 라플라스 동기간 매출 export를 '이 캠페인'에 고정 적재.
 // 이름/코드 매칭에 의존하지 않고 promotion_id로 바로 넣어 플랜↔성과가 확실히 같은 캠페인에 붙는다.
-// replace_promotion_sales RPC가 원자적 교체 + 실적옵션 재구성(구독/시그니처)을 수행한다.
+// replace_promotion_sales RPC가 원자적 교체 + 성과옵션 재구성(구독/시그니처)을 수행한다.
 export default function PerformanceUpload({
   promotionId,
   hasActuals,
@@ -85,7 +85,7 @@ export default function PerformanceUpload({
         raw: r.composition ? { composition: r.composition } : null,
       }));
 
-      // 원자적 교체 + 실적옵션 재구성(구독/시그니처 자동 분류)
+      // 원자적 교체 + 성과옵션 재구성(구독/시그니처 자동 분류)
       const { error } = await supabase.rpc("replace_promotion_sales", {
         p_promotion_id: promotionId,
         p_rows: records,

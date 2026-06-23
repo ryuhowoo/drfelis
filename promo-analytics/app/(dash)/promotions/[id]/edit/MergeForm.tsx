@@ -12,7 +12,7 @@ type Candidate = {
 };
 
 // 캠페인 병합: 이 캠페인(source)을 다른 캠페인(target)으로 흡수.
-// 같은 행사인데 가이드(⑤)·실적(②) 시트가 서로 다른 코드로 업로드돼 별개 캠페인이 생긴 경우 사용.
+// 같은 행사인데 가이드(⑤)·성과(②) 시트가 서로 다른 코드로 업로드돼 별개 캠페인이 생긴 경우 사용.
 export default function MergeForm({
   sourceId,
   sourceName,
@@ -34,7 +34,7 @@ export default function MergeForm({
     const ok = window.confirm(
       `현재 캠페인 [${sourceName}]을\n` +
         `대상 캠페인 [${target.name}]에 병합합니다.\n\n` +
-        `· 실적·메모·메인상품·목적 가중치·SKU 매핑을 모두 대상으로 이전\n` +
+        `· 성과·메모·메인상품·목적 가중치·SKU 매핑을 모두 대상으로 이전\n` +
         `· 플랜이 있으면 대상으로 이전 (양쪽 모두 있으면 거부)\n` +
         `· 기간은 합집합 (시작=min, 종료=max)\n` +
         `· 현재 캠페인은 삭제됩니다\n\n` +
@@ -63,9 +63,9 @@ export default function MergeForm({
     <section className="rounded-2xl p-6 card-soft">
       <h2 className="text-sm font-semibold text-ink-2">캠페인 병합 · 관리자/정리용</h2>
       <p className="mt-1 text-xs text-ink-4">
-        정상 경로는 가이드(⑤)·실적(②)을 <strong>같은 캠페인 코드</strong>로 올려 자동 결속하는
+        정상 경로는 가이드(⑤)·성과(②)를 <strong>같은 캠페인 코드</strong>로 올려 자동 결속하는
         것입니다. 이 도구는 코드가 어긋나 별개 캠페인이 생긴 <strong>레거시 보정용</strong> — 현재 캠페인을
-        다른 캠페인에 흡수합니다. 모든 데이터(실적·메모·플랜·매핑)는 대상으로 이전되고 현재 캠페인은
+        다른 캠페인에 흡수합니다. 모든 데이터(성과·메모·플랜·매핑)는 대상으로 이전되고 현재 캠페인은
         삭제됩니다(되돌릴 수 없음).
       </p>
 

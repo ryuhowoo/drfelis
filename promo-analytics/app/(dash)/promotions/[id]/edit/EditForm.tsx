@@ -93,7 +93,7 @@ export default function EditForm({
   }
 
   async function remove() {
-    if (!confirm(`'${promo.name}' 캠페인을 삭제할까요?\n\n실적·메인상품·메모가 함께 삭제됩니다. 복구 불가.`))
+    if (!confirm(`'${promo.name}' 캠페인을 삭제할까요?\n\n성과·메인상품·메모가 함께 삭제됩니다. 복구 불가.`))
       return;
     setDeleting(true);
     const res = await fetch(`/api/promotions/${promo.id}`, { method: "DELETE" });

@@ -101,7 +101,7 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
             <th className="px-3 py-2.5 text-right font-medium">목표 매출</th>
             <th className="px-3 py-2.5 text-right font-medium">목표 공헌이익</th>
             <th className="px-3 py-2.5 text-right font-medium">옵션</th>
-            <th className="px-3 py-2.5 font-medium">실적 연결</th>
+            <th className="px-3 py-2.5 font-medium">성과 연결</th>
             <th className="px-3 py-2.5 text-right font-medium">매출 달성률</th>
           </tr>
         </thead>
@@ -160,7 +160,7 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                       href={`/promotions/${p.actual_promotion_id}`}
                       className="text-xs text-brand-600 hover:underline"
                     >
-                      {p.actual_name ?? "실적 캠페인"}
+                      {p.actual_name ?? "성과 캠페인"}
                     </Link>
                   ) : p.promotion_id ? (
                     <span className="text-xs text-neutral-500">자기 캠페인</span>
@@ -274,16 +274,16 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
       : stats.avgAch < 0.85
         ? {
             tone: "warn" as const,
-            text: `과대계획 성향 — 목표를 실적보다 평균 ${Math.round((1 - stats.avgAch) * 100)}% 높게 잡습니다. 목표 산정을 보수적으로 조정해 보세요.`,
+            text: `과대계획 성향 — 목표를 성과보다 평균 ${Math.round((1 - stats.avgAch) * 100)}% 높게 잡습니다. 목표 산정을 보수적으로 조정해 보세요.`,
           }
         : stats.avgAch > 1.1
           ? {
               tone: "info" as const,
-              text: `과소계획 성향 — 실적이 목표를 평균 ${Math.round((stats.avgAch - 1) * 100)}% 초과합니다. 목표를 더 공격적으로 잡아도 됩니다.`,
+              text: `과소계획 성향 — 성과가 목표를 평균 ${Math.round((stats.avgAch - 1) * 100)}% 초과합니다. 목표를 더 공격적으로 잡아도 됩니다.`,
             }
           : {
               tone: "ok" as const,
-              text: "계획 정확도 양호 — 목표와 실적이 ±15% 안에서 움직입니다.",
+              text: "계획 정확도 양호 — 목표와 성과가 ±15% 안에서 움직입니다.",
             };
 
   return (
@@ -330,7 +330,7 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
           </div>
         ) : (
           <p className="mt-2 text-sm text-ink-4">
-            확정 플랜의 실적 데이터가 아직 없습니다. 플랜을 확정하고 실적과 연동하면
+            확정 플랜의 성과 데이터가 아직 없습니다. 플랜을 확정하고 성과와 연동하면
             과대/과소계획 성향이 여기서 판정됩니다.
           </p>
         )}
@@ -434,7 +434,7 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
                         style={{
                           width: `${Math.min(100, (Number(p.target_revenue) * ach / max) * 100)}%`,
                         }}
-                        title={`실적 환산 ${pct(ach, 0)}`}
+                        title={`성과 환산 ${pct(ach, 0)}`}
                       />
                     )}
                   </div>
@@ -446,7 +446,7 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
             })}
         </div>
         <p className="mt-2 text-[11px] text-ink-4">
-          연한 코랄 = 목표 · 진한 코랄 = 실적 환산(달성률 반영, 연동된 플랜만)
+          연한 코랄 = 목표 · 진한 코랄 = 성과 환산(달성률 반영, 연동된 플랜만)
         </p>
       </div>
     </div>

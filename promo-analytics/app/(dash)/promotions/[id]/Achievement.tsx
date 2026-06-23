@@ -45,7 +45,7 @@ export default function Achievement({
   if (!hasConfirmed && !hasMatchData && options.length === 0) {
     return (
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성률 (계획 대비 실적)</h2>
+        <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성률 (계획 대비 성과)</h2>
         <div className="rounded-2xl card-soft p-6 text-sm text-neutral-500">
           확정된 가격 가이드(플랜)가 없습니다.{" "}
           <Link href={`/promotions/${promotionId}/plan`} className="text-brand-600 hover:underline">
@@ -85,9 +85,9 @@ export default function Achievement({
 
   return (
     <section className="mt-6">
-      <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성 & 매칭 (계획 대비 실적)</h2>
+      <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성 & 매칭 (계획 대비 성과)</h2>
 
-      {/* 달성 카드 (N8 매출 중심): 매출은 전체 실적/목표, 수량은 메인 제품 */}
+      {/* 달성 카드 (N8 매출 중심): 매출은 전체 성과/목표, 수량은 메인 제품 */}
       {hasConfirmed ? (
         <>
           {!hideSummaryCards && (
@@ -300,7 +300,7 @@ export default function Achievement({
       ) : (
         <div className="mt-3">
           <p className="mb-2 text-[11px] text-neutral-400">
-            옵션(묶음) 달성은 <strong>best-effort</strong> 입니다 — 개입(묶음수)이 맞으면 정확 매칭, 안 맞으면(예: 8개입 계획인데 1·2·4개로 판매) <strong>SKU 실적으로 폴백</strong>해 표시합니다. 신뢰 기준은 위 SKU 탭입니다.
+            옵션(묶음) 달성은 <strong>best-effort</strong> 입니다 — 개입(묶음수)이 맞으면 정확 매칭, 안 맞으면(예: 8개입 계획인데 1·2·4개로 판매) <strong>SKU 성과로 폴백</strong>해 표시합니다. 신뢰 기준은 위 SKU 탭입니다.
           </p>
           <div className="space-y-2">
             {options.map((o) => (
@@ -412,7 +412,7 @@ function SourceBadge({ src }: { src: PlanVsActualOption["match_source"] }) {
   if (src === "sku")
     return (
       <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
-        SKU 실적 (개입 무관)
+        SKU 성과 (개입 무관)
       </span>
     );
   if (src === "manual")
@@ -477,7 +477,7 @@ function OptionRow({
         </div>
         <div className="flex items-center gap-3 text-xs text-neutral-500">
           <span>
-            예상 {wonShort(opt.expected_revenue)} → 실적 {wonShort(opt.actual_revenue)}
+            예상 {wonShort(opt.expected_revenue)} → 성과 {wonShort(opt.actual_revenue)}
           </span>
           <span className="font-medium">
             <AchPct v={opt.ach_revenue} />
@@ -494,11 +494,11 @@ function OptionRow({
       {editing && (
         <div className="mt-3 border-t border-neutral-100 pt-3">
           <p className="mb-2 text-xs text-neutral-500">
-            자동(구성·묶음) 라우팅이 빗나갔다면, 이 옵션에 해당하는 실적 옵션정보를 직접 고르세요 (부분일치). 저장 시 수동 매핑이 우선합니다.
+            자동(구성·묶음) 라우팅이 빗나갔다면, 이 옵션에 해당하는 성과 옵션정보를 직접 고르세요 (부분일치). 저장 시 수동 매핑이 우선합니다.
           </p>
           {optionInfos.length === 0 ? (
             <p className="text-xs text-neutral-400">
-              실적 데이터에 옵션정보가 없습니다. (수량·옵션 컬럼 미보유)
+              성과 데이터에 옵션정보가 없습니다. (수량·옵션 컬럼 미보유)
             </p>
           ) : (
             <div className="max-h-56 space-y-1 overflow-auto">
