@@ -163,6 +163,14 @@ export async function PATCH(
       }
     }
 
+    // 메인 상품 = 메인 옵션(is_main)의 SKU들 — 플랜에서 나눈 메인/서브를 성과 측정에 직접 연결.
+    // (별도 '메타/메인 편집' 없이 플랜이 단일 출처). 메인 옵션이 없으면 null = 전체 메인.
+    const mainIds = [
+      ...new Set(
+        options.filter((o) => o.is_main).flatMap((o) => o.items.map((it) => it.product_id)),
+      ),
+    ];
+
     const { error: upErr } = await supabase
       .from("campaign_plans")
       .update({
@@ -171,10 +179,14 @@ export async function PATCH(
         coupon_min_order: couponSpec?.min_order_amount ?? 0,
         coupon_rate: couponSpec?.discount_rate ?? 0,
         coupon_max: couponSpec?.max_discount_amount ?? 0,
+        main_product_ids: mainIds.length > 0 ? mainIds : null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", plan_id);
     if (upErr) throw upErr;
+
+    // 메인 지정이 메인/함께구매 분해에 영향 → 사전계산 롤업 갱신
+    await supabase.rpc("refresh_rollups", { p_force: true });
 
     return NextResponse.json({ ok: true });
   } catch (e) {
