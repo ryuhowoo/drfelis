@@ -219,40 +219,66 @@ export default function PlanEditor({
       ...prev,
       {
         key: uid(),
-        option_label: `옵션 ${prev.length + 1}`,
+        option_label: `메인 옵션 ${prev.length + 1}`,
         expected_option_qty: 0,
-        is_main: false,
+        is_main: true,
         match_patterns: [],
         items: [],
       },
     ]);
   };
-  // Phase 4 — 벤치마크 추천 서브상품을 옵션단가·예상수량·원가 prefilled로 한 번에 추가
+  // 옵션 카드 복제 — 구성·가격 그대로, 새 key 부여 후 바로 아래에 삽입
+  const duplicateOption = (key: string) => {
+    setDirty(true);
+    setOptions((prev) => {
+      const idx = prev.findIndex((o) => o.key === key);
+      if (idx < 0) return prev;
+      const src = prev[idx];
+      const copy: OptState = {
+        ...src,
+        key: uid(),
+        option_label: `${src.option_label} (복제)`,
+        items: src.items.map((it) => ({ ...it, key: uid() })),
+      };
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      return next;
+    });
+  };
+  // Phase 4 — 벤치마크 추천 서브상품을 옵션으로 추가.
+  // 옵션 단가는 '상시 판매가'로 들어간다(할인 안 하는 서브를 평균 할인가로 채우면 수정이 번거로움).
+  function buildSubOption(b: Bench): OptState {
+    const unit = b.regular_price ?? b.consumer_price ?? Math.round(b.avg_unit_price) ?? 0;
+    return {
+      key: uid(),
+      option_label: b.base_name,
+      expected_option_qty: Math.round(b.avg_qty) || 0,
+      is_main: false,
+      match_patterns: [],
+      items: [
+        {
+          key: uid(),
+          product_id: b.product_id,
+          base_name: b.base_name,
+          sku_qty_per_option: 1,
+          unit_sale_price: Math.round(unit) || 0,
+          source_config_id: null,
+          consumer_price: b.consumer_price,
+          regular_price: b.regular_price,
+          cost: b.cost,
+        },
+      ],
+    };
+  }
   const addSubOption = (b: Bench) => {
     setDirty(true);
-    setOptions((prev) => [
-      ...prev,
-      {
-        key: uid(),
-        option_label: b.base_name,
-        expected_option_qty: Math.round(b.avg_qty) || 0,
-        is_main: false,
-        match_patterns: [],
-        items: [
-          {
-            key: uid(),
-            product_id: b.product_id,
-            base_name: b.base_name,
-            sku_qty_per_option: 1,
-            unit_sale_price: Math.round(b.avg_unit_price) || 0,
-            source_config_id: null,
-            consumer_price: b.consumer_price,
-            regular_price: b.regular_price,
-            cost: b.cost,
-          },
-        ],
-      },
-    ]);
+    setOptions((prev) => [...prev, buildSubOption(b)]);
+  };
+  // 메인에 없는 서브 SKU를 한 번에 전체 추가 (item 8)
+  const addSubOptions = (bs: Bench[]) => {
+    if (bs.length === 0) return;
+    setDirty(true);
+    setOptions((prev) => [...prev, ...bs.map(buildSubOption)]);
   };
   const patchItem = (optKey: string, itemKey: string, patch: Partial<ItemState>) => {
     setDirty(true);
@@ -443,8 +469,8 @@ export default function PlanEditor({
         )}
       </div>
 
-      {/* 플랜 목적 + 목적별 총합 헤더 */}
-      <div className="mt-4 rounded-2xl card-soft p-5">
+      {/* 플랜 목적 + 목적별 총합 헤더 — 스크롤 시에도 합계를 보며 옵션 조절 (sticky) */}
+      <div className="sticky top-16 z-20 mt-4 rounded-2xl card-soft p-5 shadow-sm md:top-0">
         {purposes && purposes.length > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-medium text-ink-4">목적</span>
@@ -545,6 +571,7 @@ export default function PlanEditor({
                 invalid={issues.some((x) => x.level === "error")}
                 onPatch={(patch) => patchOption(o.key, patch)}
                 onRemove={() => removeOption(o.key)}
+                onDuplicate={() => duplicateOption(o.key)}
                 onAddItem={(it) => addItem(o.key, it)}
                 onPatchItem={(itemKey, patch) => patchItem(o.key, itemKey, patch)}
                 onRemoveItem={(itemKey) => removeItem(o.key, itemKey)}
@@ -568,43 +595,19 @@ export default function PlanEditor({
 
       {!confirmed && (
         <>
-          <SubProductSuggest
-            existingProductIds={options.flatMap((o) => o.items.map((it) => it.product_id))}
-            onAdd={addSubOption}
-          />
           <button
             onClick={addOption}
             disabled={busy}
-            className="mt-4 rounded-xl border border-dashed border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+            className="mt-4 rounded-xl border border-dashed border-brand-300 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 disabled:opacity-50"
           >
-            + 빈 옵션 추가
+            + 메인 옵션 추가
           </button>
+          <SubProductSuggest
+            existingProductIds={options.flatMap((o) => o.items.map((it) => it.product_id))}
+            onAdd={addSubOption}
+            onAddAll={addSubOptions}
+          />
         </>
-      )}
-
-      {/* SKU 단위 예상 수량 롤업 */}
-      {planTotals.skuExpectedQty.size > 0 && (
-        <div className="mt-6 rounded-xl card-soft p-4">
-          <h3 className="text-sm font-medium">SKU 단위 예상 판매수 (전 옵션 합산)</h3>
-          <div className="mt-2 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-neutral-400">
-                <tr>
-                  <th className="py-1 pr-3">SKU</th>
-                  <th className="py-1 text-right">예상 수량</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...planTotals.skuExpectedQty.entries()].map(([pid, v]) => (
-                  <tr key={pid} className="border-t border-neutral-100">
-                    <td className="py-1 pr-3">{v.base_name}</td>
-                    <td className="py-1 text-right">{num(v.qty)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
 
       {/* 액션 */}
@@ -730,6 +733,7 @@ function OptionCard({
   invalid,
   onPatch,
   onRemove,
+  onDuplicate,
   onAddItem,
   onPatchItem,
   onRemoveItem,
@@ -742,6 +746,7 @@ function OptionCard({
   invalid?: boolean;
   onPatch: (patch: Partial<OptState>) => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   onAddItem: (it: ItemState) => void;
   onPatchItem: (itemKey: string, patch: Partial<ItemState>) => void;
   onRemoveItem: (itemKey: string) => void;
@@ -777,6 +782,12 @@ function OptionCard({
     applyOptionPrice(Math.round(totals.consumer_total * (1 - ratePct / 100)));
   }
 
+  const qty = opt.expected_option_qty || 0;
+  const unitsPerSet = opt.items.reduce((s, it) => s + (it.sku_qty_per_option || 0), 0);
+  // 상단은 쿠폰 전(목록가 기준), 쿠폰 적용 옵션은 아래 '최종' 줄에서 반영
+  const preRevenue = totals.set_price * qty;
+  const preContribution = (totals.set_price * mult - totals.cost_total) * qty;
+
   return (
     <div className={`rounded-xl card-soft p-4 ${invalid ? "ring-1 ring-danger/40" : ""}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -787,29 +798,6 @@ function OptionCard({
           onChange={(e) => onPatch({ option_label: e.target.value })}
           placeholder="옵션 라벨 (예: 모래 4묶음 세트)"
         />
-        <div className="flex flex-col gap-0.5">
-          <label className="flex items-center gap-1 text-xs text-neutral-500">
-            예상 세트수
-            <input
-              type="number"
-              className="w-24 rounded-lg border border-neutral-200 px-2 py-1.5 text-right text-sm disabled:bg-neutral-50"
-              value={opt.expected_option_qty || 0}
-              disabled={readOnly}
-              onChange={(e) =>
-                onPatch({ expected_option_qty: Number(e.target.value) || 0 })
-              }
-            />
-          </label>
-          {(() => {
-            const hv = opt.is_main ? qtyHint?.main : qtyHint?.sub;
-            const hn = opt.is_main ? qtyHint?.mainN : qtyHint?.subN;
-            return hv != null && hn ? (
-              <span className="text-[10px] text-neutral-400">
-                유사 캠페인 평균 {num(hv)}세트 ({hn}건, {opt.is_main ? "메인" : "서브"})
-              </span>
-            ) : null;
-          })()}
-        </div>
         <label className="flex items-center gap-1 text-xs text-neutral-500">
           <input
             type="checkbox"
@@ -829,8 +817,8 @@ function OptionCard({
         )}
       </div>
 
-      {/* 옵션 단가·할인율 = 주 입력. 예상 매출·공헌은 자동 계산. */}
-      <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl surface-pressed-soft p-3 sm:grid-cols-4">
+      {/* 옵션 단가·할인율·예상세트수 = 주 입력. 단품수·매출·공헌은 자동 계산. */}
+      <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl surface-pressed-soft p-3 sm:grid-cols-3 lg:grid-cols-6">
         <label className="block">
           <span className="block text-[11px] font-medium text-ink-4">옵션 단가</span>
           <input
@@ -863,20 +851,72 @@ function OptionCard({
             <span className="text-xs text-ink-4">%</span>
           </div>
         </label>
+        <label className="block">
+          <span className="block text-[11px] font-medium text-ink-4">예상 세트수</span>
+          <input
+            type="number"
+            className="mt-0.5 w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-right text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:opacity-60"
+            value={opt.expected_option_qty || 0}
+            disabled={readOnly}
+            onChange={(e) => onPatch({ expected_option_qty: Number(e.target.value) || 0 })}
+          />
+          {(() => {
+            const hv = opt.is_main ? qtyHint?.main : qtyHint?.sub;
+            const hn = opt.is_main ? qtyHint?.mainN : qtyHint?.subN;
+            return hv != null && hn ? (
+              <span className="mt-0.5 block text-[10px] text-neutral-400">
+                유사 평균 {num(hv)}세트 ({hn}건)
+              </span>
+            ) : null;
+          })()}
+        </label>
+        <div>
+          <span className="block text-[11px] font-medium text-ink-4">예상 단품수</span>
+          <div className="mt-0.5 py-1.5 text-sm font-semibold tabular-nums text-ink-2">
+            {num(unitsPerSet * (opt.expected_option_qty || 0))}
+          </div>
+          <span className="text-[10px] text-neutral-400">세트당 {num(unitsPerSet)}개</span>
+        </div>
         <div>
           <span className="block text-[11px] font-medium text-ink-4">예상 매출</span>
-          <div className="mt-0.5 py-1.5 text-sm font-bold tabular-nums text-ink">{won(totals.expected_revenue)}</div>
+          <div className="mt-0.5 py-1.5 text-sm font-bold tabular-nums text-ink">{won(preRevenue)}</div>
         </div>
         <div>
           <span className="block text-[11px] font-medium text-ink-4">예상 공헌이익</span>
           <div className="mt-0.5 flex items-center gap-1.5 py-1.5">
-            <span className="text-sm font-bold tabular-nums text-ink">{won(totals.expected_contribution)}</span>
+            <span className="text-sm font-bold tabular-nums text-ink">{won(preContribution)}</span>
             {totals.free_shipping && (
               <span className="rounded bg-secondary-100 px-1 text-[10px] text-secondary-700">무배</span>
             )}
           </div>
         </div>
       </div>
+
+      {/* 쿠폰 적용 옵션: 최종(쿠폰 반영) 값 */}
+      {totals.coupon_discount > 0 && (
+        <div className="mt-2 grid grid-cols-2 gap-3 rounded-xl bg-brand-50/60 px-3 py-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div>
+            <span className="block text-[11px] font-medium text-brand-600">최종 쿠폰가</span>
+            <div className="mt-0.5 text-sm font-semibold tabular-nums text-ink">{won(totals.net_price)}</div>
+          </div>
+          <div>
+            <span className="block text-[11px] font-medium text-brand-600">최종 할인율</span>
+            <div className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
+              {totals.discount_rate_consumer_net != null ? pct(totals.discount_rate_consumer_net, 1) : "—"}
+            </div>
+          </div>
+          <div className="hidden lg:block" />
+          <div className="hidden lg:block" />
+          <div>
+            <span className="block text-[11px] font-medium text-brand-600">최종 예상 매출</span>
+            <div className="mt-0.5 text-sm font-bold tabular-nums text-ink">{won(totals.expected_revenue)}</div>
+          </div>
+          <div>
+            <span className="block text-[11px] font-medium text-brand-600">최종 예상 공헌이익</span>
+            <div className="mt-0.5 text-sm font-bold tabular-nums text-ink">{won(totals.expected_contribution)}</div>
+          </div>
+        </div>
+      )}
 
       {/* 아이템(BOM) */}
       <div className="mt-3 overflow-x-auto">
@@ -914,6 +954,16 @@ function OptionCard({
       <p className="mt-1 text-[11px] text-neutral-400">
         옵션 단가·할인율을 직접 입력하세요(매출 구동). SKU는 구성(수량)·원가만. 공헌이익 = 옵션단가 × {mult.toFixed(3)} − Σ(원가 × 수량).
       </p>
+      {!readOnly && (
+        <div className="mt-2">
+          <button
+            onClick={onDuplicate}
+            className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink-3 transition hover:bg-soft hover:text-ink"
+          >
+            ⧉ 옵션 복제
+          </button>
+        </div>
+      )}
     </div>
   );
 }

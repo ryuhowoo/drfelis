@@ -22,9 +22,11 @@ export type Bench = {
 export default function SubProductSuggest({
   existingProductIds,
   onAdd,
+  onAddAll,
 }: {
   existingProductIds: string[];
   onAdd: (b: Bench) => void;
+  onAddAll?: (bs: Bench[]) => void;
 }) {
   const [rows, setRows] = useState<Bench[] | null>(null);
   const [recent, setRecent] = useState(false);
@@ -47,7 +49,8 @@ export default function SubProductSuggest({
     };
   }, [recent]);
 
-  const list = (rows ?? []).filter((r) => !existing.has(r.product_id)).slice(0, 10);
+  // 메인/기존에 없는 모든 추천 상품 (전체 표시 — 리스트는 스크롤)
+  const list = (rows ?? []).filter((r) => !existing.has(r.product_id));
 
   return (
     <div className="mt-4 rounded-2xl card-soft p-5">
@@ -59,21 +62,32 @@ export default function SubProductSuggest({
       </button>
       {open && (
         <>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-ink-4">
-              누르면 평균 단가·예상수량·원가가 채워진 서브 옵션이 추가됩니다. 가격·수량은 수정하세요.
+              누르면 상시 판매가·예상수량·원가가 채워진 서브 옵션이 추가됩니다(할인은 직접 조정).
             </p>
-            <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-ink-3">
-              <input type="checkbox" checked={recent} onChange={(e) => setRecent(e.target.checked)} />
-              최근 3개월만
-            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-ink-3">
+                <input type="checkbox" checked={recent} onChange={(e) => setRecent(e.target.checked)} />
+                최근 3개월만
+              </label>
+              {onAddAll && list.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onAddAll(list)}
+                  className="shrink-0 rounded-lg bg-brand-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-brand-600"
+                >
+                  서브 옵션 전체 추가 ({list.length})
+                </button>
+              )}
+            </div>
           </div>
           {rows == null ? (
             <p className="mt-3 text-xs text-ink-4">불러오는 중…</p>
           ) : list.length === 0 ? (
             <p className="mt-3 text-xs text-ink-4">추천할 서브 상품이 없습니다(이미 모두 추가됨).</p>
           ) : (
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            <ul className="mt-3 grid max-h-96 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
               {list.map((r) => (
                 <li key={r.product_id}>
                   <button
