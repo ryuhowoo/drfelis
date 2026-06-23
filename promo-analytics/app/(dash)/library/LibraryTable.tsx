@@ -13,8 +13,8 @@ export const STAGE_META: Record<
   CampaignStage,
   { label: string; cls: string }
 > = {
-  linked: { label: "플랜+실적", cls: "bg-emerald-50 text-emerald-700" },
-  actual: { label: "실적만", cls: "bg-soft text-ink-3" },
+  linked: { label: "플랜+성과", cls: "bg-emerald-50 text-emerald-700" },
+  actual: { label: "성과만", cls: "bg-soft text-ink-3" },
   plan: { label: "플랜만", cls: "bg-amber-50 text-amber-700" },
   empty: { label: "빈 캠페인", cls: "bg-soft text-ink-4" },
 };
@@ -174,13 +174,13 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
         </InlineAlert>
       )}
 
-      {/* 생애주기 세그먼트 — 플랜+실적 / 실적만 / 플랜만 구분 */}
+      {/* 생애주기 세그먼트 — 플랜+성과 / 성과만 / 플랜만 구분 */}
       <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-soft p-1 text-sm font-medium w-fit">
         {(
           [
             { key: "all", label: `전체 ${data.length}` },
-            { key: "linked", label: `플랜+실적 ${stageCounts.linked}` },
-            { key: "actual", label: `실적만 ${stageCounts.actual}` },
+            { key: "linked", label: `플랜+성과 ${stageCounts.linked}` },
+            { key: "actual", label: `성과만 ${stageCounts.actual}` },
             { key: "plan", label: `플랜만 ${stageCounts.plan}` },
           ] as { key: StageFilter; label: string }[]
         ).map((t) => (

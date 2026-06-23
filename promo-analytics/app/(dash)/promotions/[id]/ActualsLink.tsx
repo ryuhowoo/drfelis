@@ -12,8 +12,8 @@ export type ActualsCandidate = {
   actual_skus: number;
 };
 
-// 이 캠페인의 플랜이 비교할 '실적 캠페인'을 명시적으로 선택.
-// 가이드(⑤)와 실적(②)이 서로 다른 코드로 업로드된 경우 — 머지 없이 짝지어 비교.
+// 이 캠페인의 플랜이 비교할 '성과 캠페인'을 명시적으로 선택.
+// 가이드(⑤)와 성과(②)가 서로 다른 코드로 업로드된 경우 — 머지 없이 짝지어 비교.
 export default function ActualsLink({
   promotionId,
   currentLinkId,
@@ -52,11 +52,11 @@ export default function ActualsLink({
 
   return (
     <section className="mt-6 rounded-2xl p-5 card-soft">
-      <h2 className="text-sm font-semibold text-ink-2">비교 대상 실적 캠페인</h2>
+      <h2 className="text-sm font-semibold text-ink-2">비교 대상 성과 캠페인</h2>
       <p className="mt-1 text-xs text-ink-4">
-        이 캠페인의 플랜을 어느 캠페인의 실적과 비교할지 선택합니다. 기본값은 자기 자신.
-        가이드(⑤)와 실적(②)이 서로 다른 코드로 업로드된 경우 다른 캠페인을 지정해 짝지어
-        비교하세요. 모든 달성률·진단이 선택한 실적 기준으로 다시 계산됩니다.
+        이 캠페인의 플랜을 어느 캠페인의 성과와 비교할지 선택합니다. 기본값은 자기 자신.
+        가이드(⑤)와 성과(②)가 서로 다른 코드로 업로드된 경우 다른 캠페인을 지정해 짝지어
+        비교하세요. 모든 달성률·진단이 선택한 성과 기준으로 다시 계산됩니다.
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
         <select
@@ -64,7 +64,7 @@ export default function ActualsLink({
           onChange={(e) => setPick(e.target.value)}
           className="w-full min-w-0 truncate rounded-xl border border-line bg-card px-3 py-2 text-sm focus:outline-none"
         >
-          <option value="">자기 캠페인 실적 (기본)</option>
+          <option value="">자기 캠페인 성과 (기본)</option>
           {candidates
             .filter((c) => c.id !== promotionId)
             .map((c) => (

@@ -159,7 +159,7 @@ export default async function PromotionDetail({
   // ── 생애주기 워크플로 + 즉시 조치 (Layer A/B) ────────────────
   const today = new Date().toISOString().slice(0, 10);
   // 새 모델: 성과는 이 캠페인에 직접 올린다. 성과(실 매출)가 실제로 있을 때만
-  // 매칭·달성 관련 UI를 노출한다 (성과 0인데 미매칭/실적연결 노티 X).
+  // 매칭·달성 관련 UI를 노출한다 (성과 0인데 미매칭/성과연결 노티 X).
   const hasActuals = (achSummary?.campaign_revenue_total ?? 0) > 0;
   const unmatchedCount = hasActuals
     ? diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped && !r.is_subscription).length
@@ -212,7 +212,7 @@ export default async function PromotionDetail({
 
       {linkedPlans.length > 0 && (
         <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-2.5 text-sm text-ink-2">
-          이 캠페인의 실적은{" "}
+          이 캠페인의 성과는{" "}
           {linkedPlans.map((lp, i) => (
             <span key={lp.plan_id}>
               {i > 0 && ", "}
@@ -224,7 +224,7 @@ export default async function PromotionDetail({
               </Link>
             </span>
           ))}
-          의 비교 대상입니다. <strong>플랜 vs 실적 비교·SKU 매칭은 플랜이 있는 캠페인에서</strong> 진행하세요.
+          의 비교 대상입니다. <strong>플랜 vs 성과 비교·SKU 매칭은 플랜이 있는 캠페인에서</strong> 진행하세요.
         </div>
       )}
 
@@ -259,7 +259,7 @@ export default async function PromotionDetail({
             ratio={achSummary.contribution_ach_total}
             valueLabel={wonShort(achSummary.contribution_total)}
             targetLabel={wonShort(achSummary.expected_contribution_total)}
-            caption="전체 실적 기준 · 구독 제외"
+            caption="전체 성과 기준 · 구독 제외"
             note={
               (achSummary.expected_contribution_total ?? 0) <= 0
                 ? "원가/판매가 확인 필요"
@@ -339,7 +339,7 @@ export default async function PromotionDetail({
                       <tr>
                         <th className="px-3 py-2.5 font-medium">상품</th>
                         <th className="px-3 py-2.5 text-right font-medium">baseline/일</th>
-                        <th className="px-3 py-2.5 text-right font-medium">실적</th>
+                        <th className="px-3 py-2.5 text-right font-medium">성과</th>
                         <th className="px-3 py-2.5 text-right font-medium">기대</th>
                         <th className="px-3 py-2.5 text-right font-medium">증분 ±95% CI</th>
                       </tr>
@@ -524,7 +524,7 @@ export default async function PromotionDetail({
                         {s.source_file}
                       </span>
                       <span className="shrink-0 text-[11px] text-ink-4">
-                        {s.kind === "plan_guide" ? "플랜" : s.kind === "promotion" ? "실적" : s.kind}
+                        {s.kind === "plan_guide" ? "플랜" : s.kind === "promotion" ? "성과" : s.kind}
                         {" · "}
                         {new Date(s.created_at).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })}
                       </span>

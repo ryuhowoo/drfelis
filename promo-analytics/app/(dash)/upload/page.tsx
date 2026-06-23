@@ -62,7 +62,7 @@ const CARDS: CardDef[] = [
   {
     key: "promotion",
     title: "③ 캠페인 시트",
-    desc: "캠페인 기간 실적(전 제품). 파일명의 캠페인 코드(CF_P_…)로 캠페인을 식별 — 같은 코드의 가이드(⑤)·실적(②)은 자동으로 한 캠페인에 결속됩니다(비교연결·병합 불필요). 같은 코드가 있으면 실적을 교체(백필)하고 확정 플랜은 보존, 없으면 새로 생성합니다.",
+    desc: "캠페인 기간 성과(전 제품). 파일명의 캠페인 코드(CF_P_…)로 캠페인을 식별 — 같은 코드의 가이드(⑤)·성과(②)은 자동으로 한 캠페인에 결속됩니다(비교연결·병합 불필요). 같은 코드가 있으면 성과를 교체(백필)하고 확정 플랜은 보존, 없으면 새로 생성합니다.",
   },
 ];
 
@@ -380,7 +380,7 @@ function UploadCard({ def }: { def: CardDef }) {
           raw: r.composition ? { composition: r.composition } : null,
         }));
 
-      // 기존 캠페인 탐지 (코드 우선, 없으면 이름) — 있으면 N1 백필(실적 교체)
+      // 기존 캠페인 탐지 (코드 우선, 없으면 이름) — 있으면 N1 백필(성과 교체)
       setP({ phase: "uploading", message: "기존 캠페인 확인 중…" });
       let existing: { id: string } | null = null;
       if (code) {
@@ -403,7 +403,7 @@ function UploadCard({ def }: { def: CardDef }) {
       }
 
       if (existing) {
-        // 백필: 이 캠페인의 기존 실적만 삭제 후 교체. 확정 플랜(frozen)·expected는 건드리지 않음.
+        // 백필: 이 캠페인의 기존 성과만 삭제 후 교체. 확정 플랜(frozen)·expected는 건드리지 않음.
         const { data: oldRows, error: oldErr } = await supabase
           .from("promotion_sales")
           .select("revenue")
@@ -425,14 +425,14 @@ function UploadCard({ def }: { def: CardDef }) {
 
         // 교체 검토 (DB 변경 전) — window.confirm 대신 앱 내부 dialog
         const ok = await confirm({
-          title: `캠페인 실적 교체 — ${name}`,
+          title: `캠페인 성과 교체 — ${name}`,
           oldCount,
           oldRevenue,
           newCount: parsed.rows.length,
           newRevenue,
           matchedSkus: productMap.size,
           totalSkus,
-          note: "이 캠페인의 기존 실적을 최신 파일로 교체합니다. 확정 플랜(frozen)·기대값은 보존됩니다. 삭제+삽입이 한 번에(원자적) 처리되어 부분 반영이 없습니다.",
+          note: "이 캠페인의 기존 성과를 최신 파일로 교체합니다. 확정 플랜(frozen)·기대값은 보존됩니다. 삭제+삽입이 한 번에(원자적) 처리되어 부분 반영이 없습니다.",
         });
         if (!ok) {
           setP({ phase: "idle", message: "취소됨" });
@@ -456,13 +456,13 @@ function UploadCard({ def }: { def: CardDef }) {
         await logUpload(supabase, {
           kind: "promotion",
           source_file: file.name,
-          detail: `${name} · 실적 교체`,
+          detail: `${name} · 성과 교체`,
           row_count: done,
           total_revenue: newRevenue,
           action: "replace",
           codes: code ? [code] : undefined,
         });
-        setP({ phase: "ok", message: `${name} 실적 백필 완료 · ${done}행. 상세로 이동합니다…` });
+        setP({ phase: "ok", message: `${name} 성과 백필 완료 · ${done}행. 상세로 이동합니다…` });
         router.push(`/promotions/${existing.id}`);
         return;
       }
@@ -513,7 +513,7 @@ function UploadCard({ def }: { def: CardDef }) {
         done += batch.length;
       }
 
-      // N13: 실적옵션 구조화(시그니처/구독/매칭) — 신규 캠페인은 직접 insert라 명시 호출
+      // N13: 성과옵션 구조화(시그니처/구독/매칭) — 신규 캠페인은 직접 insert라 명시 호출
       // (교체 경로는 replace_promotion_sales RPC가 내부에서 호출). 실패해도 적재는 유효.
       await supabase.rpc("rebuild_sale_options", { p_promotion_id: promo.id });
 
@@ -1123,8 +1123,8 @@ function PriceMasterCard() {
 
 // ─────────────────────────────────────────────
 // ⑤ 캠페인 플랜 가이드 — 표준 양식(평평한 표) → 캠페인 플랜(예상) 적재.
-//    가이드는 '실적 가설'(옵션·가격·예상 수량/매출/공헌이익). 실적은 ③, 차이는 달성률.
-//    N5: 플랜/실적 분리 — promotions row는 생성하지 않고 campaign_plans(독립)만 적재.
+//    가이드는 '성과 가설'(옵션·가격·예상 수량/매출/공헌이익). 성과는 ③, 차이는 달성률.
+//    N5: 플랜/성과 분리 — promotions row는 생성하지 않고 campaign_plans(독립)만 적재.
 //    미리보기 → 검수 → draft 플랜 생성/교체. 확정(frozen) 플랜은 보존.
 // ─────────────────────────────────────────────
 function PlanGuideImportCard() {
@@ -1160,9 +1160,9 @@ function PlanGuideImportCard() {
     if (!camps) return;
     const ok = window.confirm(
       `${camps.length}개 캠페인의 플랜(예상)을 적재합니다.\n` +
-        `· 플랜 row만 생성 — 캠페인(실적)은 만들지 않습니다 (플랜/실적 분리)\n` +
+        `· 플랜 row만 생성 — 캠페인(성과)은 만들지 않습니다 (플랜/성과 분리)\n` +
         `· draft 플랜은 교체, 확정(frozen) 플랜은 보존(건너뜀)\n` +
-        `· 실적은 ③ 매출 export로 별도 적층, 비교는 명시적 짝짓기로\n\n진행할까요?`,
+        `· 성과는 ③ 매출 export로 별도 적층, 비교는 명시적 짝짓기로\n\n진행할까요?`,
     );
     if (!ok) return;
     try {
@@ -1271,7 +1271,7 @@ function PlanGuideImportCard() {
                 option_label: o.option_label,
                 expected_option_qty: o.expected_qty,
                 is_main: o.is_main,
-                // 옵션 라벨을 매칭 패턴 기본값으로 — 실적 option_info 와 부분일치 자동 시도
+                // 옵션 라벨을 매칭 패턴 기본값으로 — 성과 option_info 와 부분일치 자동 시도
                 match_patterns: [o.option_label],
                 sort: idx,
                 set_price: o.set_price,
@@ -1356,7 +1356,7 @@ function PlanGuideImportCard() {
           <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>
           <p className="mt-1 text-sm text-neutral-500">
             표준 양식(1행=옵션)으로 캠페인별 <b>예상(가설)</b> — 옵션·가격·예상수량·목표매출·공헌이익을
-            플랜으로 적재합니다. 캠페인(실적) row는 만들지 않아요 — 실적은 ③ 매출 export로 별도
+            플랜으로 적재합니다. 캠페인(성과) row는 만들지 않아요 — 성과는 ③ 매출 export로 별도
             적층되고, 차이는 <b>달성률</b>로 비교돼요. 확정 플랜은 보존됩니다.{" "}
             <a
               href="/templates/campaign_plan_guide_template.csv"
