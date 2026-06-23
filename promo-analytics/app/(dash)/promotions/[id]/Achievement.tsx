@@ -9,7 +9,7 @@ import type {
   PlanVsActualOption,
 } from "@/lib/types";
 import { won, wonShort, pct, num } from "@/lib/format";
-import SkuMatchPanel, { type DiagnosticRow, type SkuMapping } from "./SkuMatchPanel";
+import SkuMatchPanel, { type DiagnosticRow, type SkuMapping, type ExcludedSku } from "./SkuMatchPanel";
 
 // N7 P3: 달성 & 매칭을 한 블록으로 통합.
 // - 상단: SKU 기준 총 달성률 카드 (1차 진실)
@@ -23,6 +23,7 @@ export default function Achievement({
   optionInfos,
   diagnosticRows,
   skuMappings,
+  excludedSkus,
   hideSummaryCards,
 }: {
   promotionId: string;
@@ -32,6 +33,7 @@ export default function Achievement({
   optionInfos: string[];
   diagnosticRows: DiagnosticRow[];
   skuMappings: SkuMapping[];
+  excludedSkus?: ExcludedSku[];
   hideSummaryCards?: boolean; // Layer A 히어로 KPI와 중복 방지
 }) {
   const [tab, setTab] = useState<"sku" | "option">("sku");
@@ -252,7 +254,7 @@ export default function Achievement({
                 <span className="ml-1 font-normal text-ink-4">(자동 매칭이 빗나간 경우에만)</span>
               </summary>
               <div className="border-t border-line/70 px-4 pb-2">
-                <SkuMatchPanel promotionId={promotionId} rows={diagnosticRows} mappings={skuMappings} />
+                <SkuMatchPanel promotionId={promotionId} rows={diagnosticRows} mappings={skuMappings} excludedSkus={excludedSkus} />
               </div>
             </details>
           )}

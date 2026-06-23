@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { won, wonShort, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { StatusBadge } from "@/components/ui";
@@ -50,19 +51,26 @@ function confidence(score: number): { label: string; tone: "success" | "info" | 
   return null;
 }
 
+export type ExcludedSku = { product_id: string; base_name: string };
+
 export default function SkuMatchPanel({
   promotionId,
   rows,
   mappings,
+  excludedSkus = [],
 }: {
   promotionId: string;
   rows: DiagnosticRow[];
   mappings: SkuMapping[];
+  excludedSkus?: ExcludedSku[];
 }) {
+  const router = useRouter();
   const { run, pending } = useOptimisticMutation();
   // optimistic 로컬 상태 — 서버 reconcile(props 변경) 시 재동기화
   const [localRows, setLocalRows] = useState(rows);
   const [localMaps, setLocalMaps] = useState(mappings);
+  const [localExcluded, setLocalExcluded] = useState<ExcludedSku[]>(excludedSkus);
+  const [soldoutBusy, setSoldoutBusy] = useState<string | null>(null);
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -70,6 +78,47 @@ export default function SkuMatchPanel({
 
   useEffect(() => setLocalRows(rows), [rows]);
   useEffect(() => setLocalMaps(mappings), [mappings]);
+  useEffect(() => setLocalExcluded(excludedSkus), [excludedSkus]);
+
+  // 품절(미판매) 처리 — 플랜·성과·미매칭에서 제외. 해제하면 복원.
+  async function markSoldout(p: { product_id: string; base_name: string }) {
+    if (soldoutBusy) return;
+    setSoldoutBusy(p.product_id);
+    setLocalRows((rs) => rs.filter((r) => r.product_id !== p.product_id)); // optimistic
+    setLocalExcluded((e) => [...e, { product_id: p.product_id, base_name: p.base_name }]);
+    try {
+      const res = await fetch(`/api/promotions/${promotionId}/excluded-skus`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ product_id: p.product_id }),
+      });
+      if (!res.ok) throw new Error();
+      router.refresh();
+    } catch {
+      setLocalExcluded((e) => e.filter((x) => x.product_id !== p.product_id));
+      setLocalRows(rows); // rollback
+    } finally {
+      setSoldoutBusy(null);
+    }
+  }
+  async function restoreSoldout(pid: string) {
+    if (soldoutBusy) return;
+    setSoldoutBusy(pid);
+    setLocalExcluded((e) => e.filter((x) => x.product_id !== pid)); // optimistic
+    try {
+      const res = await fetch(`/api/promotions/${promotionId}/excluded-skus`, {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ product_id: pid }),
+      });
+      if (!res.ok) throw new Error();
+      router.refresh();
+    } catch {
+      setLocalExcluded(excludedSkus); // rollback
+    } finally {
+      setSoldoutBusy(null);
+    }
+  }
 
   const matched = localRows.filter((r) => r.side === "both" || r.is_mapped);
   const planOnly = localRows.filter((r) => r.side === "plan" && !r.is_mapped);
@@ -255,10 +304,40 @@ export default function SkuMatchPanel({
                     >
                       {busy ? "…" : "연동"}
                     </button>
+                    <button
+                      onClick={() => markSoldout(p)}
+                      disabled={soldoutBusy === p.product_id || busy}
+                      title="품절·미판매로 처리 — 플랜·성과·미매칭에서 제외"
+                      className="shrink-0 rounded-full border border-line px-3 py-2 text-xs font-medium text-ink-3 hover:bg-soft disabled:opacity-40"
+                    >
+                      {soldoutBusy === p.product_id ? "…" : "품절"}
+                    </button>
                   </div>
                 </li>
               );
             })}
+          </ul>
+        </div>
+      )}
+
+      {/* 품절(미판매) 처리됨 — 플랜·성과·미매칭에서 제외, 복원 가능 */}
+      {localExcluded.length > 0 && (
+        <div className="mt-3 rounded-xl card-soft px-4 py-3">
+          <h4 className="text-xs font-semibold text-ink-2">품절·미판매 제외 {localExcluded.length}건</h4>
+          <p className="mt-0.5 text-[11px] text-ink-4">플랜·성과·매칭 집계에서 빠집니다.</p>
+          <ul className="mt-1.5 space-y-1 text-xs">
+            {localExcluded.map((e) => (
+              <li key={e.product_id} className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-ink-2">{e.base_name}</span>
+                <button
+                  onClick={() => restoreSoldout(e.product_id)}
+                  disabled={soldoutBusy === e.product_id}
+                  className="shrink-0 text-[11px] text-ink-4 hover:text-brand-700 disabled:opacity-40"
+                >
+                  복원
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       )}

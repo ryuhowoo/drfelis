@@ -116,6 +116,20 @@ export default async function PromotionDetail({
   ].sort();
   const diagnosticRows = bundle?.rollup?.diagnostic ?? [];
   const skuMappings = bundle?.mappings ?? [];
+  // 품절(미판매) 제외 목록 — 플랜·성과·미매칭에서 빠진 SKU (복원용으로 표시)
+  const { data: exData } = await supabase
+    .from("promotion_excluded_skus")
+    .select("product_id, products(base_name)")
+    .eq("promotion_id", id);
+  const excludedSkus = (
+    (exData ?? []) as {
+      product_id: string;
+      products: { base_name: string } | { base_name: string }[] | null;
+    }[]
+  ).map((r) => {
+    const pr = Array.isArray(r.products) ? r.products[0] : r.products;
+    return { product_id: r.product_id, base_name: pr?.base_name ?? r.product_id };
+  });
   const sources = bundle?.sources ?? [];
 
   // 목적별 핵심 지표 (S5.4)
@@ -473,6 +487,7 @@ export default async function PromotionDetail({
                   optionInfos={optionInfos}
                   diagnosticRows={diagnosticRows}
                   skuMappings={skuMappings}
+                  excludedSkus={excludedSkus}
                   hideSummaryCards
                 />
 
