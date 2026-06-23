@@ -15,6 +15,7 @@ type Body = {
   // 엄선 메타(예측에 실효) — 선택
   promo_type?: string | null;
   season_tag?: string | null;
+  channel?: string | null;
   discount_rate?: number | null; // 0~1
 };
 
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
     // 1) 프로모션 메타
     const promoType = (body.promo_type ?? "").trim() || null;
     const seasonTag = (body.season_tag ?? "").trim() || null;
+    const channel = (body.channel ?? "").trim() || null;
     const dr = body.discount_rate != null && body.discount_rate > 0 ? body.discount_rate : null;
     const { data: promo, error: pErr } = await supabase
       .from("promotions")
@@ -49,6 +51,7 @@ export async function POST(req: Request) {
         purpose: purposes[0], // 레거시 단일 목적 = 주목적
         promo_type: promoType,
         season_tag: seasonTag,
+        channel,
         benefits: dr != null ? { discount_rate: dr } : null,
       })
       .select("id")

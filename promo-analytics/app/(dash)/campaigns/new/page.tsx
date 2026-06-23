@@ -8,9 +8,11 @@ export const dynamic = "force-dynamic";
 // 서버: 예측에 쓸 과거 사례 + 옵션 마스터를 로드해 작성 폼에 전달.
 export default async function NewCampaignPage() {
   const supabase = await createClient();
-  const [cases, options] = await Promise.all([
+  const [cases, options, channelData] = await Promise.all([
     loadCases(supabase),
     loadOptions(supabase),
+    supabase.from("channel_fees").select("channel").order("sort"),
   ]);
-  return <NewCampaignForm cases={cases} options={options} />;
+  const channels = ((channelData.data ?? []) as { channel: string }[]).map((c) => c.channel);
+  return <NewCampaignForm cases={cases} options={options} channels={channels} />;
 }
