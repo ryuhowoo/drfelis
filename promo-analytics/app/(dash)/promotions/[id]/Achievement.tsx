@@ -131,21 +131,17 @@ export default function Achievement({
               />
             </div>
           )}
-          {/* 매출 구성: 메인 + 함께 구매 (구독 제외) */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-soft px-4 py-2.5 text-[11px] text-ink-3">
-            <span>
-              메인 제품 매출 <strong className="text-ink">{wonShort(summary!.main_revenue)}</strong>
-            </span>
-            <span className="text-ink-4">＋</span>
-            <span>
-              함께 구매 매출{" "}
-              <strong className="text-brand-700">{wonShort(summary!.halo_revenue)}</strong>
-              <span className="text-ink-4"> (메인 외 동반구매)</span>
-            </span>
-            <span className="text-ink-4">＝</span>
-            <span>
-              전체 <strong className="text-ink">{wonShort(summary!.campaign_revenue_total)}</strong>
-            </span>
+          {/* 매출 구성 성과 — 메인 + 함께 구매 = 전체 (구독 제외), 큰 카드로 명확히 */}
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <PerfCard label="메인 제품 매출" value={wonShort(summary!.main_revenue)} />
+            <PerfCard
+              label="함께 구매 매출"
+              sub="메인 외 동반구매"
+              value={wonShort(summary!.halo_revenue)}
+              accent
+            />
+            <PerfCard label="전체 매출" value={wonShort(summary!.campaign_revenue_total)} primary />
+            <PerfCard label="전체 공헌이익" value={wonShort(summary!.contribution_total)} />
           </div>
           {(summary!.subscription_revenue ?? 0) > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/60 px-4 py-2.5 text-xs">
@@ -320,6 +316,33 @@ export default function Achievement({
         </div>
       )}
     </section>
+  );
+}
+
+// SKU·옵션 탭 성과 강조용 큰 카드
+function PerfCard({
+  label,
+  value,
+  sub,
+  primary,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  primary?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <div className={`rounded-2xl p-4 ${primary ? "bg-brand-50" : "card-soft"}`}>
+      <div className="text-xs text-ink-4">
+        {label}
+        {sub && <span className="ml-1 text-[10px] text-ink-4">· {sub}</span>}
+      </div>
+      <div className={`mt-1 text-xl font-bold tabular-nums ${accent ? "text-brand-700" : "text-ink"}`}>
+        {value}
+      </div>
+    </div>
   );
 }
 
