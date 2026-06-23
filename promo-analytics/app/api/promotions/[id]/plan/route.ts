@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { computeOptionTotals, rateCardMult, type PlanItemInput } from "@/lib/plan";
+import { computeOptionTotals, effectiveMult, type PlanItemInput } from "@/lib/plan";
 
 export const runtime = "nodejs";
 
@@ -69,7 +69,22 @@ export async function PATCH(
       .order("effective_from", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const mult = rc ? rateCardMult(rc) : 0.715;
+    // 채널 수수료 override (없으면 레이트카드 fee)
+    const { data: promoRow } = await supabase
+      .from("promotions")
+      .select("channel")
+      .eq("id", id)
+      .maybeSingle();
+    let channelFee: number | null = null;
+    if (promoRow?.channel) {
+      const { data: cf } = await supabase
+        .from("channel_fees")
+        .select("fee_rate")
+        .eq("channel", promoRow.channel as string)
+        .maybeSingle();
+      channelFee = (cf?.fee_rate as number | undefined) ?? null;
+    }
+    const mult = rc ? effectiveMult(rc, channelFee) : 0.715;
 
     const productIds = [
       ...new Set(options.flatMap((o) => o.items.map((it) => it.product_id))),
