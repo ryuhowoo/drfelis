@@ -12,7 +12,6 @@ import PlanEditor, {
   type ProductEcon,
   type QtyHint,
 } from "./PlanEditor";
-import HaloRecommendPanel, { type Bench } from "./HaloRecommendPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -140,24 +139,6 @@ export default async function PlanPage({
     qtyHint = { main: m.v, sub: s.v, mainN: m.n, subN: s.n };
   }
 
-  // N8 P3: 함께 구매 벤치마크 + 추천 패널 데이터
-  const { data: benchData } = plan
-    ? await supabase.rpc("halo_benchmarks")
-    : { data: [] };
-  const benchmarks = (benchData ?? []) as Bench[];
-  const planSkuMap = new Map<string, string>();
-  for (const o of options) for (const it of o.items) planSkuMap.set(it.product_id, it.base_name);
-  const planSkus = [...planSkuMap].map(([product_id, base_name]) => ({ product_id, base_name }));
-  const planOptionsForHalo = options.map((o) => ({
-    expected_revenue: Number(o.frozen?.expected_revenue ?? 0),
-    product_ids: o.items.map((i) => i.product_id),
-  }));
-  const planTarget = planOptionsForHalo.reduce((s, o) => s + o.expected_revenue, 0);
-  const planMeta = plan as unknown as {
-    tags?: string[] | null;
-    main_product_ids?: string[] | null;
-  } | null;
-
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <div className="mb-1 text-sm text-neutral-400">
@@ -186,18 +167,6 @@ export default async function PlanPage({
         startDate={promo.start_date as string}
         endDate={promo.end_date as string}
       />
-
-      {plan && (
-        <HaloRecommendPanel
-          promotionId={id}
-          benchmarks={benchmarks}
-          tags={planMeta?.tags ?? []}
-          mainProductIds={planMeta?.main_product_ids ?? null}
-          skus={planSkus}
-          options={planOptionsForHalo}
-          planTarget={planTarget}
-        />
-      )}
     </div>
   );
 }
