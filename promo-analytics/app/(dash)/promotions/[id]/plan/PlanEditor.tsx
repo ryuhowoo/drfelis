@@ -88,6 +88,9 @@ export default function PlanEditor({
   rateCard,
   qtyHint,
   purposes,
+  campaignName,
+  startDate,
+  endDate,
 }: {
   promotionId: string;
   plan: CampaignPlan | null;
@@ -95,6 +98,9 @@ export default function PlanEditor({
   rateCard: RateCard | null;
   qtyHint?: QtyHint;
   purposes?: string[];
+  campaignName?: string;
+  startDate?: string;
+  endDate?: string;
 }) {
   const router = useRouter();
   const [options, setOptions] = useState<OptState[]>(() => toState(initialOptions));
@@ -366,8 +372,12 @@ export default function PlanEditor({
       };
     });
     downloadPlanXlsx(
-      `plan-v${plan!.version}.xlsx`,
-      `플랜 v${plan!.version}`,
+      {
+        campaign: campaignName || `플랜 v${plan!.version}`,
+        period: startDate && endDate ? `${startDate} ~ ${endDate}` : "",
+        version: `v${plan!.version}`,
+        purposes: purposes ?? [],
+      },
       exOptions,
       {
         revenue: planTotals.expected_revenue_total,

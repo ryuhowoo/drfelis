@@ -30,6 +30,13 @@ export type ExportSummary = {
 };
 export type ExportCoupon = { min: number; ratePct: number; max: number } | null;
 
+export type ExportMeta = {
+  campaign: string; // 플랜(캠페인)명
+  period: string; // "2026-06-08 ~ 2026-06-14"
+  version: string; // "v2"
+  purposes: string[]; // 목적
+};
+
 const PLAN_HEADER = [
   "옵션명",
   "메인",
@@ -47,7 +54,7 @@ const PLAN_HEADER = [
 
 /** 플랜 데이터 → 워크북 (플랜·요약 시트). 값 기반이라 다시 올려도 어긋남이 없다. */
 export function buildPlanWorkbook(
-  title: string,
+  meta: ExportMeta,
   options: ExportOption[],
   summary: ExportSummary,
   coupon: ExportCoupon,
@@ -78,21 +85,24 @@ export function buildPlanWorkbook(
   }
   const planWs = XLSX.utils.aoa_to_sheet(rows);
 
-  // 요약 시트
+  // 요약 시트 — 캠페인·기간·목적 + 핵심 지표 + 추가할인쿠폰(없으면 '없음')
+  const couponText =
+    coupon && coupon.ratePct > 0
+      ? `${coupon.min.toLocaleString("ko-KR")}원 이상 ${coupon.ratePct}% (최대 ${coupon.max.toLocaleString("ko-KR")}원)`
+      : "없음";
   const sum: (string | number)[][] = [
     ["항목", "값"],
-    ["캠페인", title],
+    ["캠페인", meta.campaign],
+    ["기간", meta.period],
+    ["플랜 버전", meta.version],
+    ["목적", meta.purposes.length ? meta.purposes.join(", ") : "—"],
     ["예상 매출액", Math.round(summary.revenue)],
     ["구매건수(세트)", summary.order_count],
     ["판매수량(SKU)", summary.sku_units],
     ["예상 공헌이익액", Math.round(summary.contribution)],
     ["공헌이익률(%)", summary.contribution_rate != null ? +(summary.contribution_rate * 100).toFixed(1) : ""],
+    ["추가할인쿠폰", couponText],
   ];
-  if (coupon && coupon.ratePct > 0) {
-    sum.push(["쿠폰 기준액(원 이상)", coupon.min]);
-    sum.push(["쿠폰 할인율(%)", coupon.ratePct]);
-    sum.push(["쿠폰 최대할인(원)", coupon.max]);
-  }
   const sumWs = XLSX.utils.aoa_to_sheet(sum);
 
   const wb = XLSX.utils.book_new();
@@ -101,14 +111,23 @@ export function buildPlanWorkbook(
   return wb;
 }
 
+/** 파일명 = '플랜명-기간.xlsx' (경로 불가 문자만 정리, 한글·괄호·대시는 유지) */
+export function planFileName(meta: ExportMeta): string {
+  const base = `${meta.campaign}-${meta.period.replace(/\s+/g, "")}`;
+  const safe = base
+    .replace(/[/\\:*?"<>|\n\r\t]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return `${safe || "플랜"}.xlsx`;
+}
+
 /** 브라우저에서 xlsx 다운로드 트리거 */
 export function downloadPlanXlsx(
-  filename: string,
-  title: string,
+  meta: ExportMeta,
   options: ExportOption[],
   summary: ExportSummary,
   coupon: ExportCoupon,
 ): void {
-  const wb = buildPlanWorkbook(title, options, summary, coupon);
-  XLSX.writeFile(wb, filename);
+  const wb = buildPlanWorkbook(meta, options, summary, coupon);
+  XLSX.writeFile(wb, planFileName(meta));
 }
