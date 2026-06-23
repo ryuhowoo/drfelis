@@ -4,21 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Promotion } from "@/lib/types";
-import { wonShort } from "@/lib/format";
 
-type ProductItem = { product_id: string; base_name: string; revenue: number };
 type Options = { benefitTypes: string[]; seasonalities: string[]; purposes: string[] };
 
 export default function EditForm({
   promo,
-  products,
-  initialMainIds,
   options,
   initialWeights,
 }: {
   promo: Promotion;
-  products: ProductItem[];
-  initialMainIds: string[];
   options: Options;
   initialWeights: Record<string, number>;
 }) {
@@ -44,16 +38,8 @@ export default function EditForm({
   const [giftValue, setGiftValue] = useState(
     promo.benefits?.gift?.value != null ? String(promo.benefits.gift.value) : "",
   );
-  const [contribution, setContribution] = useState(
-    promo.contribution_amount != null ? String(promo.contribution_amount) : "",
-  );
-  const [adSpend, setAdSpend] = useState(
-    promo.ad_spend != null ? String(promo.ad_spend) : "",
-  );
-  const [mainIds, setMainIds] = useState<string[]>(initialMainIds);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [query, setQuery] = useState("");
 
   function toggleType(t: string) {
     setPromoTypes((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
@@ -67,16 +53,6 @@ export default function EditForm({
     setPurposeWeights((w) => ({ ...w, [p]: Number.isNaN(v) ? 0 : v }));
   }
   const weightSum = purposes.reduce((s, p, i) => s + weightOf(p, i), 0);
-  function toggleMain(id: string) {
-    setMainIds((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
-  }
-  function selectFiltered() {
-    setMainIds((m) => [...new Set([...m, ...filtered.map((p) => p.product_id)])]);
-  }
-  function clearMain() {
-    setMainIds([]);
-  }
-  const allSelected = products.length > 0 && mainIds.length === products.length;
 
   async function save() {
     setSaving(true);
@@ -102,9 +78,6 @@ export default function EditForm({
         start_date: startDate,
         end_date: endDate,
         benefits: Object.keys(benefits).length ? benefits : null,
-        contribution_amount: contribution ? Number(contribution.replace(/[^0-9.-]/g, "")) : null,
-        ad_spend: adSpend ? Number(adSpend.replace(/[^0-9.-]/g, "")) : null,
-        main_product_ids: mainIds,
       }),
     });
     setSaving(false);
@@ -136,15 +109,12 @@ export default function EditForm({
     }
   }
 
-  const filtered = query
-    ? products.filter((p) => p.base_name.includes(query))
-    : products;
-
   return (
     <div className="max-w-3xl">
-      <h1 className="text-xl font-semibold tracking-tight">캠페인 편집</h1>
+      <h1 className="text-xl font-semibold tracking-tight">캠페인 정보 편집</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        기간·목적·혜택을 채우고, 특별 혜택을 준 <strong>메인 상품</strong>을 지정하세요.
+        기간·목적·혜택 등 기본 정보를 수정합니다. <strong>메인/서브</strong>는 플랜에서 옵션으로 나눠
+        지정하고, <strong>실공헌이익·광고비</strong>는 성과 화면에서 입력합니다.
       </p>
 
       <div className="mt-6 space-y-5">
@@ -229,88 +199,6 @@ export default function EditForm({
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="전체 공헌이익액 (직접 입력)">
-            <input
-              value={contribution}
-              onChange={(e) => setContribution(e.target.value)}
-              inputMode="numeric"
-              placeholder="예: 12000000"
-              className={inputCls}
-            />
-            <p className="mt-1 text-xs text-neutral-400">
-              기간 내 공식몰 <b>전체</b> 공헌이익액(정기구독 포함). 옵션 단위 분해 합과 대조하는
-              기준값으로 쓰입니다.
-            </p>
-          </Field>
-          <Field label="실제 광고비 (직접 입력)">
-            <input
-              value={adSpend}
-              onChange={(e) => setAdSpend(e.target.value)}
-              inputMode="numeric"
-              placeholder="예: 3000000"
-              className={inputCls}
-            />
-            <p className="mt-1 text-xs text-neutral-400">
-              캠페인 실제 광고비. 옵션별 공헌이익 분해 시 매출 비중으로 배분합니다(미입력 시 레이트카드
-              광고율 적용).
-            </p>
-          </Field>
-        </div>
-
-        <Field label={`메인 상품 지정 (${mainIds.length}/${products.length}개 선택)`}>
-          <label className="mb-2 flex cursor-pointer items-center gap-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={() => (allSelected ? clearMain() : setMainIds(products.map((p) => p.product_id)))}
-              className="accent-brand-500"
-            />
-            전 상품 대상 (전체 선택)
-          </label>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="상품명 검색"
-            className={`mb-2 ${inputCls}`}
-          />
-          <div className="mb-2 flex items-center gap-2 text-xs">
-            <button
-              type="button"
-              onClick={selectFiltered}
-              className="rounded-full border border-neutral-200 px-2.5 py-1 text-neutral-600 hover:bg-neutral-50"
-            >
-              {query ? "검색결과 선택" : "전체 선택"}
-            </button>
-            <button
-              type="button"
-              onClick={clearMain}
-              className="rounded-full border border-neutral-200 px-2.5 py-1 text-neutral-600 hover:bg-neutral-50"
-            >
-              전체 해제
-            </button>
-          </div>
-          <div className="max-h-72 overflow-y-auto rounded-xl border border-neutral-200">
-            {filtered.map((p) => (
-              <label
-                key={p.product_id}
-                className="flex cursor-pointer items-center gap-2 border-b border-neutral-100 px-3 py-2 text-sm last:border-0 hover:bg-neutral-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={mainIds.includes(p.product_id)}
-                  onChange={() => toggleMain(p.product_id)}
-                  className="accent-brand-500"
-                />
-                <span className="flex-1 truncate text-neutral-700">{p.base_name}</span>
-                <span className="text-xs text-neutral-400">{wonShort(p.revenue)}</span>
-              </label>
-            ))}
-            {filtered.length === 0 && (
-              <div className="px-3 py-6 text-center text-sm text-neutral-400">상품이 없습니다.</div>
-            )}
-          </div>
-        </Field>
       </div>
 
       <div className="mt-6 flex items-center gap-2">

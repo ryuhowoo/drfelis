@@ -12,14 +12,48 @@ import { ensureProducts } from "@/lib/products";
 export default function PerformanceUpload({
   promotionId,
   hasActuals,
+  contributionAmount,
+  adSpend,
 }: {
   promotionId: string;
   hasActuals: boolean;
+  contributionAmount?: number | null;
+  adSpend?: number | null;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  // 전체 실공헌이익액·실광고비 직접 입력 — 옵션 분해의 기준값(groundTruth)·광고 배분에 반영
+  const [contrib, setContrib] = useState(contributionAmount != null ? String(contributionAmount) : "");
+  const [ad, setAd] = useState(adSpend != null ? String(adSpend) : "");
+  const [econBusy, setEconBusy] = useState(false);
+  const [econMsg, setEconMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  async function saveEcon() {
+    setEconBusy(true);
+    setEconMsg(null);
+    try {
+      const res = await fetch(`/api/promotions/${promotionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contribution_amount: contrib.trim() ? Number(contrib.replace(/[^0-9.-]/g, "")) : null,
+          ad_spend: ad.trim() ? Number(ad.replace(/[^0-9.-]/g, "")) : null,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "저장 실패");
+      const supabase = createClient();
+      await supabase.rpc("refresh_rollups", { p_force: true });
+      setEconMsg({ kind: "ok", text: "저장됐습니다. 옵션 분해·광고 배분에 반영됩니다." });
+      router.refresh();
+    } catch (e) {
+      setEconMsg({ kind: "err", text: e instanceof Error ? e.message : "저장 실패" });
+    } finally {
+      setEconBusy(false);
+    }
+  }
 
   async function onFile(file: File) {
     setBusy(true);
@@ -108,6 +142,51 @@ export default function PerformanceUpload({
           {msg.text}
         </div>
       )}
+
+      {/* 전체 실공헌이익액·실광고비 직접 입력 (성과의 최종 ground truth) */}
+      <div className="mt-4 border-t border-line/70 pt-4">
+        <h3 className="text-xs font-semibold text-ink-2">실 공헌이익·광고비 (직접 입력)</h3>
+        <p className="mt-0.5 text-[11px] text-ink-4">
+          기간 내 공식몰 <b>전체</b> 실공헌이익액(정기구독 포함)·실광고비. 옵션별 공헌이익 분해의 기준값과
+          광고 배분에 반영돼 <b>최종 성과</b>를 정확히 보여줍니다.
+        </p>
+        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="block text-[11px] font-medium text-ink-4">전체 실공헌이익액 (₩)</span>
+            <input
+              value={contrib}
+              onChange={(e) => setContrib(e.target.value)}
+              inputMode="numeric"
+              placeholder="예: 60613475"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-[11px] font-medium text-ink-4">실 광고비 (₩)</span>
+            <input
+              value={ad}
+              onChange={(e) => setAd(e.target.value)}
+              inputMode="numeric"
+              placeholder="예: 6890000"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400"
+            />
+          </label>
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <button
+            onClick={saveEcon}
+            disabled={econBusy}
+            className="rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+          >
+            {econBusy ? "저장 중…" : "저장"}
+          </button>
+          {econMsg && (
+            <span className={`text-xs ${econMsg.kind === "ok" ? "text-success" : "text-danger"}`}>
+              {econMsg.text}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

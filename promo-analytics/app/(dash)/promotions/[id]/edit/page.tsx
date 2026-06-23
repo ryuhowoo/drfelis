@@ -29,31 +29,6 @@ export default async function EditPromotion({
     .neq("id", id)
     .order("start_date", { ascending: false });
 
-  const { data: sales } = await supabase
-    .from("promotion_sales")
-    .select("product_id, base_name, revenue")
-    .eq("promotion_id", id);
-
-  const { data: mains } = await supabase
-    .from("promotion_main_products")
-    .select("product_id")
-    .eq("promotion_id", id);
-
-  // 캠페인 내 상품 목록 (매출 합으로 정렬, 중복 제거)
-  const agg = new Map<string, { product_id: string; base_name: string; revenue: number }>();
-  for (const s of sales ?? []) {
-    if (!s.product_id) continue;
-    const cur = agg.get(s.product_id);
-    if (cur) cur.revenue += s.revenue ?? 0;
-    else
-      agg.set(s.product_id, {
-        product_id: s.product_id,
-        base_name: s.base_name,
-        revenue: s.revenue ?? 0,
-      });
-  }
-  const products = [...agg.values()].sort((a, b) => b.revenue - a.revenue);
-  const mainIds = (mains ?? []).map((m) => m.product_id);
   const options = await loadOptions(supabase);
 
   // 목적 가중치 (S5) — 저장된 값 로드
@@ -69,8 +44,6 @@ export default async function EditPromotion({
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <EditForm
         promo={promo}
-        products={products}
-        initialMainIds={mainIds}
         options={options}
         initialWeights={initialWeights}
       />

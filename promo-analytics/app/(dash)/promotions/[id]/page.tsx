@@ -206,7 +206,7 @@ export default async function PromotionDetail({
           href={`/promotions/${id}/edit`}
           className="shrink-0 rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-soft"
         >
-          메타·메인상품 편집
+          캠페인 정보 편집
         </Link>
       </header>
 
@@ -289,7 +289,12 @@ export default async function PromotionDetail({
 
       {/* 6단계 — 캠페인에 직접 성과 추가 (라플라스 양식 → 자동 분류) */}
       <div className="mt-4">
-        <PerformanceUpload promotionId={id} hasActuals={hasActuals} />
+        <PerformanceUpload
+          promotionId={id}
+          hasActuals={hasActuals}
+          contributionAmount={promo.contribution_amount ?? null}
+          adSpend={promo.ad_spend ?? null}
+        />
       </div>
 
       {/* Layer C — 심층 분석 (탭, URL 보존, 선택 탭만 렌더) */}
