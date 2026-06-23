@@ -1,4 +1,7 @@
+"use client";
+
 import { won, pct } from "@/lib/format";
+import { useTableSort } from "@/lib/table-sort";
 
 // N13 P2: 옵션 단위 실측 공헌 분해 (sale_option_contribution RPC).
 // 매출−수수료−원가−물류(매출×12%)−광고(실제 광고비 매출비중 배분) = 옵션 공헌.
@@ -36,6 +39,11 @@ export default function OptionContribution({
   rows: OptionContribRow[];
   groundTruth: number | null;
 }) {
+  const { sorted, toggle, arrow } = useTableSort<OptionContribRow>(
+    rows ?? [],
+    "contribution",
+    "desc",
+  );
   if (!rows || rows.length === 0) return null;
   const sum = rows.reduce((s, r) => s + (r.contribution ?? 0), 0);
   const revSum = rows.reduce((s, r) => s + (r.revenue ?? 0), 0);
@@ -72,20 +80,20 @@ export default function OptionContribution({
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">
           <thead className="text-ink-4">
-            <tr className="border-b border-line">
-              <th className="py-1.5 pr-3">옵션</th>
-              <th className="py-1.5 pr-3">매칭</th>
-              <th className="py-1.5 pr-3 text-right">매출</th>
-              <th className="py-1.5 pr-3 text-right">수수료</th>
-              <th className="py-1.5 pr-3 text-right">원가</th>
-              <th className="py-1.5 pr-3 text-right">물류</th>
-              <th className="py-1.5 pr-3 text-right">광고</th>
-              <th className="py-1.5 pr-3 text-right">공헌이익</th>
-              <th className="py-1.5 text-right">공헌률</th>
+            <tr className="border-b border-line [&_th]:cursor-pointer [&_th]:select-none [&_th:hover]:text-ink-2">
+              <th className="py-1.5 pr-3" onClick={() => toggle("label")}>옵션{arrow("label")}</th>
+              <th className="py-1.5 pr-3" onClick={() => toggle("match_source")}>매칭{arrow("match_source")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("revenue")}>매출{arrow("revenue")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("fee")}>수수료{arrow("fee")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("cost")}>원가{arrow("cost")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("logistics")}>물류{arrow("logistics")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("ad_alloc")}>광고{arrow("ad_alloc")}</th>
+              <th className="py-1.5 pr-3 text-right" onClick={() => toggle("contribution")}>공헌이익{arrow("contribution")}</th>
+              <th className="py-1.5 text-right" onClick={() => toggle("contribution_rate")}>공헌률{arrow("contribution_rate")}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.sale_option_id} className="border-b border-line/60">
                 <td className="py-1.5 pr-3">
                   <span className="text-ink-2">{r.label ?? r.option_code ?? "—"}</span>
