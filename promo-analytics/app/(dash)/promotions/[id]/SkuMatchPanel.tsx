@@ -74,6 +74,8 @@ export default function SkuMatchPanel({
   const matched = localRows.filter((r) => r.side === "both" || r.is_mapped);
   const planOnly = localRows.filter((r) => r.side === "plan" && !r.is_mapped);
   const actualOnly = localRows.filter((r) => r.side === "actual" && !r.is_mapped);
+  const planOnlyRevenue = planOnly.reduce((s, r) => s + (r.expected_revenue ?? 0), 0);
+  const actualOnlyRevenue = actualOnly.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
   const nameOf = useMemo(() => {
     const m = new Map(localRows.map((r) => [r.product_id, r.base_name]));
     return (pid: string) => m.get(pid) ?? `${pid.slice(0, 8)}…`;
@@ -183,6 +185,26 @@ export default function SkuMatchPanel({
           )}
         </div>
       </div>
+
+      {/* 플랜만 / 성과만 결과 요약 */}
+      {(planOnly.length > 0 || actualOnly.length > 0) && (
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="rounded-xl card-soft p-3">
+            <div className="text-[11px] font-medium text-warning">플랜만 — 계획했으나 성과 미발생</div>
+            <div className="mt-0.5 text-sm font-semibold text-ink">
+              {planOnly.length}종 · 기대매출 {wonShort(planOnlyRevenue)}
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-4">품절·미판매면 아래에서 처리하면 매칭이 완료됩니다.</div>
+          </div>
+          <div className="rounded-xl card-soft p-3">
+            <div className="text-[11px] font-medium text-ink-3">성과만 — 계획에 없던 판매</div>
+            <div className="mt-0.5 text-sm font-semibold text-ink">
+              {actualOnly.length}종 · 성과매출 {wonShort(actualOnlyRevenue)}
+            </div>
+            <div className="mt-0.5 text-[11px] text-ink-4">메인 외 동반구매로 잡힙니다(매칭하면 플랜과 연결).</div>
+          </div>
+        </div>
+      )}
 
       {/* 미매칭 플랜 SKU — 행 안에서 바로 연동 (optimistic) */}
       {planOnly.length > 0 && (
