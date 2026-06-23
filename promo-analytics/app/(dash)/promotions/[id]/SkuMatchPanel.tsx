@@ -5,6 +5,7 @@ import { won, wonShort, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { StatusBadge } from "@/components/ui";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
+import { useTableSort } from "@/lib/table-sort";
 
 // promo.sku_match_diagnostic() 반환 행
 export type DiagnosticRow = {
@@ -163,6 +164,7 @@ export default function SkuMatchPanel({
         (r) => r.base_name.includes(query.trim()) || (r.dr_code ?? "").includes(query.trim()),
       )
     : localRows;
+  const { sorted: sortedRows, toggle: sortBy, arrow } = useTableSort<DiagnosticRow>(filtered, null, "desc");
 
   return (
     <section className="mt-5">
@@ -177,7 +179,7 @@ export default function SkuMatchPanel({
             <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning">플랜 미매칭 {planOnly.length}</span>
           )}
           {actualOnly.length > 0 && (
-            <span className="rounded-full bg-soft px-2 py-0.5 text-ink-3">실적 미매칭 {actualOnly.length}</span>
+            <span className="rounded-full bg-soft px-2 py-0.5 text-ink-3">성과 미매칭 {actualOnly.length}</span>
           )}
         </div>
       </div>
@@ -186,7 +188,7 @@ export default function SkuMatchPanel({
       {planOnly.length > 0 && (
         <div className="mt-3 overflow-hidden rounded-xl card-soft">
           <div className="border-b border-line bg-warning-soft/60 px-4 py-2.5 text-xs font-medium text-warning">
-            플랜에 있는데 실적과 매칭 안 된 SKU {planOnly.length}개 — 추천순으로 골라 바로 연동하세요.
+            플랜에 있는데 성과와 매칭 안 된 SKU {planOnly.length}개 — 추천순으로 골라 바로 연동하세요.
           </div>
           <ul className="divide-y divide-line/70">
             {planOnly.map((p) => {
@@ -211,11 +213,11 @@ export default function SkuMatchPanel({
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <select
                       value={pick}
-                      aria-label={`${p.base_name}에 연결할 실적 SKU`}
+                      aria-label={`${p.base_name}에 연결할 성과 SKU`}
                       onChange={(e) => setPicks((s) => ({ ...s, [p.product_id]: e.target.value }))}
                       className="w-full min-w-0 flex-1 truncate rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink-2 focus:outline-none"
                     >
-                      <option value="">실적 SKU 선택…</option>
+                      <option value="">성과 SKU 선택…</option>
                       {candidates.map((c, i) => (
                         <option key={c.product_id} value={c.product_id}>
                           {i === 0 && bestScore >= 500 ? "★ " : ""}
@@ -290,18 +292,18 @@ export default function SkuMatchPanel({
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[640px] text-xs">
                 <thead className="text-left text-ink-4">
-                  <tr>
-                    <th className="px-2 py-2 font-medium">상태</th>
-                    <th className="px-2 py-2 font-medium">SKU</th>
-                    <th className="px-2 py-2 text-right font-medium">기대수량</th>
-                    <th className="px-2 py-2 text-right font-medium">기대매출</th>
-                    <th className="px-2 py-2 text-right font-medium">실수량</th>
-                    <th className="px-2 py-2 text-right font-medium">실매출</th>
+                  <tr className="[&_th]:cursor-pointer [&_th]:select-none [&_th:hover]:text-ink-2">
+                    <th className="px-2 py-2 font-medium" onClick={() => sortBy("side")}>상태{arrow("side")}</th>
+                    <th className="px-2 py-2 font-medium" onClick={() => sortBy("base_name")}>SKU{arrow("base_name")}</th>
+                    <th className="px-2 py-2 text-right font-medium" onClick={() => sortBy("expected_qty")}>기대수량{arrow("expected_qty")}</th>
+                    <th className="px-2 py-2 text-right font-medium" onClick={() => sortBy("expected_revenue")}>기대매출{arrow("expected_revenue")}</th>
+                    <th className="px-2 py-2 text-right font-medium" onClick={() => sortBy("actual_qty")}>성과수량{arrow("actual_qty")}</th>
+                    <th className="px-2 py-2 text-right font-medium" onClick={() => sortBy("actual_revenue")}>성과매출{arrow("actual_revenue")}</th>
                     <th className="px-2 py-2 text-center font-medium">정기구독</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => (
+                  {sortedRows.map((r) => (
                     <tr key={`${r.product_id}:${r.is_subscription}`} className="border-t border-line/60">
                       <td className="px-2 py-2">
                         <SideBadge side={r.side} isMapped={r.is_mapped} />
@@ -323,10 +325,10 @@ export default function SkuMatchPanel({
                       </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && (
+                  {sortedRows.length === 0 && (
                     <tr>
                       <td colSpan={7} className="px-2 py-6 text-center text-ink-4">
-                        {query ? "검색 결과가 없습니다." : "플랜·실적 모두 없습니다."}
+                        {query ? "검색 결과가 없습니다." : "플랜·성과 모두 없습니다."}
                       </td>
                     </tr>
                   )}
@@ -391,5 +393,5 @@ function SubscriptionCell({
 function SideBadge({ side, isMapped }: { side: DiagnosticRow["side"]; isMapped: boolean }) {
   if (side === "both" || isMapped) return <StatusBadge tone="success" label={isMapped ? "수동 연동" : "자동 매칭"} />;
   if (side === "plan") return <StatusBadge tone="warning" label="플랜만" />;
-  return <StatusBadge tone="neutral" label="실적만" />;
+  return <StatusBadge tone="neutral" label="성과만" />;
 }
