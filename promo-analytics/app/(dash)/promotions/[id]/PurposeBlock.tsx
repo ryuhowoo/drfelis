@@ -26,7 +26,7 @@ export default function PurposeBlock({ rows }: { rows: PurposeMetricRow[] }) {
                 {r.purpose}
               </span>
               <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-500">
-                가중치 {r.weight}
+                중요도 {r.weight}
               </span>
             </div>
             <div className="mt-3 space-y-1.5 text-sm">
@@ -46,10 +46,10 @@ export default function PurposeBlock({ rows }: { rows: PurposeMetricRow[] }) {
                 </>
               ) : (
                 <>
-                  <Metric label="증분 매출" value={won(r.uplift)} primary />
-                  <Metric label="공헌이익" value={wonShort(r.contribution)} />
+                  <Metric label="행사로 늘어난 매출" value={won(r.uplift)} primary />
+                  <Metric label="남는 이익(공헌)" value={wonShort(r.contribution)} />
                   {r.uplift_pct != null && (
-                    <Metric label="증분율" value={pct(r.uplift_pct, 0)} />
+                    <Metric label="평소 대비" value={pct(r.uplift_pct, 0)} />
                   )}
                 </>
               )}
@@ -58,8 +58,8 @@ export default function PurposeBlock({ rows }: { rows: PurposeMetricRow[] }) {
         ))}
       </div>
       <p className="mt-2 text-xs text-neutral-400">
-        목적별로 보는 관점이 다릅니다 — 세일즈=증분·공헌, 재고소진=수량 달성률, 브랜딩=구매 건수.
-        가중치는 캠페인 편집에서 조정합니다.
+        목적마다 중요한 숫자가 다릅니다 — 세일즈=행사로 늘어난 매출·이익, 재고소진=수량 달성률,
+        브랜딩=구매 건수. ‘평소 대비’는 행사 안 했을 때 대비 얼마나 더 팔렸는지입니다.
       </p>
     </section>
   );
