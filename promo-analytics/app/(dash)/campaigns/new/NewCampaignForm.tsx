@@ -19,9 +19,11 @@ const PURPOSES = [
 export default function NewCampaignForm({
   cases,
   options,
+  channels = [],
 }: {
   cases: CaseFeature[];
   options: Options;
+  channels?: string[];
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -30,6 +32,7 @@ export default function NewCampaignForm({
   const [weights, setWeights] = useState<Record<string, number>>({});
   const [promoType, setPromoType] = useState("");
   const [seasonTag, setSeasonTag] = useState("");
+  const [channel, setChannel] = useState("");
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -102,6 +105,7 @@ export default function NewCampaignForm({
           weights,
           promo_type: promoType || null,
           season_tag: seasonTag || null,
+          channel: channel || null,
           discount_rate: discountPct ? discountPct / 100 : null,
         }),
       });
@@ -168,6 +172,16 @@ export default function NewCampaignForm({
                 </select>
               </div>
             </div>
+            {channels.length > 0 && (
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-ink-3">판매 채널</label>
+                <select value={channel} onChange={(e) => setChannel(e.target.value)} className={inputCls}>
+                  <option value="">선택…</option>
+                  {channels.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <p className="mt-1 text-[11px] text-ink-4">채널 수수료가 공헌이익 계산에 반영됩니다(설정에서 수수료 관리).</p>
+              </div>
+            )}
             <div className="mt-3">
               <label className="block text-xs font-medium text-ink-3">대표 할인율 (%)</label>
               <input type="number" min={0} max={100} step={1} value={discountPct || ""} onChange={(e) => setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))} placeholder="예: 50" className={inputCls} />
