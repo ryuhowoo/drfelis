@@ -8,7 +8,7 @@ import type { CampaignPlan, RateCard } from "@/lib/types";
 import {
   computeOptionTotals,
   computePlanTotals,
-  rateCardMult,
+  effectiveMult,
   type PlanItemInput,
   type CouponSpec,
 } from "@/lib/plan";
@@ -91,6 +91,8 @@ export default function PlanEditor({
   campaignName,
   startDate,
   endDate,
+  channel,
+  channelFee,
 }: {
   promotionId: string;
   plan: CampaignPlan | null;
@@ -101,6 +103,8 @@ export default function PlanEditor({
   campaignName?: string;
   startDate?: string;
   endDate?: string;
+  channel?: string | null;
+  channelFee?: number | null;
 }) {
   const router = useRouter();
   const [options, setOptions] = useState<OptState[]>(() => toState(initialOptions));
@@ -135,7 +139,7 @@ export default function PlanEditor({
   const mult = confirmed
     ? plan?.rate_card_snapshot?.mult ?? 0.715
     : rateCard
-      ? rateCardMult(rateCard)
+      ? effectiveMult(rateCard, channelFee)
       : 0.715;
 
   // ── 작성 중 자동 임시저장 (item 11) ──────────
@@ -469,6 +473,7 @@ export default function PlanEditor({
         period: startDate && endDate ? `${startDate} ~ ${endDate}` : "",
         version: `v${plan!.version}`,
         purposes: purposes ?? [],
+        channel: channel ?? null,
       },
       exOptions,
       {

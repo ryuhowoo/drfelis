@@ -15,6 +15,15 @@ export function rateCardMult(rc: {
   return 1 - (rc.fee_rate + rc.ad_rate + rc.logistics_rate + rc.reward_rate);
 }
 
+/** 채널 수수료 override 반영 mult — 채널 fee 가 있으면 레이트카드 fee 대신 사용 (피드백 8) */
+export function effectiveMult(
+  rc: { fee_rate: number; ad_rate: number; logistics_rate: number; reward_rate: number },
+  channelFeeRate: number | null | undefined,
+): number {
+  const fee = channelFeeRate != null ? channelFeeRate : rc.fee_rate;
+  return 1 - (fee + rc.ad_rate + rc.logistics_rate + rc.reward_rate);
+}
+
 /** 단가 ↔ 소비자가 대비 할인율 양방향 바인딩 헬퍼 */
 export function priceFromDiscount(consumerPrice: number, discount: number): number {
   return Math.round(consumerPrice * (1 - discount));

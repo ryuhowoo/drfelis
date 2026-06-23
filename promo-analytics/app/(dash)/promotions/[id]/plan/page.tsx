@@ -25,10 +25,21 @@ export default async function PlanPage({
 
   const { data: promo } = await supabase
     .from("promotions")
-    .select("id, name, start_date, end_date, purposes")
+    .select("id, name, start_date, end_date, purposes, channel")
     .eq("id", id)
     .single();
   if (!promo) notFound();
+
+  // 채널 수수료 — 공헌이익 mult에 반영(없으면 레이트카드 fee)
+  let channelFee: number | null = null;
+  if (promo.channel) {
+    const { data: cf } = await supabase
+      .from("channel_fees")
+      .select("fee_rate")
+      .eq("channel", promo.channel as string)
+      .maybeSingle();
+    channelFee = (cf?.fee_rate as number | undefined) ?? null;
+  }
 
   // 편집 대상 = 최신 버전 플랜
   const { data: plans } = await supabase
@@ -166,6 +177,8 @@ export default async function PlanPage({
         campaignName={promo.name as string}
         startDate={promo.start_date as string}
         endDate={promo.end_date as string}
+        channel={(promo.channel as string | null) ?? null}
+        channelFee={channelFee}
       />
     </div>
   );

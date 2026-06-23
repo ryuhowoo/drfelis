@@ -35,6 +35,7 @@ export type ExportMeta = {
   period: string; // "2026-06-08 ~ 2026-06-14"
   version: string; // "v2"
   purposes: string[]; // 목적
+  channel?: string | null; // 판매 채널
 };
 
 const PLAN_HEADER = [
@@ -95,6 +96,7 @@ export function buildPlanWorkbook(
     ["캠페인", meta.campaign],
     ["기간", meta.period],
     ["플랜 버전", meta.version],
+    ["판매 채널", meta.channel || "—"],
     ["목적", meta.purposes.length ? meta.purposes.join(", ") : "—"],
     ["예상 매출액", Math.round(summary.revenue)],
     ["구매건수(세트)", summary.order_count],
