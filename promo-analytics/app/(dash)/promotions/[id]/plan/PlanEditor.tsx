@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -15,7 +15,7 @@ import {
 import { won, pct, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
 import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
-import PlanTemplatePanel from "./PlanTemplatePanel";
+import PlanLoadPanel from "./PlanLoadPanel";
 import SubProductSuggest, { type Bench } from "./SubProductSuggest";
 import { downloadPlanXlsx, type ExportOption } from "@/lib/plan-export";
 
@@ -137,6 +137,65 @@ export default function PlanEditor({
     : rateCard
       ? rateCardMult(rateCard)
       : 0.715;
+
+  // ── 작성 중 자동 임시저장 (item 11) ──────────
+  // 뒤로가기·새로고침·크래시 후에도 이어서 작성. draft에서만, localStorage 사용.
+  const draftKey = plan ? `plan-draft:${promotionId}:${plan.id}` : null;
+  const [restored, setRestored] = useState(false);
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (!draftKey || confirmed) {
+      hydrated.current = true;
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const d = JSON.parse(raw) as { options?: OptState[]; coupon?: typeof coupon };
+        if (Array.isArray(d.options) && d.options.length > 0) {
+          setOptions(d.options);
+          if (d.coupon) setCoupon(d.coupon);
+          setRestored(true);
+          setDirty(true);
+        }
+      }
+    } catch {
+      /* 손상된 임시본 무시 */
+    }
+    hydrated.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!draftKey || confirmed || !hydrated.current) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ options, coupon, ts: Date.now() }));
+      } catch {
+        /* 용량 초과 등 무시 */
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [options, coupon, draftKey, confirmed]);
+  const clearDraft = () => {
+    if (draftKey) {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        /* noop */
+      }
+    }
+    setRestored(false);
+  };
+  const discardDraft = () => {
+    clearDraft();
+    setOptions(toState(initialOptions));
+    setCoupon({
+      min: Number(planC?.coupon_min_order ?? 0) || 0,
+      ratePct: (Number(planC?.coupon_rate ?? 0) || 0) * 100,
+      max: Number(planC?.coupon_max ?? 0) || 0,
+    });
+    setDirty(false);
+  };
 
   // N5: '플랜 만들기' 자동 draft 생성 제거 — 플랜은 ⑤ 가이드 업로드로만 적재
   if (!plan) {
@@ -280,6 +339,11 @@ export default function PlanEditor({
     setDirty(true);
     setOptions((prev) => [...prev, ...bs.map(buildSubOption)]);
   };
+  // item 12 — 저장된 플랜의 옵션을 그대로 현재 플랜에 추가(append)
+  const loadPlanOptions = (opts: EditorOption[]) => {
+    setDirty(true);
+    setOptions((prev) => [...prev, ...toState(opts)]);
+  };
   const patchItem = (optKey: string, itemKey: string, patch: Partial<ItemState>) => {
     setDirty(true);
     setOptions((prev) =>
@@ -347,6 +411,7 @@ export default function PlanEditor({
     const ok = await save();
     if (ok) {
       setDirty(false);
+      clearDraft();
       setMsg({ kind: "ok", text: "draft 저장 완료" });
       router.refresh();
     }
@@ -373,6 +438,7 @@ export default function PlanEditor({
       setBusy(false);
       return;
     }
+    clearDraft();
     router.refresh();
     setBusy(false);
   }
@@ -469,6 +535,18 @@ export default function PlanEditor({
         )}
       </div>
 
+      {restored && !confirmed && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-sm text-brand-700">
+          <span>이전에 작성하던 임시 내용을 복구했습니다. 저장하면 확정 반영됩니다.</span>
+          <button
+            onClick={discardDraft}
+            className="shrink-0 rounded-lg border border-brand-300 px-2.5 py-1 text-xs font-medium hover:bg-brand-100"
+          >
+            서버 버전으로 되돌리기
+          </button>
+        </div>
+      )}
+
       {/* 플랜 목적 + 목적별 총합 헤더 — 스크롤 시에도 합계를 보며 옵션 조절 (sticky) */}
       <div className="sticky top-16 z-20 mt-4 rounded-2xl card-soft p-5 shadow-sm md:top-0">
         {purposes && purposes.length > 0 && (
@@ -534,8 +612,8 @@ export default function PlanEditor({
         </div>
       </div>
 
-      {/* 이전 플랜 추천 (draft에서만) */}
-      {!confirmed && <PlanTemplatePanel promotionId={promotionId} />}
+      {/* 플랜 불러오기 (draft에서만) */}
+      {!confirmed && <PlanLoadPanel currentPlanId={plan.id} onLoad={loadPlanOptions} />}
 
       {/* 검증 요약 (확정 전 오류 발견) */}
       {!confirmed && (validation.errorCount > 0 || validation.warnCount > 0) && (
