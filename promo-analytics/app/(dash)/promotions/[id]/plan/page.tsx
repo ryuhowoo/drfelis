@@ -182,6 +182,9 @@ export default async function PlanPage({
         rateCard={(rc as RateCard) ?? null}
         qtyHint={qtyHint}
         purposes={(promo.purposes as string[] | null) ?? []}
+        campaignName={promo.name as string}
+        startDate={promo.start_date as string}
+        endDate={promo.end_date as string}
       />
 
       {plan && (

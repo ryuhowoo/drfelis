@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { buildPlanWorkbook, type ExportOption, type ExportSummary } from "../plan-export";
+import { buildPlanWorkbook, planFileName, type ExportOption, type ExportSummary } from "../plan-export";
+
+const meta = {
+  campaign: "[BETTER HABITS] 활력을 키우는 습관 — 가격 가이드(플랜)",
+  period: "2026-06-08 ~ 2026-06-14",
+  version: "v2",
+  purposes: ["세일즈", "브랜딩"],
+};
 
 const options: ExportOption[] = [
   {
@@ -26,7 +33,7 @@ const summary: ExportSummary = {
 };
 
 describe("buildPlanWorkbook", () => {
-  const wb = buildPlanWorkbook("슈퍼클린", options, summary, { min: 50000, ratePct: 5, max: 5000 });
+  const wb = buildPlanWorkbook(meta, options, summary, { min: 50000, ratePct: 5, max: 5000 });
   // 워크북을 바이너리로 쓰고 다시 읽어 셀을 검증(왕복)
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
   const buf = (out instanceof Uint8Array ? out.buffer : out) as ArrayBuffer;
@@ -53,12 +60,31 @@ describe("buildPlanWorkbook", () => {
     expect(r2[5]).toBe(19900); // 단가
   });
 
-  it("요약 시트: 구매건수·판매수량·공헌률·쿠폰", () => {
+  it("요약 시트: 캠페인·기간·목적·지표·쿠폰 모두 포함", () => {
     const aoa = XLSX.utils.sheet_to_json(rb.Sheets["요약"], { header: 1 }) as (string | number)[][];
     const map = new Map(aoa.map((r) => [r[0], r[1]]));
+    expect(map.get("캠페인")).toBe(meta.campaign);
+    expect(map.get("기간")).toBe("2026-06-08 ~ 2026-06-14");
+    expect(map.get("목적")).toBe("세일즈, 브랜딩");
     expect(map.get("구매건수(세트)")).toBe(400);
     expect(map.get("판매수량(SKU)")).toBe(2000);
     expect(map.get("공헌이익률(%)")).toBe(30.8);
-    expect(map.get("쿠폰 할인율(%)")).toBe(5);
+    expect(map.get("추가할인쿠폰")).toContain("5%");
+  });
+
+  it("쿠폰 없으면 '없음'", () => {
+    const wb2 = buildPlanWorkbook(meta, options, summary, null);
+    const aoa = XLSX.utils.sheet_to_json(wb2.Sheets["요약"], { header: 1 }) as (string | number)[][];
+    const map = new Map(aoa.map((r) => [r[0], r[1]]));
+    expect(map.get("추가할인쿠폰")).toBe("없음");
+  });
+
+  it("파일명 = 플랜명-기간.xlsx (경로문자 정리)", () => {
+    expect(planFileName(meta)).toBe(
+      "[BETTER HABITS] 활력을 키우는 습관 — 가격 가이드(플랜)-2026-06-08~2026-06-14.xlsx",
+    );
+    expect(planFileName({ ...meta, campaign: "여름/세일" })).toBe(
+      "여름 세일-2026-06-08~2026-06-14.xlsx",
+    );
   });
 });
