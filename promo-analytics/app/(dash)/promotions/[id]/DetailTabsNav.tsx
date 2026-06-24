@@ -2,12 +2,13 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 // 상세 심층분석 탭 — URL(?view=)로 보존, 선택 탭만 서버 렌더(lazy). 네비게이션 기반(공유·뒤로가기 정상).
-export type DetailView = "overview" | "skus" | "trend" | "purpose" | "sources";
+export type DetailView = "overview" | "skus" | "trend" | "segment" | "purpose" | "sources";
 
 export const DETAIL_VIEWS: { id: DetailView; label: string }[] = [
   { id: "overview", label: "성과 개요" },
   { id: "skus", label: "SKU·옵션" },
   { id: "trend", label: "매출 흐름" },
+  { id: "segment", label: "세그먼트" },
   { id: "purpose", label: "목적 분석" },
   { id: "sources", label: "회고" },
 ];

@@ -301,3 +301,22 @@ export type CampaignAchievement = {
   actual_contribution_total: number | null;
   quantity_reliable: boolean | null;
 };
+
+// 0058: 세그먼트 성과 요약 (promotion_segment_summary RPC 반환)
+//   회원/비회원·회원등급 코호트·일반정기·카테고리. Staff·동물병원은 excluded로 분리.
+//   AOV·ARPPU는 합계에서 파생: AOV=revenue/orders, ARPPU=revenue/users.
+export type SegmentRow = {
+  revenue: number;
+  orders: number;
+  qty: number;
+  users: number;
+};
+export type SegmentSummary = {
+  has_data: boolean;
+  total: SegmentRow | null;
+  member_split: (SegmentRow & { seg: string })[];
+  grades: (SegmentRow & { grade: string })[];
+  order_types: { order_type: string; revenue: number; orders: number; qty: number }[];
+  categories: { category: string; revenue: number; orders: number; qty: number }[];
+  excluded: { grade: string; revenue: number; orders: number }[];
+};
