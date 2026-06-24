@@ -158,6 +158,15 @@ export default async function PromotionDetail({
       ach_qty: achSummary?.ach_qty ?? null,
       qty_reliable: achSummary?.quantity_reliable ?? false,
       order_count: orderCount,
+      // 플랜 대비 목표 달성
+      plan_revenue: achSummary?.expected_revenue_total ?? null,
+      actual_revenue: achSummary?.campaign_revenue_total ?? null,
+      ach_revenue: achSummary?.revenue_ach_total ?? null,
+      plan_contribution: achSummary?.expected_contribution_total ?? null,
+      actual_contribution: achSummary?.contribution_total ?? null,
+      ach_contribution: achSummary?.contribution_ach_total ?? null,
+      plan_qty: achSummary?.expected_qty_total ?? null,
+      actual_qty: achSummary?.main_nonsub_qty ?? null,
     };
   });
 
