@@ -32,6 +32,13 @@ create table if not exists promo.promotion_segment_sales (
 create index if not exists promotion_segment_sales_promo_idx
   on promo.promotion_segment_sales(promotion_id);
 
+-- RLS: 기존 promo 테이블 규약과 동일(인증 사용자 허용). 앱이 교체 확인용으로 이 테이블을
+-- authenticated 클라이언트로 직접 count 조회하므로 정책이 없으면 조용히 0건이 된다.
+alter table promo.promotion_segment_sales enable row level security;
+drop policy if exists promotion_segment_sales_auth on promo.promotion_segment_sales;
+create policy promotion_segment_sales_auth on promo.promotion_segment_sales
+  for all to authenticated using (true) with check (true);
+
 -- 원자 교체(삭제+삽입) + 카테고리 백필 — 업로드 직후 일관 적용
 create or replace function promo.replace_promotion_segment_sales(
   p_promotion_id uuid,
