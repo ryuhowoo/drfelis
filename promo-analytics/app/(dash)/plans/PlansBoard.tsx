@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { won, wonShort, pct } from "@/lib/format";
 
 // promo.plans_bundle() 반환 형태
@@ -84,6 +85,29 @@ export default function PlansBoard({
 
 // ── 플랜 목록 ─────────────────────────────────────────────────────────────
 function PlanList({ plans }: { plans: PlanRow[] }) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function del(p: PlanRow) {
+    if (!p.promotion_id) {
+      alert("캠페인에 연결되지 않은 플랜이라 삭제할 수 없습니다.");
+      return;
+    }
+    if (
+      !confirm(
+        `'${p.name ?? p.code ?? "캠페인"}'을(를) 삭제할까요?\n\n성과·플랜·메모가 함께 삭제됩니다. 복구 불가.`,
+      )
+    )
+      return;
+    setDeleting(p.id);
+    const res = await fetch(`/api/promotions/${p.promotion_id}`, { method: "DELETE" });
+    if (res.ok) router.refresh();
+    else {
+      setDeleting(null);
+      alert("삭제 실패");
+    }
+  }
+
   if (plans.length === 0)
     return (
       <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center text-sm text-neutral-400">
@@ -103,6 +127,7 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
             <th className="px-3 py-2.5 text-right font-medium">옵션</th>
             <th className="px-3 py-2.5 font-medium">성과 연결</th>
             <th className="px-3 py-2.5 text-right font-medium">매출 달성률</th>
+            <th className="px-3 py-2.5 font-medium"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
@@ -182,6 +207,16 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                   }`}
                 >
                   {ach != null ? pct(ach, 0) : "—"}
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  <button
+                    onClick={() => del(p)}
+                    disabled={deleting === p.id || !p.promotion_id}
+                    title="캠페인 삭제"
+                    className="rounded-lg px-2 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  >
+                    {deleting === p.id ? "삭제 중…" : "삭제"}
+                  </button>
                 </td>
               </tr>
             );

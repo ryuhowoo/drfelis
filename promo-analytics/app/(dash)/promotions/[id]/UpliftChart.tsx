@@ -39,14 +39,14 @@ export default function UpliftChart({ data }: { data: Item[] }) {
           tickFormatter={(v: string) => (v.length > 14 ? v.slice(0, 14) + "…" : v)}
         />
         <Tooltip
-          formatter={(v) => [wonShort(Number(v)), "증분"] as [string, string]}
+          formatter={(v) => [wonShort(Number(v)), "초과 달성"] as [string, string]}
           cursor={{ fill: "#f5f5f5" }}
         />
         <Bar dataKey="uplift" radius={[0, 4, 4, 0]}>
           {data.map((d, i) => (
             <Cell
               key={i}
-              fill={d.uplift < 0 ? "#f87171" : d.isMain ? "#171717" : "#9ca3af"}
+              fill={d.uplift < 0 ? "#f87171" : d.isMain ? "#16a34a" : "#9ca3af"}
             />
           ))}
         </Bar>
