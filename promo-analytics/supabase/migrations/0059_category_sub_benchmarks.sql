@@ -64,12 +64,23 @@ as $$
       and (p_months is null or p.start_date >= (current_date - make_interval(months => p_months)))
     group by o.promotion_id
   ),
-  camp as (
+  camp_all as (
     select mc.promotion_id, mc.main_category, mc.main_skeys, q.main_qty
     from main_cat mc
     join main_qty q on q.promotion_id = mc.promotion_id
     where q.main_qty > 0
-      and (p_main_category is null or p_main_category = '전체' or mc.main_category = p_main_category)
+  ),
+  sel as (
+    -- 선택한 메인 카테고리가 메인이던 캠페인(또는 전체)
+    select * from camp_all
+    where (p_main_category is null or p_main_category = '전체' or main_category = p_main_category)
+  ),
+  sel_count as (select count(*) as n from sel),
+  camp as (
+    -- 동일 메인카테고리 표본이 충분(>=2)하면 그것만, 부족하면 전체 캠페인으로 자동 보완
+    select promotion_id, main_skeys, main_qty from sel where (select n from sel_count) >= 2
+    union all
+    select promotion_id, main_skeys, main_qty from camp_all where (select n from sel_count) < 2
   ),
   sub_opt as (
     -- 풀 안 캠페인의 '서브'(메인 SKU 제외) 옵션
