@@ -18,6 +18,7 @@ export type Bench = {
   regular_price: number | null;
   cost: number | null;
   avg_discount: number | null;
+  total_revenue?: number | null; // 풀 내 누적 매출(서브 기여 규모)
   avg_attach_ratio?: number | null; // 메인 1개당 서브 평균수량 (category_sub_benchmarks)
 };
 
@@ -136,11 +137,15 @@ export default function SubProductSuggest({
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-ink">{r.base_name}</span>
-                        <span className="mt-0.5 block text-[11px] text-ink-4">
+                        {/* 평균수량 · 매출 · 부착률 — 사용자 선택 지표 */}
+                        <span className="mt-0.5 block text-[11px] text-ink-3">
+                          평균 {Math.round(r.avg_qty)}개
+                          {r.total_revenue != null ? ` · 매출 ${won(r.total_revenue)}` : ""}
                           {r.avg_attach_ratio != null
-                            ? `메인 100개당 ${Math.round(r.avg_attach_ratio * 100)}개${rec != null ? ` · 계획 ≈ ${num(rec)}개` : ""}`
-                            : `평균 ${Math.round(r.avg_qty)}개`}
-                          {" · "}
+                            ? ` · 부착률 메인 100개당 ${Math.round(r.avg_attach_ratio * 100)}개${rec != null ? ` (계획 ≈ ${num(rec)}개)` : ""}`
+                            : ""}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-ink-4">
                           {r.campaigns}회 등장 · 단가 {won(r.avg_unit_price)}
                           {r.avg_discount != null ? ` · 할인 ${pct(r.avg_discount)}` : ""}
                         </span>

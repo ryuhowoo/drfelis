@@ -31,7 +31,8 @@ returns table(
   consumer_price numeric,
   regular_price numeric,
   cost numeric,
-  avg_discount numeric        -- 소비자가 대비 평균 할인율(0~1)
+  avg_discount numeric,       -- 소비자가 대비 평균 할인율(0~1)
+  total_revenue numeric       -- 풀 내 누적 매출(서브상품 기여 규모)
 )
 language sql stable security definer set search_path = ''
 as $$
@@ -114,7 +115,8 @@ as $$
     pr.consumer_price, pr.regular_price, pr.cost,
     case when pr.consumer_price > 0
          then round(1 - (a.total_revenue / nullif(a.total_qty, 0)) / pr.consumer_price, 3)
-         else null end as avg_discount
+         else null end as avg_discount,
+    a.total_revenue
   from agg a
   join prod pr on pr.skey = a.skey
   where (p_exclude_skeys is null or a.skey <> all(p_exclude_skeys))
