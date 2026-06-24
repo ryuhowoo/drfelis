@@ -18,6 +18,8 @@ import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button 
 import PlanLoadPanel from "./PlanLoadPanel";
 import SubProductSuggest, { type Bench } from "./SubProductSuggest";
 import { downloadPlanXlsx, type ExportOption } from "@/lib/plan-export";
+import { parsePlanWorkbook } from "@/lib/plan-import";
+import { ensureProducts } from "@/lib/products";
 
 export type EditorItem = {
   product_id: string;
@@ -487,6 +489,64 @@ export default function PlanEditor({
     );
   }
 
+  // Excel 가져오기 (로드맵 3.2) — 내보낸 양식의 '플랜' 시트를 파싱해 옵션을 추가
+  async function importXlsx(file: File) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const { options: parsed } = parsePlanWorkbook(buf);
+      if (parsed.length === 0)
+        throw new Error("'플랜' 시트를 찾지 못했습니다 — 내보낸 양식인지 확인하세요.");
+      const supabase = createClient();
+      const names = [...new Set(parsed.flatMap((o) => o.items.map((it) => it.base_name)))];
+      const idMap = await ensureProducts(supabase, names);
+      const ids = [...new Set([...idMap.values()])];
+      const econ: Record<string, { consumer_price: number | null; regular_price: number | null; cost: number | null }> = {};
+      if (ids.length > 0) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id, consumer_price, regular_price, cost")
+          .in("id", ids);
+        for (const p of prods ?? [])
+          econ[p.id as string] = {
+            consumer_price: p.consumer_price as number | null,
+            regular_price: p.regular_price as number | null,
+            cost: p.cost as number | null,
+          };
+      }
+      const editorOpts: EditorOption[] = parsed.map((o) => ({
+        option_label: o.option_label,
+        expected_option_qty: o.expected_option_qty,
+        is_main: o.is_main,
+        match_patterns: [],
+        frozen: null,
+        items: o.items
+          .map((it) => {
+            const pid = idMap.get(it.base_name) ?? "";
+            const e = econ[pid];
+            return {
+              product_id: pid,
+              base_name: it.base_name,
+              sku_qty_per_option: it.sku_qty_per_option,
+              unit_sale_price: it.unit_sale_price,
+              source_config_id: null,
+              consumer_price: e?.consumer_price ?? null,
+              regular_price: e?.regular_price ?? null,
+              cost: e?.cost ?? it.cost ?? null,
+            };
+          })
+          .filter((it) => it.product_id),
+      }));
+      loadPlanOptions(editorOpts);
+      setMsg({ kind: "ok", text: `엑셀에서 옵션 ${editorOpts.length}개를 불러왔습니다. 검토 후 저장하세요.` });
+    } catch (e) {
+      setMsg({ kind: "err", text: e instanceof Error ? e.message : "가져오기 실패" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onClone() {
     setBusy(true);
     setMsg(null);
@@ -703,6 +763,25 @@ export default function PlanEditor({
         >
           ⬇ Excel 내보내기
         </button>
+        {!confirmed && (
+          <label
+            className={`cursor-pointer rounded-xl border border-line px-4 py-2 text-sm font-medium text-ink-2 hover:bg-soft ${busy ? "pointer-events-none opacity-50" : ""}`}
+            title="내보낸 양식의 엑셀을 올려 옵션을 한 번에 채우기"
+          >
+            ⬆ Excel 가져오기
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              disabled={busy}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importXlsx(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
         {confirmed ? (
           <button
             onClick={onClone}
