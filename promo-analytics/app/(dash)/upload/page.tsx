@@ -527,7 +527,7 @@ function UploadCard({ def }: { def: CardDef }) {
         codes: code ? [code] : undefined,
       });
       setP({ phase: "ok", message: `${name} 생성 완료 · ${done}행. 상세로 이동합니다…` });
-      router.push(`/promotions/${promo.id}/edit`);
+      router.push(`/promotions/${promo.id}`);
     } catch (e) {
       const msg =
         e instanceof Error

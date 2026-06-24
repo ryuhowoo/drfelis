@@ -26,6 +26,7 @@ import CampaignTrend, { type DailyPoint } from "./CampaignTrend";
 import { CampaignWorkflowBar } from "./CampaignWorkflowBar";
 import { ActionPanel } from "./ActionPanel";
 import { DetailTabsNav, type DetailView } from "./DetailTabsNav";
+import { DeleteCampaignButton } from "./DeleteCampaignButton";
 
 export const dynamic = "force-dynamic";
 
@@ -234,12 +235,7 @@ export default async function PromotionDetail({
             {promo.promo_type && ` · ${promo.promo_type}`}
           </p>
         </div>
-        <Link
-          href={`/promotions/${id}/edit`}
-          className="shrink-0 rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-soft"
-        >
-          캠페인 정보 편집
-        </Link>
+        <DeleteCampaignButton id={id} name={promo.name} />
       </header>
 
       {linkedPlans.length > 0 && (
@@ -455,8 +451,8 @@ export default async function PromotionDetail({
                   ) : (
                     <p className="mt-1 text-sm text-ink-4">
                       아직 메인 상품이 지정되지 않았습니다.{" "}
-                      <Link href={`/promotions/${id}/edit`} className="underline">
-                        지정하기
+                      <Link href={`/promotions/${id}/plan`} className="underline">
+                        플랜에서 옵션을 ‘메인’으로 지정하세요
                       </Link>
                     </p>
                   )}
