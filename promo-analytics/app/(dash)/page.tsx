@@ -487,7 +487,7 @@ export default async function Dashboard() {
       <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card className="lg:col-span-2">
           <div className="mb-1 flex items-center justify-between">
-            <CardTitle className="mb-0">월별 증분 추세</CardTitle>
+            <CardTitle className="mb-0">월별 초과 달성 추세</CardTitle>
             {trend != null && (
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-semibold surface-pressed-soft ${
@@ -509,7 +509,7 @@ export default async function Dashboard() {
 
       <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-3 bento-in">
         <Card>
-          <CardTitle>혜택 유형별 증분</CardTitle>
+          <CardTitle>혜택 유형별 초과 달성</CardTitle>
           <Concentric data={typeData} />
         </Card>
 

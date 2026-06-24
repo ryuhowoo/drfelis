@@ -131,7 +131,6 @@ export default async function PromotionDetail({
     const pr = Array.isArray(r.products) ? r.products[0] : r.products;
     return { product_id: r.product_id, base_name: pr?.base_name ?? r.product_id };
   });
-  const sources = bundle?.sources ?? [];
 
   // 목적별 핵심 지표 (S5.4)
   const ewData = bundle?.weights ?? [];
@@ -333,7 +332,7 @@ export default async function PromotionDetail({
           <div>
             {!hasBaseline && (
               <div className="mb-4 rounded-lg bg-info-soft px-4 py-3 text-sm text-info">
-                baseline(직전 8주 일평균)이 얕아 증분 정확도가 낮을 수 있습니다 — <strong>차단되지 않으며</strong>,
+                baseline(직전 8주 일평균)이 얕아 초과 달성 정확도가 낮을 수 있습니다 — <strong>차단되지 않으며</strong>,
                 일별 매출 추이가 쌓이면 자동으로 정확해집니다.
               </div>
             )}
@@ -360,7 +359,7 @@ export default async function PromotionDetail({
 
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-5">
               <section className="lg:col-span-3">
-                <h2 className="mb-2 text-sm font-semibold text-ink-2">상품별 증분 측정</h2>
+                <h2 className="mb-2 text-sm font-semibold text-ink-2">상품별 초과 달성</h2>
                 <div className="overflow-x-auto rounded-2xl card-soft">
                   <table className="w-full min-w-[760px] text-sm">
                     <thead className="bg-soft/60 text-left text-xs text-ink-3">
@@ -369,7 +368,7 @@ export default async function PromotionDetail({
                         <th className="px-3 py-2.5 text-right font-medium">baseline/일</th>
                         <th className="px-3 py-2.5 text-right font-medium">성과</th>
                         <th className="px-3 py-2.5 text-right font-medium">기대</th>
-                        <th className="px-3 py-2.5 text-right font-medium">증분 ±95% CI</th>
+                        <th className="px-3 py-2.5 text-right font-medium">초과 달성 ±95% CI</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line/70">
@@ -401,11 +400,11 @@ export default async function PromotionDetail({
                             </td>
                             <td className="px-3 py-2.5 text-right text-ink-2">{wonShort(r.actual_revenue)}</td>
                             <td className="px-3 py-2.5 text-right text-ink-4">{wonShort(r.expected_revenue)}</td>
-                            <td className={`px-3 py-2.5 text-right font-semibold ${r.uplift_revenue < 0 ? "text-danger" : "text-ink"}`}>
+                            <td className={`px-3 py-2.5 text-right font-semibold ${r.uplift_revenue < 0 ? "text-danger" : "text-success"}`}>
                               <div className="flex items-center justify-end gap-1">
                                 <span>{wonShort(r.uplift_revenue)}</span>
                                 {!significant && r.uplift_ci > 0 && !r.cold_start && (
-                                  <span className="text-[10px] text-ink-4" title="증분이 baseline 변동성 범위 안 — 통계적으로 유의하지 않음">
+                                  <span className="text-[10px] text-ink-4" title="초과 달성이 baseline 변동성 범위 안 — 통계적으로 유의하지 않음">
                                     n.s.
                                   </span>
                                 )}
@@ -433,7 +432,7 @@ export default async function PromotionDetail({
               </section>
 
               <section className="lg:col-span-2">
-                <h2 className="mb-2 text-sm font-semibold text-ink-2">증분 Top 10 (검정=메인 · 회색=후광)</h2>
+                <h2 className="mb-2 text-sm font-semibold text-ink-2">초과 달성 Top 10 (초록=메인 · 회색=후광)</h2>
                 <div className="rounded-2xl card-soft p-4">
                   <UpliftChart data={chartData} />
                 </div>
@@ -444,7 +443,7 @@ export default async function PromotionDetail({
                       {mains.map((m) => (
                         <li key={m.product_id} className="flex justify-between">
                           <span className="truncate text-ink-2">{m.base_name}</span>
-                          <span className="ml-2 shrink-0 text-ink-3">증분 {wonShort(m.uplift_revenue)}</span>
+                          <span className="ml-2 shrink-0 font-semibold text-success">초과 {wonShort(m.uplift_revenue)}</span>
                         </li>
                       ))}
                     </ul>
@@ -542,33 +541,10 @@ export default async function PromotionDetail({
         {view === "purpose" && <PurposeBlock rows={purposeRows} />}
 
         {view === "sources" && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <section className="lg:col-span-2">
-              <h2 className="mb-2 text-sm font-semibold text-ink-2">데이터 출처 (업로드 파일)</h2>
-              {sources.length > 0 ? (
-                <ul className="space-y-1.5 rounded-2xl card-soft p-4 text-sm">
-                  {sources.slice(0, 8).map((s) => (
-                    <li key={s.id} className="flex items-baseline justify-between gap-2">
-                      <span className="min-w-0 truncate text-ink-2" title={s.source_file}>
-                        {s.source_file}
-                      </span>
-                      <span className="shrink-0 text-[11px] text-ink-4">
-                        {s.kind === "plan_guide" ? "플랜" : s.kind === "promotion" ? "성과" : s.kind}
-                        {" · "}
-                        {new Date(s.created_at).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-2xl card-soft p-4 text-sm text-ink-4">출처 기록이 없습니다.</p>
-              )}
-            </section>
-            <section className="lg:col-span-3">
-              <h2 className="mb-1 text-sm font-semibold text-ink-2">성과의 원인 — 집요하게 묻기</h2>
-              <p className="mb-3 text-xs text-ink-4">여기 쌓인 원인·가설이 예측 정확도를 높입니다.</p>
-              <Notes promotionId={id} notes={notes} suggested={suggested} />
-            </section>
+          <div className="max-w-3xl">
+            <h2 className="mb-1 text-sm font-semibold text-ink-2">성과 원인 기록하기</h2>
+            <p className="mb-3 text-xs text-ink-4">왜 이런 성과가 났는지 적어두면 다음 캠페인 예측이 정확해집니다.</p>
+            <Notes promotionId={id} notes={notes} suggested={suggested} />
           </div>
         )}
       </div>
@@ -650,11 +626,11 @@ function buildQuestions(rows: MeasurementRow[], summary: PromotionSummary | null
   const worst = [...rows].sort((a, b) => a.uplift_revenue - b.uplift_revenue)[0];
 
   if (topMain && topMain.uplift_revenue > 0)
-    qs.push(`메인 '${topMain.base_name}'의 증분이 컸어요. 광고·노출을 늘렸나요?`);
+    qs.push(`메인 '${topMain.base_name}'의 초과 달성이 컸어요. 광고·노출을 늘렸나요?`);
   if (topHalo && topHalo.uplift_revenue > 0)
     qs.push(`'${topHalo.base_name}'가 함께 잘 팔렸어요. 동반구매를 유도한 요인은?`);
   if (worst && worst.uplift_revenue < 0)
-    qs.push(`'${worst.base_name}'는 증분이 마이너스였어요. 원인이 있나요?`);
+    qs.push(`'${worst.base_name}'는 초과 달성이 마이너스였어요. 원인이 있나요?`);
   if (summary && summary.halo_share != null && summary.halo_share > 0.4)
     qs.push("후광효과 비중이 높습니다. 어떤 상품군이 같이 담겼나요?");
   qs.push("이 기간에 외부 이벤트(시즌·경쟁사·트렌드)가 있었나요?");

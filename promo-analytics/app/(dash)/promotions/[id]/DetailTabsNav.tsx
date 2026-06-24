@@ -9,7 +9,7 @@ export const DETAIL_VIEWS: { id: DetailView; label: string }[] = [
   { id: "skus", label: "SKU·옵션" },
   { id: "trend", label: "매출 흐름" },
   { id: "purpose", label: "목적 분석" },
-  { id: "sources", label: "데이터·회고" },
+  { id: "sources", label: "회고" },
 ];
 
 export function DetailTabsNav({
