@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Promotion } from "@/lib/types";
 import EditForm from "./EditForm";
-import MergeForm from "./MergeForm";
 import { loadOptions } from "@/lib/options";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +21,6 @@ export default async function EditPromotion({
     .single<Promotion>();
   if (!promo) notFound();
 
-  // 병합 후보 목록 (자기 자신 제외)
-  const { data: otherPromos } = await supabase
-    .from("promotions")
-    .select("id, name, code, start_date, end_date")
-    .neq("id", id)
-    .order("start_date", { ascending: false });
-
   const options = await loadOptions(supabase);
 
   // 목적 가중치 (S5) — 저장된 값 로드
@@ -42,26 +34,7 @@ export default async function EditPromotion({
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
-      <EditForm
-        promo={promo}
-        options={options}
-        initialWeights={initialWeights}
-      />
-      <div className="mt-8">
-        <MergeForm
-          sourceId={id}
-          sourceName={promo.name}
-          candidates={
-            (otherPromos ?? []).map((p) => ({
-              id: p.id as string,
-              name: p.name as string,
-              code: (p.code as string | null) ?? null,
-              start_date: p.start_date as string,
-              end_date: p.end_date as string,
-            }))
-          }
-        />
-      </div>
+      <EditForm promo={promo} options={options} initialWeights={initialWeights} />
     </div>
   );
 }
