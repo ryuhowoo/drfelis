@@ -175,8 +175,17 @@ export default async function PromotionDetail({
   // 새 모델: 성과는 이 캠페인에 직접 올린다. 성과(실 매출)가 실제로 있을 때만
   // 매칭·달성 관련 UI를 노출한다 (성과 0인데 미매칭/성과연결 노티 X).
   const hasActuals = (achSummary?.campaign_revenue_total ?? 0) > 0;
+  // '보정 필요'는 플랜에 있으나 성과와 매칭 안 된 SKU(planOnly)만 — 품절 제외분은 빼고,
+  // actualOnly(성과만=계획에 없던 동반구매)는 정상이라 보정 대상이 아니다.
+  const excludedIdSet = new Set(excludedSkus.map((e) => e.product_id));
   const unmatchedCount = hasActuals
-    ? diagnosticRows.filter((r) => r.side !== "both" && !r.is_mapped && !r.is_subscription).length
+    ? diagnosticRows.filter(
+        (r) =>
+          r.side === "plan" &&
+          !r.is_mapped &&
+          !r.is_subscription &&
+          !excludedIdSet.has(r.product_id),
+      ).length
     : 0;
   const wfInput = {
     hasPlan: !!plan,
