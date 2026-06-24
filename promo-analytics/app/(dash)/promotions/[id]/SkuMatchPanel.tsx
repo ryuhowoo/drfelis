@@ -84,7 +84,7 @@ export default function SkuMatchPanel({
   async function markSoldout(p: { product_id: string; base_name: string }) {
     if (soldoutBusy) return;
     setSoldoutBusy(p.product_id);
-    setLocalRows((rs) => rs.filter((r) => r.product_id !== p.product_id)); // optimistic
+    // 낙관적: 제외 목록에 추가 → visibleRows 필터로 매칭 카드/진단표에서 즉시 사라짐
     setLocalExcluded((e) => [...e, { product_id: p.product_id, base_name: p.base_name }]);
     try {
       const res = await fetch(`/api/promotions/${promotionId}/excluded-skus`, {
@@ -95,8 +95,7 @@ export default function SkuMatchPanel({
       if (!res.ok) throw new Error();
       router.refresh();
     } catch {
-      setLocalExcluded((e) => e.filter((x) => x.product_id !== p.product_id));
-      setLocalRows(rows); // rollback
+      setLocalExcluded((e) => e.filter((x) => x.product_id !== p.product_id)); // rollback
     } finally {
       setSoldoutBusy(null);
     }
@@ -120,9 +119,15 @@ export default function SkuMatchPanel({
     }
   }
 
-  const matched = localRows.filter((r) => r.side === "both" || r.is_mapped);
-  const planOnly = localRows.filter((r) => r.side === "plan" && !r.is_mapped);
-  const actualOnly = localRows.filter((r) => r.side === "actual" && !r.is_mapped);
+  // 품절 제외된 SKU는 저장 롤업 갱신(cron) 전에도 즉시 화면에서 빠지도록 클라이언트에서 필터
+  const excludedSet = useMemo(() => new Set(localExcluded.map((e) => e.product_id)), [localExcluded]);
+  const visibleRows = useMemo(
+    () => localRows.filter((r) => !excludedSet.has(r.product_id)),
+    [localRows, excludedSet],
+  );
+  const matched = visibleRows.filter((r) => r.side === "both" || r.is_mapped);
+  const planOnly = visibleRows.filter((r) => r.side === "plan" && !r.is_mapped);
+  const actualOnly = visibleRows.filter((r) => r.side === "actual" && !r.is_mapped);
   const planOnlyRevenue = planOnly.reduce((s, r) => s + (r.expected_revenue ?? 0), 0);
   const actualOnlyRevenue = actualOnly.reduce((s, r) => s + (r.actual_revenue ?? 0), 0);
   const nameOf = useMemo(() => {
@@ -211,10 +216,10 @@ export default function SkuMatchPanel({
   }
 
   const filtered = query.trim()
-    ? localRows.filter(
+    ? visibleRows.filter(
         (r) => r.base_name.includes(query.trim()) || (r.dr_code ?? "").includes(query.trim()),
       )
-    : localRows;
+    : visibleRows;
   const { sorted: sortedRows, toggle: sortBy, arrow } = useTableSort<DiagnosticRow>(filtered, null, "desc");
 
   return (
@@ -230,7 +235,9 @@ export default function SkuMatchPanel({
             <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning">플랜 미매칭 {planOnly.length}</span>
           )}
           {actualOnly.length > 0 && (
-            <span className="rounded-full bg-soft px-2 py-0.5 text-ink-3">성과 미매칭 {actualOnly.length}</span>
+            <span className="rounded-full bg-soft px-2 py-0.5 text-ink-3" title="계획에 없던 동반구매 — 보정 불필요, 함께 구매 성과로 집계됩니다">
+              계획 외 판매 {actualOnly.length}
+            </span>
           )}
         </div>
       </div>

@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 // 품절(미판매) SKU 제외 토글 (피드백 1). 제외하면 플랜·성과·미매칭에서 빠진다.
-// POST = 제외 추가, DELETE = 제외 해제. 변경 후 롤업 갱신.
+// POST = 제외 추가, DELETE = 제외 해제.
+// 저장 롤업 갱신은 promotion_excluded_skus 트리거(mark_rollups_dirty)→cron 이 처리하고,
+// 매칭 패널은 excludedSkus 로 즉시 필터링한다(무거운 동기 refresh_rollups 호출 제거).
 async function mutate(
   id: string,
   product_id: string,
@@ -24,7 +26,6 @@ async function mutate(
       .eq("product_id", product_id);
     if (error) return { error: error.message };
   }
-  await supabase.rpc("refresh_rollups", { p_force: true });
   return {};
 }
 
