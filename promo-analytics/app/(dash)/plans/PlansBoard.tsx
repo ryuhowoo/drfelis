@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { won, wonShort, pct } from "@/lib/format";
+import { useTableSort } from "@/lib/table-sort";
 
 // promo.plans_bundle() 반환 형태
 export type PlanRow = {
@@ -84,9 +85,27 @@ export default function PlansBoard({
 }
 
 // ── 플랜 목록 ─────────────────────────────────────────────────────────────
+// 정렬용 평탄화 행 — 중첩(achievement)·파생(달성률) 값을 키로 끌어올려 컬럼 클릭 정렬을 지원.
+type SortRow = PlanRow & { _ach: number | null };
+
 function PlanList({ plans }: { plans: PlanRow[] }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  // 표시 행에 정렬 키(_ach=매출 달성률) 부여
+  const rows: SortRow[] = useMemo(
+    () =>
+      plans.map((p) => ({
+        ...p,
+        _ach:
+          p.achievement?.has_confirmed_plan && p.achievement.ach_revenue != null
+            ? p.achievement.ach_revenue
+            : null,
+      })),
+    [plans],
+  );
+  // 기본 정렬: 기간(시작일) 내림차순 — 최신 캠페인이 위로
+  const { sorted, toggle, arrow } = useTableSort<SortRow>(rows, "start_date", "desc");
 
   async function del(p: PlanRow) {
     if (!p.promotion_id) {
@@ -116,26 +135,23 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
     );
   return (
     <div className="mt-4 overflow-x-auto rounded-2xl card-soft">
-      <table className="w-full min-w-[860px] text-sm">
+      <table className="w-full min-w-[920px] text-sm">
         <thead className="bg-soft/60 text-left text-xs text-neutral-500">
           <tr>
-            <th className="px-3 py-2.5 font-medium">플랜 (코드)</th>
-            <th className="px-3 py-2.5 font-medium">기간</th>
-            <th className="px-3 py-2.5 font-medium">상태</th>
-            <th className="px-3 py-2.5 text-right font-medium">목표 매출</th>
-            <th className="px-3 py-2.5 text-right font-medium">목표 공헌이익</th>
-            <th className="px-3 py-2.5 text-right font-medium">옵션</th>
-            <th className="px-3 py-2.5 font-medium">성과 연결</th>
-            <th className="px-3 py-2.5 text-right font-medium">매출 달성률</th>
+            <Th label="캠페인명" k="name" toggle={toggle} arrow={arrow} />
+            <Th label="상태" k="status" toggle={toggle} arrow={arrow} />
+            <Th label="채널" k="channel" toggle={toggle} arrow={arrow} />
+            <Th label="기간" k="start_date" toggle={toggle} arrow={arrow} />
+            <Th label="목표 매출" k="target_revenue" toggle={toggle} arrow={arrow} align="right" />
+            <Th label="목표 공헌이익" k="target_contribution" toggle={toggle} arrow={arrow} align="right" />
+            <Th label="옵션" k="option_count" toggle={toggle} arrow={arrow} align="right" />
+            <Th label="매출 달성률" k="_ach" toggle={toggle} arrow={arrow} align="right" />
             <th className="px-3 py-2.5 font-medium"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line/70">
-          {plans.map((p) => {
-            const ach =
-              p.achievement?.has_confirmed_plan && p.achievement.ach_revenue != null
-                ? p.achievement.ach_revenue
-                : null;
+          {sorted.map((p) => {
+            const ach = p._ach;
             const linkedId = p.actual_promotion_id ?? p.promotion_id;
             return (
               <tr key={p.id} className="hover:bg-soft/40">
@@ -156,9 +172,6 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     <span className="ml-1.5 text-[11px] text-neutral-400">{p.code}</span>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
-                  {p.start_date ?? "—"} ~ {p.end_date ?? "—"}
-                </td>
                 <td className="px-3 py-2.5">
                   {p.status === "confirmed" ? (
                     <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
@@ -170,6 +183,12 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     </span>
                   )}
                 </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                  {p.channel ?? "—"}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                  {p.start_date ?? "—"} ~ {p.end_date ?? "—"}
+                </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-neutral-700">
                   {wonShort(p.target_revenue)}
                 </td>
@@ -178,22 +197,6 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-neutral-500">
                   {p.option_count}
-                </td>
-                <td className="px-3 py-2.5">
-                  {p.actual_promotion_id ? (
-                    <Link
-                      href={`/promotions/${p.actual_promotion_id}`}
-                      className="text-xs text-brand-600 hover:underline"
-                    >
-                      {p.actual_name ?? "성과 캠페인"}
-                    </Link>
-                  ) : p.promotion_id ? (
-                    <span className="text-xs text-neutral-500">자기 캠페인</span>
-                  ) : (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700">
-                      미연동
-                    </span>
-                  )}
                 </td>
                 <td
                   className={`px-3 py-2.5 text-right font-semibold tabular-nums ${
@@ -224,6 +227,37 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+// 정렬 가능한 헤더 셀 — 클릭 시 해당 컬럼으로 오름/내림 토글, 활성 컬럼에 화살표 표시.
+function Th({
+  label,
+  k,
+  toggle,
+  arrow,
+  align = "left",
+}: {
+  label: string;
+  k: keyof SortRow;
+  toggle: (k: keyof SortRow) => void;
+  arrow: (k: keyof SortRow) => string;
+  align?: "left" | "right";
+}) {
+  return (
+    <th className={`px-3 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        type="button"
+        onClick={() => toggle(k)}
+        className={`inline-flex items-center gap-0.5 select-none hover:text-ink ${
+          align === "right" ? "flex-row-reverse" : ""
+        }`}
+        title="정렬"
+      >
+        {label}
+        <span className="tabular-nums text-[10px] text-brand-500">{arrow(k)}</span>
+      </button>
+    </th>
   );
 }
 

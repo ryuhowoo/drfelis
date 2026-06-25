@@ -12,12 +12,20 @@ type Body = {
   end_date: string;
   purposes: string[]; // 세일즈/브랜딩/재고소진 (1~3개)
   weights: Record<string, number>; // 목적별 1~10 정수
-  // 엄선 메타(예측에 실효) — 선택
-  promo_type?: string | null;
-  season_tag?: string | null;
+  // 엄선 메타(예측에 실효) — 선택. 복수 선택 지원(혜택 유형·시즌).
+  promo_type?: string | null; // 레거시 단일(대표값)
+  promo_types?: string[]; // 복수 선택
+  season_tag?: string | null; // 레거시 단일(대표값)
+  season_tags?: string[]; // 복수 선택
   channel?: string | null;
   discount_rate?: number | null; // 0~1
 };
+
+/** 복수 선택 배열을 정리 — 단일값 폴백 포함, 공백 제거·중복 제거 */
+function cleanTags(arr?: string[], single?: string | null): string[] {
+  const src = arr && arr.length > 0 ? arr : single ? [single] : [];
+  return [...new Set(src.map((s) => (s ?? "").trim()).filter(Boolean))];
+}
 
 export async function POST(req: Request) {
   try {
@@ -36,9 +44,9 @@ export async function POST(req: Request) {
 
     const supabase = await createClient();
 
-    // 1) 프로모션 메타
-    const promoType = (body.promo_type ?? "").trim() || null;
-    const seasonTag = (body.season_tag ?? "").trim() || null;
+    // 1) 프로모션 메타 — 혜택 유형·시즌은 복수 선택(배열) + 대표값(첫 항목) 동시 저장
+    const promoTypes = cleanTags(body.promo_types, body.promo_type);
+    const seasonTags = cleanTags(body.season_tags, body.season_tag);
     const channel = (body.channel ?? "").trim() || null;
     const dr = body.discount_rate != null && body.discount_rate > 0 ? body.discount_rate : null;
     const { data: promo, error: pErr } = await supabase
@@ -49,8 +57,10 @@ export async function POST(req: Request) {
         end_date,
         purposes,
         purpose: purposes[0], // 레거시 단일 목적 = 주목적
-        promo_type: promoType,
-        season_tag: seasonTag,
+        promo_type: promoTypes[0] ?? null, // 레거시 단일 = 대표 혜택 유형
+        promo_types: promoTypes.length > 0 ? promoTypes : null,
+        season_tag: seasonTags[0] ?? null, // 레거시 단일 = 대표 시즌
+        season_tags: seasonTags.length > 0 ? seasonTags : null,
         channel,
         benefits: dr != null ? { discount_rate: dr } : null,
       })
