@@ -30,8 +30,9 @@ export default function NewCampaignForm({
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [weights, setWeights] = useState<Record<string, number>>({});
-  const [promoType, setPromoType] = useState("");
-  const [seasonTag, setSeasonTag] = useState("");
+  // 혜택 유형·시즌은 복수 선택 — 예측은 대표값(첫 항목) 사용.
+  const [promoTypes, setPromoTypes] = useState<string[]>([]);
+  const [seasonTags, setSeasonTags] = useState<string[]>([]);
   const [channel, setChannel] = useState("");
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [saving, setSaving] = useState(false);
@@ -65,15 +66,20 @@ export default function NewCampaignForm({
     if (duration <= 0 || cases.length === 0) return null;
     return predict(
       {
-        promo_type: promoType || null,
-        season_tag: seasonTag || null,
+        promo_type: promoTypes[0] || null,
+        season_tag: seasonTags[0] || null,
         discount_rate: discountPct ? discountPct / 100 : null,
         duration_days: duration,
         purpose: primaryPurpose,
       },
       cases,
     );
-  }, [promoType, seasonTag, discountPct, duration, primaryPurpose, cases]);
+  }, [promoTypes, seasonTags, discountPct, duration, primaryPurpose, cases]);
+
+  // 복수 선택 토글 (혜택 유형·시즌)
+  function toggleTag(setter: typeof setPromoTypes, key: string) {
+    setter((arr) => (arr.includes(key) ? arr.filter((x) => x !== key) : [...arr, key]));
+  }
 
   function toggle(key: string) {
     setWeights((w) => {
@@ -103,8 +109,10 @@ export default function NewCampaignForm({
           end_date: end,
           purposes: selected.map((p) => p.key),
           weights,
-          promo_type: promoType || null,
-          season_tag: seasonTag || null,
+          promo_types: promoTypes,
+          promo_type: promoTypes[0] || null,
+          season_tags: seasonTags,
+          season_tag: seasonTags[0] || null,
           channel: channel || null,
           discount_rate: discountPct ? discountPct / 100 : null,
         }),
@@ -156,20 +164,26 @@ export default function NewCampaignForm({
           <section className="rounded-2xl card-soft p-5 sm:p-6">
             <h2 className="text-sm font-semibold text-ink-2">캠페인 성격</h2>
             <p className="mt-1 text-xs text-ink-4">예측·유사 사례 매칭에 쓰입니다.</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-ink-3">혜택 유형</label>
-                <select value={promoType} onChange={(e) => setPromoType(e.target.value)} className={inputCls}>
-                  <option value="">선택…</option>
-                  {options.benefitTypes.map((b) => <option key={b} value={b}>{b}</option>)}
-                </select>
+                <label className="block text-xs font-medium text-ink-3">
+                  혜택 유형 <span className="text-ink-4">· 복수 선택</span>
+                </label>
+                <ChipMulti
+                  values={options.benefitTypes}
+                  selected={promoTypes}
+                  onToggle={(k) => toggleTag(setPromoTypes, k)}
+                />
               </div>
               <div>
-                <label className="block text-xs font-medium text-ink-3">시즌</label>
-                <select value={seasonTag} onChange={(e) => setSeasonTag(e.target.value)} className={inputCls}>
-                  <option value="">선택…</option>
-                  {options.seasonalities.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <label className="block text-xs font-medium text-ink-3">
+                  시즌 <span className="text-ink-4">· 복수 선택</span>
+                </label>
+                <ChipMulti
+                  values={options.seasonalities}
+                  selected={seasonTags}
+                  onToggle={(k) => toggleTag(setSeasonTags, k)}
+                />
               </div>
             </div>
             {channels.length > 0 && (
@@ -269,6 +283,43 @@ export default function NewCampaignForm({
           </section>
         </aside>
       </div>
+    </div>
+  );
+}
+
+// 복수 선택 칩 — 혜택 유형·시즌. 예측은 첫 선택을 대표값으로 사용.
+function ChipMulti({
+  values,
+  selected,
+  onToggle,
+}: {
+  values: string[];
+  selected: string[];
+  onToggle: (k: string) => void;
+}) {
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {values.map((v) => {
+        const on = selected.includes(v);
+        return (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onToggle(v)}
+            aria-pressed={on}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              on
+                ? "border-brand-500 bg-brand-500 text-white"
+                : "border-line bg-card text-ink-2 hover:border-brand-300 hover:bg-brand-50/50"
+            }`}
+          >
+            {v}
+          </button>
+        );
+      })}
+      {values.length === 0 && (
+        <span className="text-xs text-ink-4">설정에서 항목을 추가하세요.</span>
+      )}
     </div>
   );
 }
