@@ -285,16 +285,17 @@ function UploadCard({ def }: { def: CardDef }) {
         );
         const dedup = new Map<
           string,
-          { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
+          { sale_date: string; product_id: string | null; base_name: string; option_info: string; channel: string; revenue: number; quantity: number; source_file: string }
         >();
         for (const r of rows) {
-          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info]);
+          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info, r.channel]);
           const prev = dedup.get(key);
           dedup.set(key, {
             sale_date: r.sale_date,
             product_id: productMap.get(r.base_name) ?? null,
             base_name: r.base_name,
             option_info: r.option_info,
+            channel: r.channel,
             revenue: (prev?.revenue ?? 0) + r.revenue,
             quantity: (prev?.quantity ?? 0) + r.quantity,
             source_file: file.name,

@@ -141,6 +141,7 @@ export type DailyRow = {
   sale_date: string;
   base_name: string;
   option_info: string;
+  channel: string;
   revenue: number;
   quantity: number;
 };
@@ -150,13 +151,15 @@ export function parseDailySales(buf: ArrayBuffer): DailyRow[] {
   const h = findHeaderRow(rows, ["일자", "기초상품명", "결제금액", "판매수량"]);
   if (h < 0)
     throw new Error(
-      "일별 매출 추이 헤더를 찾을 수 없습니다 (일자·기초상품명·결제금액·판매수량 컬럼 필요). " +
+      "일별 전체 매출 헤더를 찾을 수 없습니다 (일자·기초상품명·결제금액·판매수량 컬럼 필요). " +
         "‘가이드/기획’ 문서가 아니라 일자별 매출 export인지 확인하세요.",
     );
   const header = rows[h];
   const cDate = findCol(header, ["일자"]);
   const cName = preferBaseName(header);
   const cOpt = findCol(header, ["옵션정보", "옵션"]);
+  // 채널: '판매채널/채널/유입채널/주문채널' 등. 합본 파일이라 행마다 채널이 들어옴. 없으면 '전체'.
+  const cChannel = findCol(header, ["판매채널", "주문채널", "유입채널", "채널몰", "채널"]);
   const cRev = findCol(header, ["결제금액"]);
   const cQty = findCol(header, ["판매수량", "수량"]);
 
@@ -166,10 +169,12 @@ export function parseDailySales(buf: ArrayBuffer): DailyRow[] {
     const date = toDateStr(r[cDate]);
     const name = String(r[cName] ?? "").trim();
     if (!date || !name || name === "-") continue;
+    const channel = cChannel >= 0 ? String(r[cChannel] ?? "").trim() : "";
     out.push({
       sale_date: date,
       base_name: name,
       option_info: String(r[cOpt] ?? "").trim(),
+      channel: channel || "전체",
       revenue: toNum(r[cRev]),
       quantity: toNum(r[cQty]),
     });
