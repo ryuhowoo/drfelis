@@ -7,6 +7,10 @@ import { Button } from "@/components/ui";
 import { predict, type CaseFeature } from "@/lib/predict";
 import type { Options } from "@/lib/options";
 import { wonShort } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
+import { ensureProducts } from "@/lib/products";
+import { parsePlanWorkbook, type ParsedPlanOption } from "@/lib/plan-import";
+import { downloadCampaignTemplate, parseCampaignMeta } from "@/lib/campaignTemplate";
 
 // 새 모델의 진입점 — 캠페인 생성 + 목적/기간 + 엄선 메타(혜택유형·시즌·할인율) + 실시간 예측.
 // 메타는 감사에서 '예측에 실효적'으로 검증된 것만 노출(channel·ad_spend·contribution_amount·gift 폐기).
@@ -37,6 +41,9 @@ export default function NewCampaignForm({
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // 엑셀 양식으로 한 번에 채우기 — 파싱한 플랜 옵션은 캠페인 생성 후 draft 플랜에 적재.
+  const [planOptions, setPlanOptions] = useState<ParsedPlanOption[]>([]);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   const selected = useMemo(() => PURPOSES.filter((p) => weights[p.key] != null), [weights]);
   const total = useMemo(
@@ -93,6 +100,65 @@ export default function NewCampaignForm({
     setWeights((w) => ({ ...w, [key]: Math.max(1, Math.min(10, v)) }));
   }
 
+  // 엑셀 양식 업로드 → '캠페인' 시트로 폼 자동 채움 + '플랜' 시트로 옵션 적재 예약
+  async function importTemplate(file: File) {
+    setImportMsg("엑셀 읽는 중…");
+    setErr(null);
+    try {
+      const buf = await file.arrayBuffer();
+      const meta = parseCampaignMeta(buf);
+      if (meta) {
+        setName(meta.name);
+        if (meta.start_date) setStart(meta.start_date);
+        if (meta.end_date) setEnd(meta.end_date);
+        if (meta.promo_types.length) setPromoTypes(meta.promo_types);
+        if (meta.season_tags.length) setSeasonTags(meta.season_tags);
+        if (meta.channel) setChannel(meta.channel);
+        if (meta.discount_pct != null) setDiscountPct(meta.discount_pct);
+        if (Object.keys(meta.weights).length) setWeights(meta.weights);
+      }
+      const { options } = parsePlanWorkbook(buf);
+      setPlanOptions(options);
+      const parts: string[] = [];
+      if (meta) parts.push("기본 정보·성격·목적 자동 채움");
+      parts.push(`플랜 옵션 ${options.length}개 인식`);
+      setImportMsg(
+        `${parts.join(" · ")}. 검토 후 [캠페인 만들고 플랜 작성]을 누르면 플랜에 적재됩니다.`,
+      );
+    } catch (e) {
+      setImportMsg(null);
+      setErr(e instanceof Error ? e.message : "엑셀을 읽지 못했습니다.");
+    }
+  }
+
+  // 생성된 draft 플랜에 엑셀 옵션 적재 — SKU를 product_id로 해석 후 플랜 PATCH (플랜 에디터와 동일 로직)
+  async function ingestPlanOptions(promotionId: string, planId: string) {
+    const supabase = createClient();
+    const names = [...new Set(planOptions.flatMap((o) => o.items.map((it) => it.base_name)))];
+    const idMap = await ensureProducts(supabase, names);
+    const optionsPayload = planOptions.map((o, idx) => ({
+      option_label: o.option_label,
+      expected_option_qty: o.expected_option_qty,
+      is_main: o.is_main,
+      match_patterns: [] as string[],
+      sort: idx,
+      items: o.items
+        .map((it) => ({
+          product_id: idMap.get(it.base_name) ?? "",
+          base_name: it.base_name,
+          sku_qty_per_option: it.sku_qty_per_option,
+          unit_sale_price: it.unit_sale_price,
+          source_config_id: null,
+        }))
+        .filter((it) => it.product_id),
+    }));
+    await fetch(`/api/promotions/${promotionId}/plan`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan_id: planId, options: optionsPayload }),
+    });
+  }
+
   const canSave = name.trim() && start && end && end >= start && selected.length > 0;
 
   async function save() {
@@ -119,6 +185,14 @@ export default function NewCampaignForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "생성 실패");
+      // 엑셀 양식으로 올린 옵션이 있으면 draft 플랜에 적재(확정 직전 상태로)
+      if (planOptions.length > 0 && data.plan_id) {
+        try {
+          await ingestPlanOptions(data.promotion_id, data.plan_id);
+        } catch {
+          /* 옵션 적재 실패해도 캠페인은 생성됨 — 플랜 페이지에서 보완 */
+        }
+      }
       router.push(`/promotions/${data.promotion_id}/plan`);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "생성 실패");
@@ -142,6 +216,40 @@ export default function NewCampaignForm({
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {/* 좌: 입력 */}
         <div className="grid gap-4 rise-in">
+          {/* 엑셀 양식으로 한 번에 채우기 */}
+          <section className="rounded-2xl border border-brand-200 bg-brand-50/40 p-5 sm:p-6">
+            <h2 className="text-sm font-semibold text-ink-2">엑셀 양식으로 한 번에 채우기</h2>
+            <p className="mt-1 text-xs text-ink-4">
+              양식을 내려받아 캠페인 정보·목적·플랜 옵션을 채운 뒤 올리면, 아래 입력란과 플랜 옵션이
+              자동으로 채워집니다(플랜 확정 직전 상태).
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => downloadCampaignTemplate()}
+                className="rounded-xl border border-line bg-card px-4 py-2 text-sm font-medium text-ink-2 hover:bg-brand-50"
+              >
+                ↓ 엑셀 양식 내려받기
+              </button>
+              <label className="cursor-pointer rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
+                엑셀 불러오기
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) importTemplate(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {importMsg && (
+              <p className="mt-2 rounded-lg bg-brand-100/60 px-3 py-2 text-xs text-brand-700">{importMsg}</p>
+            )}
+          </section>
+
           {/* 기본 정보 */}
           <section className="rounded-2xl card-soft p-5 sm:p-6">
             <h2 className="mb-4 text-sm font-semibold text-ink-2">기본 정보</h2>
