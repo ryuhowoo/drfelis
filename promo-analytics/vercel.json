@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-price-master",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}

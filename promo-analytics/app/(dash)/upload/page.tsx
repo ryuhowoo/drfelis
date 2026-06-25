@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { won, pct } from "@/lib/format";
 import type { ParsedPriceConfig } from "@/lib/parse";
 import { useReplaceConfirm } from "./useReplaceConfirm";
+import PriceMasterSync from "./PriceMasterSync";
+import CampaignPerformanceList from "./CampaignPerformanceList";
+import CardHistory from "./CardHistory";
 
 // 업로드 이력 기록 — 연동 파일명·시간·종류·행수를 남긴다(업데이트 참고용).
 // 실패해도 업로드 자체를 막지 않는다(best-effort).
@@ -50,19 +53,9 @@ type CardDef = {
 
 const CARDS: CardDef[] = [
   {
-    key: "master",
-    title: "① 마스터 (품목코드)",
-    desc: "기초상품 원가·소비자가·상시가. 가장 먼저 올리면 상품 정보가 채워집니다.",
-  },
-  {
     key: "daily",
-    title: "② 일별 매출 추이",
-    desc: "일자 × 기초상품 × 옵션 × 결제금액 × 수량. baseline(평소 매출)의 연료입니다. 재업로드 시 같은 기간·상품을 교체합니다(누적 아님) — 수량·옵션정보 백필용.",
-  },
-  {
-    key: "promotion",
-    title: "③ 캠페인 시트",
-    desc: "캠페인 기간 성과(전 제품). 파일명의 캠페인 코드(CF_P_…)로 캠페인을 식별 — 같은 코드의 가이드(⑤)·성과(②)은 자동으로 한 캠페인에 결속됩니다(비교연결·병합 불필요). 같은 코드가 있으면 성과를 교체(백필)하고 확정 플랜은 보존, 없으면 새로 생성합니다.",
+    title: "① 일별 전체 매출",
+    desc: "모든 B2C 채널 합본을 한 번에 올리면 채널별로 분해해 적재합니다(일자 × 기초상품 × 옵션 × 채널 × 결제금액 × 수량). baseline(평소 매출)과 캠페인 시점 비교의 연료입니다. 재업로드 시 같은 기간·상품을 교체합니다(누적 아님).",
   },
 ];
 
@@ -79,124 +72,13 @@ export default function UploadPage() {
           <UploadCard key={c.key} def={c} />
         ))}
         <PriceMasterCard />
-        <SegmentImportCard />
         <PlanGuideImportCard />
+        <CampaignPerformanceList />
       </div>
-      <UploadHistory />
     </div>
   );
 }
 
-type LogRow = {
-  id: string;
-  kind: string;
-  source_file: string;
-  detail: string | null;
-  row_count: number | null;
-  total_revenue: number | null;
-  action: string | null;
-  uploaded_by: string | null;
-  created_at: string;
-};
-
-const KIND_LABEL: Record<string, string> = {
-  daily: "일별 매출",
-  promotion: "캠페인",
-  price_master: "가격 마스터",
-  plan_guide: "플랜 가이드",
-  segment: "세그먼트 실적",
-};
-
-function UploadHistory() {
-  const [rows, setRows] = useState<LogRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("upload_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(30);
-    setRows((data as LogRow[]) ?? []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-    const h = () => load();
-    window.addEventListener("upload-done", h);
-    return () => window.removeEventListener("upload-done", h);
-  }, [load]);
-
-  return (
-    <div className="mt-6 rounded-2xl card-soft p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-medium">연동 이력</h2>
-        <button
-          onClick={load}
-          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-50"
-        >
-          새로고침
-        </button>
-      </div>
-      <p className="mt-1 text-sm text-neutral-500">
-        최근 업로드한 파일·시간·행수입니다. 다음 업데이트 때 어떤 소스가 반영됐는지 참고하세요.
-      </p>
-      {loading ? (
-        <p className="mt-4 text-sm text-neutral-400">불러오는 중…</p>
-      ) : rows.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-400">아직 업로드 이력이 없습니다.</p>
-      ) : (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="text-xs text-neutral-400">
-              <tr>
-                <th className="py-1.5 pr-3">시간</th>
-                <th className="py-1.5 pr-3">종류</th>
-                <th className="py-1.5 pr-3">파일명</th>
-                <th className="py-1.5 pr-3">요약</th>
-                <th className="py-1.5 pr-3 text-right">행수</th>
-                <th className="py-1.5">방식</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-neutral-100 align-top">
-                  <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
-                    {new Date(r.created_at).toLocaleString("ko-KR", {
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="py-1.5 pr-3 whitespace-nowrap">
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                      {KIND_LABEL[r.kind] ?? r.kind}
-                    </span>
-                  </td>
-                  <td className="py-1.5 pr-3 font-medium text-neutral-800">{r.source_file}</td>
-                  <td className="py-1.5 pr-3 text-neutral-500">{r.detail ?? "—"}</td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-neutral-700">
-                    {r.row_count != null ? r.row_count.toLocaleString() : "—"}
-                  </td>
-                  <td className="py-1.5">
-                    {r.action === "replace" ? (
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-700">교체(백필)</span>
-                    ) : (
-                      <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] text-neutral-500">신규</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
 
 type Progress = {
   phase: "idle" | "reading" | "parsing" | "uploading" | "ok" | "error";
@@ -285,16 +167,17 @@ function UploadCard({ def }: { def: CardDef }) {
         );
         const dedup = new Map<
           string,
-          { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
+          { sale_date: string; product_id: string | null; base_name: string; option_info: string; channel: string; revenue: number; quantity: number; source_file: string }
         >();
         for (const r of rows) {
-          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info]);
+          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info, r.channel]);
           const prev = dedup.get(key);
           dedup.set(key, {
             sale_date: r.sale_date,
             product_id: productMap.get(r.base_name) ?? null,
             base_name: r.base_name,
             option_info: r.option_info,
+            channel: r.channel,
             revenue: (prev?.revenue ?? 0) + r.revenue,
             quantity: (prev?.quantity ?? 0) + r.quantity,
             source_file: file.name,
@@ -593,6 +476,7 @@ function UploadCard({ def }: { def: CardDef }) {
           )}
         </div>
       )}
+      <CardHistory kinds={[def.key]} />
     </div>
   );
 }
@@ -930,7 +814,7 @@ function PriceMasterCard() {
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">④ 가격 마스터 (가격가이드 워크북)</h2>
+          <h2 className="font-medium">② 품목/가격 마스터</h2>
           <p className="mt-1 text-sm text-neutral-500">
             품목 시트 + 가격가이드 시트를 한 번에 적재합니다. SKU × 구성(단품/2·3·4·5묶음)별
             할인율·공헌이익은 rate card로 자동 계산합니다. 재업로드 시 중복 없이 갱신됩니다.
@@ -1119,195 +1003,12 @@ function PriceMasterCard() {
           )}
         </div>
       )}
+      <PriceMasterSync />
+      <CardHistory kinds={["price_master"]} />
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// ⑥ 세그먼트 실적 — 카페24 채널별(회원/비회원·회원등급·카테고리·일반/정기 분해) 매출 export.
-//    캠페인 코드(파일명)·이름으로 캠페인을 식별(없으면 생성), 세그먼트 fact 적재 + 카테고리 백필.
-//    회원/등급/객단가/AOV 분석(상세 '세그먼트' 탭)의 데이터원. 기존 ③ 흐름과 독립.
-// ─────────────────────────────────────────────
-function SegmentImportCard() {
-  const router = useRouter();
-  const [p, setP] = useState<Progress>({ phase: "idle", message: "" });
-  const { confirm, element: replaceDialog } = useReplaceConfirm();
-
-  async function handleFile(file: File) {
-    try {
-      setP({ phase: "reading", message: `${file.name} 읽는 중…` });
-      const buf = await file.arrayBuffer();
-      setP({ phase: "parsing", message: "세그먼트 시트 파싱 중…" });
-      const parse = await import("@/lib/parse");
-      const products = await import("@/lib/products");
-      const supabase = createClient();
-
-      const parsed = parse.parseSegmentSheet(buf);
-      if (parsed.rows.length === 0) throw new Error("유효한 행이 없습니다.");
-
-      const rawName = file.name.replace(/\.(xlsx|xls|csv)$/i, "");
-      const code = parse.extractPromoCode(rawName);
-      const name = code ? rawName.slice(rawName.indexOf(code)) : rawName;
-      const newRevenue = parsed.rows.reduce((s, r) => s + r.revenue, 0);
-      const cats = [...new Set(parsed.rows.map((r) => r.category).filter(Boolean))];
-      const grades = [...new Set(parsed.rows.map((r) => r.member_grade).filter(Boolean))];
-
-      // 캠페인 식별 (코드 우선, 없으면 이름) — 없으면 신규 생성
-      setP({ phase: "uploading", message: "캠페인 확인 중…" });
-      let existing: { id: string } | null = null;
-      if (code) {
-        const { data } = await supabase
-          .from("promotions").select("id").eq("code", code).limit(1).maybeSingle();
-        existing = (data as { id: string } | null) ?? null;
-      }
-      if (!existing) {
-        const { data } = await supabase
-          .from("promotions").select("id").eq("name", name).limit(1).maybeSingle();
-        existing = (data as { id: string } | null) ?? null;
-      }
-
-      // 상품 매칭(이름 → product_id) — base_name 매칭 실패 행도 적재하되 product_id=null
-      setP({ phase: "uploading", message: "상품 매칭 중…" });
-      const productMap = await products.ensureProducts(
-        supabase,
-        parsed.rows.map((r) => r.base_name),
-      );
-      const matched = parsed.rows.filter((r) => productMap.get(r.base_name)).length;
-
-      let promotionId: string;
-      if (existing) {
-        promotionId = existing.id;
-        const { count: oldCount } = await supabase
-          .from("promotion_segment_sales")
-          .select("*", { count: "exact", head: true })
-          .eq("promotion_id", promotionId);
-        if (oldCount && oldCount > 0) {
-          const ok = await confirm({
-            title: `세그먼트 실적 교체 — ${name}`,
-            oldCount,
-            oldRevenue: 0,
-            newCount: parsed.rows.length,
-            newRevenue,
-            matchedSkus: matched,
-            totalSkus: new Set(parsed.rows.map((r) => r.base_name)).size,
-            note: "이 캠페인의 기존 세그먼트 실적을 최신 파일로 교체합니다(삭제+삽입 원자적). 카테고리는 빈 품목만 백필됩니다.",
-          });
-          if (!ok) {
-            setP({ phase: "idle", message: "취소됨" });
-            return;
-          }
-        }
-      } else {
-        setP({ phase: "uploading", message: "캠페인 생성 중…" });
-        const { inferSeasonality } = await import("@/lib/season");
-        const { data: seasonRows } = await supabase.from("seasonalities").select("name").order("sort");
-        const seasonNames = (seasonRows ?? []).map((r) => r.name as string);
-        const season_tag = inferSeasonality(name, parsed.start_date, seasonNames);
-        const { data: created, error: cErr } = await supabase
-          .from("promotions")
-          .insert({ name, code, start_date: parsed.start_date, end_date: parsed.end_date, season_tag })
-          .select("id").single();
-        if (cErr) throw cErr;
-        promotionId = created.id as string;
-      }
-
-      const records = parsed.rows.map((r) => ({
-        product_id: productMap.get(r.base_name) ?? null,
-        base_name: r.base_name,
-        option_info: r.option_info,
-        category: r.category,
-        member_type: r.member_type,
-        member_grade: r.member_grade,
-        order_type: r.order_type,
-        revenue: r.revenue,
-        order_count: r.order_count,
-        aov: r.aov,
-        arppu: r.arppu,
-        paying_users: r.paying_users,
-        quantity: r.quantity,
-        fee: r.fee,
-        cost: r.cost,
-      }));
-
-      setP({ phase: "uploading", message: `세그먼트 ${records.length}행 적재 중…`, done: 0, total: records.length });
-      const { data: insertedN, error: rpcErr } = await supabase.rpc("replace_promotion_segment_sales", {
-        p_promotion_id: promotionId,
-        p_rows: records,
-      });
-      if (rpcErr) throw rpcErr;
-      const done = Number(insertedN) || records.length;
-
-      await logUpload(supabase, {
-        kind: "segment",
-        source_file: file.name,
-        detail: `${name} · 카테고리 ${cats.length}종 · 등급 ${grades.length}종`,
-        row_count: done,
-        total_revenue: newRevenue,
-        action: existing ? "replace" : "insert",
-        codes: code ? [code] : undefined,
-      });
-      setP({ phase: "ok", message: `${name} 세그먼트 ${done}행 적재 완료. 상세로 이동합니다…` });
-      router.push(`/promotions/${promotionId}?view=segment`);
-    } catch (e) {
-      setP({ phase: "error", message: errMsg(e) });
-    }
-  }
-
-  const busy = p.phase === "reading" || p.phase === "parsing" || p.phase === "uploading";
-  const pctVal = p.total && p.total > 0 && p.done != null ? Math.round((p.done / p.total) * 100) : null;
-
-  return (
-    <div className="rounded-2xl card-soft p-5">
-      {replaceDialog}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-medium">⑥ 세그먼트 실적 (회원·등급·카테고리)</h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            카페24 채널별 매출 export(회원/비회원 × 회원등급 × 카테고리 × 일반/정기 분해)를 올리면
-            <b> 회원/비회원·등급·객단가(ARPPU)·AOV</b> 분석이 캠페인 상세 ‘세그먼트’ 탭에 표시됩니다.
-            파일명의 캠페인 코드로 캠페인을 식별(없으면 생성)하고, 빈 품목의 카테고리도 자동 백필합니다.
-            재업로드 시 같은 캠페인의 세그먼트 실적을 교체합니다.
-          </p>
-        </div>
-        <label
-          className={`shrink-0 cursor-pointer rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 ${
-            busy ? "pointer-events-none opacity-50" : ""
-          }`}
-        >
-          파일 선택
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </div>
-      {p.phase !== "idle" && p.message && (
-        <div
-          className={`mt-3 rounded-lg px-3 py-2 text-sm ${
-            p.phase === "error"
-              ? "bg-red-50 text-red-700"
-              : p.phase === "ok"
-                ? "bg-green-50 text-green-700"
-                : "bg-neutral-100 text-neutral-600"
-          }`}
-        >
-          <div>{p.message}</div>
-          {pctVal != null && p.phase === "uploading" && (
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/60">
-              <div className="h-full bg-brand-500 transition-all" style={{ width: `${pctVal}%` }} />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─────────────────────────────────────────────
 // ⑤ 캠페인 플랜 가이드 — 표준 양식(평평한 표) → 캠페인 플랜(예상) 적재.
@@ -1541,7 +1242,7 @@ function PlanGuideImportCard() {
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>
+          <h2 className="font-medium">③ 캠페인 플랜 가이드</h2>
           <p className="mt-1 text-sm text-neutral-500">
             표준 양식(1행=옵션)으로 캠페인별 <b>예상(가설)</b> — 옵션·가격·예상수량·목표매출·공헌이익을
             플랜으로 적재합니다. 캠페인(성과) row는 만들지 않아요 — 성과는 ③ 매출 export로 별도
@@ -1635,6 +1336,7 @@ function PlanGuideImportCard() {
           </div>
         </div>
       )}
+      <CardHistory kinds={["plan_guide"]} />
     </div>
   );
 }

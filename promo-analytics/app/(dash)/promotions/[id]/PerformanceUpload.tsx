@@ -3,12 +3,14 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { parsePromotionSheet } from "@/lib/parse";
+import { parseSegmentSheet } from "@/lib/parse";
 import { ensureProducts } from "@/lib/products";
 
-// 캠페인에 직접 성과 추가 (6단계) — 라플라스 동기간 매출 export를 '이 캠페인'에 고정 적재.
-// 이름/코드 매칭에 의존하지 않고 promotion_id로 바로 넣어 플랜↔성과가 확실히 같은 캠페인에 붙는다.
-// replace_promotion_sales RPC가 원자적 교체 + 성과옵션 재구성(구독/시그니처)을 수행한다.
+// 캠페인에 직접 성과 추가 (통합 포맷) — 회원/등급/카테고리·일반/정기까지 분해된 매출 export를
+// '이 캠페인'에 promotion_id로 고정 적재. replace_promotion_performance RPC가 한 번에
+//   (1) promotion_segment_sales 풀그레인(세그먼트 탭·어태치율) + 카테고리 백필
+//   (2) promotion_sales 집계(달성률·롤업)
+// 를 원자적으로 채운다. 이어서 sale_options 재구성 + 롤업 갱신.
 export default function PerformanceUpload({
   promotionId,
   hasActuals,
@@ -60,9 +62,9 @@ export default function PerformanceUpload({
     setMsg(null);
     try {
       const buf = await file.arrayBuffer();
-      const parsed = parsePromotionSheet(buf);
+      const parsed = parseSegmentSheet(buf);
       if (parsed.rows.length === 0)
-        throw new Error("성과 행이 없습니다 — 라플라스 캠페인 매출 export인지 확인하세요.");
+        throw new Error("성과 행이 없습니다 — 회원/등급/카테고리까지 분해된 캠페인 매출 export인지 확인하세요.");
 
       const supabase = createClient();
       const productMap = await ensureProducts(
@@ -70,34 +72,58 @@ export default function PerformanceUpload({
         parsed.rows.map((r) => r.base_name),
       );
       const records = parsed.rows.map((r) => ({
-        promotion_id: promotionId,
         product_id: productMap.get(r.base_name) ?? null,
         base_name: r.base_name,
         option_info: r.option_info,
+        category: r.category,
+        member_type: r.member_type,
+        member_grade: r.member_grade,
+        order_type: r.order_type, // 정기/일반 — 구독 자동 분류
         revenue: r.revenue,
         order_count: r.order_count,
         aov: r.aov,
+        arppu: r.arppu,
+        paying_users: r.paying_users,
+        quantity: r.quantity,
         fee: r.fee,
         cost: r.cost,
-        quantity: r.quantity,
-        order_type: r.order_type, // 정기/일반 — 구독 자동 분류
-        sale_option_code: r.sale_option_code,
-        raw: r.composition ? { composition: r.composition } : null,
       }));
 
-      // 원자적 교체 + 성과옵션 재구성(구독/시그니처 자동 분류)
-      const { error } = await supabase.rpc("replace_promotion_sales", {
+      // 통합 적재: 세그먼트 풀그레인 + promotion_sales 집계(달성률) 원자적 교체
+      const { error } = await supabase.rpc("replace_promotion_performance", {
         p_promotion_id: promotionId,
         p_rows: records,
       });
       if (error) throw error;
-      // 롤업 갱신(달성률·구독분리) — 실패해도 적재는 유효
+      // 성과옵션(구독/시그니처) 재구성 + 롤업 갱신 — 실패해도 적재는 유효
+      try {
+        await supabase.rpc("rebuild_sale_options", { p_promotion_id: promotionId });
+      } catch {
+        /* 옵션 재구성 실패는 무시 — 다음 조회 시 ensure */
+      }
       await supabase.rpc("refresh_rollups", { p_force: true });
+
+      // 업로드 이력(④ 캠페인 성과 카드) — best-effort
+      try {
+        const cats = new Set(records.map((x) => x.category).filter(Boolean)).size;
+        const { data: au } = await supabase.auth.getUser();
+        await supabase.from("upload_log").insert({
+          kind: "segment",
+          source_file: file.name,
+          detail: `${parsed.rows.length}행 · 카테고리 ${cats}종`,
+          row_count: parsed.rows.length,
+          total_revenue: records.reduce((s, x) => s + (x.revenue || 0), 0),
+          action: hasActuals ? "replace" : "insert",
+          uploaded_by: au.user?.email ?? null,
+        });
+      } catch {
+        /* 이력 기록 실패는 무시 */
+      }
 
       const subN = records.filter((x) => x.order_type === "subscription").length;
       setMsg({
         kind: "ok",
-        text: `성과 ${records.length}행 적재·자동 분류 완료${subN > 0 ? ` (정기구독 ${subN}행 분리)` : ""}. 달성률을 갱신합니다…`,
+        text: `성과 ${records.length}행 적재·자동 분류 완료${subN > 0 ? ` (정기구독 ${subN}행 분리)` : ""}. 세그먼트·달성률을 갱신합니다…`,
       });
       router.refresh();
     } catch (e) {
@@ -116,8 +142,8 @@ export default function PerformanceUpload({
             성과 {hasActuals ? "교체" : "추가"}
           </h2>
           <p className="mt-0.5 text-xs text-ink-4">
-            캠페인 종료 후 <strong className="text-ink-3">동기간 매출 export</strong>(상품명·일반/정기·옵션정보·기초상품명)를 올리면
-            이 캠페인에 바로 적재 → 옵션/SKU별 달성률과 구독 제외 값이 자동 분류됩니다.
+            캠페인 종료 후 <strong className="text-ink-3">통합 매출 export</strong>(기초상품명·옵션정보·회원/비회원·회원등급·카테고리·일반/정기)를 올리면
+            이 캠페인에 바로 적재 → 옵션/SKU별 <strong className="text-ink-3">달성률</strong>과 <strong className="text-ink-3">세그먼트</strong>(회원·등급·AOV·ARPPU)가 한 번에 채워집니다.
           </p>
         </div>
         <label className={`shrink-0 cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${busy ? "bg-ink-4" : "bg-brand-500 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-float"}`}>
