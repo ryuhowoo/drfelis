@@ -27,6 +27,8 @@ import { CampaignWorkflowBar } from "./CampaignWorkflowBar";
 import { ActionPanel } from "./ActionPanel";
 import { DetailTabsNav, type DetailView } from "./DetailTabsNav";
 import { DeleteCampaignButton } from "./DeleteCampaignButton";
+import SegmentBlock from "./SegmentBlock";
+import type { SegmentSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +71,7 @@ type UploadSource = {
   created_at: string;
 };
 
-const VALID_VIEWS: DetailView[] = ["overview", "skus", "trend", "purpose", "sources"];
+const VALID_VIEWS: DetailView[] = ["overview", "skus", "trend", "segment", "purpose", "sources"];
 
 export default async function PromotionDetail({
   params,
@@ -110,6 +112,11 @@ export default async function PromotionDetail({
   // N13 P2: 옵션 단위 실측 공헌 분해 (마이그레이션 미적용 시 함수 부재 → 조용히 빈 배열)
   const { data: contribData } = await supabase.rpc("sale_option_contribution", { p_id: id });
   const optionContribs = (contribData as OptionContribRow[] | null) ?? [];
+  // Feature C: 세그먼트 요약 (선택 탭에서만 조회 — 마이그레이션 미적용 시 함수 부재 → null)
+  const segSummary =
+    view === "segment"
+      ? (((await supabase.rpc("promotion_segment_summary", { p_id: id })).data) as SegmentSummary | null)
+      : null;
   const optionInfos = [
     ...new Set(
       (bundle?.option_infos ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
@@ -537,6 +544,8 @@ export default async function PromotionDetail({
             }
           />
         )}
+
+        {view === "segment" && <SegmentBlock summary={segSummary} />}
 
         {view === "purpose" && <PurposeBlock rows={purposeRows} />}
 

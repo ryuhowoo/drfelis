@@ -14,7 +14,7 @@ import {
 } from "@/lib/plan";
 import { won, pct, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
-import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button } from "@/components/ui";
+import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button, SegmentedControl } from "@/components/ui";
 import PlanLoadPanel from "./PlanLoadPanel";
 import SubProductSuggest, { type Bench } from "./SubProductSuggest";
 import { downloadPlanXlsx, type ExportOption } from "@/lib/plan-export";
@@ -115,12 +115,31 @@ export default function PlanEditor({
     coupon_min_order?: number | null;
     coupon_rate?: number | null;
     coupon_max?: number | null;
+    main_category?: string | null;
   }) | null;
   const [coupon, setCoupon] = useState(() => ({
     min: Number(planC?.coupon_min_order ?? 0) || 0,
     ratePct: (Number(planC?.coupon_rate ?? 0) || 0) * 100,
     max: Number(planC?.coupon_max ?? 0) || 0,
   }));
+  // Feature A/B — 메인 카테고리(서브 어태치율 추천 기준). '전체'=전사 할인(n주년 등) 분석.
+  const [mainCategory, setMainCategory] = useState<string>(() => planC?.main_category || "전체");
+  const [categories, setCategories] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await createClient()
+        .from("products")
+        .select("category")
+        .not("category", "is", null);
+      if (!alive) return;
+      const uniq = [...new Set((data ?? []).map((r) => (r.category as string)?.trim()).filter(Boolean))].sort();
+      setCategories(uniq);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "err" | "ok"; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -157,10 +176,11 @@ export default function PlanEditor({
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
-        const d = JSON.parse(raw) as { options?: OptState[]; coupon?: typeof coupon };
+        const d = JSON.parse(raw) as { options?: OptState[]; coupon?: typeof coupon; mainCategory?: string };
         if (Array.isArray(d.options) && d.options.length > 0) {
           setOptions(d.options);
           if (d.coupon) setCoupon(d.coupon);
+          if (d.mainCategory) setMainCategory(d.mainCategory);
           setRestored(true);
           setDirty(true);
         }
@@ -175,13 +195,13 @@ export default function PlanEditor({
     if (!draftKey || confirmed || !hydrated.current) return;
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(draftKey, JSON.stringify({ options, coupon, ts: Date.now() }));
+        localStorage.setItem(draftKey, JSON.stringify({ options, coupon, mainCategory, ts: Date.now() }));
       } catch {
         /* 용량 초과 등 무시 */
       }
     }, 600);
     return () => clearTimeout(t);
-  }, [options, coupon, draftKey, confirmed]);
+  }, [options, coupon, mainCategory, draftKey, confirmed]);
   const clearDraft = () => {
     if (draftKey) {
       try {
@@ -314,10 +334,16 @@ export default function PlanEditor({
   // 옵션 단가는 '상시 판매가'로 들어간다(할인 안 하는 서브를 평균 할인가로 채우면 수정이 번거로움).
   function buildSubOption(b: Bench): OptState {
     const unit = b.regular_price ?? b.consumer_price ?? Math.round(b.avg_unit_price) ?? 0;
+    // Feature A — 어태치율이 있으면 (계획 메인 수량 × 어태치율)로 환산, 없으면 과거 평균 수량
+    const mq = options.filter((o) => o.is_main).reduce((s, o) => s + (o.expected_option_qty || 0), 0);
+    const qty =
+      b.avg_attach_ratio != null && mq > 0
+        ? Math.round(b.avg_attach_ratio * mq) || 0
+        : Math.round(b.avg_qty) || 0;
     return {
       key: uid(),
       option_label: b.base_name,
-      expected_option_qty: Math.round(b.avg_qty) || 0,
+      expected_option_qty: qty,
       is_main: false,
       match_patterns: [],
       items: [
@@ -407,6 +433,17 @@ export default function PlanEditor({
     if (!res.ok) {
       setMsg({ kind: "err", text: (await res.json()).error ?? "저장 실패" });
       return false;
+    }
+    // Feature B — 선택한 메인 카테고리 저장(다음 플래닝 시 기준 기억). best-effort: 컬럼 미적용 시 무시.
+    if (plan) {
+      try {
+        await createClient()
+          .from("campaign_plans")
+          .update({ main_category: mainCategory === "전체" ? null : mainCategory })
+          .eq("id", plan.id);
+      } catch {
+        /* 0059 미적용 등 무시 */
+      }
     }
     return true;
   }
@@ -745,8 +782,28 @@ export default function PlanEditor({
           >
             + 메인 옵션 추가
           </button>
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl card-soft px-5 py-3">
+            <span className="text-sm font-semibold text-ink-2">메인 카테고리</span>
+            <SegmentedControl
+              ariaLabel="메인 카테고리 선택"
+              value={mainCategory}
+              onValueChange={(v) => {
+                setMainCategory(v);
+                setDirty(true);
+              }}
+              options={[
+                { value: "전체", label: "전체" },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+            <span className="text-[11px] text-ink-4">
+              선택한 카테고리가 메인이던 과거 캠페인의 어태치율로 서브 수량을 제안합니다. ‘전체’=전사 할인(n주년 등).
+            </span>
+          </div>
           <SubProductSuggest
             existingProductIds={options.flatMap((o) => o.items.map((it) => it.product_id))}
+            mainCategory={mainCategory}
+            mainQty={options.filter((o) => o.is_main).reduce((s, o) => s + (o.expected_option_qty || 0), 0)}
             onAdd={addSubOption}
             onAddAll={addSubOptions}
           />

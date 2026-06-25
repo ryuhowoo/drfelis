@@ -277,6 +277,104 @@ export function parsePromotionSheet(buf: ArrayBuffer): ParsedPromotion {
 }
 
 // ─────────────────────────────────────────────
+// ⑥ 세그먼트 실적 (회원/비회원 × 회원등급 × 카테고리 × 일반/정기)
+//    카페24 채널별 매출 export — 한 라인을 세그먼트로 분해. promotion_segment_sales 적재용.
+// ─────────────────────────────────────────────
+export type SegmentSalesRow = {
+  base_name: string;
+  option_info: string;
+  category: string | null;
+  member_type: string | null; // 회원 | 비회원
+  member_grade: string | null; // 고영희/꼬물이/아깽이/캣초딩/묘르신 · Staff · 동물병원 · null
+  order_type: "subscription" | "onetime" | null;
+  revenue: number;
+  order_count: number;
+  aov: number;
+  arppu: number;
+  paying_users: number;
+  quantity: number;
+  fee: number;
+  cost: number;
+};
+
+export type ParsedSegment = {
+  start_date: string | null;
+  end_date: string | null;
+  rows: SegmentSalesRow[];
+};
+
+export function parseSegmentSheet(buf: ArrayBuffer): ParsedSegment {
+  const rows = firstSheetRows(buf);
+  // 세그먼트 export는 회원/비회원·회원등급 컬럼이 핵심 — 일반 캠페인 시트와 구분되는 지표
+  const h = findHeaderRow(rows, ["기초상품명", "결제금액", "회원", "회원등급", "카테고리"]);
+  if (h < 0)
+    throw new Error(
+      "세그먼트 실적 시트 헤더를 찾을 수 없습니다 (회원/비회원·회원등급·카테고리·결제금액 컬럼 필요). " +
+        "카페24 채널별(세그먼트 분해) 매출 export인지 확인하세요.",
+    );
+  const header = rows[h];
+  const cPeriod = findCol(header, ["일자"]);
+  const cName = preferBaseName(header);
+  const cOpt = findCol(header, ["옵션정보", "옵션"]);
+  const cCat = findCol(header, ["기초상품카테고리", "카테고리", "분류"]);
+  // '회원/비회원 주문'(→회원비회원주문)과 '주문 회원등급'(→주문회원등급)을 정확히 분리
+  const cMember = findCol(header, ["회원/비회원", "회원비회원"]);
+  const cGrade = findCol(header, ["주문회원등급", "회원등급"]);
+  const cOrderType = findCol(header, ["일반/정기 배송", "일반/정기", "주문유형", "정기여부"]);
+  const cRev = findCol(header, ["결제금액"]);
+  const cCnt = findCol(header, ["결제건수", "건수"]);
+  const cAov = findCol(header, ["평균주문가치", "aov"]);
+  const cArppu = findCol(header, ["객단가", "arppu"]);
+  const cUsers = findCol(header, ["결제유저수", "유저수"]);
+  const cFee = findCol(header, ["수수료"]);
+  const cCost = findCol(header, ["원가"]);
+  const cQty = findCol(header, ["판매수량", "수량"]);
+
+  let start: string | null = null;
+  let end: string | null = null;
+  const out: SegmentSalesRow[] = [];
+
+  for (let i = h + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const name = String(r[cName] ?? "").trim();
+    if (!name || name === "-") continue;
+
+    if (!start && cPeriod >= 0) {
+      const p = String(r[cPeriod] ?? "");
+      const parts = p.split("~");
+      if (parts.length >= 2) {
+        start = toDateStr(parts[0]);
+        end = toDateStr(parts[1]);
+      } else {
+        start = toDateStr(p);
+      }
+    }
+
+    const at = (c: number) => (c >= 0 ? String(r[c] ?? "").trim() : "");
+    const cat = at(cCat);
+    const member = at(cMember);
+    const grade = at(cGrade);
+    out.push({
+      base_name: name,
+      option_info: at(cOpt),
+      category: cat && cat !== "-" ? cat : null,
+      member_type: member && member !== "-" ? member : null,
+      member_grade: grade && grade !== "-" ? grade : null,
+      order_type: cOrderType >= 0 ? normOrderType(r[cOrderType]) : null,
+      revenue: toNum(r[cRev]),
+      order_count: toNum(r[cCnt]),
+      aov: toNum(r[cAov]),
+      arppu: toNum(r[cArppu]),
+      paying_users: toNum(r[cUsers]),
+      quantity: toNum(r[cQty]),
+      fee: toNum(r[cFee]),
+      cost: toNum(r[cCost]),
+    });
+  }
+  return { start_date: start, end_date: end, rows: out };
+}
+
+// ─────────────────────────────────────────────
 // ③ 마스터 (품목코드)
 // ─────────────────────────────────────────────
 export type MasterRow = {
