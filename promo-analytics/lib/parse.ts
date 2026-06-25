@@ -113,6 +113,14 @@ function rowHasData(r: unknown[]): boolean {
   return r.some((c) => String(c ?? "").trim() !== "");
 }
 
+// 메인 카테고리 정규화 — '모래'는 '배변용품'의 하위라 통합한다(0065와 동일 규칙).
+const CATEGORY_ALIAS: Record<string, string> = { 모래: "배변용품" };
+export function normalizeCategory(cat: string | null): string | null {
+  if (!cat) return cat;
+  const c = cat.trim();
+  return CATEGORY_ALIAS[c] ?? c;
+}
+
 function skipToArr(m: Map<string, number>): { reason: string; count: number }[] {
   return [...m.entries()].map(([reason, count]) => ({ reason, count }));
 }
@@ -639,7 +647,7 @@ export function parsePriceGuide(
       if (rowHasData(r)) bump("품목코드·품목명 모두 없음");
       continue;
     }
-    const cat = cCat >= 0 ? String(r[cCat] ?? "").trim() || null : null;
+    const cat = normalizeCategory(cCat >= 0 ? String(r[cCat] ?? "").trim() || null : null);
     const look = dr && opts.lookup ? opts.lookup.get(dr) : undefined;
     const cp = pick(cConsumer >= 0 ? toNum(r[cConsumer]) : 0, look?.consumer_price);
     const rp = pick(cRegular >= 0 ? toNum(r[cRegular]) : 0, look?.regular_price);
