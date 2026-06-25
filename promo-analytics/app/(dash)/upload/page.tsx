@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { won, pct } from "@/lib/format";
 import type { ParsedPriceConfig } from "@/lib/parse";
 import { useReplaceConfirm } from "./useReplaceConfirm";
+import PriceMasterSync from "./PriceMasterSync";
+import CampaignPerformanceList from "./CampaignPerformanceList";
+import CardHistory from "./CardHistory";
 
 // 업로드 이력 기록 — 연동 파일명·시간·종류·행수를 남긴다(업데이트 참고용).
 // 실패해도 업로드 자체를 막지 않는다(best-effort).
@@ -50,19 +53,9 @@ type CardDef = {
 
 const CARDS: CardDef[] = [
   {
-    key: "master",
-    title: "① 마스터 (품목코드)",
-    desc: "기초상품 원가·소비자가·상시가. 가장 먼저 올리면 상품 정보가 채워집니다.",
-  },
-  {
     key: "daily",
-    title: "② 일별 매출 추이",
-    desc: "일자 × 기초상품 × 옵션 × 결제금액 × 수량. baseline(평소 매출)의 연료입니다. 재업로드 시 같은 기간·상품을 교체합니다(누적 아님) — 수량·옵션정보 백필용.",
-  },
-  {
-    key: "promotion",
-    title: "③ 캠페인 시트",
-    desc: "캠페인 기간 성과(전 제품). 파일명의 캠페인 코드(CF_P_…)로 캠페인을 식별 — 같은 코드의 가이드(⑤)·성과(②)은 자동으로 한 캠페인에 결속됩니다(비교연결·병합 불필요). 같은 코드가 있으면 성과를 교체(백필)하고 확정 플랜은 보존, 없으면 새로 생성합니다.",
+    title: "① 일별 전체 매출",
+    desc: "모든 B2C 채널 합본을 한 번에 올리면 채널별로 분해해 적재합니다(일자 × 기초상품 × 옵션 × 채널 × 결제금액 × 수량). baseline(평소 매출)과 캠페인 시점 비교의 연료입니다. 재업로드 시 같은 기간·상품을 교체합니다(누적 아님).",
   },
 ];
 
@@ -81,119 +74,8 @@ export default function UploadPage() {
         <PriceMasterCard />
         <SegmentImportCard />
         <PlanGuideImportCard />
+        <CampaignPerformanceList />
       </div>
-      <UploadHistory />
-    </div>
-  );
-}
-
-type LogRow = {
-  id: string;
-  kind: string;
-  source_file: string;
-  detail: string | null;
-  row_count: number | null;
-  total_revenue: number | null;
-  action: string | null;
-  uploaded_by: string | null;
-  created_at: string;
-};
-
-const KIND_LABEL: Record<string, string> = {
-  daily: "일별 매출",
-  promotion: "캠페인",
-  price_master: "가격 마스터",
-  plan_guide: "플랜 가이드",
-  segment: "세그먼트 실적",
-};
-
-function UploadHistory() {
-  const [rows, setRows] = useState<LogRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("upload_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(30);
-    setRows((data as LogRow[]) ?? []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-    const h = () => load();
-    window.addEventListener("upload-done", h);
-    return () => window.removeEventListener("upload-done", h);
-  }, [load]);
-
-  return (
-    <div className="mt-6 rounded-2xl card-soft p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-medium">연동 이력</h2>
-        <button
-          onClick={load}
-          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-50"
-        >
-          새로고침
-        </button>
-      </div>
-      <p className="mt-1 text-sm text-neutral-500">
-        최근 업로드한 파일·시간·행수입니다. 다음 업데이트 때 어떤 소스가 반영됐는지 참고하세요.
-      </p>
-      {loading ? (
-        <p className="mt-4 text-sm text-neutral-400">불러오는 중…</p>
-      ) : rows.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-400">아직 업로드 이력이 없습니다.</p>
-      ) : (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="text-xs text-neutral-400">
-              <tr>
-                <th className="py-1.5 pr-3">시간</th>
-                <th className="py-1.5 pr-3">종류</th>
-                <th className="py-1.5 pr-3">파일명</th>
-                <th className="py-1.5 pr-3">요약</th>
-                <th className="py-1.5 pr-3 text-right">행수</th>
-                <th className="py-1.5">방식</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-neutral-100 align-top">
-                  <td className="py-1.5 pr-3 whitespace-nowrap text-neutral-500">
-                    {new Date(r.created_at).toLocaleString("ko-KR", {
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="py-1.5 pr-3 whitespace-nowrap">
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                      {KIND_LABEL[r.kind] ?? r.kind}
-                    </span>
-                  </td>
-                  <td className="py-1.5 pr-3 font-medium text-neutral-800">{r.source_file}</td>
-                  <td className="py-1.5 pr-3 text-neutral-500">{r.detail ?? "—"}</td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-neutral-700">
-                    {r.row_count != null ? r.row_count.toLocaleString() : "—"}
-                  </td>
-                  <td className="py-1.5">
-                    {r.action === "replace" ? (
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-700">교체(백필)</span>
-                    ) : (
-                      <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] text-neutral-500">신규</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
@@ -285,16 +167,17 @@ function UploadCard({ def }: { def: CardDef }) {
         );
         const dedup = new Map<
           string,
-          { sale_date: string; product_id: string | null; base_name: string; option_info: string; revenue: number; quantity: number; source_file: string }
+          { sale_date: string; product_id: string | null; base_name: string; option_info: string; channel: string; revenue: number; quantity: number; source_file: string }
         >();
         for (const r of rows) {
-          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info]);
+          const key = JSON.stringify([r.sale_date, r.base_name, r.option_info, r.channel]);
           const prev = dedup.get(key);
           dedup.set(key, {
             sale_date: r.sale_date,
             product_id: productMap.get(r.base_name) ?? null,
             base_name: r.base_name,
             option_info: r.option_info,
+            channel: r.channel,
             revenue: (prev?.revenue ?? 0) + r.revenue,
             quantity: (prev?.quantity ?? 0) + r.quantity,
             source_file: file.name,
@@ -593,6 +476,7 @@ function UploadCard({ def }: { def: CardDef }) {
           )}
         </div>
       )}
+      <CardHistory kinds={[def.key]} />
     </div>
   );
 }
@@ -930,7 +814,7 @@ function PriceMasterCard() {
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">④ 가격 마스터 (가격가이드 워크북)</h2>
+          <h2 className="font-medium">② 품목/가격 마스터</h2>
           <p className="mt-1 text-sm text-neutral-500">
             품목 시트 + 가격가이드 시트를 한 번에 적재합니다. SKU × 구성(단품/2·3·4·5묶음)별
             할인율·공헌이익은 rate card로 자동 계산합니다. 재업로드 시 중복 없이 갱신됩니다.
@@ -1119,9 +1003,12 @@ function PriceMasterCard() {
           )}
         </div>
       )}
+      <PriceMasterSync />
+      <CardHistory kinds={["price_master"]} />
     </div>
   );
 }
+
 
 // ─────────────────────────────────────────────
 // ⑥ 세그먼트 실적 — 카페24 채널별(회원/비회원·회원등급·카테고리·일반/정기 분해) 매출 export.
@@ -1541,7 +1428,7 @@ function PlanGuideImportCard() {
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">⑤ 캠페인 플랜 가이드 (예상 적재)</h2>
+          <h2 className="font-medium">③ 캠페인 플랜 가이드</h2>
           <p className="mt-1 text-sm text-neutral-500">
             표준 양식(1행=옵션)으로 캠페인별 <b>예상(가설)</b> — 옵션·가격·예상수량·목표매출·공헌이익을
             플랜으로 적재합니다. 캠페인(성과) row는 만들지 않아요 — 성과는 ③ 매출 export로 별도
@@ -1635,6 +1522,7 @@ function PlanGuideImportCard() {
           </div>
         </div>
       )}
+      <CardHistory kinds={["plan_guide"]} />
     </div>
   );
 }
