@@ -149,6 +149,15 @@ export async function applyPriceMasterCsv(
     if (error) throw new Error(error.message);
   }
 
+  // 6) 중복 product 자동 치유 — 같은 dr_code 가 이름만 달라 2행으로 들어온 경우 1행으로 병합(0071).
+  //    매칭은 product 이름 정규화로 이뤄져, 카탈로그명/적재명이 다르면 '플랜만·성과만' 고아가 생기므로
+  //    코드 기준으로 재발을 막는다. best-effort: 함수 미적용 환경에서도 동기화는 성공.
+  try {
+    await supabase.rpc("merge_dup_products_by_code");
+  } catch {
+    /* 0071 미적용 등 무시 */
+  }
+
   return { items: itemPayload.length, configs: records.length, unmatched };
 }
 
