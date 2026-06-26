@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45">
+  <ellipse cx="22.5" cy="38" rx="14" ry="3" fill="rgba(0,0,0,0.15)"/>
+  <ellipse cx="22.5" cy="28" rx="15" ry="11" fill="#94a3b8"/>
+  <path d="M14 27 q3 2 6 0" stroke="#1b2a4a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <path d="M25 27 q3 2 6 0" stroke="#1b2a4a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <text x="34" y="14" font-family="sans-serif" font-size="7" fill="#475569">z</text>
+  <text x="38" y="9" font-family="sans-serif" font-size="9" fill="#475569">Z</text>
+</svg>

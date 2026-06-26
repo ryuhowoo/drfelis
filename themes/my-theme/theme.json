@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "name": "My Theme",
+  "version": "1.0.0",
+  "author": "ryuhowoo",
+  "description": "A simple static Clawd desktop pet theme. Replace the placeholder art in assets/ with your own.",
+  "license": "All rights reserved",
+  "viewBox": { "x": 0, "y": 0, "width": 45, "height": 45 },
+
+  "eyeTracking": {
+    "enabled": false,
+    "states": []
+  },
+
+  "miniMode": {
+    "supported": false
+  },
+
+  "sleepSequence": {
+    "mode": "direct"
+  },
+
+  "states": {
+    "idle":         ["idle.svg"],
+    "thinking":     ["thinking.svg"],
+    "working":      ["working.svg"],
+    "attention":    ["happy.svg"],
+    "error":        { "fallbackTo": "attention" },
+    "notification": { "fallbackTo": "attention" },
+    "sleeping":     ["sleeping.svg"]
+  },
+
+  "hitBoxes": {
+    "default": { "x": 0, "y": 0, "w": 45, "h": 45 }
+  }
+}
