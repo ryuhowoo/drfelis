@@ -21,7 +21,7 @@ import PlanLoadPanel from "./PlanLoadPanel";
 import SubProductSuggest, { type Bench } from "./SubProductSuggest";
 import { downloadPlanXlsx, type ExportOption } from "@/lib/plan-export";
 import { parsePlanWorkbook } from "@/lib/plan-import";
-import { ensureProducts } from "@/lib/products";
+import { ensureProducts, isComponentName } from "@/lib/products";
 
 export type EditorItem = {
   product_id: string;
@@ -1567,7 +1567,8 @@ function FreebieRow({
       .from("products")
       .select("id, base_name, dr_code, consumer_price, regular_price, cost")
       .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
-      .limit(8);
+      .limit(30);
+    // 사은품은 스티커·약봉투·팜플렛 등 부재료/판촉물도 쓰이므로 구성품도 포함해 모두 노출
     setHits(((data as SearchHit[]) ?? []).slice(0, 8));
     setOpen(true);
   }
@@ -1720,10 +1721,12 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
       .from("products")
       .select("id, base_name, dr_code, consumer_price, regular_price, cost")
       .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
-      .limit(20);
-    // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 성과에서 이름만 자동생성된 것) 숨김
+      .limit(30);
     const clear = ((data as SearchHit[]) ?? []).filter(
-      (h) => h.dr_code || h.consumer_price || h.regular_price,
+      // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 성과에서 이름만 자동생성된 것) 숨김
+      (h) => (h.dr_code || h.consumer_price || h.regular_price) &&
+        // 원재료·부재료·부자재(비판매 구성품)는 옵션에 담지 않으므로 제외
+        !isComponentName(h.base_name),
     );
     setHits(clear.slice(0, 8));
     setOpen(true);
