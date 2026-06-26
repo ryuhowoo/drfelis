@@ -23,17 +23,17 @@ it stays crisp at any zoom and needs no GIF tooling.
 
 ## Install
 
-1. Copy the whole `my-theme/` folder into your Clawd user themes directory:
-   - **Windows:** `%APPDATA%/clawd-on-desk/themes/my-theme/`
-   - **macOS:** `~/Library/Application Support/clawd-on-desk/themes/my-theme/`
-   - **Linux:** `~/.config/clawd-on-desk/themes/my-theme/`
+1. Copy the whole `dr-felis/` folder into your Clawd user themes directory:
+   - **Windows:** `%APPDATA%/clawd-on-desk/themes/dr-felis/`
+   - **macOS:** `~/Library/Application Support/clawd-on-desk/themes/dr-felis/`
+   - **Linux:** `~/.config/clawd-on-desk/themes/dr-felis/`
 2. Open `Settings...` → `Theme` and select **Dr. Felis**.
 3. Restart Clawd if it doesn't appear yet.
 
 ## Validate (from the clawd-on-desk repo)
 
 ```bash
-node scripts/validate-theme.js path/to/my-theme
+node scripts/validate-theme.js path/to/dr-felis
 ```
 
 ## Asset map
