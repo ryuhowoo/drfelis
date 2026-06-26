@@ -20,26 +20,32 @@ export default function PlanGuideList() {
   const load = useCallback(async () => {
     const supabase = createClient();
     setRows(null);
-    // 현재 버전 플랜 + 캠페인명
+    // 현재 버전 플랜. campaign_plans→promotions는 FK가 2개(promotion_id·actual_promotion_id)라
+    // PostgREST 임베드가 모호해 실패하므로, 캠페인명은 별도 조회로 합친다.
     const { data: plans } = await supabase
       .from("campaign_plans")
-      .select("promotion_id, status, promotions(name)")
+      .select("promotion_id, status")
       .eq("is_current", true)
       .not("promotion_id", "is", null);
 
     const seen = new Map<string, { name: string; status: string }>();
-    for (const p of (plans ?? []) as unknown as {
-      promotion_id: string;
-      status: string;
-      promotions: { name: string | null } | null;
-    }[]) {
+    for (const p of (plans ?? []) as { promotion_id: string; status: string }[]) {
       if (!seen.has(p.promotion_id))
-        seen.set(p.promotion_id, {
-          name: p.promotions?.name ?? "(이름 없음)",
-          status: p.status,
-        });
+        seen.set(p.promotion_id, { name: "(이름 없음)", status: p.status });
     }
     const ids = [...seen.keys()];
+
+    // 캠페인명 채우기
+    if (ids.length > 0) {
+      const { data: proms } = await supabase
+        .from("promotions")
+        .select("id, name")
+        .in("id", ids);
+      for (const pr of (proms ?? []) as { id: string; name: string | null }[]) {
+        const e = seen.get(pr.id);
+        if (e) e.name = pr.name ?? "(이름 없음)";
+      }
+    }
 
     // 성과(실판매) 업로드 유무 — promotion_sales 존재 여부
     const perfSet = new Set<string>();

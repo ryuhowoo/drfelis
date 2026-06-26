@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseSegmentSheet } from "@/lib/parse";
 import { ensureProducts } from "@/lib/products";
+import { useReplaceConfirm } from "../../upload/useReplaceConfirm";
+
+// Supabase 에러(PostgrestError)는 Error 인스턴스가 아니라 일반 객체 → message/details/hint를 직접 추출.
+function errText(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === "object") {
+    const o = e as { message?: string; details?: string; hint?: string };
+    return o.message || o.details || o.hint || "업로드 실패";
+  }
+  return "업로드 실패";
+}
 
 // 캠페인에 직접 성과 추가 (통합 포맷) — 회원/등급/카테고리·일반/정기까지 분해된 매출 export를
 // '이 캠페인'에 promotion_id로 고정 적재. replace_promotion_performance RPC가 한 번에
@@ -26,6 +37,7 @@ export default function PerformanceUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const { confirm, element: replaceDialog } = useReplaceConfirm();
 
   // 전체 실공헌이익액·실광고비 직접 입력 — 옵션 분해의 기준값(groundTruth)·광고 배분에 반영
   const [contrib, setContrib] = useState(contributionAmount != null ? String(contributionAmount) : "");
@@ -89,6 +101,37 @@ export default function PerformanceUpload({
         cost: r.cost,
       }));
 
+      // 교체 검토 (DB 변경 전) — 일별 매출과 동일한 흐름. 기존 성과가 있으면 old/new 비교 후 확인.
+      const { data: existing } = await supabase
+        .from("promotion_sales")
+        .select("revenue")
+        .eq("promotion_id", promotionId);
+      const oldCount = existing?.length ?? 0;
+      if (oldCount > 0) {
+        const oldRevenue = (existing ?? []).reduce((s, x) => s + (Number(x.revenue) || 0), 0);
+        const newRevenue = records.reduce((s, x) => s + (x.revenue || 0), 0);
+        const newGrain = new Set(
+          parsed.rows.map((r) => `${r.base_name}|${r.option_info ?? ""}`),
+        ).size;
+        const uniqNames = new Set(parsed.rows.map((r) => r.base_name)).size;
+        const ok = await confirm({
+          title: "성과 교체 — 이 캠페인의 기존 성과를 새 파일로",
+          oldCount,
+          oldRevenue,
+          newCount: newGrain,
+          newRevenue,
+          matchedSkus: productMap.size,
+          totalSkus: uniqNames,
+          note: "이 캠페인의 옵션/SKU별 집계와 세그먼트(회원·등급·AOV·ARPPU)가 새 파일로 원자적으로 교체됩니다(누적 아님).",
+        });
+        if (!ok) {
+          setMsg(null);
+          setBusy(false);
+          if (inputRef.current) inputRef.current.value = "";
+          return;
+        }
+      }
+
       // 통합 적재: 세그먼트 풀그레인 + promotion_sales 집계(달성률) 원자적 교체
       const { error } = await supabase.rpc("replace_promotion_performance", {
         p_promotion_id: promotionId,
@@ -127,7 +170,7 @@ export default function PerformanceUpload({
       });
       router.refresh();
     } catch (e) {
-      setMsg({ kind: "err", text: e instanceof Error ? e.message : "업로드 실패" });
+      setMsg({ kind: "err", text: errText(e) });
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -136,6 +179,7 @@ export default function PerformanceUpload({
 
   return (
     <div className="rounded-2xl card-soft p-5">
+      {replaceDialog}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink-2">

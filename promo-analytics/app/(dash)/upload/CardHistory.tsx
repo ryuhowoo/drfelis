@@ -13,8 +13,8 @@ type LogRow = {
 };
 
 // 카드별 미니 업로드 이력 — upload_log 를 kind 로 필터해 최근 N건. (기존 전역 '연동 이력' 섹션 대체)
-// upload-done window 이벤트로 자동 갱신.
-export default function CardHistory({ kinds, limit = 4 }: { kinds: string[]; limit?: number }) {
+// upload-done window 이벤트로 자동 갱신. 항목이 많으면 영역 내부 스크롤로 전부 볼 수 있다.
+export default function CardHistory({ kinds, limit = 50 }: { kinds: string[]; limit?: number }) {
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -42,8 +42,10 @@ export default function CardHistory({ kinds, limit = 4 }: { kinds: string[]; lim
 
   return (
     <div className="mt-3 border-t border-neutral-100 pt-2.5">
-      <div className="text-[11px] font-medium text-neutral-400">최근 업로드</div>
-      <ul className="mt-1 space-y-0.5">
+      <div className="text-[11px] font-medium text-neutral-400">
+        최근 업로드{rows.length >= 6 ? ` · ${rows.length}건` : ""}
+      </div>
+      <ul className="mt-1 max-h-44 space-y-0.5 overflow-y-auto pr-1">
         {rows.map((r) => (
           <li key={r.id} className="flex items-center gap-2 text-[11px] text-neutral-500">
             <span className="whitespace-nowrap text-neutral-400">
