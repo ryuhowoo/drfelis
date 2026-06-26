@@ -9,10 +9,12 @@ import {
   computeOptionTotals,
   computePlanTotals,
   effectiveMult,
+  freebieDeduction,
   type PlanItemInput,
-  type CouponSpec,
+  type Coupon,
+  type Freebie,
 } from "@/lib/plan";
-import { won, pct, num } from "@/lib/format";
+import { won, pct, pctFloor, num } from "@/lib/format";
 import { validatePlan } from "@/lib/plan-validation";
 import { InlineAlert, Dialog, DialogContent, DialogHeader, DialogFooter, Button, SegmentedControl } from "@/components/ui";
 import PlanLoadPanel from "./PlanLoadPanel";
@@ -65,6 +67,8 @@ type OptState = {
   is_main: boolean;
   match_patterns: string[];
   items: ItemState[];
+  // 이 옵션 구성의 과거 평균 판매수 (서브 추천에서 추가 시 채워짐, 비구속 힌트)
+  qty_bench?: number | null;
 };
 
 const uid = () =>
@@ -81,6 +85,100 @@ function toState(opts: EditorOption[]): OptState[] {
     match_patterns: o.match_patterns,
     items: o.items.map((it) => ({ ...it, key: uid() })),
   }));
+}
+
+// 메인 카테고리 표기 — '배변용품'에는 '모래'가 통합돼 있어 라벨로 함께 보여준다(0065 데이터 통합).
+function categoryLabel(c: string): string {
+  return c === "배변용품" ? "배변용품(모래)" : c;
+}
+
+// ── 사은품・추가 할인 쿠폰 카드 항목 ─────────────────────────────
+// 한 캠페인에 쿠폰을 여러 개 중첩하거나(정률/정액) 사은품을 동봉할 수 있어, 항목을 자유롭게 추가/삭제한다.
+type CouponEntry = {
+  id: string;
+  type: "coupon";
+  kind: "rate" | "flat";
+  min: number; // 기준액 (원 이상)
+  ratePct: number; // 정률 %
+  max: number; // 정률 캡 (원, 0=무제한)
+  flat: number; // 정액 할인 (원)
+  label: string;
+};
+type FreebieEntry = {
+  id: string;
+  type: "freebie";
+  product_id: string | null;
+  base_name: string;
+  qty: number;
+  cost: number; // 원가(VAT+) — 차감 기준
+};
+type ExtraEntry = CouponEntry | FreebieEntry;
+
+const isCoupon = (e: ExtraEntry): e is CouponEntry => e.type === "coupon";
+const isFreebie = (e: ExtraEntry): e is FreebieEntry => e.type === "freebie";
+
+// 저장된 extras(JSON) 복원 + 레거시 단일 쿠폰(coupon_rate>0) 마이그레이션
+function initialExtras(plan: {
+  extras?: unknown;
+  coupon_min_order?: number | null;
+  coupon_rate?: number | null;
+  coupon_max?: number | null;
+} | null): ExtraEntry[] {
+  const raw = plan?.extras;
+  if (Array.isArray(raw)) {
+    return (raw as Partial<ExtraEntry>[])
+      .map((e): ExtraEntry | null => {
+        if (e?.type === "freebie")
+          return {
+            id: uid(),
+            type: "freebie",
+            product_id: (e as FreebieEntry).product_id ?? null,
+            base_name: (e as FreebieEntry).base_name ?? "",
+            qty: Number((e as FreebieEntry).qty) || 0,
+            cost: Number((e as FreebieEntry).cost) || 0,
+          };
+        if (e?.type === "coupon")
+          return {
+            id: uid(),
+            type: "coupon",
+            kind: (e as CouponEntry).kind === "flat" ? "flat" : "rate",
+            min: Number((e as CouponEntry).min) || 0,
+            ratePct: Number((e as CouponEntry).ratePct) || 0,
+            max: Number((e as CouponEntry).max) || 0,
+            flat: Number((e as CouponEntry).flat) || 0,
+            label: (e as CouponEntry).label ?? "",
+          };
+        return null;
+      })
+      .filter((e): e is ExtraEntry => e != null);
+  }
+  // 레거시 단일 쿠폰 → 쿠폰 항목 1개로 승격
+  if ((Number(plan?.coupon_rate) || 0) > 0) {
+    return [
+      {
+        id: uid(),
+        type: "coupon",
+        kind: "rate",
+        min: Number(plan?.coupon_min_order) || 0,
+        ratePct: (Number(plan?.coupon_rate) || 0) * 100,
+        max: Number(plan?.coupon_max) || 0,
+        flat: 0,
+        label: "",
+      },
+    ];
+  }
+  return [];
+}
+
+function entryToCoupon(e: CouponEntry): Coupon {
+  return {
+    kind: e.kind,
+    min_order_amount: e.min,
+    discount_rate: e.ratePct / 100,
+    max_discount_amount: e.max,
+    flat_amount: e.flat,
+    label: e.label,
+  };
 }
 
 export default function PlanEditor({
@@ -116,12 +214,10 @@ export default function PlanEditor({
     coupon_rate?: number | null;
     coupon_max?: number | null;
     main_category?: string | null;
+    extras?: unknown;
   }) | null;
-  const [coupon, setCoupon] = useState(() => ({
-    min: Number(planC?.coupon_min_order ?? 0) || 0,
-    ratePct: (Number(planC?.coupon_rate ?? 0) || 0) * 100,
-    max: Number(planC?.coupon_max ?? 0) || 0,
-  }));
+  // 사은품・추가 할인 쿠폰 항목들 (다중 쿠폰 중첩 + 사은품 동봉)
+  const [extras, setExtras] = useState<ExtraEntry[]>(() => initialExtras(planC));
   // Feature A/B — 메인 카테고리(서브 어태치율 추천 기준). '전체'=전사 할인(n주년 등) 분석.
   const [mainCategory, setMainCategory] = useState<string>(() => planC?.main_category || "전체");
   const [categories, setCategories] = useState<string[]>([]);
@@ -176,10 +272,10 @@ export default function PlanEditor({
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
-        const d = JSON.parse(raw) as { options?: OptState[]; coupon?: typeof coupon; mainCategory?: string };
+        const d = JSON.parse(raw) as { options?: OptState[]; extras?: ExtraEntry[]; mainCategory?: string };
         if (Array.isArray(d.options) && d.options.length > 0) {
           setOptions(d.options);
-          if (d.coupon) setCoupon(d.coupon);
+          if (Array.isArray(d.extras)) setExtras(d.extras);
           if (d.mainCategory) setMainCategory(d.mainCategory);
           setRestored(true);
           setDirty(true);
@@ -195,13 +291,13 @@ export default function PlanEditor({
     if (!draftKey || confirmed || !hydrated.current) return;
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(draftKey, JSON.stringify({ options, coupon, mainCategory, ts: Date.now() }));
+        localStorage.setItem(draftKey, JSON.stringify({ options, extras, mainCategory, ts: Date.now() }));
       } catch {
         /* 용량 초과 등 무시 */
       }
     }, 600);
     return () => clearTimeout(t);
-  }, [options, coupon, mainCategory, draftKey, confirmed]);
+  }, [options, extras, mainCategory, draftKey, confirmed]);
   const clearDraft = () => {
     if (draftKey) {
       try {
@@ -215,11 +311,7 @@ export default function PlanEditor({
   const discardDraft = () => {
     clearDraft();
     setOptions(toState(initialOptions));
-    setCoupon({
-      min: Number(planC?.coupon_min_order ?? 0) || 0,
-      ratePct: (Number(planC?.coupon_rate ?? 0) || 0) * 100,
-      max: Number(planC?.coupon_max ?? 0) || 0,
-    });
+    setExtras(initialExtras(planC));
     setDirty(false);
   };
 
@@ -241,15 +333,15 @@ export default function PlanEditor({
     );
   }
 
-  // 쿠폰 스펙 (할인율>0일 때만 적용)
-  const couponSpec: CouponSpec =
-    coupon.ratePct > 0
-      ? {
-          min_order_amount: coupon.min,
-          discount_rate: coupon.ratePct / 100,
-          max_discount_amount: coupon.max,
-        }
-      : null;
+  // 쿠폰·사은품 분해 (정률/정액 다중 쿠폰 중첩 + 사은품 동봉 차감)
+  const couponList: Coupon[] = extras.filter(isCoupon).map(entryToCoupon);
+  const freebies: Freebie[] = extras.filter(isFreebie).map((f) => ({
+    product_id: f.product_id,
+    base_name: f.base_name,
+    qty: f.qty,
+    cost: f.cost,
+  }));
+  const freebieTotal = freebieDeduction(freebies);
 
   // ── 라이브 롤업 ──────────────────────────────
   const optionResults = options.map((o) => {
@@ -260,7 +352,7 @@ export default function PlanEditor({
       regular_price: it.regular_price,
       cost: it.cost,
     }));
-    return computeOptionTotals(inputs, mult, o.expected_option_qty, couponSpec);
+    return computeOptionTotals(inputs, mult, o.expected_option_qty, couponList);
   });
   const planTotals = computePlanTotals(
     options.map((o, i) => ({
@@ -277,9 +369,11 @@ export default function PlanEditor({
   const expOrderCount = options.reduce((s, o) => s + (o.expected_option_qty || 0), 0);
   let expSkuUnits = 0;
   for (const v of planTotals.skuExpectedQty.values()) expSkuUnits += v.qty;
+  // 사은품 차감 후 최종 공헌이익 (사은품은 동봉 발송 → 원가×수량만 일괄 차감)
+  const contribNet = planTotals.expected_contribution_total - freebieTotal;
   const contribRate =
     planTotals.expected_revenue_total > 0
-      ? planTotals.expected_contribution_total / planTotals.expected_revenue_total
+      ? contribNet / planTotals.expected_revenue_total
       : null;
   const couponTotal = optionResults.reduce(
     (s, r, i) => s + r.coupon_discount * (options[i].expected_option_qty || 0),
@@ -288,6 +382,30 @@ export default function PlanEditor({
 
   // ── 인라인 검증 (확정 전 오류 발견) ──────────
   const validation = validatePlan(options, mult);
+
+  // ── 사은품・쿠폰 항목 변경 헬퍼 ───────────────
+  const addCouponEntry = () => {
+    setDirty(true);
+    setExtras((prev) => [
+      ...prev,
+      { id: uid(), type: "coupon", kind: "rate", min: 50000, ratePct: 5, max: 0, flat: 0, label: "" },
+    ]);
+  };
+  const addFreebieEntry = () => {
+    setDirty(true);
+    setExtras((prev) => [
+      ...prev,
+      { id: uid(), type: "freebie", product_id: null, base_name: "", qty: 0, cost: 0 },
+    ]);
+  };
+  const patchExtra = (id: string, patch: Partial<ExtraEntry>) => {
+    setDirty(true);
+    setExtras((prev) => prev.map((e) => (e.id === id ? ({ ...e, ...patch } as ExtraEntry) : e)));
+  };
+  const removeExtra = (id: string) => {
+    setDirty(true);
+    setExtras((prev) => prev.filter((e) => e.id !== id));
+  };
 
   // ── 상태 변경 헬퍼 ───────────────────────────
   const patchOption = (key: string, patch: Partial<OptState>) => {
@@ -330,6 +448,29 @@ export default function PlanEditor({
       return next;
     });
   };
+  // 메인 체크 토글 — 메인 옵션은 위로, 서브는 아래로 안정 정렬(상대 순서 유지)
+  const toggleMain = (key: string, isMain: boolean) => {
+    setDirty(true);
+    setOptions((prev) => {
+      const next = prev.map((o) => (o.key === key ? { ...o, is_main: isMain } : o));
+      return [...next.filter((o) => o.is_main), ...next.filter((o) => !o.is_main)];
+    });
+  };
+  // 드래그로 옵션 카드 순서 변경 — from 카드를 to 위치로 이동
+  const dragKey = useRef<string | null>(null);
+  const moveOption = (from: string, to: string) => {
+    if (from === to) return;
+    setDirty(true);
+    setOptions((prev) => {
+      const fi = prev.findIndex((o) => o.key === from);
+      const ti = prev.findIndex((o) => o.key === to);
+      if (fi < 0 || ti < 0) return prev;
+      const next = [...prev];
+      const [m] = next.splice(fi, 1);
+      next.splice(ti, 0, m);
+      return next;
+    });
+  };
   // Phase 4 — 벤치마크 추천 서브상품을 옵션으로 추가.
   // 옵션 단가는 '상시 판매가'로 들어간다(할인 안 하는 서브를 평균 할인가로 채우면 수정이 번거로움).
   function buildSubOption(b: Bench): OptState {
@@ -345,6 +486,7 @@ export default function PlanEditor({
       option_label: b.base_name,
       expected_option_qty: qty,
       is_main: false,
+      qty_bench: Math.round(b.avg_qty) || null,
       match_patterns: [],
       items: [
         {
@@ -404,9 +546,18 @@ export default function PlanEditor({
 
   // ── 저장 / 확정 / 복제 ───────────────────────
   function payload() {
+    // 레거시 단일 쿠폰 컬럼(coupon_*) 은 첫 정률 쿠폰으로 채워 하위호환 유지, 전체는 extras로 저장
+    const firstRate = extras.find((e): e is CouponEntry => isCoupon(e) && e.kind === "rate" && e.ratePct > 0);
     return {
       plan_id: plan!.id,
-      coupon: { min_order: coupon.min, rate: coupon.ratePct / 100, max: coupon.max },
+      coupon: firstRate
+        ? { min_order: firstRate.min, rate: firstRate.ratePct / 100, max: firstRate.max }
+        : { min_order: 0, rate: 0, max: 0 },
+      extras: extras.map((e) =>
+        isFreebie(e)
+          ? { type: "freebie", product_id: e.product_id, base_name: e.base_name, qty: e.qty, cost: e.cost }
+          : { type: "coupon", kind: e.kind, min: e.min, ratePct: e.ratePct, max: e.max, flat: e.flat, label: e.label },
+      ),
       options: options.map((o, i) => ({
         option_label: o.option_label,
         expected_option_qty: o.expected_option_qty,
@@ -482,11 +633,14 @@ export default function PlanEditor({
       return;
     }
     clearDraft();
+    // 확정 완료 → 해당 캠페인 상세(SKU·옵션)로 이동
+    router.push(`/promotions/${promotionId}?view=skus`);
     router.refresh();
     setBusy(false);
   }
 
   function exportXlsx() {
+    const firstRate = extras.find((e): e is CouponEntry => isCoupon(e) && e.kind === "rate" && e.ratePct > 0);
     const exOptions: ExportOption[] = options.map((o, i) => {
       const t = optionResults[i];
       return {
@@ -519,10 +673,10 @@ export default function PlanEditor({
         revenue: planTotals.expected_revenue_total,
         order_count: expOrderCount,
         sku_units: expSkuUnits,
-        contribution: planTotals.expected_contribution_total,
+        contribution: contribNet,
         contribution_rate: contribRate,
       },
-      couponSpec ? { min: coupon.min, ratePct: coupon.ratePct, max: coupon.max } : null,
+      firstRate ? { min: firstRate.min, ratePct: firstRate.ratePct, max: firstRate.max } : null,
     );
   }
 
@@ -662,56 +816,78 @@ export default function PlanEditor({
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <Stat label="예상 매출액" value={won(planTotals.expected_revenue_total)} primary />
+          <Stat
+            label="예상 매출액"
+            value={won(planTotals.expected_revenue_total)}
+            sub={couponTotal > 0 ? `쿠폰 할인 반영 −${won(couponTotal)}` : undefined}
+            primary
+          />
           <Stat label="구매건수 (세트)" value={num(expOrderCount)} />
           <Stat label="판매수량 (SKU)" value={num(expSkuUnits)} />
-          <Stat label="공헌이익액" value={won(planTotals.expected_contribution_total)} />
+          <Stat
+            label="공헌이익액"
+            value={won(contribNet)}
+            sub={freebieTotal > 0 ? `사은품 차감 −${won(freebieTotal)}` : undefined}
+          />
           <Stat label="공헌이익률" value={contribRate != null ? pct(contribRate, 1) : "—"} />
         </div>
         <div className="mt-2 text-[11px] text-ink-4">
           옵션 {num(options.length)}종 · SKU {num(planTotals.skuExpectedQty.size)}종
-          {couponTotal > 0 && <> · 쿠폰 할인 반영 −{won(couponTotal)}</>}
         </div>
       </div>
 
-      {/* 추가 할인 쿠폰 (플랜 단위 · N원 이상 n% 최대 n원) */}
+      {/* 사은품・추가 할인 쿠폰 (플랜 단위 · 쿠폰 다중 중첩 + 사은품 동봉) */}
       <div className="mt-3 rounded-2xl card-soft p-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-ink-2">추가 할인 쿠폰</h3>
-          <span className="text-[11px] text-ink-4">옵션 혜택가가 기준액 이상이면 자동 적용</span>
+          <h3 className="text-sm font-semibold text-ink-2">사은품・추가 할인 쿠폰</h3>
+          <span className="text-[11px] text-ink-4">쿠폰: 옵션 혜택가가 기준액 이상이면 자동 적용</span>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          <label className="block">
-            <span className="block text-[11px] font-medium text-ink-4">기준액 (원 이상)</span>
-            <input
-              type="text" inputMode="numeric" disabled={confirmed}
-              value={coupon.min ? coupon.min.toLocaleString("ko-KR") : ""}
-              onChange={(e) => { const v = Number(e.target.value.replace(/[^0-9]/g, "")) || 0; setCoupon((c) => ({ ...c, min: v })); setDirty(true); }}
-              placeholder="예: 50,000"
-              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
-            />
-          </label>
-          <label className="block">
-            <span className="block text-[11px] font-medium text-ink-4">할인율 (%)</span>
-            <input
-              type="number" inputMode="decimal" min={0} max={100} disabled={confirmed}
-              value={coupon.ratePct || ""}
-              onChange={(e) => { setCoupon((c) => ({ ...c, ratePct: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })); setDirty(true); }}
-              placeholder="예: 10"
-              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
-            />
-          </label>
-          <label className="block">
-            <span className="block text-[11px] font-medium text-ink-4">최대 할인 (원, 0=무제한)</span>
-            <input
-              type="text" inputMode="numeric" disabled={confirmed}
-              value={coupon.max ? coupon.max.toLocaleString("ko-KR") : ""}
-              onChange={(e) => { const v = Number(e.target.value.replace(/[^0-9]/g, "")) || 0; setCoupon((c) => ({ ...c, max: v })); setDirty(true); }}
-              placeholder="예: 10,000"
-              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none transition focus:border-brand-400 disabled:opacity-60"
-            />
-          </label>
-        </div>
+
+        {extras.length === 0 ? (
+          <p className="mt-3 text-xs text-ink-4">
+            추가 쿠폰이나 동봉 사은품이 없습니다. 아래에서 추가하세요. 쿠폰은 여러 개를 중첩 적용할 수 있어요.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {extras.map((e, i) =>
+              isCoupon(e) ? (
+                <CouponRow
+                  key={e.id}
+                  entry={e}
+                  index={extras.filter((x, j) => isCoupon(x) && j <= i).length}
+                  readOnly={confirmed}
+                  onPatch={(patch) => patchExtra(e.id, patch)}
+                  onRemove={() => removeExtra(e.id)}
+                />
+              ) : (
+                <FreebieRow
+                  key={e.id}
+                  entry={e}
+                  readOnly={confirmed}
+                  onPatch={(patch) => patchExtra(e.id, patch)}
+                  onRemove={() => removeExtra(e.id)}
+                />
+              ),
+            )}
+          </ul>
+        )}
+
+        {!confirmed && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={addCouponEntry}
+              className="rounded-lg border border-dashed border-brand-300 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+            >
+              + 쿠폰 추가
+            </button>
+            <button
+              onClick={addFreebieEntry}
+              className="rounded-lg border border-dashed border-secondary-300 px-3 py-1.5 text-xs font-medium text-secondary-700 hover:bg-secondary-50"
+            >
+              + 사은품 추가
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 플랜 불러오기 (draft에서만) */}
@@ -736,12 +912,24 @@ export default function PlanEditor({
         </div>
       )}
 
-      {/* 옵션들 */}
+      {/* 옵션들 — 드래그로 순서 변경 가능 */}
       <div className="mt-5 space-y-4">
         {options.map((o, i) => {
           const issues = validation.byOption[o.key] ?? [];
           return (
-            <div key={o.key}>
+            <div
+              key={o.key}
+              onDragOver={confirmed ? undefined : (e) => e.preventDefault()}
+              onDrop={
+                confirmed
+                  ? undefined
+                  : (e) => {
+                      e.preventDefault();
+                      if (dragKey.current) moveOption(dragKey.current, o.key);
+                      dragKey.current = null;
+                    }
+              }
+            >
               <OptionCard
                 opt={o}
                 totals={optionResults[i]}
@@ -750,11 +938,18 @@ export default function PlanEditor({
                 readOnly={confirmed}
                 invalid={issues.some((x) => x.level === "error")}
                 onPatch={(patch) => patchOption(o.key, patch)}
+                onToggleMain={(v) => toggleMain(o.key, v)}
                 onRemove={() => removeOption(o.key)}
                 onDuplicate={() => duplicateOption(o.key)}
                 onAddItem={(it) => addItem(o.key, it)}
                 onPatchItem={(itemKey, patch) => patchItem(o.key, itemKey, patch)}
                 onRemoveItem={(itemKey) => removeItem(o.key, itemKey)}
+                onDragStart={() => {
+                  dragKey.current = o.key;
+                }}
+                onDragEnd={() => {
+                  dragKey.current = null;
+                }}
               />
               {issues.length > 0 && (
                 <ul className="mt-1 space-y-0.5 px-1">
@@ -793,11 +988,11 @@ export default function PlanEditor({
               }}
               options={[
                 { value: "전체", label: "전체" },
-                ...categories.map((c) => ({ value: c, label: c })),
+                ...categories.map((c) => ({ value: c, label: categoryLabel(c) })),
               ]}
             />
             <span className="text-[11px] text-ink-4">
-              선택한 카테고리가 메인이던 과거 캠페인의 어태치율로 서브 수량을 제안합니다. ‘전체’=전사 할인(n주년 등).
+              선택한 카테고리가 메인이던 과거 캠페인의 ‘함께 담은 비율’로 서브 수량을 제안합니다. ‘전체’=전사 할인(n주년 등).
             </span>
           </div>
           <SubProductSuggest
@@ -878,8 +1073,8 @@ export default function PlanEditor({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader
-            title="플랜 확정"
-            description="확정하면 rate card·가격·원가가 동결되고 수정이 잠깁니다. 이후 수정은 '새 버전'으로만 가능합니다."
+            title="이대로 확정할까요?"
+            description="확정하면 rate card·가격·원가가 이 시점으로 동결됩니다. 확정 후에도 '수정(새 버전)'으로 언제든 변경할 수 있어요. 확정이 끝나면 캠페인 상세로 이동합니다."
           />
           <dl className="space-y-1.5 text-sm">
             <div className="flex justify-between gap-3">
@@ -887,8 +1082,8 @@ export default function PlanEditor({
               <dd className="font-semibold tabular-nums text-ink">{won(planTotals.expected_revenue_total)}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-ink-3">목표 공헌이익</dt>
-              <dd className="font-semibold tabular-nums text-ink">{won(planTotals.expected_contribution_total)}</dd>
+              <dt className="text-ink-3">목표 공헌이익{freebieTotal > 0 ? " (사은품 차감 후)" : ""}</dt>
+              <dd className="font-semibold tabular-nums text-ink">{won(contribNet)}</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-ink-3">옵션 수</dt>
@@ -927,10 +1122,12 @@ export default function PlanEditor({
 function Stat({
   label,
   value,
+  sub,
   primary,
 }: {
   label: string;
   value: string;
+  sub?: string;
   primary?: boolean;
 }) {
   return (
@@ -939,6 +1136,7 @@ function Stat({
     >
       <div className="text-xs text-neutral-500">{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
+      {sub && <div className="mt-0.5 text-[11px] text-ink-4">{sub}</div>}
     </div>
   );
 }
@@ -951,11 +1149,14 @@ function OptionCard({
   readOnly,
   invalid,
   onPatch,
+  onToggleMain,
   onRemove,
   onDuplicate,
   onAddItem,
   onPatchItem,
   onRemoveItem,
+  onDragStart,
+  onDragEnd,
 }: {
   opt: OptState;
   totals: ReturnType<typeof computeOptionTotals>;
@@ -964,17 +1165,25 @@ function OptionCard({
   readOnly: boolean;
   invalid?: boolean;
   onPatch: (patch: Partial<OptState>) => void;
+  onToggleMain: (v: boolean) => void;
   onRemove: () => void;
   onDuplicate: () => void;
   onAddItem: (it: ItemState) => void;
   onPatchItem: (itemKey: string, patch: Partial<ItemState>) => void;
   onRemoveItem: (itemKey: string) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }) {
+  // 드래그는 핸들(⠿)을 잡았을 때만 활성 — 입력 필드 드래그 선택과 충돌 방지
+  const [dragging, setDragging] = useState(false);
   // 옵션 단가/할인율을 '주 입력'으로 — 입력 시 SKU 단가들을 비례 스케일해
   // set_price=Σ(sku×price) 계약을 유지(백엔드 무변). 입력 중 jitter 방지로 blur 시 적용.
   const [priceDraft, setPriceDraft] = useState<string | null>(null);
   const [discDraft, setDiscDraft] = useState<string | null>(null);
 
+  // 입력한 옵션 단가를 '정확히' 유지한다. set_price=Σ(sku_qty×unit_sale_price) 계약을
+  // 지키려면 정수 단가로는 입력값을 못 맞추는 경우가 있어(예: 수량3, 89,900 → 89,898 드리프트),
+  // 단가를 소수까지 허용해 Σ가 입력값과 정확히 일치하도록 비례 배분한다(단가는 숨김 값이라 무방).
   function applyOptionPrice(newPrice: number) {
     const items = opt.items;
     if (items.length === 0 || !(newPrice >= 0)) return;
@@ -982,23 +1191,24 @@ function OptionCard({
     if (cur > 0) {
       const f = newPrice / cur;
       items.forEach((it) =>
-        onPatchItem(it.key, { unit_sale_price: Math.max(0, Math.round(it.unit_sale_price * f)), source_config_id: null }),
+        onPatchItem(it.key, { unit_sale_price: Math.max(0, it.unit_sale_price * f), source_config_id: null }),
       );
     } else if (totals.consumer_total > 0) {
       items.forEach((it) => {
         const share = ((it.consumer_price ?? 0) * (it.sku_qty_per_option || 0)) / totals.consumer_total;
         const q = Math.max(1, it.sku_qty_per_option || 1);
-        onPatchItem(it.key, { unit_sale_price: Math.round((newPrice * share) / q), source_config_id: null });
+        onPatchItem(it.key, { unit_sale_price: (newPrice * share) / q, source_config_id: null });
       });
     } else {
       const totalQty = items.reduce((s, it) => s + (it.sku_qty_per_option || 0), 0) || items.length;
-      const perUnit = Math.round(newPrice / totalQty);
+      const perUnit = newPrice / totalQty;
       items.forEach((it) => onPatchItem(it.key, { unit_sale_price: perUnit, source_config_id: null }));
     }
   }
   function applyDiscount(ratePct: number) {
     if (totals.consumer_total <= 0) return;
-    applyOptionPrice(Math.round(totals.consumer_total * (1 - ratePct / 100)));
+    // 입력 할인율은 정수 기준으로 받되, 단가는 정확히 반영(반올림 없이)
+    applyOptionPrice(totals.consumer_total * (1 - ratePct / 100));
   }
 
   const qty = opt.expected_option_qty || 0;
@@ -1008,8 +1218,28 @@ function OptionCard({
   const preContribution = (totals.set_price * mult - totals.cost_total) * qty;
 
   return (
-    <div className={`rounded-xl card-soft p-4 ${invalid ? "ring-1 ring-danger/40" : ""}`}>
+    <div
+      className={`rounded-xl card-soft p-4 ${invalid ? "ring-1 ring-danger/40" : ""} ${dragging ? "opacity-60 ring-2 ring-brand-300" : ""}`}
+      draggable={dragging && !readOnly}
+      onDragStart={onDragStart}
+      onDragEnd={() => {
+        setDragging(false);
+        onDragEnd();
+      }}
+    >
       <div className="flex flex-wrap items-center gap-2">
+        {!readOnly && (
+          <button
+            type="button"
+            aria-label="드래그하여 순서 변경"
+            title="드래그하여 순서 변경"
+            onMouseDown={() => setDragging(true)}
+            onMouseUp={() => setDragging(false)}
+            className="cursor-grab select-none px-1 text-base leading-none text-ink-4 hover:text-ink-2 active:cursor-grabbing"
+          >
+            ⠿
+          </button>
+        )}
         <input
           className="min-w-[10rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm font-medium disabled:bg-neutral-50"
           value={opt.option_label}
@@ -1022,7 +1252,7 @@ function OptionCard({
             type="checkbox"
             checked={opt.is_main}
             disabled={readOnly}
-            onChange={(e) => onPatch({ is_main: e.target.checked })}
+            onChange={(e) => onToggleMain(e.target.checked)}
           />
           메인
         </label>
@@ -1057,11 +1287,11 @@ function OptionCard({
           <div className="mt-0.5 flex items-center gap-1">
             <input
               type="number"
-              step="0.1"
+              step="1"
               min={0}
               max={100}
               disabled={readOnly || totals.consumer_total <= 0}
-              value={discDraft ?? (totals.discount_rate_consumer != null ? +(totals.discount_rate_consumer * 100).toFixed(1) : "")}
+              value={discDraft ?? (totals.discount_rate_consumer != null ? Math.floor(totals.discount_rate_consumer * 100) : "")}
               onChange={(e) => setDiscDraft(e.target.value)}
               onBlur={() => { if (discDraft != null) { applyDiscount(Number(discDraft) || 0); setDiscDraft(null); } }}
               onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
@@ -1071,7 +1301,7 @@ function OptionCard({
           </div>
         </label>
         <label className="block">
-          <span className="block text-[11px] font-medium text-ink-4">예상 세트수</span>
+          <span className="block text-[11px] font-medium text-ink-4">예상 판매수</span>
           <input
             type="number"
             className="mt-0.5 w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-right text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:opacity-60"
@@ -1080,11 +1310,19 @@ function OptionCard({
             onChange={(e) => onPatch({ expected_option_qty: Number(e.target.value) || 0 })}
           />
           {(() => {
+            // 이 옵션 구성의 과거 평균(서브 추천에서 추가 시)이 있으면 우선, 없으면 메인/서브 전역 평균
+            if (opt.qty_bench != null && opt.qty_bench > 0) {
+              return (
+                <span className="mt-0.5 block text-[10px] text-neutral-400">
+                  이 구성 평균 {num(opt.qty_bench)}개
+                </span>
+              );
+            }
             const hv = opt.is_main ? qtyHint?.main : qtyHint?.sub;
             const hn = opt.is_main ? qtyHint?.mainN : qtyHint?.subN;
             return hv != null && hn ? (
               <span className="mt-0.5 block text-[10px] text-neutral-400">
-                유사 평균 {num(hv)}세트 ({hn}건)
+                유사 평균 {num(hv)}개 ({hn}건)
               </span>
             ) : null;
           })()}
@@ -1102,10 +1340,17 @@ function OptionCard({
         </div>
         <div>
           <span className="block text-[11px] font-medium text-ink-4">예상 공헌이익</span>
-          <div className="mt-0.5 flex items-center gap-1.5 py-1.5">
+          <div className="mt-0.5 flex flex-wrap items-center gap-1 py-1.5">
             <span className="text-sm font-bold tabular-nums text-ink">{won(preContribution)}</span>
             {totals.free_shipping && (
               <span className="rounded bg-secondary-100 px-1 text-[10px] text-secondary-700">무배</span>
+            )}
+            {totals.coupon_amounts.map((amt, ci) =>
+              amt > 0 ? (
+                <span key={ci} className="rounded bg-brand-100 px-1 text-[10px] font-medium text-brand-700">
+                  쿠폰{ci + 1}
+                </span>
+              ) : null,
             )}
           </div>
         </div>
@@ -1121,7 +1366,7 @@ function OptionCard({
           <div>
             <span className="block text-[11px] font-medium text-brand-600">최종 할인율</span>
             <div className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
-              {totals.discount_rate_consumer_net != null ? pct(totals.discount_rate_consumer_net, 1) : "—"}
+              {pctFloor(totals.discount_rate_consumer_net)}
             </div>
           </div>
           <div className="hidden lg:block" />
@@ -1184,6 +1429,229 @@ function OptionCard({
         </div>
       )}
     </div>
+  );
+}
+
+// 입력 스타일 공통
+const fieldCls =
+  "mt-0.5 w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:opacity-60";
+const labelCls = "block text-[11px] font-medium text-ink-4";
+
+function CouponRow({
+  entry,
+  index,
+  readOnly,
+  onPatch,
+  onRemove,
+}: {
+  entry: CouponEntry;
+  index: number;
+  readOnly: boolean;
+  onPatch: (patch: Partial<CouponEntry>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <li className="rounded-xl border border-line bg-card p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
+            쿠폰{index}
+          </span>
+          <select
+            value={entry.kind}
+            disabled={readOnly}
+            onChange={(e) => onPatch({ kind: e.target.value as "rate" | "flat" })}
+            className="rounded-lg border border-line bg-card px-2 py-1 text-xs text-ink disabled:opacity-60"
+          >
+            <option value="rate">정률(%)</option>
+            <option value="flat">정액(원)</option>
+          </select>
+          <input
+            value={entry.label}
+            disabled={readOnly}
+            placeholder="쿠폰 이름(선택, 예: 카톡 추가)"
+            onChange={(e) => onPatch({ label: e.target.value })}
+            className="w-44 rounded-lg border border-line bg-card px-2 py-1 text-xs text-ink disabled:opacity-60"
+          />
+        </div>
+        {!readOnly && (
+          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">
+            삭제
+          </button>
+        )}
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        <label className="block">
+          <span className={labelCls}>기준액 (원 이상)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            disabled={readOnly}
+            value={entry.min ? entry.min.toLocaleString("ko-KR") : ""}
+            onChange={(e) => onPatch({ min: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })}
+            placeholder="예: 50,000"
+            className={fieldCls}
+          />
+        </label>
+        {entry.kind === "rate" ? (
+          <>
+            <label className="block">
+              <span className={labelCls}>할인율 (%)</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={100}
+                disabled={readOnly}
+                value={entry.ratePct || ""}
+                onChange={(e) => onPatch({ ratePct: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                placeholder="예: 5"
+                className={fieldCls}
+              />
+            </label>
+            <label className="block">
+              <span className={labelCls}>최대 할인 (원, 0=무제한)</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                disabled={readOnly}
+                value={entry.max ? entry.max.toLocaleString("ko-KR") : ""}
+                onChange={(e) => onPatch({ max: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })}
+                placeholder="예: 10,000"
+                className={fieldCls}
+              />
+            </label>
+          </>
+        ) : (
+          <label className="col-span-2 block">
+            <span className={labelCls}>정액 할인 (원) — 예: 배송비 대신 5,000</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              disabled={readOnly}
+              value={entry.flat ? entry.flat.toLocaleString("ko-KR") : ""}
+              onChange={(e) => onPatch({ flat: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })}
+              placeholder="예: 5,000"
+              className={fieldCls}
+            />
+          </label>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function FreebieRow({
+  entry,
+  readOnly,
+  onPatch,
+  onRemove,
+}: {
+  entry: FreebieEntry;
+  readOnly: boolean;
+  onPatch: (patch: Partial<FreebieEntry>) => void;
+  onRemove: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [open, setOpen] = useState(false);
+
+  async function search(v: string) {
+    setQ(v);
+    if (v.trim().length < 1) {
+      setHits([]);
+      return;
+    }
+    const safe = v.replace(/[,()%]/g, " ").trim();
+    const { data } = await createClient()
+      .from("products")
+      .select("id, base_name, dr_code, consumer_price, regular_price, cost")
+      .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
+      .limit(8);
+    setHits(((data as SearchHit[]) ?? []).slice(0, 8));
+    setOpen(true);
+  }
+  function pick(h: SearchHit) {
+    onPatch({ product_id: h.id, base_name: h.base_name, cost: Number(h.cost) || 0 });
+    setQ("");
+    setHits([]);
+    setOpen(false);
+  }
+
+  const deduction = (Number(entry.cost) || 0) * (Number(entry.qty) || 0);
+
+  return (
+    <li className="rounded-xl border border-secondary-200 bg-secondary-50/40 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="rounded bg-secondary-100 px-1.5 py-0.5 text-[10px] font-semibold text-secondary-700">
+          사은품 (동봉)
+        </span>
+        {!readOnly && (
+          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">
+            삭제
+          </button>
+        )}
+      </div>
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="relative sm:col-span-2">
+          <span className={labelCls}>사은품 SKU</span>
+          {entry.product_id ? (
+            <div className="mt-0.5 flex items-center justify-between gap-2 rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm text-ink">
+              <span className="truncate">{entry.base_name}</span>
+              {!readOnly && (
+                <button
+                  onClick={() => onPatch({ product_id: null, base_name: "", cost: 0 })}
+                  className="shrink-0 text-xs text-red-500 hover:underline"
+                >
+                  변경
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <input
+                className={fieldCls}
+                placeholder="품목명/품목코드 검색"
+                value={q}
+                disabled={readOnly}
+                onChange={(e) => search(e.target.value)}
+                onFocus={() => hits.length && setOpen(true)}
+              />
+              {open && hits.length > 0 && (
+                <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+                  {hits.map((h) => (
+                    <li key={h.id}>
+                      <button
+                        onClick={() => pick(h)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-50"
+                      >
+                        <span className="truncate">{h.base_name}</span>
+                        <span className="shrink-0 text-xs text-neutral-400">원가 {won(h.cost)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+        <label className="block">
+          <span className={labelCls}>수량 (한정)</span>
+          <input
+            type="number"
+            min={0}
+            disabled={readOnly}
+            value={entry.qty || 0}
+            onChange={(e) => onPatch({ qty: Number(e.target.value) || 0 })}
+            className={`${fieldCls} text-right`}
+          />
+        </label>
+      </div>
+      <p className="mt-1.5 text-[11px] text-ink-4">
+        차감액 = 원가 {won(entry.cost)} × 수량 {num(entry.qty)} = <b className="text-ink-2">−{won(deduction)}</b>{" "}
+        (동봉 발송이라 물류비·광고비는 제외)
+      </p>
+    </li>
   );
 }
 

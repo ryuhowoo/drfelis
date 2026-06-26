@@ -14,7 +14,8 @@ export function ActionPanel({ actions, basePath }: { actions: ActionItem[]; base
   return (
     <div className="space-y-2">
       {actions.map((a) => {
-        const href = a.href ?? (a.view ? `${basePath}?view=${a.view}` : undefined);
+        const base = a.href ?? (a.view ? `${basePath}?view=${a.view}` : undefined);
+        const href = base ? `${base}${a.hash ? `#${a.hash}` : ""}` : undefined;
         return (
           <InlineAlert
             key={a.id}
@@ -24,7 +25,7 @@ export function ActionPanel({ actions, basePath }: { actions: ActionItem[]; base
               a.actionLabel && href ? (
                 <Link
                   href={href}
-                  scroll={false}
+                  scroll={!a.hash ? false : undefined}
                   className="rounded-lg bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-ink-2 hover:bg-card focus-visible:outline-none"
                 >
                   {a.actionLabel} →

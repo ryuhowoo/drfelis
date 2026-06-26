@@ -87,13 +87,12 @@ export function validatePlan(options: ValOption[], mult: number): PlanValidation
   }
 
   // 플랜 레벨 — 메인 지정
+  // 메인 제품(퍼펙트·세븐플러스)은 맛·수량별로 옵션을 잘게 나누므로 메인 옵션 수가 많은 건
+  // 정상이다. 따라서 '메인 과다' 경고는 두지 않고, 메인 미지정만 경고한다.
   const plan: Issue[] = [];
   const mainCount = options.filter((o) => o.is_main).length;
   if (options.length > 0 && mainCount === 0) {
     plan.push({ level: "warn", code: "no-main", message: "메인 제품이 지정되지 않았습니다." });
-    warnCount++;
-  } else if (mainCount > Math.ceil(options.length / 2)) {
-    plan.push({ level: "warn", code: "too-many-main", message: "메인 제품이 과도하게 많습니다." });
     warnCount++;
   }
 

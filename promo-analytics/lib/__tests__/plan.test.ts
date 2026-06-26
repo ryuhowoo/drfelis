@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { computeOptionTotals, couponDiscount, type PlanItemInput } from "../plan";
+import {
+  computeOptionTotals,
+  couponDiscount,
+  stackedCoupons,
+  freebieDeduction,
+  type PlanItemInput,
+  type Coupon,
+} from "../plan";
 
 // 옵션: SKU 4개 × 단가 12,500 = 세트가 50,000 / 원가 4×8,000 = 32,000
 const ITEMS: PlanItemInput[] = [
@@ -55,5 +62,57 @@ describe("computeOptionTotals — 쿠폰 반영", () => {
     });
     expect(t.net_price).toBe(47000);
     expect(t.expected_revenue).toBe(470000);
+  });
+});
+
+describe("stackedCoupons — 다중 쿠폰 중첩", () => {
+  const rate5: Coupon = { kind: "rate", min_order_amount: 50000, discount_rate: 0.05, max_discount_amount: 0, flat_amount: 0 };
+  const flat5k: Coupon = { kind: "flat", min_order_amount: 50000, discount_rate: 0, max_discount_amount: 0, flat_amount: 5000 };
+
+  it("기준 미달 쿠폰은 건너뛴다 (gross 기준 게이팅)", () => {
+    const { total, per } = stackedCoupons(40000, [rate5, flat5k]);
+    expect(total).toBe(0);
+    expect(per).toEqual([0, 0]);
+  });
+
+  it("정률 + 정액 순차 중첩 — 정률은 직전 차감 후 running 기준", () => {
+    // 80,000 → 5%(4,000) → running 76,000 → 정액 5,000 → 총 9,000
+    const { total, per } = stackedCoupons(80000, [rate5, flat5k]);
+    expect(per).toEqual([4000, 5000]);
+    expect(total).toBe(9000);
+  });
+
+  it("정액은 남은 금액을 넘지 않는다", () => {
+    const { total } = stackedCoupons(52000, [{ ...flat5k, flat_amount: 60000 }]);
+    expect(total).toBe(52000);
+  });
+});
+
+describe("computeOptionTotals — 다중 쿠폰 배열 + coupon_amounts", () => {
+  it("쿠폰별 할인액을 순서대로 노출", () => {
+    const coupons: Coupon[] = [
+      { kind: "rate", min_order_amount: 50000, discount_rate: 0.05, max_discount_amount: 0, flat_amount: 0 },
+      { kind: "flat", min_order_amount: 50000, discount_rate: 0, max_discount_amount: 0, flat_amount: 5000 },
+    ];
+    const t = computeOptionTotals(ITEMS, MULT, QTY, coupons);
+    // set_price 50,000: 5% = 2,500 → running 47,500 → 정액 5,000 → net 42,500
+    expect(t.coupon_amounts).toEqual([2500, 5000]);
+    expect(t.coupon_discount).toBe(7500);
+    expect(t.net_price).toBe(42500);
+  });
+});
+
+describe("freebieDeduction — 사은품 차감 (원가×수량)", () => {
+  it("원가×수량 합", () => {
+    expect(
+      freebieDeduction([
+        { product_id: "a", base_name: "샘플A", qty: 100, cost: 1200 },
+        { product_id: "b", base_name: "샘플B", qty: 50, cost: 800 },
+      ]),
+    ).toBe(100 * 1200 + 50 * 800);
+  });
+  it("빈/널이면 0", () => {
+    expect(freebieDeduction([])).toBe(0);
+    expect(freebieDeduction(null)).toBe(0);
   });
 });

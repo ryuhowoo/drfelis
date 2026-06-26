@@ -17,6 +17,12 @@ export function pct(n: number | null | undefined, digits = 1): string {
   return (n * 100).toFixed(digits) + "%";
 }
 
+/** 할인율 등 정수 % 표기 — 소수점 아래는 내림(floor). 예: 0.606 → "60%". */
+export function pctFloor(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return Math.floor(n * 100) + "%";
+}
+
 export function num(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return Math.round(n).toLocaleString("ko-KR");

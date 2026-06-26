@@ -138,6 +138,7 @@ export type ActionItem = {
   actionLabel?: string;
   view?: string;
   href?: string;
+  hash?: string; // 같은 탭 내 특정 패널로 스크롤 (예: #sku-match)
 };
 
 export function deriveActions(
@@ -152,7 +153,7 @@ export function deriveActions(
   }
   // 성과 매칭 보정은 '성과가 실제로 있을 때만' 노출 (성과 0인데 미매칭 노티 X)
   if (i.hasActuals && i.unmatchedCount > 0) {
-    a.push({ id: "unmatched", tone: "warning", title: `미매칭 SKU ${i.unmatchedCount}개`, body: "자동 매칭이 빗나간 항목을 보정하세요.", actionLabel: "매칭 보정", view: "skus" });
+    a.push({ id: "unmatched", tone: "warning", title: `미매칭 SKU ${i.unmatchedCount}개`, body: "자동 매칭이 빗나간 항목을 보정하세요.", actionLabel: "매칭 보정", view: "skus", hash: "sku-match" });
   }
   if (i.hasActuals && i.expectedContribution != null && i.expectedContribution <= 0) {
     a.push({ id: "contrib", tone: "danger", title: "기대 공헌이익이 0 이하", body: "플랜의 원가·옵션 단가 적재를 확인하세요.", actionLabel: "플랜 확인", href: `/promotions/${ctx.promotionId}/plan` });

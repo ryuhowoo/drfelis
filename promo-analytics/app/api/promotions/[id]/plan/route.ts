@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { computeOptionTotals, effectiveMult, type PlanItemInput } from "@/lib/plan";
+import {
+  computeOptionTotals,
+  effectiveMult,
+  freebieDeduction,
+  type PlanItemInput,
+  type Coupon,
+  type Freebie,
+} from "@/lib/plan";
 
 export const runtime = "nodejs";
 
@@ -19,6 +26,10 @@ type OptionIn = {
   sort?: number;
   items: ItemIn[];
 };
+// 사은품・추가 할인 쿠폰 항목 (PlanEditor extras 직렬화)
+type ExtraIn =
+  | { type: "coupon"; kind: "rate" | "flat"; min: number; ratePct: number; max: number; flat: number; label?: string }
+  | { type: "freebie"; product_id: string | null; base_name: string; qty: number; cost: number };
 
 // N5: POST(빈 draft 자동 생성)는 제거됐다 — 플랜은 ⑤ 가이드 업로드로만 생성(plan-only).
 // 급소 2(N5_단독시작문서.md §7): '플랜 만들기' 클릭만으로 빈 draft가 생겨
@@ -35,16 +46,39 @@ export async function PATCH(
       plan_id: string;
       options: OptionIn[];
       coupon?: { min_order: number; rate: number; max: number };
+      extras?: ExtraIn[];
     };
     const { plan_id, options } = body;
-    const couponSpec =
-      body.coupon && body.coupon.rate > 0
-        ? {
-            min_order_amount: Number(body.coupon.min_order) || 0,
-            discount_rate: Number(body.coupon.rate) || 0,
-            max_discount_amount: Number(body.coupon.max) || 0,
-          }
-        : null;
+    const extras = Array.isArray(body.extras) ? body.extras : [];
+    // 다중 쿠폰(정률/정액 중첩) — extras 가 있으면 그것을, 없으면 레거시 단일 쿠폰을 사용
+    const couponList: Coupon[] = extras
+      .filter((e): e is Extract<ExtraIn, { type: "coupon" }> => e.type === "coupon")
+      .map((e) => ({
+        kind: e.kind === "flat" ? "flat" : "rate",
+        min_order_amount: Number(e.min) || 0,
+        discount_rate: (Number(e.ratePct) || 0) / 100,
+        max_discount_amount: Number(e.max) || 0,
+        flat_amount: Number(e.flat) || 0,
+        label: e.label,
+      }));
+    if (couponList.length === 0 && body.coupon && body.coupon.rate > 0) {
+      couponList.push({
+        kind: "rate",
+        min_order_amount: Number(body.coupon.min_order) || 0,
+        discount_rate: Number(body.coupon.rate) || 0,
+        max_discount_amount: Number(body.coupon.max) || 0,
+        flat_amount: 0,
+      });
+    }
+    const freebies: Freebie[] = extras
+      .filter((e): e is Extract<ExtraIn, { type: "freebie" }> => e.type === "freebie")
+      .map((e) => ({
+        product_id: e.product_id ?? null,
+        base_name: e.base_name ?? "",
+        qty: Number(e.qty) || 0,
+        cost: Number(e.cost) || 0,
+      }));
+    const freebieTotal = freebieDeduction(freebies);
     const supabase = await createClient();
 
     const { data: plan, error: pErr } = await supabase
@@ -127,7 +161,7 @@ export async function PATCH(
           cost: pm?.cost ?? null,
         };
       });
-      const t = computeOptionTotals(itemInputs, mult, opt.expected_option_qty, couponSpec);
+      const t = computeOptionTotals(itemInputs, mult, opt.expected_option_qty, couponList);
       revTotal += t.expected_revenue;
       contribTotal += t.expected_contribution;
 
@@ -186,19 +220,32 @@ export async function PATCH(
       ),
     ];
 
+    // 사은품 동봉 차감(원가×수량)은 플랜 단위 공헌이익에서 일괄 차감
+    contribTotal -= freebieTotal;
+
+    // 레거시 단일 쿠폰 컬럼은 첫 정률 쿠폰으로 채워 하위호환 유지
+    const firstRate = couponList.find((c) => c.kind === "rate" && c.discount_rate > 0);
+
     const { error: upErr } = await supabase
       .from("campaign_plans")
       .update({
         expected_revenue_total: revTotal,
         expected_contribution_total: contribTotal,
-        coupon_min_order: couponSpec?.min_order_amount ?? 0,
-        coupon_rate: couponSpec?.discount_rate ?? 0,
-        coupon_max: couponSpec?.max_discount_amount ?? 0,
+        coupon_min_order: firstRate?.min_order_amount ?? 0,
+        coupon_rate: firstRate?.discount_rate ?? 0,
+        coupon_max: firstRate?.max_discount_amount ?? 0,
         main_product_ids: mainIds.length > 0 ? mainIds : null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", plan_id);
     if (upErr) throw upErr;
+
+    // 사은품・다중 쿠폰 원본(extras) 저장 — 0069 미적용 시 컬럼 부재 → 조용히 무시(best-effort)
+    try {
+      await supabase.from("campaign_plans").update({ extras }).eq("id", plan_id);
+    } catch {
+      /* extras 컬럼 미적용 무시 */
+    }
 
     // 메인 지정이 메인/함께구매 분해에 영향 → 사전계산 롤업 갱신
     await supabase.rpc("refresh_rollups", { p_force: true });

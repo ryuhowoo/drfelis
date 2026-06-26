@@ -62,9 +62,68 @@ export function couponDiscount(setPrice: number, coupon: CouponSpec): number {
   return Math.round(capped);
 }
 
+// ── 다중 쿠폰 + 사은품 (사은품・추가 할인 쿠폰 카드) ──────────────────────
+// 한 캠페인에서 쿠폰을 2~3개까지 중첩 적용(예: 5만원↑ 5% + 카톡 추가 시 5천원 정액).
+// 정률(rate)·정액(flat) 두 종류를 지원하고, 기준액은 옵션 혜택가(set_price, gross) 기준으로 게이팅.
+
+/** 다중 쿠폰 1건. kind='flat'이면 flat_amount(정액 원)를, 아니면 discount_rate(정률)+max(캡)을 사용. */
+export type Coupon = {
+  kind: "rate" | "flat";
+  min_order_amount: number; // 기준액 (원 이상, 0=조건없음) — set_price 기준
+  discount_rate: number; // 정률 (0~1)
+  max_discount_amount: number; // 정률 캡 (0=무제한)
+  flat_amount: number; // 정액 할인 (원)
+  label?: string;
+};
+
+/** 사은품 1건 — 동봉 발송. 차감액 = 원가(VAT+) × 수량 (물류비·광고비·수수료 미반영). */
+export type Freebie = {
+  product_id: string | null;
+  base_name: string;
+  qty: number;
+  cost: number; // 원가(VAT+)
+};
+
+/** 쿠폰 1건이 현재 running price에 대해 적용하는 할인액 (기준은 gross setPrice로 게이팅). */
+export function couponAmount(setPrice: number, running: number, c: Coupon): number {
+  if (running <= 0) return 0;
+  if (setPrice < (c.min_order_amount || 0)) return 0;
+  let d: number;
+  if (c.kind === "flat") {
+    d = c.flat_amount || 0;
+  } else {
+    if (!(c.discount_rate > 0)) return 0;
+    const raw = running * c.discount_rate;
+    d = c.max_discount_amount > 0 ? Math.min(raw, c.max_discount_amount) : raw;
+  }
+  return Math.round(Math.max(0, Math.min(d, running)));
+}
+
+/** 쿠폰들을 순차 중첩 적용 — 정률은 직전까지 차감된 running price 기준. 쿠폰별 할인액 배열도 반환. */
+export function stackedCoupons(
+  setPrice: number,
+  coupons: Coupon[],
+): { total: number; per: number[] } {
+  let running = setPrice;
+  const per: number[] = [];
+  for (const c of coupons) {
+    const d = couponAmount(setPrice, running, c);
+    per.push(d);
+    running -= d;
+  }
+  return { total: setPrice - running, per };
+}
+
+/** 사은품 총 차감액 = Σ(원가 × 수량) — 공헌이익에서 일괄 차감(플랜 단위). */
+export function freebieDeduction(freebies: Freebie[] | null | undefined): number {
+  if (!freebies || freebies.length === 0) return 0;
+  return freebies.reduce((s, f) => s + (Number(f.cost) || 0) * (Number(f.qty) || 0), 0);
+}
+
 export type OptionTotals = {
   set_price: number; // Σ(sku_qty × unit_sale_price) — 쿠폰 전 세트 단가
-  coupon_discount: number; // 이 옵션에 적용된 쿠폰 할인액 (없으면 0)
+  coupon_discount: number; // 이 옵션에 적용된 쿠폰 할인액 합계 (없으면 0)
+  coupon_amounts: number[]; // 쿠폰별 할인액 (입력 순서, 적용 안 됨=0) — '쿠폰1/2' 배지용
   net_price: number; // set_price − coupon_discount — 쿠폰 적용 후 실혜택가
   consumer_total: number; // Σ(consumer_price × sku_qty)
   regular_total: number; // Σ(regular_price × sku_qty)
@@ -77,12 +136,13 @@ export type OptionTotals = {
   free_shipping: boolean;
 };
 
-/** 옵션 1개 롤업: 세트 단가·할인율 이중표기·예상 매출/공헌. coupon=null이면 기존과 동일. */
+/** 옵션 1개 롤업: 세트 단가·할인율 이중표기·예상 매출/공헌.
+   coupon: null=쿠폰 없음 / 단일 CouponSpec(레거시) / Coupon[](다중 중첩). */
 export function computeOptionTotals(
   items: PlanItemInput[],
   mult: number,
   qty: number,
-  coupon: CouponSpec = null,
+  coupon: CouponSpec | Coupon[] = null,
 ): OptionTotals {
   let set_price = 0;
   let consumer_total = 0;
@@ -96,11 +156,26 @@ export function computeOptionTotals(
     cost_total += q * (it.cost || 0);
   }
   const expQty = qty || 0;
-  const coupon_discount = couponDiscount(set_price, coupon);
+  // 레거시 단일 쿠폰(CouponSpec)은 정률 Coupon 1건으로 승격해 동일 경로로 계산
+  const coupons: Coupon[] = Array.isArray(coupon)
+    ? coupon
+    : coupon
+      ? [
+          {
+            kind: "rate",
+            min_order_amount: coupon.min_order_amount,
+            discount_rate: coupon.discount_rate,
+            max_discount_amount: coupon.max_discount_amount,
+            flat_amount: 0,
+          },
+        ]
+      : [];
+  const { total: coupon_discount, per: coupon_amounts } = stackedCoupons(set_price, coupons);
   const net_price = set_price - coupon_discount;
   return {
     set_price,
     coupon_discount,
+    coupon_amounts,
     net_price,
     consumer_total,
     regular_total,

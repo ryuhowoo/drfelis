@@ -89,7 +89,7 @@ export default function SubProductSuggest({
         <span className="text-sm font-semibold text-ink-2">
           서브 상품 추천{" "}
           <span className="font-normal text-ink-4">
-            · {fellBack ? "과거 캠페인 자주 판매(전역)" : `‘${catLabel}’ 메인 캠페인 어태치율`}
+            · {fellBack ? "과거 캠페인 자주 판매(전역)" : `‘${catLabel === "배변용품" ? "배변용품(모래)" : catLabel}’ 메인 캠페인 함께 담은 비율`}
           </span>
         </span>
         <span className="text-ink-4">{open ? "▲" : "▼"}</span>
@@ -101,8 +101,8 @@ export default function SubProductSuggest({
               {fellBack
                 ? "해당 메인 카테고리의 과거 캠페인이 없어 전역 평균으로 대체했습니다. 누르면 상시가·예상수량이 채워집니다."
                 : planMainQty > 0
-                  ? `누르면 계획 메인 수량(${num(planMainQty)}개) × 어태치율로 환산된 서브 수량이 채워집니다(할인은 직접 조정).`
-                  : "메인 옵션 수량을 입력하면 어태치율로 서브 수량이 자동 환산됩니다. 누르면 추천 서브가 추가됩니다."}
+                  ? `누르면 계획 메인 수량(${num(planMainQty)}개) × 함께 담은 비율로 환산된 서브 수량이 채워집니다(할인은 직접 조정).`
+                  : "메인 옵션 수량을 입력하면 함께 담은 비율로 서브 수량이 자동 환산됩니다. 누르면 추천 서브가 추가됩니다."}
             </p>
             <div className="flex items-center gap-3">
               <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-ink-3">
@@ -142,7 +142,7 @@ export default function SubProductSuggest({
                           평균 {Math.round(r.avg_qty)}개
                           {r.total_revenue != null ? ` · 매출 ${won(r.total_revenue)}` : ""}
                           {r.avg_attach_ratio != null
-                            ? ` · 부착률 메인 100개당 ${Math.round(r.avg_attach_ratio * 100)}개${rec != null ? ` (계획 ≈ ${num(rec)}개)` : ""}`
+                            ? ` · 함께 담은 비율 메인 100개당 ${Math.round(r.avg_attach_ratio * 100)}개${rec != null ? ` (계획 ≈ ${num(rec)}개)` : ""}`
                             : ""}
                         </span>
                         <span className="mt-0.5 block text-[11px] text-ink-4">

@@ -22,16 +22,26 @@ function errText(e: unknown): string {
 //   (1) promotion_segment_sales 풀그레인(세그먼트 탭·어태치율) + 카테고리 백필
 //   (2) promotion_sales 집계(달성률·롤업)
 // 를 원자적으로 채운다. 이어서 sale_options 재구성 + 롤업 갱신.
+// 천 단위 콤마 — 입력 표시용 (숫자만 추출 후 포맷)
+function commaFmt(v: string): string {
+  const n = v.replace(/[^0-9]/g, "");
+  return n ? Number(n).toLocaleString("ko-KR") : "";
+}
+
 export default function PerformanceUpload({
   promotionId,
   hasActuals,
   contributionAmount,
   adSpend,
+  lastUploadedAt,
+  lastSourceFile,
 }: {
   promotionId: string;
   hasActuals: boolean;
   contributionAmount?: number | null;
   adSpend?: number | null;
+  lastUploadedAt?: string | null;
+  lastSourceFile?: string | null;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +54,9 @@ export default function PerformanceUpload({
   const [ad, setAd] = useState(adSpend != null ? String(adSpend) : "");
   const [econBusy, setEconBusy] = useState(false);
   const [econMsg, setEconMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  // 저장 완료 상태면 비활성(읽기) — '수정'을 누르면 다시 편집 가능
+  const econSaved = contributionAmount != null || adSpend != null;
+  const [editingEcon, setEditingEcon] = useState(!econSaved);
 
   async function saveEcon() {
     setEconBusy(true);
@@ -61,6 +74,7 @@ export default function PerformanceUpload({
       const supabase = createClient();
       await supabase.rpc("refresh_rollups", { p_force: true });
       setEconMsg({ kind: "ok", text: "저장됐습니다. 옵션 분해·광고 배분에 반영됩니다." });
+      setEditingEcon(false);
       router.refresh();
     } catch (e) {
       setEconMsg({ kind: "err", text: e instanceof Error ? e.message : "저장 실패" });
@@ -163,6 +177,20 @@ export default function PerformanceUpload({
         /* 이력 기록 실패는 무시 */
       }
 
+      // 성과 업로드 메타(파일명·시각) 기록 — 0070 미적용 시 컬럼 부재 → 조용히 무시
+      try {
+        await fetch(`/api/promotions/${promotionId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            perf_uploaded_at: new Date().toISOString(),
+            perf_source_file: file.name,
+          }),
+        });
+      } catch {
+        /* 메타 기록 실패는 무시 */
+      }
+
       const subN = records.filter((x) => x.order_type === "subscription").length;
       setMsg({
         kind: "ok",
@@ -189,6 +217,18 @@ export default function PerformanceUpload({
             캠페인 종료 후 <strong className="text-ink-3">통합 매출 export</strong>(기초상품명·옵션정보·회원/비회원·회원등급·카테고리·일반/정기)를 올리면
             이 캠페인에 바로 적재 → 옵션/SKU별 <strong className="text-ink-3">달성률</strong>과 <strong className="text-ink-3">세그먼트</strong>(회원·등급·AOV·ARPPU)가 한 번에 채워집니다.
           </p>
+          {hasActuals && (lastSourceFile || lastUploadedAt) && (
+            <p className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-success-soft px-2.5 py-1 text-[11px] text-success">
+              <span aria-hidden>✓</span>
+              <span className="font-medium">업로드됨</span>
+              {lastSourceFile && <span className="text-ink-2">· {lastSourceFile}</span>}
+              {lastUploadedAt && (
+                <span className="text-ink-3">
+                  · {new Date(lastUploadedAt).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <label className={`shrink-0 cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${busy ? "bg-ink-4" : "bg-brand-500 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-float"}`}>
           {busy ? "적재 중…" : hasActuals ? "성과 다시 올리기" : "성과 엑셀 업로드"}
@@ -224,32 +264,46 @@ export default function PerformanceUpload({
           <label className="block">
             <span className="block text-[11px] font-medium text-ink-4">전체 실공헌이익액 (₩)</span>
             <input
-              value={contrib}
-              onChange={(e) => setContrib(e.target.value)}
+              value={commaFmt(contrib)}
+              onChange={(e) => setContrib(e.target.value.replace(/[^0-9]/g, ""))}
               inputMode="numeric"
-              placeholder="예: 60613475"
-              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400"
+              disabled={!editingEcon}
+              placeholder="예: 60,613,475"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:bg-soft disabled:opacity-70"
             />
           </label>
           <label className="block">
             <span className="block text-[11px] font-medium text-ink-4">실 광고비 (₩)</span>
             <input
-              value={ad}
-              onChange={(e) => setAd(e.target.value)}
+              value={commaFmt(ad)}
+              onChange={(e) => setAd(e.target.value.replace(/[^0-9]/g, ""))}
               inputMode="numeric"
-              placeholder="예: 6890000"
-              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400"
+              disabled={!editingEcon}
+              placeholder="예: 6,890,000"
+              className="mt-1 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm tabular-nums text-ink outline-none focus:border-brand-400 disabled:bg-soft disabled:opacity-70"
             />
           </label>
         </div>
         <div className="mt-2 flex items-center gap-3">
-          <button
-            onClick={saveEcon}
-            disabled={econBusy}
-            className="rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
-          >
-            {econBusy ? "저장 중…" : "저장"}
-          </button>
+          {editingEcon ? (
+            <button
+              onClick={saveEcon}
+              disabled={econBusy}
+              className="rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50"
+            >
+              {econBusy ? "저장 중…" : "저장"}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setEditingEcon(true);
+                setEconMsg(null);
+              }}
+              className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-soft"
+            >
+              수정
+            </button>
+          )}
           {econMsg && (
             <span className={`text-xs ${econMsg.kind === "ok" ? "text-success" : "text-danger"}`}>
               {econMsg.text}
