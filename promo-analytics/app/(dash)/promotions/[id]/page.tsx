@@ -139,6 +139,13 @@ export default async function PromotionDetail({
     return { product_id: r.product_id, base_name: pr?.base_name ?? r.product_id };
   });
 
+  // 성과 업로드 메타(파일명·시각) — 0070 미적용 시 컬럼 부재 → null
+  const { data: perfMeta } = await supabase
+    .from("promotions")
+    .select("perf_uploaded_at, perf_source_file")
+    .eq("id", id)
+    .maybeSingle<{ perf_uploaded_at: string | null; perf_source_file: string | null }>();
+
   // 목적별 핵심 지표 (S5.4)
   const ewData = bundle?.weights ?? [];
   const orderCount = Number(bundle?.order_count) || 0;
@@ -307,7 +314,7 @@ export default async function PromotionDetail({
           title={plan ? "성과 시트를 올리면 달성 KPI가 채워집니다" : "플랜을 먼저 작성하세요"}
           action={
             <Link href={`${basePath}/plan`} className="rounded-lg bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-ink-2 hover:bg-card">
-              {plan ? "플랜 편집" : "플랜 만들기"} →
+              {plan ? "플랜 보기" : "플랜 만들기"} →
             </Link>
           }
         >
@@ -321,6 +328,11 @@ export default async function PromotionDetail({
         <ActionPanel actions={actions} basePath={basePath} />
       </div>
 
+      {/* 플랜(가격 가이드) — 성과 교체 위에 두어 '플랜 → 성과' 흐름으로 읽히게 한다 */}
+      <div className="mt-4">
+        <PlanGuideCard plan={plan} planHref={`${basePath}/plan`} />
+      </div>
+
       {/* 6단계 — 캠페인에 직접 성과 추가 (라플라스 양식 → 자동 분류) */}
       <div className="mt-4">
         <PerformanceUpload
@@ -328,6 +340,8 @@ export default async function PromotionDetail({
           hasActuals={hasActuals}
           contributionAmount={promo.contribution_amount ?? null}
           adSpend={promo.ad_spend ?? null}
+          lastUploadedAt={perfMeta?.perf_uploaded_at ?? null}
+          lastSourceFile={perfMeta?.perf_source_file ?? null}
         />
       </div>
 
@@ -470,33 +484,6 @@ export default async function PromotionDetail({
 
         {view === "skus" && (
           <div>
-            <div className="mb-4 rounded-2xl card-soft p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-ink-2">가격 가이드(플랜)</h2>
-                  {plan ? (
-                    <p className="mt-1 text-sm text-ink-3">
-                      v{plan.version} ·{" "}
-                      <span className={plan.status === "confirmed" ? "text-success" : "text-warning"}>
-                        {plan.status === "confirmed" ? "확정됨" : "draft"}
-                      </span>{" "}
-                      · 예상 매출 {won(plan.expected_revenue_total)} · 예상 공헌이익 {won(plan.expected_contribution_total)}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-ink-3">
-                      아직 플랜이 없습니다. 옵션·예상 세트수로 예상 성과를 미리 계산하세요.
-                    </p>
-                  )}
-                </div>
-                <Link
-                  href={`/promotions/${id}/plan`}
-                  className="shrink-0 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
-                >
-                  {plan ? "플랜 편집" : "플랜 만들기"}
-                </Link>
-              </div>
-            </div>
-
             {hasActuals ? (
               <>
                 <Achievement
@@ -624,6 +611,43 @@ function Stat({
       <div className={`text-xs ${primary ? "text-white/70" : "text-ink-3"}`}>{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
       {sub && <div className={`mt-0.5 text-xs ${primary ? "text-white/70" : "text-ink-4"}`}>{sub}</div>}
+    </div>
+  );
+}
+
+function PlanGuideCard({
+  plan,
+  planHref,
+}: {
+  plan: DetailBundle["plan"];
+  planHref: string;
+}) {
+  return (
+    <div className="rounded-2xl card-soft p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-ink-2">플랜(가격 가이드)</h2>
+          {plan ? (
+            <p className="mt-1 text-sm text-ink-3">
+              v{plan.version} ·{" "}
+              <span className={plan.status === "confirmed" ? "text-success" : "text-warning"}>
+                {plan.status === "confirmed" ? "확정됨" : "draft"}
+              </span>{" "}
+              · 예상 매출 {won(plan.expected_revenue_total)} · 예상 공헌이익 {won(plan.expected_contribution_total)}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-ink-3">
+              아직 플랜이 없습니다. 옵션·예상 세트수로 예상 성과를 미리 계산하세요.
+            </p>
+          )}
+        </div>
+        <Link
+          href={planHref}
+          className="shrink-0 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+        >
+          {plan ? "플랜 보기" : "플랜 만들기"}
+        </Link>
+      </div>
     </div>
   );
 }

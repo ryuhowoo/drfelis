@@ -33,6 +33,8 @@ export async function PATCH(
       "notes",
       "start_date",
       "end_date",
+      "perf_uploaded_at",
+      "perf_source_file",
     ];
     const update: Record<string, unknown> = {};
     for (const k of allowed) if (k in fields) update[k] = fields[k];

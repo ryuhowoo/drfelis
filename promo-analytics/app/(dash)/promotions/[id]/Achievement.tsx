@@ -241,9 +241,10 @@ export default function Achievement({
           {/* SKU 매칭 보정 — 미매칭 있으면 자동 펼침, 없으면 접힘 (사용자 토글 가능) */}
           {hasMatchData && (
             <details
+              id="sku-match"
               open={matchOpen}
               onToggle={(e) => setMatchOpen(e.currentTarget.open)}
-              className="mt-3 rounded-xl card-soft"
+              className="mt-3 scroll-mt-24 rounded-xl card-soft"
             >
               <summary className="cursor-pointer px-4 py-3 text-xs font-semibold text-ink-2">
                 SKU 매칭 보정{unmatched > 0 ? ` · 미매칭 ${unmatched}` : ""}
