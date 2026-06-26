@@ -34,6 +34,26 @@ export async function ensureProducts(
   return map;
 }
 
+// 품목 마스터(SKU 템플릿)는 이름 접두로 종류를 구분한다.
+// 판매: (제품)/(세트)/(상품) · 비판매 구성품: (원재료)/(부재료)/(부자재).
+export type ProductKind = "제품" | "세트" | "상품" | "원재료" | "부재료" | "부자재" | "기타";
+export const SELLABLE_KINDS: ProductKind[] = ["제품", "세트", "상품"];
+export const COMPONENT_KINDS: ProductKind[] = ["원재료", "부재료", "부자재"];
+
+/** 이름 접두로 종류 판별. 접두가 없으면 '기타'. */
+export function productKind(name: string | null | undefined): ProductKind {
+  if (!name) return "기타";
+  const m = name.trimStart().match(/^\(([^)]+)\)/);
+  const k = m?.[1]?.trim();
+  const all: ProductKind[] = ["제품", "세트", "상품", "원재료", "부재료", "부자재"];
+  return (all as string[]).includes(k ?? "") ? (k as ProductKind) : "기타";
+}
+
+/** 원재료·부재료·부자재(비판매 구성품)면 true — 판매 SKU 검색에서 제외용. */
+export function isComponentName(name: string | null | undefined): boolean {
+  return COMPONENT_KINDS.includes(productKind(name));
+}
+
 /** 배열을 size 단위로 분할 */
 export function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];

@@ -90,15 +90,16 @@ export default function PriceMasterSync() {
   return (
     <div className="mt-4 rounded-xl border border-neutral-150 bg-neutral-50/60 p-3.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-neutral-700">스프레드시트 연동 (Google Sheets · 매일 자동)</span>
+        <span className="text-sm font-medium text-neutral-700">스프레드시트에서 가져오기 (Google Sheets · 수동)</span>
         {row?.last_synced_at && (
           <span className="text-[11px] text-neutral-400">
-            마지막 동기화 {new Date(row.last_synced_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+            마지막 가져오기 {new Date(row.last_synced_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
       </div>
       <p className="mt-1 text-xs text-neutral-500">
-        시트 → 파일 → 공유 → ‘웹에 게시’ → 해당 시트 · CSV → 게시. 생성된 CSV 링크를 등록하면 매일 1회 자동 동기화됩니다.
+        가격의 기준은 <strong>‘상품·가격’ 페이지(웹)</strong>입니다. 이 가져오기는 <strong>원할 때만 수동</strong>으로 시트 값을 일괄 적재합니다(자동 동기화 없음).
+        같은 상품명은 시트 값으로 덮어쓰니, 웹에서 보정한 값이 바뀔 수 있어요. 시트 → 공유 → ‘웹에 게시’ → CSV 링크 등록 후 ‘지금 가져오기’.
       </p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <input
@@ -121,7 +122,7 @@ export default function PriceMasterSync() {
             disabled={busy !== "idle" || !url.trim()}
             className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {busy === "syncing" ? "동기화 중…" : "지금 동기화"}
+            {busy === "syncing" ? "가져오는 중…" : "지금 가져오기"}
           </button>
         </div>
       </div>
