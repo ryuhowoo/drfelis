@@ -224,13 +224,15 @@ export default function PlanEditor({
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data } = await createClient()
-        .from("products")
-        .select("category")
-        .not("category", "is", null);
+      const supabase = createClient();
+      // 관리 카테고리 목록(정렬) 우선, 없으면 상품 distinct 로 보완(0072 미적용 환경 대비)
+      const { data: managed } = await supabase.from("product_categories").select("name, sort").order("sort");
+      const { data } = await supabase.from("products").select("category").not("category", "is", null);
       if (!alive) return;
-      const uniq = [...new Set((data ?? []).map((r) => (r.category as string)?.trim()).filter(Boolean))].sort();
-      setCategories(uniq);
+      const fromProducts = [...new Set((data ?? []).map((r) => (r.category as string)?.trim()).filter(Boolean))];
+      const ordered = (managed ?? []).map((c) => c.name as string);
+      const uniq = [...new Set([...ordered, ...fromProducts])];
+      setCategories(uniq.length > 0 ? uniq : fromProducts.sort());
     })();
     return () => {
       alive = false;

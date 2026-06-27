@@ -29,6 +29,7 @@ const KIND_TONE: Record<ProductKind, string> = {
 };
 
 type KindFilter = "전체" | "판매" | "구성품" | "기타";
+const UNSET = "(미지정)";
 
 export default function ProductsTable({
   initialRows,
@@ -39,6 +40,7 @@ export default function ProductsTable({
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ProductRow[]>(initialRows);
+  const [cats, setCats] = useState<string[]>(categories);
   const [q, setQ] = useState("");
   const [kindF, setKindF] = useState<KindFilter>("전체");
   const [catF, setCatF] = useState<string>("전체");
@@ -46,6 +48,8 @@ export default function ProductsTable({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkCat, setBulkCat] = useState<string>("");
 
   const filtered = useMemo(() => {
     const term = q.trim();
@@ -55,24 +59,34 @@ export default function ProductsTable({
       if (kindF === "판매" && !SELLABLE_KINDS.includes(k)) return false;
       if (kindF === "구성품" && !COMPONENT_KINDS.includes(k)) return false;
       if (kindF === "기타" && k !== "기타") return false;
-      if (catF !== "전체" && (r.category ?? "") !== catF) return false;
+      if (catF === UNSET && r.category) return false;
+      if (catF !== "전체" && catF !== UNSET && (r.category ?? "") !== catF) return false;
       if (missingOnly && r.cost != null && r.consumer_price != null && r.regular_price != null) return false;
       return true;
     });
   }, [rows, q, kindF, catF, missingOnly]);
 
-  async function patch(id: string, field: Field, value: string | boolean) {
+  const catCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const c = r.category?.trim();
+      if (c) m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return m;
+  }, [rows]);
+  const unsetCount = rows.filter((r) => !r.category).length;
+
+  async function patch(id: string, field: Field, value: string | boolean | null) {
     setErr(null);
     setSavingId(id);
     const prev = rows.find((r) => r.id === id);
-    // 낙관적 반영
     setRows((rs) =>
       rs.map((r) =>
         r.id === id
           ? {
               ...r,
               [field]: NUMERIC_FIELDS.includes(field)
-                ? value === "" ? null : Number(String(value).replace(/[^0-9.-]/g, ""))
+                ? value === "" || value == null ? null : Number(String(value).replace(/[^0-9.-]/g, ""))
                 : field === "is_subscription" ? value : (value === "" ? null : value),
             }
           : r,
@@ -88,10 +102,31 @@ export default function ProductsTable({
       setFlashId(id);
       setTimeout(() => setFlashId((f) => (f === id ? null : f)), 800);
     } catch (e) {
-      if (prev) setRows((rs) => rs.map((r) => (r.id === id ? prev : r))); // 롤백
+      if (prev) setRows((rs) => rs.map((r) => (r.id === id ? prev : r)));
       setErr(e instanceof Error ? e.message : "수정 실패");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function bulkAssign() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const cat = bulkCat === UNSET || bulkCat === "" ? null : bulkCat;
+    setErr(null);
+    const snapshot = rows;
+    setRows((rs) => rs.map((r) => (selected.has(r.id) ? { ...r, category: cat } : r)));
+    try {
+      const res = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids, category: cat }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "일괄 적용 실패");
+      setSelected(new Set());
+    } catch (e) {
+      setRows(snapshot);
+      setErr(e instanceof Error ? e.message : "일괄 적용 실패");
     }
   }
 
@@ -113,15 +148,43 @@ export default function ProductsTable({
 
   function onCreated(row: ProductRow) {
     setRows((rs) => [row, ...rs]);
+    if (row.category && !cats.includes(row.category)) setCats((c) => [...c, row.category!]);
     router.refresh();
   }
 
+  // 카테고리 관리 후 로컬 반영
+  function applyCatChange(kind: "add" | "rename" | "merge" | "delete", a: string, b?: string) {
+    if (kind === "add") setCats((c) => (c.includes(a) ? c : [...c, a]));
+    else if (kind === "rename") {
+      setCats((c) => c.map((x) => (x === a ? b! : x)));
+      setRows((rs) => rs.map((r) => (r.category === a ? { ...r, category: b! } : r)));
+    } else if (kind === "merge") {
+      setCats((c) => c.filter((x) => x !== a));
+      setRows((rs) => rs.map((r) => (r.category === a ? { ...r, category: b! } : r)));
+    } else if (kind === "delete") {
+      setCats((c) => c.filter((x) => x !== a));
+      setRows((rs) => rs.map((r) => (r.category === a ? { ...r, category: null } : r)));
+    }
+    router.refresh();
+  }
+
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const toggleAll = () =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (allSelected) filtered.forEach((r) => next.delete(r.id));
+      else filtered.forEach((r) => next.add(r.id));
+      return next;
+    });
+
   return (
-    <div className="mt-5">
-      <AddProduct categories={categories} onCreated={onCreated} onError={setErr} />
+    <div className="mt-5 space-y-4">
+      <CategoryManager cats={cats} counts={catCounts} unsetCount={unsetCount} onChange={applyCatChange} onError={setErr} />
+
+      <AddProduct categories={cats} onCreated={onCreated} onError={setErr} />
 
       {/* 검색·필터 */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -136,8 +199,9 @@ export default function ProductsTable({
         </select>
         <select value={catF} onChange={(e) => setCatF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
           <option value="전체">카테고리 전체</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          <option value={UNSET}>미지정 ({unsetCount})</option>
+          {cats.map((c) => (
+            <option key={c} value={c}>{c} ({catCounts.get(c) ?? 0})</option>
           ))}
         </select>
         <label className="flex items-center gap-1.5 text-sm text-ink-3">
@@ -147,12 +211,36 @@ export default function ProductsTable({
         <span className="ml-auto text-xs text-ink-4">{filtered.length} / {rows.length}개</span>
       </div>
 
-      {err && <p className="mt-2 text-sm text-danger">{err}</p>}
+      {/* 선택 일괄 카테고리 적용 */}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-brand-50 px-4 py-2.5 text-sm">
+          <span className="font-medium text-brand-700">{selected.size}개 선택</span>
+          <span className="text-ink-3">→ 카테고리</span>
+          <select value={bulkCat} onChange={(e) => setBulkCat(e.target.value)} className="rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm">
+            <option value="">선택…</option>
+            <option value={UNSET}>미지정으로</option>
+            {cats.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <button
+            onClick={bulkAssign}
+            disabled={!bulkCat}
+            className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-40"
+          >
+            적용
+          </button>
+          <button onClick={() => setSelected(new Set())} className="text-xs text-ink-4 hover:text-ink-2">선택 해제</button>
+        </div>
+      )}
 
-      <div className="mt-3 overflow-x-auto rounded-2xl card-soft">
-        <table className="w-full min-w-[920px] text-sm">
+      {err && <p className="text-sm text-danger">{err}</p>}
+
+      <div className="overflow-x-auto rounded-2xl card-soft">
+        <table className="w-full min-w-[980px] text-sm">
           <thead className="bg-soft/60 text-left text-xs text-ink-3">
             <tr>
+              <th className="px-3 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="전체 선택" /></th>
               <th className="px-3 py-2.5 font-medium">종류</th>
               <th className="px-3 py-2.5 font-medium">SKU 코드</th>
               <th className="px-3 py-2.5 font-medium">상품명</th>
@@ -168,7 +256,21 @@ export default function ProductsTable({
             {filtered.map((r) => {
               const kind = productKind(r.base_name);
               return (
-                <tr key={r.id} className={`hover:bg-soft/40 ${flashId === r.id ? "row-success-flash" : ""}`}>
+                <tr key={r.id} className={`hover:bg-soft/40 ${flashId === r.id ? "row-success-flash" : ""} ${selected.has(r.id) ? "bg-brand-50/40" : ""}`}>
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(r.id)}
+                      onChange={(e) =>
+                        setSelected((s) => {
+                          const next = new Set(s);
+                          if (e.target.checked) next.add(r.id);
+                          else next.delete(r.id);
+                          return next;
+                        })
+                      }
+                    />
+                  </td>
                   <td className="px-3 py-2">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${KIND_TONE[kind]}`}>{kind}</span>
                   </td>
@@ -179,17 +281,22 @@ export default function ProductsTable({
                     <TextCell value={r.base_name} width="w-72" onSave={(v) => patch(r.id, "base_name", v)} />
                   </td>
                   <td className="px-2 py-1.5">
-                    <TextCell value={r.category} placeholder="—" width="w-28" list="cats" onSave={(v) => patch(r.id, "category", v)} />
+                    <select
+                      value={r.category ?? ""}
+                      disabled={savingId === r.id}
+                      onChange={(e) => patch(r.id, "category", e.target.value === "" ? null : e.target.value)}
+                      className={`w-32 rounded-lg border px-2 py-1 text-sm focus:border-brand-400 focus:outline-none ${r.category ? "border-line bg-card" : "border-amber-300 bg-amber-50 text-amber-700"}`}
+                    >
+                      <option value="">미지정</option>
+                      {r.category && !cats.includes(r.category) && <option value={r.category}>{r.category}</option>}
+                      {cats.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                   </td>
-                  <td className="px-2 py-1.5 text-right">
-                    <NumCell value={r.cost} onSave={(v) => patch(r.id, "cost", v)} />
-                  </td>
-                  <td className="px-2 py-1.5 text-right">
-                    <NumCell value={r.consumer_price} onSave={(v) => patch(r.id, "consumer_price", v)} />
-                  </td>
-                  <td className="px-2 py-1.5 text-right">
-                    <NumCell value={r.regular_price} onSave={(v) => patch(r.id, "regular_price", v)} />
-                  </td>
+                  <td className="px-2 py-1.5 text-right"><NumCell value={r.cost} onSave={(v) => patch(r.id, "cost", v)} /></td>
+                  <td className="px-2 py-1.5 text-right"><NumCell value={r.consumer_price} onSave={(v) => patch(r.id, "consumer_price", v)} /></td>
+                  <td className="px-2 py-1.5 text-right"><NumCell value={r.regular_price} onSave={(v) => patch(r.id, "regular_price", v)} /></td>
                   <td className="px-2 py-1.5 text-center">
                     <input
                       type="checkbox"
@@ -206,19 +313,110 @@ export default function ProductsTable({
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
+                <td colSpan={10} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
 
-      {/* 카테고리 자동완성 */}
-      <datalist id="cats">
-        {categories.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
+function CategoryManager({
+  cats,
+  counts,
+  unsetCount,
+  onChange,
+  onError,
+}: {
+  cats: string[];
+  counts: Map<string, number>;
+  unsetCount: number;
+  onChange: (kind: "add" | "rename" | "merge" | "delete", a: string, b?: string) => void;
+  onError: (m: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function call(method: string, body: Record<string, unknown>): Promise<boolean> {
+    setBusy(true);
+    onError("");
+    try {
+      const res = await fetch("/api/product-categories", {
+        method,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "실패");
+      return true;
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "실패");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function add() {
+    const n = newName.trim();
+    if (!n) return;
+    if (await call("POST", { name: n })) {
+      onChange("add", n);
+      setNewName("");
+    }
+  }
+  async function rename(from: string) {
+    const to = prompt(`'${from}' → 새 이름 (이미 있는 이름으로 바꾸면 병합됩니다)`, from)?.trim();
+    if (!to || to === from) return;
+    const merge = cats.includes(to);
+    if (await call("PATCH", { from, to })) onChange(merge ? "merge" : "rename", from, to);
+  }
+  async function del(name: string) {
+    const n = counts.get(name) ?? 0;
+    if (!confirm(`'${name}' 카테고리를 삭제할까요?${n > 0 ? ` 이 카테고리 상품 ${n}개는 '미지정'이 됩니다.` : ""}`)) return;
+    if (await call("DELETE", { name })) onChange("delete", name);
+  }
+
+  return (
+    <div className="rounded-2xl card-soft p-4">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between">
+        <span className="text-sm font-semibold text-ink-2">
+          카테고리 관리 <span className="font-normal text-ink-4">· {cats.length}종{unsetCount > 0 ? ` · 미지정 ${unsetCount}개` : ""}</span>
+        </span>
+        <span className="text-ink-4">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="mt-3">
+          <p className="text-[11px] text-ink-4">
+            이름 변경 시 해당 상품들의 카테고리도 함께 바뀝니다(예: 굿즈 → 집사). 이미 있는 이름으로 바꾸면 두 카테고리가 병합돼요.
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <li key={c} className="flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1 text-sm">
+                <span className="text-ink-2">{c}</span>
+                <span className="text-[11px] text-ink-4">{counts.get(c) ?? 0}</span>
+                <button onClick={() => rename(c)} disabled={busy} className="ml-1 text-[11px] text-brand-600 hover:underline">이름변경</button>
+                <button onClick={() => del(c)} disabled={busy} className="text-[11px] text-red-500 hover:underline">삭제</button>
+              </li>
+            ))}
+            {cats.length === 0 && <li className="text-xs text-ink-4">카테고리가 없습니다.</li>}
+          </ul>
+          <div className="mt-3 flex gap-2">
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && add()}
+              placeholder="새 카테고리 (예: 집사)"
+              className="w-48 rounded-lg border border-line bg-card px-3 py-1.5 text-sm focus:border-brand-400 focus:outline-none"
+            />
+            <button onClick={add} disabled={busy || !newName.trim()} className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
+              추가
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -227,13 +425,11 @@ function TextCell({
   value,
   placeholder,
   width,
-  list,
   onSave,
 }: {
   value: string | null;
   placeholder?: string;
   width: string;
-  list?: string;
   onSave: (v: string) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -242,7 +438,6 @@ function TextCell({
     <input
       value={shown}
       placeholder={placeholder}
-      list={list}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         if (draft != null && draft !== (value ?? "")) onSave(draft);
@@ -348,7 +543,10 @@ function AddProduct({
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[11px] text-ink-4">카테고리</span>
-          <input className={`${input} w-28`} list="cats" value={f.category} onChange={(e) => set("category", e.target.value)} />
+          <select className={`${input} w-28`} value={f.category} onChange={(e) => set("category", e.target.value)}>
+            <option value="">미지정</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[11px] text-ink-4">원가</span>
@@ -374,7 +572,6 @@ function AddProduct({
         </div>
       </div>
       <p className="mt-2 text-[11px] text-ink-4">접두 ‘(제품)/(세트)/(상품)’=판매상품, ‘(원재료)/(부재료)/(부자재)’=구성품으로 자동 분류됩니다.</p>
-      <datalist id="cats">{categories.map((c) => <option key={c} value={c} />)}</datalist>
     </div>
   );
 }
