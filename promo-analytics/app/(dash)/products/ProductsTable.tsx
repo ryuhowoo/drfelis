@@ -18,6 +18,7 @@ export type ProductRow = {
   consumer_price: number | null;
   regular_price: number | null;
   is_subscription: boolean;
+  list_rank: number | null;
 };
 
 const STATUSES = ["판매중", "품절", "단종"] as const;
@@ -68,6 +69,8 @@ export default function ProductsTable({
   const [rows, setRows] = useState<ProductRow[]>(initialRows);
   const [cats, setCats] = useState<string[]>(categories);
   const [view, setView] = useState<"edit" | "matrix">("edit");
+  // 카탈로그(가격표 SKU)만 보기 — 기본 ON. 끄면 전체 상품(구성품·비B2C·과거 SKU 포함) 표시.
+  const [catalogOnly, setCatalogOnly] = useState(true);
   const [channelF, setChannelF] = useState<string>("B2C");
   const [statusF, setStatusF] = useState<string>("전체");
   const [q, setQ] = useState("");
@@ -101,11 +104,12 @@ export default function ProductsTable({
     if (!res.ok) setErr((await res.json()).error ?? "가격 저장 실패");
   }
 
-  // 채널 필터(B2C 기본) — 편집표·가격표 공통 적용
-  const channelRows = useMemo(
-    () => (channelF === "전체" ? rows : rows.filter((r) => r.channel === channelF)),
-    [rows, channelF],
-  );
+  // 카탈로그(가격표 SKU)만 / 채널 필터 — 편집표·가격표 공통 적용.
+  // 카탈로그만 보기일 땐 시트 SKU(list_rank)만 시트 순서대로(이미 정렬됨) 노출하고 채널 필터는 무시.
+  const channelRows = useMemo(() => {
+    if (catalogOnly) return rows.filter((r) => r.list_rank != null);
+    return channelF === "전체" ? rows : rows.filter((r) => r.channel === channelF);
+  }, [rows, catalogOnly, channelF]);
 
   const filtered = useMemo(() => {
     const term = q.trim();
@@ -206,6 +210,7 @@ export default function ProductsTable({
   function onCreated(row: ProductRow) {
     setRows((rs) => [row, ...rs]);
     if (row.category && !cats.includes(row.category)) setCats((c) => [...c, row.category!]);
+    setCatalogOnly(false); // 새 SKU 는 카탈로그 순서가 없어 '전체 보기'로 전환해 바로 보이게
     router.refresh();
   }
 
@@ -236,20 +241,39 @@ export default function ProductsTable({
 
   return (
     <div className="mt-5 space-y-4">
-      {/* 보기 전환 */}
-      <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
-        <button
-          onClick={() => setView("edit")}
-          className={`rounded-lg px-3 py-1.5 font-medium ${view === "edit" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
-        >
-          편집표
-        </button>
-        <button
-          onClick={() => setView("matrix")}
-          className={`rounded-lg px-3 py-1.5 font-medium ${view === "matrix" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
-        >
-          가격표(매트릭스)
-        </button>
+      {/* 보기 전환 + 카탈로그 필터 */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
+          <button
+            onClick={() => setView("edit")}
+            className={`rounded-lg px-3 py-1.5 font-medium ${view === "edit" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+          >
+            편집표
+          </button>
+          <button
+            onClick={() => setView("matrix")}
+            className={`rounded-lg px-3 py-1.5 font-medium ${view === "matrix" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+          >
+            가격표(매트릭스)
+          </button>
+        </div>
+        <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
+          <button
+            onClick={() => setCatalogOnly(true)}
+            className={`rounded-lg px-3 py-1.5 font-medium ${catalogOnly ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+          >
+            가격표 상품만
+          </button>
+          <button
+            onClick={() => setCatalogOnly(false)}
+            className={`rounded-lg px-3 py-1.5 font-medium ${!catalogOnly ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+          >
+            전체 보기
+          </button>
+        </div>
+        <span className="text-xs text-ink-4">
+          {catalogOnly ? "B2C 가격표에 있는 판매 SKU만 시트 순서대로 표시" : "구성품·비B2C·과거 SKU 포함 전체"}
+        </span>
       </div>
 
       <CategoryManager cats={cats} counts={catCounts} unsetCount={unsetCount} onChange={applyCatChange} onError={setErr} />
@@ -257,13 +281,15 @@ export default function ProductsTable({
       {view === "matrix" ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
-              <option value="B2C">B2C (기본)</option>
-              <option value="전체">채널 전체</option>
-              {channels.filter((c) => c !== "B2C").map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            {!catalogOnly && (
+              <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
+                <option value="B2C">B2C (기본)</option>
+                <option value="전체">채널 전체</option>
+                {channels.filter((c) => c !== "B2C").map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
             <span className="text-xs text-ink-4">{channelRows.length}개</span>
           </div>
           <PriceMatrix
@@ -300,13 +326,15 @@ export default function ProductsTable({
             <option key={c} value={c}>{c} ({catCounts.get(c) ?? 0})</option>
           ))}
         </select>
-        <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
-          <option value="B2C">B2C (기본)</option>
-          <option value="전체">채널 전체</option>
-          {channels.filter((c) => c !== "B2C").map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+        {!catalogOnly && (
+          <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
+            <option value="B2C">B2C (기본)</option>
+            <option value="전체">채널 전체</option>
+            {channels.filter((c) => c !== "B2C").map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        )}
         <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
           <option value="전체">상태 전체</option>
           {STATUSES.map((s) => (
@@ -663,6 +691,7 @@ function AddProduct({
         consumer_price: num(f.consumer_price),
         regular_price: num(f.regular_price),
         is_subscription: f.is_subscription,
+        list_rank: null,
       });
       setF({ base_name: "", dr_code: "", category: "", brand: "", cost: "", consumer_price: "", regular_price: "", is_subscription: false });
       setOpen(false);
