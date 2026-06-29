@@ -68,7 +68,15 @@ export async function PATCH(req: Request) {
   const supabase = await requireUser();
   if (!supabase) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    const body = (await req.json()) as Record<string, unknown> & { id?: string };
+    const body = (await req.json()) as Record<string, unknown> & { id?: string; ids?: string[] };
+    // 일괄 카테고리 지정: { ids: [...], category } — 미분류 상품 대량 정리용
+    if (Array.isArray(body.ids)) {
+      if (body.ids.length === 0) return NextResponse.json({ ok: true });
+      const cat = typeof body.category === "string" && body.category.trim() ? body.category.trim() : null;
+      const { error } = await supabase.from("products").update({ category: cat }).in("id", body.ids);
+      if (error) throw error;
+      return NextResponse.json({ ok: true, updated: body.ids.length });
+    }
     const id = body.id;
     if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });
     const fields = clean(body);
