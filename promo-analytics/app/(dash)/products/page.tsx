@@ -6,13 +6,14 @@ export const dynamic = "force-dynamic";
 // 상품·가격 가이드 — 웹이 단일 출처. 기본정보·카테고리·브랜드·원가·상시/정기/묶음 가격을 직접 관리.
 export default async function ProductsPage() {
   const supabase = await createClient();
-  const [{ data: prod }, { data: cats }, { data: cfgs }, { data: rc }] = await Promise.all([
+  const [{ data: prod }, { data: cats }, { data: brs }, { data: cfgs }, { data: rc }] = await Promise.all([
     supabase
       .from("products")
       .select("id, base_name, dr_code, category, brand, channel, status, cost, consumer_price, regular_price, is_subscription")
       .order("dr_code", { ascending: true, nullsFirst: false })
       .order("base_name", { ascending: true }),
     supabase.from("product_categories").select("name, sort").order("sort"),
+    supabase.from("product_brands").select("name, sort").order("sort"),
     supabase.from("product_price_configs").select("product_id, sale_mode, config_type, sale_price, free_shipping"),
     supabase
       .from("rate_card")
@@ -22,12 +23,23 @@ export default async function ProductsPage() {
       .limit(1)
       .maybeSingle(),
   ]);
-  const rows = (prod as ProductRow[]) ?? [];
+  const unsorted = (prod as ProductRow[]) ?? [];
   const managed = (cats ?? []).map((c) => c.name as string);
-  const fromProducts = [...new Set(rows.map((r) => r.category).filter((c): c is string => !!c))];
+  const fromProducts = [...new Set(unsorted.map((r) => r.category).filter((c): c is string => !!c))];
   const categories = [...new Set([...managed, ...fromProducts])];
-  const brands = [...new Set(rows.map((r) => r.brand).filter((b): b is string => !!b))].sort();
-  const channels = [...new Set(rows.map((r) => r.channel).filter(Boolean))].sort();
+  // 서브 브랜드 중요도 순(시트와 동일) → 같은 브랜드 안에서는 품목코드 순. 브랜드 없으면 맨 뒤.
+  const brandOrder = new Map<string, number>((brs ?? []).map((b) => [b.name as string, b.sort as number]));
+  const brands = [
+    ...(brs ?? []).map((b) => b.name as string),
+    ...[...new Set(unsorted.map((r) => r.brand).filter((b): b is string => !!b))].filter((b) => !brandOrder.has(b)),
+  ];
+  const rows = [...unsorted].sort((a, b) => {
+    const ba = a.brand ? brandOrder.get(a.brand) ?? 900 : 999;
+    const bb = b.brand ? brandOrder.get(b.brand) ?? 900 : 999;
+    if (ba !== bb) return ba - bb;
+    return (a.dr_code ?? "￿").localeCompare(b.dr_code ?? "￿");
+  });
+  const channels = [...new Set(unsorted.map((r) => r.channel).filter(Boolean))].sort();
 
   const configsByProduct: Record<string, ConfigLite[]> = {};
   for (const c of (cfgs as (ConfigLite & { product_id: string })[]) ?? []) {
