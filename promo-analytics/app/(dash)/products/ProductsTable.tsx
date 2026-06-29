@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { productKind, type ProductKind, SELLABLE_KINDS, COMPONENT_KINDS } from "@/lib/products";
+import PriceConfigDrawer from "./PriceConfigDrawer";
 
 export type ProductRow = {
   id: string;
@@ -50,6 +51,7 @@ export default function ProductsTable({
   const [err, setErr] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState<string>("");
+  const [configFor, setConfigFor] = useState<{ id: string; base_name: string } | null>(null);
 
   const filtered = useMemo(() => {
     const term = q.trim();
@@ -305,7 +307,8 @@ export default function ProductsTable({
                       onChange={(e) => patch(r.id, "is_subscription", e.target.checked)}
                     />
                   </td>
-                  <td className="px-2 py-1.5 text-right">
+                  <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                    <button onClick={() => setConfigFor({ id: r.id, base_name: r.base_name })} className="rounded px-1.5 py-0.5 text-xs text-brand-600 hover:bg-brand-50">구성</button>
                     <button onClick={() => remove(r)} className="rounded px-1.5 py-0.5 text-xs text-red-500 hover:bg-red-50">삭제</button>
                   </td>
                 </tr>
@@ -319,6 +322,8 @@ export default function ProductsTable({
           </tbody>
         </table>
       </div>
+
+      <PriceConfigDrawer product={configFor} onClose={() => setConfigFor(null)} />
     </div>
   );
 }
