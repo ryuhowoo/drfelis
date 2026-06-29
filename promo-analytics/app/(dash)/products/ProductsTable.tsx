@@ -12,10 +12,19 @@ export type ProductRow = {
   dr_code: string | null;
   category: string | null;
   brand: string | null;
+  channel: string;
+  status: string;
   cost: number | null;
   consumer_price: number | null;
   regular_price: number | null;
   is_subscription: boolean;
+};
+
+const STATUSES = ["판매중", "품절", "단종"] as const;
+const STATUS_TONE: Record<string, string> = {
+  판매중: "bg-success-soft text-success",
+  품절: "bg-amber-100 text-amber-700",
+  단종: "bg-neutral-200 text-neutral-600",
 };
 export type ConfigLite = {
   sale_mode: string;
@@ -44,12 +53,14 @@ export default function ProductsTable({
   initialRows,
   categories,
   brands,
+  channels,
   configsByProduct,
   mult,
 }: {
   initialRows: ProductRow[];
   categories: string[];
   brands: string[];
+  channels: string[];
   configsByProduct: Record<string, ConfigLite[]>;
   mult: number;
 }) {
@@ -57,6 +68,8 @@ export default function ProductsTable({
   const [rows, setRows] = useState<ProductRow[]>(initialRows);
   const [cats, setCats] = useState<string[]>(categories);
   const [view, setView] = useState<"edit" | "matrix">("edit");
+  const [channelF, setChannelF] = useState<string>("B2C");
+  const [statusF, setStatusF] = useState<string>("전체");
   const [q, setQ] = useState("");
   const [kindF, setKindF] = useState<KindFilter>("전체");
   const [catF, setCatF] = useState<string>("전체");
@@ -68,9 +81,15 @@ export default function ProductsTable({
   const [bulkCat, setBulkCat] = useState<string>("");
   const [configFor, setConfigFor] = useState<ProductRow | null>(null);
 
+  // 채널 필터(B2C 기본) — 편집표·가격표 공통 적용
+  const channelRows = useMemo(
+    () => (channelF === "전체" ? rows : rows.filter((r) => r.channel === channelF)),
+    [rows, channelF],
+  );
+
   const filtered = useMemo(() => {
     const term = q.trim();
-    return rows.filter((r) => {
+    return channelRows.filter((r) => {
       if (term && !(r.base_name.includes(term) || (r.dr_code ?? "").includes(term))) return false;
       const k = productKind(r.base_name);
       if (kindF === "판매" && !SELLABLE_KINDS.includes(k)) return false;
@@ -78,10 +97,11 @@ export default function ProductsTable({
       if (kindF === "기타" && k !== "기타") return false;
       if (catF === UNSET && r.category) return false;
       if (catF !== "전체" && catF !== UNSET && (r.category ?? "") !== catF) return false;
+      if (statusF !== "전체" && r.status !== statusF) return false;
       if (missingOnly && r.cost != null && r.consumer_price != null && r.regular_price != null) return false;
       return true;
     });
-  }, [rows, q, kindF, catF, missingOnly]);
+  }, [channelRows, q, kindF, catF, statusF, missingOnly]);
 
   const catCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -215,7 +235,19 @@ export default function ProductsTable({
       <CategoryManager cats={cats} counts={catCounts} unsetCount={unsetCount} onChange={applyCatChange} onError={setErr} />
 
       {view === "matrix" ? (
-        <PriceMatrix rows={rows} configsByProduct={configsByProduct} mult={mult} onOpen={setConfigFor} />
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
+              <option value="B2C">B2C (기본)</option>
+              <option value="전체">채널 전체</option>
+              {channels.filter((c) => c !== "B2C").map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <span className="text-xs text-ink-4">{channelRows.length}개</span>
+          </div>
+          <PriceMatrix rows={channelRows} configsByProduct={configsByProduct} mult={mult} onOpen={setConfigFor} />
+        </>
       ) : (
       <>
       <AddProduct categories={cats} brands={brands} onCreated={onCreated} onError={setErr} />
@@ -241,11 +273,24 @@ export default function ProductsTable({
             <option key={c} value={c}>{c} ({catCounts.get(c) ?? 0})</option>
           ))}
         </select>
+        <select value={channelF} onChange={(e) => setChannelF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
+          <option value="B2C">B2C (기본)</option>
+          <option value="전체">채널 전체</option>
+          {channels.filter((c) => c !== "B2C").map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className="rounded-xl border border-line bg-card px-2.5 py-2 text-sm">
+          <option value="전체">상태 전체</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
         <label className="flex items-center gap-1.5 text-sm text-ink-3">
           <input type="checkbox" checked={missingOnly} onChange={(e) => setMissingOnly(e.target.checked)} />
           가격·원가 누락만
         </label>
-        <span className="ml-auto text-xs text-ink-4">{filtered.length} / {rows.length}개</span>
+        <span className="ml-auto text-xs text-ink-4">{filtered.length} / {channelRows.length}개</span>
       </div>
 
       {/* 선택 일괄 카테고리 적용 */}
@@ -274,7 +319,7 @@ export default function ProductsTable({
       {err && <p className="text-sm text-danger">{err}</p>}
 
       <div className="overflow-x-auto rounded-2xl card-soft">
-        <table className="w-full min-w-[980px] text-sm">
+        <table className="w-full min-w-[1180px] text-sm">
           <thead className="bg-soft/60 text-left text-xs text-ink-3">
             <tr>
               <th className="px-3 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="전체 선택" /></th>
@@ -283,6 +328,7 @@ export default function ProductsTable({
               <th className="px-3 py-2.5 font-medium">상품명</th>
               <th className="px-3 py-2.5 font-medium">카테고리</th>
               <th className="px-3 py-2.5 font-medium">브랜드</th>
+              <th className="px-3 py-2.5 font-medium">상태</th>
               <th className="px-3 py-2.5 text-right font-medium">원가</th>
               <th className="px-3 py-2.5 text-right font-medium">소비자가</th>
               <th className="px-3 py-2.5 text-right font-medium">상시 판매가</th>
@@ -316,7 +362,7 @@ export default function ProductsTable({
                     <TextCell value={r.dr_code} placeholder="없음" width="w-24" onSave={(v) => patch(r.id, "dr_code", v)} />
                   </td>
                   <td className="px-2 py-1.5">
-                    <TextCell value={r.base_name} width="w-72" onSave={(v) => patch(r.id, "base_name", v)} />
+                    <TextCell value={r.base_name} width="w-[26rem]" onSave={(v) => patch(r.id, "base_name", v)} />
                   </td>
                   <td className="px-2 py-1.5">
                     <select
@@ -334,6 +380,18 @@ export default function ProductsTable({
                   </td>
                   <td className="px-2 py-1.5">
                     <TextCell value={r.brand} placeholder="—" width="w-28" list="brands" onSave={(v) => patch(r.id, "brand", v)} />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select
+                      value={r.status}
+                      disabled={savingId === r.id}
+                      onChange={(e) => patch(r.id, "status", e.target.value)}
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium focus:outline-none ${STATUS_TONE[r.status] ?? "bg-neutral-100 text-neutral-500"}`}
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-2 py-1.5 text-right"><NumCell value={r.cost} onSave={(v) => patch(r.id, "cost", v)} /></td>
                   <td className="px-2 py-1.5 text-right"><NumCell value={r.consumer_price} onSave={(v) => patch(r.id, "consumer_price", v)} /></td>
@@ -355,7 +413,7 @@ export default function ProductsTable({
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
+                <td colSpan={12} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
               </tr>
             )}
           </tbody>
@@ -572,6 +630,8 @@ function AddProduct({
         dr_code: f.dr_code.trim() || null,
         category: f.category.trim() || null,
         brand: f.brand.trim() || null,
+        channel: "B2C",
+        status: "판매중",
         cost: num(f.cost),
         consumer_price: num(f.consumer_price),
         regular_price: num(f.regular_price),

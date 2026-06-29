@@ -86,7 +86,12 @@ export default function PriceMatrix({
                 <td className={tdL}>{r.dr_code ?? "—"}</td>
                 <td className={tdL}>{r.brand ?? "—"}</td>
                 <td className={tdL}>{r.category ?? "—"}</td>
-                <td className={`${tdL} max-w-[260px] truncate`} title={r.base_name}>{r.base_name}</td>
+                <td className={`${tdL} max-w-[280px]`} title={r.base_name}>
+                  <span className="block truncate">{r.base_name}</span>
+                  {r.status !== "판매중" && (
+                    <span className="rounded bg-amber-100 px-1 text-[10px] text-amber-700">{r.status}</span>
+                  )}
+                </td>
                 <td className={td}>{won(consumer)}</td>
                 <td className={td}>{won(cost)}</td>
                 <td className={td}>{won(regular)}</td>

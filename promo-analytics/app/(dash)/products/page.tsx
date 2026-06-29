@@ -9,7 +9,7 @@ export default async function ProductsPage() {
   const [{ data: prod }, { data: cats }, { data: cfgs }, { data: rc }] = await Promise.all([
     supabase
       .from("products")
-      .select("id, base_name, dr_code, category, brand, cost, consumer_price, regular_price, is_subscription")
+      .select("id, base_name, dr_code, category, brand, channel, status, cost, consumer_price, regular_price, is_subscription")
       .order("dr_code", { ascending: true, nullsFirst: false })
       .order("base_name", { ascending: true }),
     supabase.from("product_categories").select("name, sort").order("sort"),
@@ -27,6 +27,7 @@ export default async function ProductsPage() {
   const fromProducts = [...new Set(rows.map((r) => r.category).filter((c): c is string => !!c))];
   const categories = [...new Set([...managed, ...fromProducts])];
   const brands = [...new Set(rows.map((r) => r.brand).filter((b): b is string => !!b))].sort();
+  const channels = [...new Set(rows.map((r) => r.channel).filter(Boolean))].sort();
 
   const configsByProduct: Record<string, ConfigLite[]> = {};
   for (const c of (cfgs as (ConfigLite & { product_id: string })[]) ?? []) {
@@ -50,6 +51,7 @@ export default async function ProductsPage() {
         initialRows={rows}
         categories={categories}
         brands={brands}
+        channels={channels}
         configsByProduct={configsByProduct}
         mult={mult}
       />
