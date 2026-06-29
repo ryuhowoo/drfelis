@@ -126,6 +126,7 @@ export async function applyPriceMasterCsv(
     recMap.set(`${match.id}::${c.config_type}`, {
       product_id: match.id,
       base_name: match.base_name,
+      sale_mode: "상시",
       config_type: c.config_type,
       pack_count: c.pack_count,
       free_shipping: c.free_shipping,
@@ -145,7 +146,7 @@ export async function applyPriceMasterCsv(
   for (const batch of chunk(records, 500)) {
     const { error } = await supabase
       .from("product_price_configs")
-      .upsert(batch, { onConflict: "product_id,config_type" });
+      .upsert(batch, { onConflict: "product_id,sale_mode,config_type" });
     if (error) throw new Error(error.message);
   }
 
