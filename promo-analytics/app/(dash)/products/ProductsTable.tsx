@@ -80,6 +80,26 @@ export default function ProductsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState<string>("");
   const [configFor, setConfigFor] = useState<ProductRow | null>(null);
+  const [configs, setConfigs] = useState<Record<string, ConfigLite[]>>(configsByProduct);
+
+  // 가격표 인라인: tier 판매가 저장 + 로컬 반영
+  async function saveConfig(productId: string, sale_mode: string, config_type: string, sale: string) {
+    setErr(null);
+    const saleNum = sale.trim() === "" ? null : Number(sale.replace(/[^0-9.]/g, ""));
+    setConfigs((prev) => {
+      const list = [...(prev[productId] ?? [])];
+      const i = list.findIndex((c) => c.sale_mode === sale_mode && c.config_type === config_type);
+      if (i >= 0) list[i] = { ...list[i], sale_price: saleNum };
+      else list.push({ sale_mode, config_type, sale_price: saleNum, free_shipping: sale_mode === "정기" });
+      return { ...prev, [productId]: list };
+    });
+    const res = await fetch("/api/products/configs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ product_id: productId, sale_mode, config_type, sale_price: sale, free_shipping: sale_mode === "정기" }),
+    });
+    if (!res.ok) setErr((await res.json()).error ?? "가격 저장 실패");
+  }
 
   // 채널 필터(B2C 기본) — 편집표·가격표 공통 적용
   const channelRows = useMemo(
@@ -246,7 +266,14 @@ export default function ProductsTable({
             </select>
             <span className="text-xs text-ink-4">{channelRows.length}개</span>
           </div>
-          <PriceMatrix rows={channelRows} configsByProduct={configsByProduct} mult={mult} onOpen={setConfigFor} />
+          <PriceMatrix
+            rows={channelRows}
+            configsByProduct={configs}
+            mult={mult}
+            onOpen={setConfigFor}
+            onPatchBase={(id, field, val) => patch(id, field, val)}
+            onSaveConfig={saveConfig}
+          />
         </>
       ) : (
       <>
