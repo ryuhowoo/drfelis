@@ -1595,8 +1595,8 @@ function FreebieRow({
           </button>
         )}
       </div>
-      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div className="relative sm:col-span-2">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="relative col-span-2">
           <span className={labelCls}>사은품 SKU</span>
           {entry.product_id ? (
             <div className="mt-0.5 flex items-center justify-between gap-2 rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm text-ink">
@@ -1639,6 +1639,18 @@ function FreebieRow({
           )}
         </div>
         <label className="block">
+          <span className={labelCls}>원가 (차감 기준)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            disabled={readOnly}
+            value={entry.cost ? entry.cost.toLocaleString("ko-KR") : ""}
+            onChange={(e) => onPatch({ cost: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })}
+            placeholder="자동·직접입력"
+            className={`${fieldCls} text-right`}
+          />
+        </label>
+        <label className="block">
           <span className={labelCls}>수량 (한정)</span>
           <input
             type="number"
@@ -1652,7 +1664,7 @@ function FreebieRow({
       </div>
       <p className="mt-1.5 text-[11px] text-ink-4">
         차감액 = 원가 {won(entry.cost)} × 수량 {num(entry.qty)} = <b className="text-ink-2">−{won(deduction)}</b>{" "}
-        (동봉 발송이라 물류비·광고비는 제외)
+        (동봉 발송이라 물류비·광고비는 제외). 원가가 비어 있으면 직접 입력하세요.
       </p>
     </li>
   );
