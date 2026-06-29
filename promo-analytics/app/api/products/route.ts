@@ -12,6 +12,8 @@ const ALLOWED = [
   "dr_code",
   "category",
   "brand",
+  "channel",
+  "status",
   "cost",
   "consumer_price",
   "regular_price",

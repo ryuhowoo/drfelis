@@ -1716,6 +1716,8 @@ type SearchHit = {
   consumer_price: number | null;
   regular_price: number | null;
   cost: number | null;
+  channel?: string | null;
+  status?: string | null;
 };
 
 function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
@@ -1733,14 +1735,17 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
     const safe = v.replace(/[,()%]/g, " ").trim();
     const { data } = await supabase
       .from("products")
-      .select("id, base_name, dr_code, consumer_price, regular_price, cost")
+      .select("id, base_name, dr_code, consumer_price, regular_price, cost, channel, status")
       .or(`base_name.ilike.%${safe}%,dr_code.ilike.%${safe}%`)
-      .limit(30);
+      .limit(40);
     const clear = ((data as SearchHit[]) ?? []).filter(
       // 불분명 품목(상품코드·소비자가·상시가 전부 없는, 성과에서 이름만 자동생성된 것) 숨김
       (h) => (h.dr_code || h.consumer_price || h.regular_price) &&
         // 원재료·부재료·부자재(비판매 구성품)는 옵션에 담지 않으므로 제외
-        !isComponentName(h.base_name),
+        !isComponentName(h.base_name) &&
+        // 비B2C 채널·품절·단종은 옵션에서 제외(채널 미지정=구버전 데이터는 허용)
+        (h.channel == null || h.channel === "B2C") &&
+        h.status !== "품절" && h.status !== "단종",
     );
     setHits(clear.slice(0, 8));
     setOpen(true);
