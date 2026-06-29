@@ -4,16 +4,24 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { productKind, type ProductKind, SELLABLE_KINDS, COMPONENT_KINDS } from "@/lib/products";
 import PriceConfigDrawer from "./PriceConfigDrawer";
+import PriceMatrix from "./PriceMatrix";
 
 export type ProductRow = {
   id: string;
   base_name: string;
   dr_code: string | null;
   category: string | null;
+  brand: string | null;
   cost: number | null;
   consumer_price: number | null;
   regular_price: number | null;
   is_subscription: boolean;
+};
+export type ConfigLite = {
+  sale_mode: string;
+  config_type: string;
+  sale_price: number | null;
+  free_shipping: boolean;
 };
 
 type Field = keyof Omit<ProductRow, "id">;
@@ -35,13 +43,20 @@ const UNSET = "(미지정)";
 export default function ProductsTable({
   initialRows,
   categories,
+  brands,
+  configsByProduct,
+  mult,
 }: {
   initialRows: ProductRow[];
   categories: string[];
+  brands: string[];
+  configsByProduct: Record<string, ConfigLite[]>;
+  mult: number;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ProductRow[]>(initialRows);
   const [cats, setCats] = useState<string[]>(categories);
+  const [view, setView] = useState<"edit" | "matrix">("edit");
   const [q, setQ] = useState("");
   const [kindF, setKindF] = useState<KindFilter>("전체");
   const [catF, setCatF] = useState<string>("전체");
@@ -51,7 +66,7 @@ export default function ProductsTable({
   const [err, setErr] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkCat, setBulkCat] = useState<string>("");
-  const [configFor, setConfigFor] = useState<{ id: string; base_name: string } | null>(null);
+  const [configFor, setConfigFor] = useState<ProductRow | null>(null);
 
   const filtered = useMemo(() => {
     const term = q.trim();
@@ -181,9 +196,29 @@ export default function ProductsTable({
 
   return (
     <div className="mt-5 space-y-4">
+      {/* 보기 전환 */}
+      <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
+        <button
+          onClick={() => setView("edit")}
+          className={`rounded-lg px-3 py-1.5 font-medium ${view === "edit" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+        >
+          편집표
+        </button>
+        <button
+          onClick={() => setView("matrix")}
+          className={`rounded-lg px-3 py-1.5 font-medium ${view === "matrix" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+        >
+          가격표(매트릭스)
+        </button>
+      </div>
+
       <CategoryManager cats={cats} counts={catCounts} unsetCount={unsetCount} onChange={applyCatChange} onError={setErr} />
 
-      <AddProduct categories={cats} onCreated={onCreated} onError={setErr} />
+      {view === "matrix" ? (
+        <PriceMatrix rows={rows} configsByProduct={configsByProduct} mult={mult} onOpen={setConfigFor} />
+      ) : (
+      <>
+      <AddProduct categories={cats} brands={brands} onCreated={onCreated} onError={setErr} />
 
       {/* 검색·필터 */}
       <div className="flex flex-wrap items-center gap-2">
@@ -247,6 +282,7 @@ export default function ProductsTable({
               <th className="px-3 py-2.5 font-medium">SKU 코드</th>
               <th className="px-3 py-2.5 font-medium">상품명</th>
               <th className="px-3 py-2.5 font-medium">카테고리</th>
+              <th className="px-3 py-2.5 font-medium">브랜드</th>
               <th className="px-3 py-2.5 text-right font-medium">원가</th>
               <th className="px-3 py-2.5 text-right font-medium">소비자가</th>
               <th className="px-3 py-2.5 text-right font-medium">상시 판매가</th>
@@ -296,6 +332,9 @@ export default function ProductsTable({
                       ))}
                     </select>
                   </td>
+                  <td className="px-2 py-1.5">
+                    <TextCell value={r.brand} placeholder="—" width="w-28" list="brands" onSave={(v) => patch(r.id, "brand", v)} />
+                  </td>
                   <td className="px-2 py-1.5 text-right"><NumCell value={r.cost} onSave={(v) => patch(r.id, "cost", v)} /></td>
                   <td className="px-2 py-1.5 text-right"><NumCell value={r.consumer_price} onSave={(v) => patch(r.id, "consumer_price", v)} /></td>
                   <td className="px-2 py-1.5 text-right"><NumCell value={r.regular_price} onSave={(v) => patch(r.id, "regular_price", v)} /></td>
@@ -308,7 +347,7 @@ export default function ProductsTable({
                     />
                   </td>
                   <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                    <button onClick={() => setConfigFor({ id: r.id, base_name: r.base_name })} className="rounded px-1.5 py-0.5 text-xs text-brand-600 hover:bg-brand-50">구성</button>
+                    <button onClick={() => setConfigFor(r)} className="rounded px-1.5 py-0.5 text-xs text-brand-600 hover:bg-brand-50">구성</button>
                     <button onClick={() => remove(r)} className="rounded px-1.5 py-0.5 text-xs text-red-500 hover:bg-red-50">삭제</button>
                   </td>
                 </tr>
@@ -316,14 +355,28 @@ export default function ProductsTable({
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
+                <td colSpan={11} className="px-3 py-8 text-center text-ink-4">조건에 맞는 상품이 없습니다.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+      <datalist id="brands">{brands.map((b) => <option key={b} value={b} />)}</datalist>
+      </>
+      )}
 
-      <PriceConfigDrawer product={configFor} onClose={() => setConfigFor(null)} />
+      <PriceConfigDrawer
+        product={
+          configFor
+            ? { id: configFor.id, base_name: configFor.base_name, consumer_price: configFor.consumer_price, regular_price: configFor.regular_price, cost: configFor.cost }
+            : null
+        }
+        mult={mult}
+        onClose={() => {
+          setConfigFor(null);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
@@ -430,17 +483,20 @@ function TextCell({
   value,
   placeholder,
   width,
+  list,
   onSave,
 }: {
   value: string | null;
   placeholder?: string;
   width: string;
+  list?: string;
   onSave: (v: string) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? value ?? "";
   return (
     <input
+      list={list}
       value={shown}
       placeholder={placeholder}
       onChange={(e) => setDraft(e.target.value)}
@@ -481,16 +537,18 @@ function NumCell({ value, onSave }: { value: number | null; onSave: (v: string) 
 
 function AddProduct({
   categories,
+  brands,
   onCreated,
   onError,
 }: {
   categories: string[];
+  brands: string[];
   onCreated: (r: ProductRow) => void;
   onError: (m: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ base_name: "", dr_code: "", category: "", cost: "", consumer_price: "", regular_price: "", is_subscription: false });
+  const [f, setF] = useState({ base_name: "", dr_code: "", category: "", brand: "", cost: "", consumer_price: "", regular_price: "", is_subscription: false });
   const set = (k: keyof typeof f, v: string | boolean) => setF((s) => ({ ...s, [k]: v }));
 
   async function submit() {
@@ -513,12 +571,13 @@ function AddProduct({
         base_name: f.base_name.trim(),
         dr_code: f.dr_code.trim() || null,
         category: f.category.trim() || null,
+        brand: f.brand.trim() || null,
         cost: num(f.cost),
         consumer_price: num(f.consumer_price),
         regular_price: num(f.regular_price),
         is_subscription: f.is_subscription,
       });
-      setF({ base_name: "", dr_code: "", category: "", cost: "", consumer_price: "", regular_price: "", is_subscription: false });
+      setF({ base_name: "", dr_code: "", category: "", brand: "", cost: "", consumer_price: "", regular_price: "", is_subscription: false });
       setOpen(false);
     } catch (e) {
       onError(e instanceof Error ? e.message : "생성 실패");
@@ -552,6 +611,11 @@ function AddProduct({
             <option value="">미지정</option>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] text-ink-4">브랜드</span>
+          <input className={`${input} w-28`} list="brands-add" value={f.brand} onChange={(e) => set("brand", e.target.value)} placeholder="(선택)" />
+          <datalist id="brands-add">{brands.map((b) => <option key={b} value={b} />)}</datalist>
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[11px] text-ink-4">원가</span>

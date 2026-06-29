@@ -1754,6 +1754,7 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
       .select("id, sale_price")
       .eq("product_id", h.id)
       .eq("config_type", "단품")
+      .eq("sale_mode", "상시")
       .limit(1)
       .maybeSingle();
     const seed =
