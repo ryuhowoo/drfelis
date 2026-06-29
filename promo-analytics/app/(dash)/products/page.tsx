@@ -9,7 +9,7 @@ export default async function ProductsPage() {
   const [{ data: prod }, { data: cats }, { data: brs }, { data: cfgs }, { data: rc }] = await Promise.all([
     supabase
       .from("products")
-      .select("id, base_name, dr_code, category, brand, channel, status, cost, consumer_price, regular_price, is_subscription")
+      .select("id, base_name, dr_code, category, brand, channel, status, cost, consumer_price, regular_price, is_subscription, list_rank")
       .order("dr_code", { ascending: true, nullsFirst: false })
       .order("base_name", { ascending: true }),
     supabase.from("product_categories").select("name, sort").order("sort"),
@@ -27,13 +27,17 @@ export default async function ProductsPage() {
   const managed = (cats ?? []).map((c) => c.name as string);
   const fromProducts = [...new Set(unsorted.map((r) => r.category).filter((c): c is string => !!c))];
   const categories = [...new Set([...managed, ...fromProducts])];
-  // 서브 브랜드 중요도 순(시트와 동일) → 같은 브랜드 안에서는 품목코드 순. 브랜드 없으면 맨 뒤.
+  // 카탈로그(시트) SKU 는 list_rank(시트 순서)대로 맨 위에. 그 외에는 브랜드 중요도 → 품목코드 순.
   const brandOrder = new Map<string, number>((brs ?? []).map((b) => [b.name as string, b.sort as number]));
   const brands = [
     ...(brs ?? []).map((b) => b.name as string),
     ...[...new Set(unsorted.map((r) => r.brand).filter((b): b is string => !!b))].filter((b) => !brandOrder.has(b)),
   ];
   const rows = [...unsorted].sort((a, b) => {
+    // list_rank 있는(카탈로그) 행이 항상 먼저, rank 순서대로
+    const ra = a.list_rank ?? Number.MAX_SAFE_INTEGER;
+    const rb = b.list_rank ?? Number.MAX_SAFE_INTEGER;
+    if (ra !== rb) return ra - rb;
     const ba = a.brand ? brandOrder.get(a.brand) ?? 900 : 999;
     const bb = b.brand ? brandOrder.get(b.brand) ?? 900 : 999;
     if (ba !== bb) return ba - bb;
