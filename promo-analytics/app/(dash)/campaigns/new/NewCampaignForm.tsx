@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { predict, type CaseFeature } from "@/lib/predict";
+import { inferSeasonality } from "@/lib/season";
 import type { Options } from "@/lib/options";
 import { wonShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -44,6 +45,20 @@ export default function NewCampaignForm({
   // 엑셀 양식으로 한 번에 채우기 — 파싱한 플랜 옵션은 캠페인 생성 후 draft 플랜에 적재.
   const [planOptions, setPlanOptions] = useState<ParsedPlanOption[]>([]);
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  // 시즌 자동 활성화 힌트 — 시작일에 맞춰 시즌을 자동 채움(사용자가 직접 만지면 멈춤).
+  const [seasonTouched, setSeasonTouched] = useState(false);
+  const [autoSeason, setAutoSeason] = useState<string | null>(null);
+
+  // 시작일(또는 이름)로 시즌 자동 추정 → 아직 손대지 않았으면 자동 선택
+  useEffect(() => {
+    if (!start || seasonTouched) return;
+    const inferred = inferSeasonality(name, start, options.seasonalities);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setAutoSeason(inferred);
+    setSeasonTags(inferred ? [inferred] : []);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start, name]);
 
   const selected = useMemo(() => PURPOSES.filter((p) => weights[p.key] != null), [weights]);
   const total = useMemo(
@@ -112,7 +127,10 @@ export default function NewCampaignForm({
         if (meta.start_date) setStart(meta.start_date);
         if (meta.end_date) setEnd(meta.end_date);
         if (meta.promo_types.length) setPromoTypes(meta.promo_types);
-        if (meta.season_tags.length) setSeasonTags(meta.season_tags);
+        if (meta.season_tags.length) {
+          setSeasonTouched(true);
+          setSeasonTags(meta.season_tags);
+        }
         if (meta.channel) setChannel(meta.channel);
         if (meta.discount_pct != null) setDiscountPct(meta.discount_pct);
         if (Object.keys(meta.weights).length) setWeights(meta.weights);
@@ -136,6 +154,41 @@ export default function NewCampaignForm({
     const supabase = createClient();
     const names = [...new Set(planOptions.flatMap((o) => o.items.map((it) => it.base_name)))];
     const idMap = await ensureProducts(supabase, names);
+
+    // 엑셀에 적은 SKU 소비자가/원가/상시가(세트→1개 환산)를 상품 마스터의 '빈 값'에만 채운다.
+    // (기존 마스터 값은 건드리지 않음 — 단일 출처 원칙 유지, best-effort)
+    try {
+      const econByName = new Map<string, { consumer: number | null; regular: number | null; cost: number | null }>();
+      for (const o of planOptions)
+        for (const it of o.items) {
+          const cur = econByName.get(it.base_name) ?? { consumer: null, regular: null, cost: null };
+          econByName.set(it.base_name, {
+            consumer: cur.consumer ?? it.consumer_price,
+            regular: cur.regular ?? it.regular_price,
+            cost: cur.cost ?? it.cost,
+          });
+        }
+      const ids = [...new Set([...idMap.values()])];
+      if (ids.length > 0) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id, base_name, consumer_price, regular_price, cost")
+          .in("id", ids);
+        for (const p of prods ?? []) {
+          const e = econByName.get(p.base_name as string);
+          if (!e) continue;
+          const patch: Record<string, number> = {};
+          if (p.consumer_price == null && e.consumer != null) patch.consumer_price = Math.round(e.consumer);
+          if (p.regular_price == null && e.regular != null) patch.regular_price = Math.round(e.regular);
+          if (p.cost == null && e.cost != null) patch.cost = Math.round(e.cost);
+          if (Object.keys(patch).length > 0)
+            await supabase.from("products").update(patch).eq("id", p.id as string);
+        }
+      }
+    } catch {
+      /* 마스터 프리필 실패는 무시 — 플랜 적재는 계속 */
+    }
+
     const optionsPayload = planOptions.map((o, idx) => ({
       option_label: o.option_label,
       expected_option_qty: o.expected_option_qty,
@@ -290,8 +343,14 @@ export default function NewCampaignForm({
                 <ChipMulti
                   values={options.seasonalities}
                   selected={seasonTags}
-                  onToggle={(k) => toggleTag(setSeasonTags, k)}
+                  onToggle={(k) => {
+                    setSeasonTouched(true);
+                    toggleTag(setSeasonTags, k);
+                  }}
                 />
+                {autoSeason && seasonTags.includes(autoSeason) && !seasonTouched && (
+                  <p className="mt-1 text-[11px] text-brand-600">시작일에 맞춰 ‘{autoSeason}’ 시즌을 자동 선택했어요. 바꾸려면 칩을 눌러 조정하세요.</p>
+                )}
               </div>
             </div>
             {channels.length > 0 && (
@@ -357,8 +416,11 @@ export default function NewCampaignForm({
           <section className="rounded-2xl card-glass shimmer blob-soft p-5">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.4px] text-brand-600">
               <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" />
-              예상 성과 · 유사 사례 기반
+              플랜 설계 기준선 · 유사 사례 기반
             </div>
+            <p className="mt-1 text-[11px] text-ink-4">
+              아래는 유사 캠페인으로 추정한 <b>목표 기준선</b>입니다. 다음 단계(플랜 작성)에서 옵션·수량을 짜며 이 값을 목표로 삼으세요.
+            </p>
             {prediction ? (
               <>
                 <div className="mt-3 grid grid-cols-3 gap-2">

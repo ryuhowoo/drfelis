@@ -48,16 +48,19 @@ describe("parsePlanWorkbook (내보내기↔가져오기 왕복)", () => {
     expect(parsed[1].is_main).toBe(false);
   });
 
-  it("SKU 구성·세트당수량·단가·원가 복원", () => {
+  it("SKU 구성·세트당수량·단가·원가 복원 (세트 합계 ↔ 1개 단가 환산)", () => {
     expect(parsed[0].items).toHaveLength(2);
+    // 내보내기는 세트 합계(단가×수량)로 쓰고, 가져오기는 세트당수량으로 나눠 1개 단가를 복원한다.
     expect(parsed[0].items[0]).toMatchObject({
       base_name: "퓨저나이트 슈퍼볼 4.3kg",
       sku_qty_per_option: 4,
       unit_sale_price: 10900,
       cost: 8000,
+      consumer_price: 21800,
     });
     expect(parsed[0].items[1].base_name).toBe("바이바이배드 500ml");
     expect(parsed[1].items[0].base_name).toBe("포캣트릿 닭가슴살 25g");
+    expect(parsed[1].items[0].unit_sale_price).toBe(12900);
   });
 
   it("플랜 시트 헤더가 없으면 빈 옵션", () => {

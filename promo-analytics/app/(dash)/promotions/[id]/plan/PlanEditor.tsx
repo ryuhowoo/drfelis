@@ -724,8 +724,8 @@ export default function PlanEditor({
               sku_qty_per_option: it.sku_qty_per_option,
               unit_sale_price: it.unit_sale_price,
               source_config_id: null,
-              consumer_price: e?.consumer_price ?? null,
-              regular_price: e?.regular_price ?? null,
+              consumer_price: e?.consumer_price ?? it.consumer_price ?? null,
+              regular_price: e?.regular_price ?? it.regular_price ?? null,
               cost: e?.cost ?? it.cost ?? null,
             };
           })

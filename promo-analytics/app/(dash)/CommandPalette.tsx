@@ -14,7 +14,7 @@ const PAGES = [
   { label: "캠페인 추천", href: "/prescribe" },
   { label: "플랜 보드", href: "/plans" },
   { label: "히스토리 비교/분석", href: "/library" },
-  { label: "데이터 업로드", href: "/upload" },
+  { label: "데이터 관리", href: "/upload" },
   { label: "설정", href: "/settings" },
 ];
 

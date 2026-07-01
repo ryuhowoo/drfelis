@@ -38,15 +38,16 @@ export type ExportMeta = {
   channel?: string | null; // 판매 채널
 };
 
+// 금액 컬럼은 '세트(옵션) 기준 합계' — 세트당수량을 이미 곱한 값. 가져오기(plan-import)와 통일.
 const PLAN_HEADER = [
   "옵션명",
   "메인",
   "예상세트수",
   "SKU",
   "세트당수량",
-  "단가",
-  "원가",
-  "소비자가",
+  "판매가(세트)",
+  "원가(세트)",
+  "소비자가(세트)",
   "옵션단가",
   "할인율(%)",
   "예상매출",
@@ -65,15 +66,16 @@ export function buildPlanWorkbook(
   for (const o of options) {
     const disc = o.discount_rate_consumer != null ? +(o.discount_rate_consumer * 100).toFixed(1) : "";
     o.items.forEach((it, i) => {
+      const q = it.sku_qty || 0;
       rows.push([
         i === 0 ? o.label : "",
         i === 0 ? (o.is_main ? "Y" : "") : "",
         i === 0 ? o.expected_option_qty : "",
         it.base_name,
         it.sku_qty,
-        it.unit_price,
-        it.cost ?? "",
-        it.consumer_price ?? "",
+        Math.round(it.unit_price * q), // 판매가(세트)
+        it.cost != null ? Math.round(it.cost * q) : "", // 원가(세트)
+        it.consumer_price != null ? Math.round(it.consumer_price * q) : "", // 소비자가(세트)
         i === 0 ? Math.round(o.net_price) : "",
         i === 0 ? disc : "",
         i === 0 ? Math.round(o.expected_revenue) : "",
