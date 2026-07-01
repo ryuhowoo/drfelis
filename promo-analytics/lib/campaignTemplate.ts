@@ -55,16 +55,24 @@ function numOrNull(v: unknown): number | null {
 }
 function ymd(v: unknown): string | null {
   if (v == null || v === "") return null;
+  const p = (n: number) => String(n).padStart(2, "0");
+  // 엑셀 날짜 시리얼(숫자) — 타임존과 무관하게 순수 산술로 달력 날짜 복원.
+  // (cellDates 로 만든 Date 는 KST 등에서 미세 드리프트로 하루 앞당겨지는 문제가 있어 시리얼을 우선 사용)
+  if (typeof v === "number" && Number.isFinite(v)) {
+    const d = XLSX.SSF.parse_date_code(v);
+    if (d && d.y) return `${d.y}-${p(d.m)}-${p(d.d)}`;
+  }
   if (v instanceof Date) {
-    const p = (n: number) => String(n).padStart(2, "0");
-    return `${v.getFullYear()}-${p(v.getMonth() + 1)}-${p(v.getDate())}`;
+    // cellDates 결과가 Date 로 온 경우: 12시간 보정 후 UTC 기준으로 달력 날짜를 읽어
+    // 타임존 오프셋·시리얼 드리프트에 의한 하루 밀림을 방지.
+    const adj = new Date(v.getTime() + 12 * 60 * 60 * 1000);
+    return `${adj.getUTCFullYear()}-${p(adj.getUTCMonth() + 1)}-${p(adj.getUTCDate())}`;
   }
   const s = String(v).replace(/\s+/g, "");
   const m = s.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
   const d = new Date(String(v).trim());
   if (isNaN(d.getTime())) return null;
-  const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
@@ -72,10 +80,11 @@ function ymd(v: unknown): string | null {
 function readBook(buf: ArrayBuffer): XLSX.WorkBook {
   const bytes = new Uint8Array(buf);
   const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b;
-  if (isZip) return XLSX.read(buf, { cellDates: true });
+  // cellDates:false → 날짜 셀을 엑셀 시리얼(숫자) 그대로 받아 ymd()에서 타임존 무관하게 변환.
+  if (isZip) return XLSX.read(buf, { cellDates: false });
   let text = new TextDecoder("utf-8").decode(bytes);
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
-  return XLSX.read(text, { type: "string", cellDates: true });
+  return XLSX.read(text, { type: "string", cellDates: false });
 }
 
 /** '캠페인' 시트 → 폼 자동 채움값. 시트가 없으면 첫 시트의 헤더+1행을 시도. */

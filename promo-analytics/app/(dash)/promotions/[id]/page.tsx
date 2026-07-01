@@ -109,14 +109,30 @@ export default async function PromotionDetail({
   const achSummary = bundle?.rollup?.pva_summary ?? null;
   const achRows = bundle?.rollup?.pva_rows ?? [];
   const achOptions = bundle?.rollup?.pva_options ?? [];
-  // N13 P2: 옵션 단위 실측 공헌 분해 (마이그레이션 미적용 시 함수 부재 → 조용히 빈 배열)
-  const { data: contribData } = await supabase.rpc("sale_option_contribution", { p_id: id });
-  const optionContribs = (contribData as OptionContribRow[] | null) ?? [];
-  // Feature C: 세그먼트 요약 (선택 탭에서만 조회 — 마이그레이션 미적용 시 함수 부재 → null)
-  const segSummary =
+  // 보조 조회를 한 번에 병렬로 — 서로 독립이므로 순차 왕복 대신 Promise.all 로 지연을 줄인다.
+  // 무거운 뷰 전용 RPC(옵션 공헌 분해·세그먼트 요약)는 해당 탭일 때만 호출해 탭 전환을 가볍게 한다.
+  //  · sale_option_contribution: 'SKU·옵션' 탭에서만 사용 → skus 뷰에서만 호출
+  //  · promotion_segment_summary: '세그먼트' 탭에서만 사용 → segment 뷰에서만 호출
+  const [contribRes, segRes, exRes, perfRes] = await Promise.all([
+    view === "skus"
+      ? supabase.rpc("sale_option_contribution", { p_id: id })
+      : Promise.resolve({ data: null }),
     view === "segment"
-      ? (((await supabase.rpc("promotion_segment_summary", { p_id: id })).data) as SegmentSummary | null)
-      : null;
+      ? supabase.rpc("promotion_segment_summary", { p_id: id })
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("promotion_excluded_skus")
+      .select("product_id, products(base_name)")
+      .eq("promotion_id", id),
+    supabase
+      .from("promotions")
+      .select("perf_uploaded_at, perf_source_file")
+      .eq("id", id)
+      .maybeSingle<{ perf_uploaded_at: string | null; perf_source_file: string | null }>(),
+  ]);
+  const optionContribs = (contribRes.data as OptionContribRow[] | null) ?? [];
+  const segSummary = (segRes.data as SegmentSummary | null) ?? null;
+  const perfMeta = perfRes.data;
   const optionInfos = [
     ...new Set(
       (bundle?.option_infos ?? []).map((s) => s.trim()).filter((s) => s.length > 0),
@@ -125,12 +141,8 @@ export default async function PromotionDetail({
   const diagnosticRows = bundle?.rollup?.diagnostic ?? [];
   const skuMappings = bundle?.mappings ?? [];
   // 품절(미판매) 제외 목록 — 플랜·성과·미매칭에서 빠진 SKU (복원용으로 표시)
-  const { data: exData } = await supabase
-    .from("promotion_excluded_skus")
-    .select("product_id, products(base_name)")
-    .eq("promotion_id", id);
   const excludedSkus = (
-    (exData ?? []) as {
+    (exRes.data ?? []) as {
       product_id: string;
       products: { base_name: string } | { base_name: string }[] | null;
     }[]
@@ -138,13 +150,6 @@ export default async function PromotionDetail({
     const pr = Array.isArray(r.products) ? r.products[0] : r.products;
     return { product_id: r.product_id, base_name: pr?.base_name ?? r.product_id };
   });
-
-  // 성과 업로드 메타(파일명·시각) — 0070 미적용 시 컬럼 부재 → null
-  const { data: perfMeta } = await supabase
-    .from("promotions")
-    .select("perf_uploaded_at, perf_source_file")
-    .eq("id", id)
-    .maybeSingle<{ perf_uploaded_at: string | null; perf_source_file: string | null }>();
 
   // 목적별 핵심 지표 (S5.4)
   const ewData = bundle?.weights ?? [];
