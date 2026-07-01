@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { downloadPlanXlsx, downloadPerformanceXlsx } from "@/lib/exportXlsx";
 
-// ⑤ 캠페인 플랜 가이드 (리스트 전용)
-//  - 플랜은 '새 캠페인 만들기'에서 엑셀로 올리고, 성과는 '캠페인 상세'에서 올립니다.
-//  - 여기서는 플랜이 있는 캠페인을 '캠페인명'으로 나열하고, 성과 데이터 업로드 유무만 체크합니다.
+// 캠페인 데이터 (리스트 전용)
+//  - 플랜이 있는 캠페인을 캠페인명으로 나열하고, 성과 데이터 업로드 유무를 표시.
+//  - 행을 클릭하면 해당 캠페인으로 이동하고, 플랜/성과 데이터를 엑셀로 내려받을 수 있다.
 type Row = {
   promotion_id: string;
   name: string;
@@ -15,7 +16,10 @@ type Row = {
 };
 
 export default function PlanGuideList() {
+  const router = useRouter();
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -69,21 +73,34 @@ export default function PlanGuideList() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     const h = () => load();
     window.addEventListener("upload-done", h);
     return () => window.removeEventListener("upload-done", h);
   }, [load]);
 
+  async function dl(kind: "plan" | "perf", r: Row) {
+    setErr(null);
+    setBusy(`${kind}:${r.promotion_id}`);
+    try {
+      if (kind === "plan") await downloadPlanXlsx(r.promotion_id, r.name);
+      else await downloadPerformanceXlsx(r.promotion_id, r.name);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-medium">⑤ 캠페인 플랜 가이드</h2>
+          <h2 className="font-medium">캠페인 데이터</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            플랜은 <Link href="/campaigns/new" className="text-brand-600 underline">새 캠페인 만들기</Link>에서
-            엑셀 양식으로 올리고, 성과는 <b>캠페인 상세</b>에서 올립니다. 아래는 플랜이 있는
-            캠페인과 <b>성과 데이터 업로드 유무</b>입니다.
+            플랜이 있는 캠페인과 <b>성과 데이터 업로드 유무</b>입니다. 행을 클릭하면 해당 캠페인으로
+            이동하고, 오른쪽 버튼으로 플랜·성과 데이터를 엑셀로 내려받을 수 있어요.
           </p>
         </div>
         <button
@@ -94,6 +111,8 @@ export default function PlanGuideList() {
         </button>
       </div>
 
+      {err && <p className="mt-3 text-xs text-rose-600">{err}</p>}
+
       {rows == null ? (
         <p className="mt-4 text-sm text-neutral-400">불러오는 중…</p>
       ) : rows.length === 0 ? (
@@ -102,23 +121,23 @@ export default function PlanGuideList() {
         </p>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full min-w-[520px] text-left text-sm">
             <thead className="text-xs text-neutral-400">
               <tr>
                 <th className="py-1.5 pr-3">캠페인명</th>
                 <th className="py-1.5 pr-3">플랜 상태</th>
                 <th className="py-1.5 pr-3">성과 데이터</th>
-                <th className="py-1.5"></th>
+                <th className="py-1.5 text-right">엑셀 다운로드</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.promotion_id} className="border-t border-neutral-100">
-                  <td className="py-2 pr-3 font-medium text-neutral-800">
-                    <Link href={`/promotions/${r.promotion_id}`} className="hover:text-brand-600">
-                      {r.name}
-                    </Link>
-                  </td>
+                <tr
+                  key={r.promotion_id}
+                  onClick={() => router.push(`/promotions/${r.promotion_id}`)}
+                  className="cursor-pointer border-t border-neutral-100 hover:bg-neutral-50"
+                >
+                  <td className="py-2 pr-3 font-medium text-neutral-800">{r.name}</td>
                   <td className="py-2 pr-3">
                     {r.status === "confirmed" ? (
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
@@ -137,13 +156,28 @@ export default function PlanGuideList() {
                       <span className="text-neutral-400">✗ 없음</span>
                     )}
                   </td>
-                  <td className="py-2 text-right">
-                    <Link
-                      href={`/promotions/${r.promotion_id}`}
-                      className="text-xs text-brand-600 hover:underline"
+                  <td className="py-2 text-right whitespace-nowrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dl("plan", r);
+                      }}
+                      disabled={busy != null}
+                      className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
                     >
-                      성과 올리기 →
-                    </Link>
+                      {busy === `plan:${r.promotion_id}` ? "…" : "플랜"}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dl("perf", r);
+                      }}
+                      disabled={busy != null || !r.has_perf}
+                      title={r.has_perf ? undefined : "성과 데이터가 없습니다"}
+                      className="ml-1.5 rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50 disabled:opacity-40"
+                    >
+                      {busy === `perf:${r.promotion_id}` ? "…" : "성과"}
+                    </button>
                   </td>
                 </tr>
               ))}

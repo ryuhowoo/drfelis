@@ -54,7 +54,13 @@ export default async function ProductsPage() {
       free_shipping: c.free_shipping,
     });
   }
-  const mult = rc ? 1 - (Number(rc.fee_rate) + Number(rc.ad_rate) + Number(rc.logistics_rate) + Number(rc.reward_rate)) : 0.715;
+  const rates = {
+    fee_rate: rc ? Number(rc.fee_rate) : 0.045,
+    ad_rate: rc ? Number(rc.ad_rate) : 0.1,
+    logistics_rate: rc ? Number(rc.logistics_rate) : 0.12,
+    reward_rate: rc ? Number(rc.reward_rate) : 0.02,
+  };
+  const mult = 1 - (rates.fee_rate + rates.ad_rate + rates.logistics_rate + rates.reward_rate);
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
@@ -70,6 +76,7 @@ export default async function ProductsPage() {
         channels={channels}
         configsByProduct={configsByProduct}
         mult={mult}
+        rates={rates}
       />
     </div>
   );

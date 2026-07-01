@@ -50,6 +50,13 @@ const KIND_TONE: Record<ProductKind, string> = {
 type KindFilter = "전체" | "판매" | "구성품" | "기타";
 const UNSET = "(미지정)";
 
+export type Rates = {
+  fee_rate: number;
+  ad_rate: number;
+  logistics_rate: number;
+  reward_rate: number;
+};
+
 export default function ProductsTable({
   initialRows,
   categories,
@@ -57,6 +64,7 @@ export default function ProductsTable({
   channels,
   configsByProduct,
   mult,
+  rates,
 }: {
   initialRows: ProductRow[];
   categories: string[];
@@ -64,11 +72,13 @@ export default function ProductsTable({
   channels: string[];
   configsByProduct: Record<string, ConfigLite[]>;
   mult: number;
+  rates: Rates;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ProductRow[]>(initialRows);
   const [cats, setCats] = useState<string[]>(categories);
-  const [view, setView] = useState<"edit" | "matrix">("edit");
+  // 진입 시 '가격 가이드'(매트릭스)를 먼저 보여준다.
+  const [view, setView] = useState<"edit" | "matrix">("matrix");
   // 카탈로그(가격표 SKU)만 보기 — 기본 ON. 끄면 전체 상품(구성품·비B2C·과거 SKU 포함) 표시.
   const [catalogOnly, setCatalogOnly] = useState(true);
   const [channelF, setChannelF] = useState<string>("B2C");
@@ -245,16 +255,16 @@ export default function ProductsTable({
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
           <button
-            onClick={() => setView("edit")}
-            className={`rounded-lg px-3 py-1.5 font-medium ${view === "edit" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
-          >
-            편집표
-          </button>
-          <button
             onClick={() => setView("matrix")}
             className={`rounded-lg px-3 py-1.5 font-medium ${view === "matrix" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
           >
-            가격표(매트릭스)
+            가격 가이드
+          </button>
+          <button
+            onClick={() => setView("edit")}
+            className={`rounded-lg px-3 py-1.5 font-medium ${view === "edit" ? "bg-brand-500 text-white" : "text-ink-3 hover:bg-soft"}`}
+          >
+            상품 전체
           </button>
         </div>
         <div className="inline-flex rounded-xl border border-line p-0.5 text-sm">
@@ -295,7 +305,7 @@ export default function ProductsTable({
           <PriceMatrix
             rows={channelRows}
             configsByProduct={configs}
-            mult={mult}
+            rates={rates}
             onOpen={setConfigFor}
             onPatchBase={(id, field, val) => patch(id, field, val)}
             onSaveConfig={saveConfig}
