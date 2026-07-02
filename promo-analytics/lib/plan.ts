@@ -74,6 +74,12 @@ export type Coupon = {
   max_discount_amount: number; // 정률 캡 (0=무제한)
   flat_amount: number; // 정액 할인 (원)
   label?: string;
+  // 중복(스택) 규칙 — group(유형)이 같은 쿠폰끼리는 기본 '중복 불가'(가장 큰 할인 1개만),
+  // stack_same=true 면 같은 group 도 모두 중복 적용(금액대별 발행 케이스). group 이 비면 독립(항상 중첩).
+  group?: string;
+  stack_same?: boolean;
+  // 자사 부담율 (0~1, 기본 1=전액 자사 부담). 매출은 전체 할인 반영, 공헌이익만 자사 부담분으로 계산.
+  burden_rate?: number;
 };
 
 /** 사은품 1건 — 동봉 발송. 차감액 = 원가(VAT+) × 수량 (물류비·광고비·수수료 미반영). */
@@ -99,19 +105,72 @@ export function couponAmount(setPrice: number, running: number, c: Coupon): numb
   return Math.round(Math.max(0, Math.min(d, running)));
 }
 
-/** 쿠폰들을 순차 중첩 적용 — 정률은 직전까지 차감된 running price 기준. 쿠폰별 할인액 배열도 반환. */
+/** 쿠폰 1건이 gross set_price 단독 적용 시 할인액 (동일유형 '가장 큰 할인' 선택 기준). */
+function standaloneDiscount(setPrice: number, c: Coupon): number {
+  return couponAmount(setPrice, setPrice, c);
+}
+
+/** 중복(스택) 규칙 적용 후 실제 반영할 쿠폰만 표시하는 boolean 배열.
+   · group 이 비면 독립 → 항상 적용
+   · 같은 group 이 여럿이고 모두 stack_same → 모두 적용
+   · 그 외 같은 group → 조건 충족 중 '가장 큰 할인' 1개만(동점=먼저 입력한 것) */
+export function selectSurvivors(setPrice: number, coupons: Coupon[]): boolean[] {
+  const survive = new Array<boolean>(coupons.length).fill(false);
+  const groups = new Map<string, number[]>();
+  coupons.forEach((c, i) => {
+    const g = (c.group ?? "").trim();
+    if (!g) {
+      survive[i] = true; // 독립 쿠폰(유형 미지정)은 항상 중첩
+      return;
+    }
+    (groups.get(g) ?? groups.set(g, []).get(g)!).push(i);
+  });
+  for (const idxs of groups.values()) {
+    if (idxs.length === 1) {
+      survive[idxs[0]] = true;
+      continue;
+    }
+    if (idxs.every((i) => coupons[i].stack_same)) {
+      idxs.forEach((i) => (survive[i] = true));
+      continue;
+    }
+    // 동일유형 중복 불가 → 가장 큰 할인 1개만
+    let best = -1;
+    let bestAmt = 0;
+    for (const i of idxs) {
+      const amt = standaloneDiscount(setPrice, coupons[i]);
+      if (amt > bestAmt) {
+        bestAmt = amt;
+        best = i;
+      }
+    }
+    if (best >= 0) survive[best] = true;
+  }
+  return survive;
+}
+
+/** 쿠폰들을 중복 규칙 적용 후 순차 중첩 — 정률은 직전까지 차감된 running price 기준.
+   per: 쿠폰별 할인액(적용 안 됨=0), ourTotal: 자사 부담율 가중 할인액 합(공헌이익용). */
 export function stackedCoupons(
   setPrice: number,
   coupons: Coupon[],
-): { total: number; per: number[] } {
+): { total: number; per: number[]; ourTotal: number } {
+  const survive = selectSurvivors(setPrice, coupons);
   let running = setPrice;
+  let ourTotal = 0;
   const per: number[] = [];
-  for (const c of coupons) {
+  coupons.forEach((c, i) => {
+    if (!survive[i]) {
+      per.push(0);
+      return;
+    }
     const d = couponAmount(setPrice, running, c);
     per.push(d);
     running -= d;
-  }
-  return { total: setPrice - running, per };
+    const burden = c.burden_rate == null ? 1 : Math.max(0, Math.min(1, c.burden_rate));
+    ourTotal += d * burden;
+  });
+  return { total: setPrice - running, per, ourTotal };
 }
 
 /** 사은품 총 차감액 = Σ(원가 × 수량) — 공헌이익에서 일괄 차감(플랜 단위). */
@@ -124,7 +183,8 @@ export type OptionTotals = {
   set_price: number; // Σ(sku_qty × unit_sale_price) — 쿠폰 전 세트 단가
   coupon_discount: number; // 이 옵션에 적용된 쿠폰 할인액 합계 (없으면 0)
   coupon_amounts: number[]; // 쿠폰별 할인액 (입력 순서, 적용 안 됨=0) — '쿠폰1/2' 배지용
-  net_price: number; // set_price − coupon_discount — 쿠폰 적용 후 실혜택가
+  net_price: number; // set_price − coupon_discount — 쿠폰 적용 후 실혜택가(고객 결제가)
+  our_net_price: number; // set_price − 자사부담 할인액 — 공헌이익 계산용(부담율 반영)
   consumer_total: number; // Σ(consumer_price × sku_qty)
   regular_total: number; // Σ(regular_price × sku_qty)
   cost_total: number; // Σ(cost × sku_qty)
@@ -170,13 +230,15 @@ export function computeOptionTotals(
           },
         ]
       : [];
-  const { total: coupon_discount, per: coupon_amounts } = stackedCoupons(set_price, coupons);
-  const net_price = set_price - coupon_discount;
+  const { total: coupon_discount, per: coupon_amounts, ourTotal } = stackedCoupons(set_price, coupons);
+  const net_price = set_price - coupon_discount; // 고객 결제가(전체 할인 반영)
+  const our_net_price = set_price - ourTotal; // 공헌이익 기준가(자사 부담분만 차감)
   return {
     set_price,
     coupon_discount,
     coupon_amounts,
     net_price,
+    our_net_price,
     consumer_total,
     regular_total,
     cost_total,
@@ -184,9 +246,11 @@ export function computeOptionTotals(
     discount_rate_regular: regular_total > 0 ? 1 - set_price / regular_total : null,
     discount_rate_consumer_net:
       consumer_total > 0 ? 1 - net_price / consumer_total : null,
+    // 매출은 고객 결제가 기준(성과 결제금액과 비교 가능)
     expected_revenue: net_price * expQty,
-    // 물류비 12%는 mult에 일괄 반영 — 무료배송 여부와 무관하게 고정
-    expected_contribution: (net_price * mult - cost_total) * expQty,
+    // 공헌이익은 자사 부담분만 반영 — 채널(네이버 등) 부담 쿠폰은 공헌이익에서 덜 깎인다.
+    // 물류비 12%는 mult에 일괄 반영 — 무료배송 여부와 무관하게 고정.
+    expected_contribution: (our_net_price * mult - cost_total) * expQty,
     free_shipping: net_price >= FREE_SHIP_THRESHOLD,
   };
 }
