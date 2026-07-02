@@ -103,6 +103,9 @@ type CouponEntry = {
   max: number; // 정률 캡 (원, 0=무제한)
   flat: number; // 정액 할인 (원)
   label: string;
+  group: string; // 유형(중복 규칙 그룹). 비면 독립(항상 중첩)
+  stackSame: boolean; // 동일유형 중복 허용(금액대별 발행 케이스)
+  burdenPct: number; // 자사 부담율 % (기본 100 = 전액 자사 부담)
 };
 type FreebieEntry = {
   id: string;
@@ -147,6 +150,10 @@ function initialExtras(plan: {
             max: Number((e as CouponEntry).max) || 0,
             flat: Number((e as CouponEntry).flat) || 0,
             label: (e as CouponEntry).label ?? "",
+            group: (e as CouponEntry).group ?? "",
+            stackSame: !!(e as CouponEntry).stackSame,
+            burdenPct:
+              (e as CouponEntry).burdenPct == null ? 100 : Number((e as CouponEntry).burdenPct),
           };
         return null;
       })
@@ -164,6 +171,9 @@ function initialExtras(plan: {
         max: Number(plan?.coupon_max) || 0,
         flat: 0,
         label: "",
+        group: "",
+        stackSame: false,
+        burdenPct: 100,
       },
     ];
   }
@@ -178,6 +188,9 @@ function entryToCoupon(e: CouponEntry): Coupon {
     max_discount_amount: e.max,
     flat_amount: e.flat,
     label: e.label,
+    group: e.group,
+    stack_same: e.stackSame,
+    burden_rate: (e.burdenPct == null ? 100 : e.burdenPct) / 100,
   };
 }
 
@@ -390,7 +403,7 @@ export default function PlanEditor({
     setDirty(true);
     setExtras((prev) => [
       ...prev,
-      { id: uid(), type: "coupon", kind: "rate", min: 50000, ratePct: 5, max: 0, flat: 0, label: "" },
+      { id: uid(), type: "coupon", kind: "rate", min: 50000, ratePct: 5, max: 0, flat: 0, label: "", group: "", stackSame: false, burdenPct: 100 },
     ]);
   };
   const addFreebieEntry = () => {
@@ -558,7 +571,7 @@ export default function PlanEditor({
       extras: extras.map((e) =>
         isFreebie(e)
           ? { type: "freebie", product_id: e.product_id, base_name: e.base_name, qty: e.qty, cost: e.cost }
-          : { type: "coupon", kind: e.kind, min: e.min, ratePct: e.ratePct, max: e.max, flat: e.flat, label: e.label },
+          : { type: "coupon", kind: e.kind, min: e.min, ratePct: e.ratePct, max: e.max, flat: e.flat, label: e.label, group: e.group, stackSame: e.stackSame, burdenPct: e.burdenPct },
       ),
       options: options.map((o, i) => ({
         option_label: o.option_label,
@@ -873,6 +886,11 @@ export default function PlanEditor({
             )}
           </ul>
         )}
+        <datalist id="coupon-groups">
+          {[...new Set(extras.filter(isCoupon).map((e) => e.group).filter(Boolean))].map((g) => (
+            <option key={g} value={g} />
+          ))}
+        </datalist>
 
         {!confirmed && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -1539,6 +1557,50 @@ function CouponRow({
           </label>
         )}
       </div>
+
+      {/* 중복(스택) 규칙 + 자사 부담율 */}
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <label className="block">
+          <span className={labelCls}>유형(중복 그룹)</span>
+          <input
+            type="text"
+            list="coupon-groups"
+            disabled={readOnly}
+            value={entry.group}
+            onChange={(e) => onPatch({ group: e.target.value })}
+            placeholder="예: 기본할인 / 카톡 / 네이버"
+            className={fieldCls}
+          />
+        </label>
+        <label className="block">
+          <span className={labelCls}>자사 부담율 (%)</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            inputMode="numeric"
+            disabled={readOnly}
+            value={entry.burdenPct}
+            onChange={(e) => onPatch({ burdenPct: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+            placeholder="100"
+            className={`${fieldCls} text-right`}
+          />
+        </label>
+        <label className="flex items-end gap-1.5 pb-1.5 text-xs text-ink-3">
+          <input
+            type="checkbox"
+            disabled={readOnly || !entry.group.trim()}
+            checked={entry.stackSame}
+            onChange={(e) => onPatch({ stackSame: e.target.checked })}
+          />
+          동일유형 중복 허용
+        </label>
+      </div>
+      <p className="mt-1 text-[11px] text-ink-4">
+        같은 <b>유형</b>끼리는 기본 <b>중복 불가</b>(가장 큰 할인 1개만) · 다른 유형은 중첩. 금액대별로 여러 개 발행돼 모두 적용되면
+        ‘동일유형 중복 허용’을 켜세요. 부담율 100%=우리가 전액, <b>네이버 100% 지원=0%</b>, 5:5 분담=50%.
+        (매출은 전체 할인 반영, <b>공헌이익만</b> 부담율로 보정)
+      </p>
     </li>
   );
 }

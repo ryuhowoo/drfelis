@@ -102,6 +102,62 @@ describe("computeOptionTotals — 다중 쿠폰 배열 + coupon_amounts", () => 
   });
 });
 
+describe("stackedCoupons — 중복(스택) 규칙 (유형/그룹)", () => {
+  const g = (over: Partial<Coupon>): Coupon => ({
+    kind: "rate", min_order_amount: 0, discount_rate: 0.05, max_discount_amount: 0, flat_amount: 0, ...over,
+  });
+  it("동일유형(같은 group) 중복 불가 → 가장 큰 할인 1개만", () => {
+    const c5 = g({ group: "기본", discount_rate: 0.05 });
+    const c10 = g({ group: "기본", discount_rate: 0.1 });
+    const { total, per } = stackedCoupons(80000, [c5, c10]);
+    expect(per).toEqual([0, 8000]); // 5% 탈락, 10%만 적용
+    expect(total).toBe(8000);
+  });
+  it("동일유형 '중복 허용'(stack_same) → 모두 중첩", () => {
+    const c5 = g({ group: "기본", discount_rate: 0.05, stack_same: true });
+    const c10 = g({ group: "기본", discount_rate: 0.1, stack_same: true });
+    const { total, per } = stackedCoupons(80000, [c5, c10]);
+    expect(per).toEqual([4000, 7600]); // 4,000 → running 76,000 → 10% 7,600
+    expect(total).toBe(11600);
+  });
+  it("다른 유형(다른 group)은 항상 중첩", () => {
+    const a = g({ group: "A", discount_rate: 0.05 });
+    const b = g({ group: "B", kind: "flat", flat_amount: 5000 });
+    const { total } = stackedCoupons(80000, [a, b]);
+    expect(total).toBe(9000); // 4,000 + 5,000
+  });
+  it("group 미지정(독립)은 기존처럼 모두 중첩", () => {
+    const a = g({ discount_rate: 0.05 });
+    const b = g({ kind: "flat", flat_amount: 5000 });
+    const { total } = stackedCoupons(80000, [a, b]);
+    expect(total).toBe(9000);
+  });
+});
+
+describe("computeOptionTotals — 자사 부담율 (공헌이익만 보정)", () => {
+  const cp = (burden: number): Coupon[] => [
+    { kind: "rate", min_order_amount: 40000, discount_rate: 0.1, max_discount_amount: 0, flat_amount: 0, burden_rate: burden },
+  ];
+  it("네이버 100% 지원(부담율 0) → 매출은 할인 반영, 공헌이익은 무변", () => {
+    const t = computeOptionTotals(ITEMS, MULT, QTY, cp(0));
+    expect(t.net_price).toBe(45000); // 고객 결제가(전체 할인)
+    expect(t.expected_revenue).toBe(450000);
+    expect(t.our_net_price).toBe(50000); // 자사 부담 0 → 공헌 기준가 무변
+    expect(t.expected_contribution).toBeCloseTo(30000, 4); // 쿠폰 없을 때와 동일
+  });
+  it("5:5 분담(부담율 0.5)", () => {
+    const t = computeOptionTotals(ITEMS, MULT, QTY, cp(0.5));
+    expect(t.expected_revenue).toBe(450000);
+    expect(t.our_net_price).toBe(47500); // 50,000 − 5,000×0.5
+    expect(t.expected_contribution).toBeCloseTo(12500, 4);
+  });
+  it("전액 자사 부담(기본 1) → 기존 계산과 동일", () => {
+    const t = computeOptionTotals(ITEMS, MULT, QTY, cp(1));
+    expect(t.our_net_price).toBe(45000);
+    expect(t.expected_contribution).toBeCloseTo(-5000, 4);
+  });
+});
+
 describe("freebieDeduction — 사은품 차감 (원가×수량)", () => {
   it("원가×수량 합", () => {
     expect(

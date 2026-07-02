@@ -28,7 +28,18 @@ type OptionIn = {
 };
 // 사은품・추가 할인 쿠폰 항목 (PlanEditor extras 직렬화)
 type ExtraIn =
-  | { type: "coupon"; kind: "rate" | "flat"; min: number; ratePct: number; max: number; flat: number; label?: string }
+  | {
+      type: "coupon";
+      kind: "rate" | "flat";
+      min: number;
+      ratePct: number;
+      max: number;
+      flat: number;
+      label?: string;
+      group?: string;
+      stackSame?: boolean;
+      burdenPct?: number;
+    }
   | { type: "freebie"; product_id: string | null; base_name: string; qty: number; cost: number };
 
 // N5: POST(빈 draft 자동 생성)는 제거됐다 — 플랜은 ⑤ 가이드 업로드로만 생성(plan-only).
@@ -60,6 +71,9 @@ export async function PATCH(
         max_discount_amount: Number(e.max) || 0,
         flat_amount: Number(e.flat) || 0,
         label: e.label,
+        group: e.group ?? "",
+        stack_same: !!e.stackSame,
+        burden_rate: (e.burdenPct == null ? 100 : Number(e.burdenPct)) / 100,
       }));
     if (couponList.length === 0 && body.coupon && body.coupon.rate > 0) {
       couponList.push({
