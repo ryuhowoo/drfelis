@@ -23,41 +23,69 @@ export default async function PlanPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: promo } = await supabase
-    .from("promotions")
-    .select("id, name, start_date, end_date, purposes, channel")
-    .eq("id", id)
-    .single();
+  // 1차: 서로 독립인 조회를 한 번에 (캠페인·플랜·레이트카드·확정플랜 목록) — 순차 왕복 제거
+  const [{ data: promo }, { data: plans }, { data: rc }, { data: confPlans }] =
+    await Promise.all([
+      supabase
+        .from("promotions")
+        .select("id, name, start_date, end_date, purposes, channel")
+        .eq("id", id)
+        .single(),
+      supabase
+        .from("campaign_plans")
+        .select("*")
+        .eq("promotion_id", id)
+        .order("version", { ascending: false }),
+      supabase
+        .from("rate_card")
+        .select("*")
+        .eq("is_current", true)
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("campaign_plans")
+        .select("id")
+        .eq("status", "confirmed")
+        .neq("promotion_id", id),
+    ]);
   if (!promo) notFound();
 
-  // 채널 수수료 — 공헌이익 mult에 반영(없으면 레이트카드 fee)
-  let channelFee: number | null = null;
-  if (promo.channel) {
-    const { data: cf } = await supabase
-      .from("channel_fees")
-      .select("fee_rate")
-      .eq("channel", promo.channel as string)
-      .maybeSingle();
-    channelFee = (cf?.fee_rate as number | undefined) ?? null;
-  }
-
   // 편집 대상 = 최신 버전 플랜
-  const { data: plans } = await supabase
-    .from("campaign_plans")
-    .select("*")
-    .eq("promotion_id", id)
-    .order("version", { ascending: false });
   const plan = ((plans as CampaignPlan[]) ?? [])[0] ?? null;
+  const confIds = ((confPlans as { id: string }[]) ?? []).map((p) => p.id);
+
+  // 2차: 1차 결과에 의존하는 조회를 한 번에 (채널 수수료·플랜 옵션·힌트 옵션)
+  const [cfRes, optRes, hintRes] = await Promise.all([
+    promo.channel
+      ? supabase
+          .from("channel_fees")
+          .select("fee_rate")
+          .eq("channel", promo.channel as string)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    plan
+      ? supabase
+          .from("campaign_plan_options")
+          .select("*")
+          .eq("campaign_plan_id", plan.id)
+          .order("sort")
+      : Promise.resolve({ data: null }),
+    confIds.length > 0
+      ? supabase
+          .from("campaign_plan_options")
+          .select("expected_option_qty, is_main")
+          .in("campaign_plan_id", confIds)
+      : Promise.resolve({ data: null }),
+  ]);
+  // 채널 수수료 — 공헌이익 mult에 반영(없으면 레이트카드 fee)
+  const channelFee =
+    ((cfRes.data as { fee_rate: number } | null)?.fee_rate as number | undefined) ?? null;
 
   let options: EditorOption[] = [];
   const econ: ProductEcon = {};
   if (plan) {
-    const { data: optRows } = await supabase
-      .from("campaign_plan_options")
-      .select("*")
-      .eq("campaign_plan_id", plan.id)
-      .order("sort");
-    const opts = (optRows as CampaignPlanOption[]) ?? [];
+    const opts = (optRes.data as CampaignPlanOption[]) ?? [];
     const optIds = opts.map((o) => o.id);
     let items: CampaignPlanOptionItem[] = [];
     if (optIds.length > 0) {
@@ -113,29 +141,11 @@ export default async function PlanPage({
     }));
   }
 
-  const { data: rc } = await supabase
-    .from("rate_card")
-    .select("*")
-    .eq("is_current", true)
-    .order("effective_from", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   // 예상 세트수 힌트 (S6.2): 다른 캠페인 확정 플랜 옵션의 예상 세트수 평균 (비구속)
   let qtyHint: QtyHint = { main: null, sub: null, mainN: 0, subN: 0 };
-  const { data: confPlans } = await supabase
-    .from("campaign_plans")
-    .select("id")
-    .eq("status", "confirmed")
-    .neq("promotion_id", id);
-  const confIds = ((confPlans as { id: string }[]) ?? []).map((p) => p.id);
   if (confIds.length > 0) {
-    const { data: hintOpts } = await supabase
-      .from("campaign_plan_options")
-      .select("expected_option_qty, is_main")
-      .in("campaign_plan_id", confIds);
     const hintRows =
-      (hintOpts as { expected_option_qty: number | null; is_main: boolean }[]) ?? [];
+      (hintRes.data as { expected_option_qty: number | null; is_main: boolean }[] | null) ?? [];
     const avgQty = (pred: (r: (typeof hintRows)[number]) => boolean) => {
       const xs = hintRows
         .filter(pred)
