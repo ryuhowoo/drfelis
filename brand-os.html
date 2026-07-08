@@ -1116,13 +1116,15 @@ input[type="range"]::-webkit-slider-thumb{
 .bos-nav a.active{color:#fff;background:linear-gradient(135deg,var(--accent),#287A63);
   box-shadow:0 6px 14px rgba(47,143,114,.22)}
 
-/* 히어로 — Neo Organic 커버(딥틸 + 유기체 블롭) */
-.bos-hero{position:relative;overflow:hidden;text-align:center;color:#fff;
+/* 히어로 — Neo Organic 커버(딥틸 + 유기체 블롭)
+   #bos section.bos-hero 로 스코핑: 디자인시스템의 section:nth-child(odd){background:transparent}
+   보다 특이도를 높여 딥틸 배경이 확실히 렌더되게 한다(흰 텍스트 가독성 보장). */
+#bos section.bos-hero{position:relative;overflow:hidden;text-align:center;color:#fff;
   padding:120px 22px 96px!important;
   background:
     radial-gradient(circle at 78% 26%,rgba(133,211,179,.26),transparent 30%),
     radial-gradient(circle at 16% 78%,rgba(110,157,180,.16),transparent 26%),
-    linear-gradient(145deg,#153633 0%,#1C4842 56%,#24564D 100%)}
+    linear-gradient(145deg,#153633 0%,#1C4842 56%,#24564D 100%)!important}
 .bos-hero::before{content:"";position:absolute;pointer-events:none;width:420px;height:320px;
   right:-90px;bottom:-120px;border-radius:64% 36% 38% 62%/50% 62% 38% 50%;
   background:rgba(233,247,240,.08);border:1px solid rgba(255,255,255,.08)}
@@ -1134,14 +1136,14 @@ input[type="range"]::-webkit-slider-thumb{
 .bos-hero h1 mark{background:linear-gradient(120deg,rgba(143,215,184,.28),rgba(143,215,184,.28));
   background-repeat:no-repeat;background-position:0 82%;background-size:100% .4em;
   color:#8FD7B8;padding:0 2px}
-.bos-hero .bos-sub{font-size:clamp(14px,2vw,18px);color:rgba(255,255,255,.72);line-height:1.8;
+.bos-hero .bos-sub{font-size:clamp(14px,2vw,18px);color:rgba(255,255,255,.85);line-height:1.8;
   margin-bottom:8px}
-.bos-hero .bos-sub .src{display:block;margin-top:8px;font-size:13px;color:rgba(255,255,255,.45)}
+.bos-hero .bos-sub .src{display:block;margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)}
 .bos-hero .bos-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:26px 0 22px}
 .bos-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
   font-size:12px;font-weight:800;background:rgba(255,255,255,.1);color:#CDEBDD;
   border:1px solid rgba(255,255,255,.14)}
-.bos-hero .bos-foot{font-size:13px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:.2px;
+.bos-hero .bos-foot{font-size:13px;color:rgba(255,255,255,.78);font-weight:700;letter-spacing:.2px;
   margin-top:14px}
 
 /* 리드 문장 */
@@ -1186,6 +1188,12 @@ input[type="range"]::-webkit-slider-thumb{
 .bos-step h4{font-size:16px;color:var(--txt-900);margin-bottom:2px}
 .bos-step .bos-who{font-size:12.5px;color:var(--accent);font-weight:800;margin-bottom:8px}
 .bos-step .bos-cond{font-size:13px;color:var(--txt-600);line-height:1.7}
+
+/* 브랜드팀 예시 그리드 */
+.bos-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.bos-team-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.bos-team-head h4{font-size:15px;color:var(--txt-900);margin:0}
+.bos-team .bos-note{margin-top:0}
 
 /* 로드맵 가로 타임라인 */
 .bos-road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
@@ -1331,21 +1339,28 @@ input[type="range"]::-webkit-slider-thumb{
     <h2 class="section-heading">이 제안은 <em>두 축</em>으로 이뤄집니다</h2>
     <div class="card" style="padding:30px 26px">
       <div class="bos-cross">
-        <svg viewBox="0 0 600 400" role="img" aria-label="세로축 사람의 성장, 가로축 일의 흐름, 교차점 본부 운영체제">
+        <svg viewBox="0 0 600 420" role="img" aria-label="세로축 사람의 성장, 가로축 일의 흐름, 교차점 본부 운영체제">
           <defs>
-            <marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
-              <path d="M0 0l7 5-7 5" fill="none" stroke="#2F8F72" stroke-width="1.6"/>
+            <marker id="ah-v" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#2F8F72" stroke-width="1.8"/>
+            </marker>
+            <marker id="ah-h" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#507A91" stroke-width="1.8"/>
             </marker>
           </defs>
-          <line x1="300" y1="366" x2="300" y2="46" stroke="#2F8F72" stroke-width="2" marker-end="url(#ah)"/>
-          <line x1="70" y1="206" x2="530" y2="206" stroke="#507A91" stroke-width="2" marker-end="url(#ah)"/>
-          <text x="300" y="30" text-anchor="middle" fill="#247F63" font-size="15" font-weight="800">사람의 성장</text>
-          <text x="300" y="392" text-anchor="middle" fill="#8B9996" font-size="12">각자 자기 영역의 주인이 되어 전문가로 성장</text>
-          <text x="548" y="200" text-anchor="end" fill="#507A91" font-size="15" font-weight="800">일의 흐름 ▶</text>
-          <text x="548" y="222" text-anchor="end" fill="#8B9996" font-size="12">결정하는 사람이 책임진다</text>
-          <rect x="222" y="176" width="156" height="60" rx="16" fill="#183B38"/>
-          <text x="300" y="205" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">본부 운영체제</text>
-          <text x="300" y="224" text-anchor="middle" fill="#8FD7B8" font-size="11">가로축 × 세로축</text>
+          <!-- 축 -->
+          <line x1="300" y1="380" x2="300" y2="66" stroke="#2F8F72" stroke-width="2.5" marker-end="url(#ah-v)"/>
+          <line x1="92" y1="214" x2="470" y2="214" stroke="#507A91" stroke-width="2.5" marker-end="url(#ah-h)"/>
+          <!-- 세로축 라벨 -->
+          <text x="300" y="46" text-anchor="middle" fill="#247F63" font-size="16" font-weight="800">사람의 성장</text>
+          <text x="300" y="406" text-anchor="middle" fill="#5C6E6C" font-size="12.5">각자 자기 영역의 주인으로 성장</text>
+          <!-- 가로축 라벨 (화살촉 위/아래로 분리해 겹침 방지) -->
+          <text x="466" y="194" text-anchor="end" fill="#3C6076" font-size="16" font-weight="800">일의 흐름</text>
+          <text x="466" y="250" text-anchor="end" fill="#5C6E6C" font-size="12.5">결정하는 사람이 책임진다</text>
+          <!-- 교차점 뱃지 (선 위에 덮어 그림) -->
+          <rect x="224" y="180" width="152" height="58" rx="16" fill="#183B38"/>
+          <text x="300" y="206" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">본부 운영체제</text>
+          <text x="300" y="225" text-anchor="middle" fill="#8FD7B8" font-size="11">가로축 × 세로축</text>
         </svg>
       </div>
     </div>
@@ -1577,6 +1592,28 @@ input[type="range"]::-webkit-slider-thumb{
         <div><h4>영역 총괄</h4><div class="bos-who">영역이 팀이 된다</div>
           <div class="bos-cond">통과 조건 — 영역이 팀 규모로 성장, 관리자 또는 전문가로 선택</div></div>
       </div>
+    </div>
+
+    <!-- 브랜드팀 적용 예시 -->
+    <div style="margin-top:34px">
+      <p class="bos-eye" style="margin-bottom:6px">브랜드팀 예시</p>
+      <h3 style="font-size:clamp(19px,2.4vw,26px);font-weight:850;letter-spacing:-.025em;color:var(--txt-900);margin:0 0 8px">각 담당자가 자기 <span style="color:var(--accent)">영역의 주인</span>으로 성장한다</h3>
+      <p class="bos-lead" style="margin-bottom:18px">위 4단계는 직무명이 아니라 <strong>영역</strong> 위에서 오른다. 브랜드팀을 예로 들면, 브랜드가 고객에게 닿는 결과를 기준으로 영역을 나누고 각 담당자가 그 영역의 오너로 궤도를 밟는다.</p>
+      <div class="bos-team">
+        <div class="card"><div class="bos-team-head"><h4>그로스 전략</h4><span class="chip chip-o">브라운</span></div><p class="bos-note">성장 구조·광고·채널 전략·수익성 실험을 연결해 "어떻게 더 크게 팔릴지"를 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>제품 전략</h4><span class="chip chip-o">마틸다</span></div><p class="bos-note">제품 정보를 고객이 이해하고 구매할 수 있는 언어와 구조로 번역한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 디자인</h4><span class="chip chip-o">니나</span></div><p class="bos-note">패키지·상세·굿즈·캠페인의 시각 자산과 닥터펠리스다운 감도를 책임진다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>고객 관계 설계</h4><span class="chip chip-o">유니</span></div><p class="bos-note">첫구매·재구매·구독·이탈 흐름을 하나의 고객 관계(CRM)로 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>CX·신뢰 설계</h4><span class="chip chip-o">로지</span></div><p class="bos-note">VOC·CX를 사후 처리에 두지 않고 신뢰 회복과 제품 개선으로 연결한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 내러티브</h4><span class="chip chip-o">노바</span></div><p class="bos-note">브랜드 언어·세계관·캠페인 메시지를 축적 가능한 자산으로 만든다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 운영 설계</h4><span class="chip chip-o">몰갱</span></div><p class="bos-note">데이터·자동화·체크리스트·R&amp;R 기준으로 운영의 반복 가능성을 확보한다.</p></div>
+      </div>
+    </div>
+
+    <!-- 조직명은 잠정 · 구조만 고정 -->
+    <div class="warn-box" style="margin-top:22px">
+      <span class="tag">이름은 잠정 · 구조만 고정</span>
+      <p>위의 <strong>영역 이름</strong>(그로스·제품·디자인·고객 관계·CX·내러티브·운영), <strong>단계 이름</strong>(실행자·영역 오너·리드·총괄), <strong>담당자 배치</strong>는 확정이 아니라 잠정 예시다. 조직이 100억에서 300억으로 커지는 동안 이름과 경계는 얼마든지 바뀔 수 있다 — 운영 방식을 먼저 검증하고, 실제로 나아진 것이 확인된 뒤에 조직명·역할명을 공식화한다. 고정하는 건 이름이 아니라 <strong>"통제하는 만큼 책임지고, 그만큼 성장·보상한다"</strong>는 구조 하나뿐이다.</p>
     </div>
   </div>
 </section>
