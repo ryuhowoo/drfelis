@@ -15,6 +15,11 @@ import { wonShort } from "@/lib/format";
 
 const BRAND = "#2f8f72"; // Dr.Felis mint-green (brand-500)
 
+// 카테고리형(서로 다른 항목) 차트용 팔레트 — Neo Organic 액센트 색상들.
+// 같은 초록 명암이 아니라 '서로 구분되는 hue'라야 항목이 읽힌다.
+// accent green · navy · gold · burgundy · clay · teal
+const CAT = ["#2f8f72", "#507a91", "#b8893f", "#c86652", "#6f8f87", "#247f63"];
+
 // 목적별 비중 바 (가중 기여매출/공헌) — value 점유율
 export function PurposeShareBars({
   data,
@@ -131,7 +136,7 @@ export function AchievementTrend({
           contentStyle={{ borderRadius: 14, border: "none", boxShadow: "0 8px 24px -8px rgba(0,0,0,.2)", fontSize: 12 }}
         />
         <Line type="monotone" dataKey="revenue" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
-        <Line type="monotone" dataKey="contribution" stroke="#34504d" strokeWidth={2} dot={{ r: 2 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
+        <Line type="monotone" dataKey="contribution" stroke="#507a91" strokeWidth={2} dot={{ r: 2 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -198,30 +203,32 @@ export function Concentric({
   if (items.length === 0)
     return <div className="text-sm text-ink-4">데이터가 없습니다.</div>;
   const max = items[0].value;
-  const shades = ["#cfeadf", "#a6d7c2", "#58ac8e", BRAND];
-  const baseShade = (i: number) => shades[Math.min(i, shades.length - 1)];
+  // 항목별로 '서로 다른 색상'을 부여 — 명암이 아니라 hue로 구분(카테고리형).
+  // 약간의 투명도로 겹치는 원이 아래 항목까지 비쳐 크기(증분)도 함께 읽히게 한다.
+  const catColor = (i: number) => CAT[i % CAT.length];
 
+  // 카드가 좁아(예: 3열 그리드의 1/3) 원+범례를 나란히 두면 폭을 초과한다.
+  // 항상 세로 스택(원 위 · 범례 아래 전체폭)으로 두고, 원은 컨테이너 폭에 맞춰 줄인다.
   return (
-    <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end sm:gap-5">
-      <div className="relative h-[220px] w-[220px] shrink-0">
+    <div className="flex w-full flex-col items-center gap-3 overflow-hidden">
+      <div className="relative mx-auto h-[190px] w-[190px] max-w-full shrink-0">
         {items.map((d, i) => {
-          const dia = 110 + 110 * Math.sqrt(d.value / max);
-          const shade = baseShade(items.length - 1 - i); // 바깥=연하게, 안=진하게
+          const dia = 95 + 95 * Math.sqrt(d.value / max);
           return (
             <div
               key={d.label}
               className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
-              style={{ width: dia, height: dia, background: shade, zIndex: i }}
+              style={{ width: dia, height: dia, background: catColor(i), opacity: 0.82, zIndex: i }}
             />
           );
         })}
       </div>
-      <ul className="flex w-full flex-col gap-1.5 text-xs sm:max-w-[180px]">
+      <ul className="flex w-full flex-col gap-1.5 text-xs">
         {items.map((d, i) => (
           <li key={d.label} className="flex items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: baseShade(items.length - 1 - i) }}
+              style={{ background: catColor(i) }}
             />
             <span className="min-w-0 flex-1 truncate text-ink-2">{d.label}</span>
             <span className="shrink-0 font-semibold tabular-nums text-ink">
