@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>닥터펠리스 본부 운영체제 (제안)</title>
+<meta name="description" content="명확한 프로세스는 규칙이 아니라 성장의 토대입니다. 닥터펠리스 본부 운영체제 방향 제안.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Dr. Felis — Neo Organic Dashboard 디자인 시스템
+   ogk2026_v4_weekly.html 에서 추출 · 재사용용 단일 스타일시트
+
+   원본은 :root 테마 블록이 여러 겹 쌓여 있고, 캐스케이드 특성상
+   '마지막' 블록(NEO ORGANIC · teal/mint)이 실제 화면에 렌더됩니다.
+   추출 시 순서를 그대로 보존해 원본과 동일하게 재현합니다.
+
+   구조:
+   1) BASE  — 컴포넌트 구조/레이아웃 (.card .bento .tbl .chip …) + 원본 1차 팔레트
+   2) SKIN  — 뉴모피즘 → NEO ORGANIC 순으로 덮어써지는 스킨 레이어
+              (실제 적용 팔레트 = 아래 'DR.FELIS NEO ORGANIC DASHBOARD' :root)
+
+   ● 색/모양을 바꾸려면 'DR.FELIS NEO ORGANIC DASHBOARD' :root 토큰만 수정하세요.
+   ● 폰트: <link ...pretendard.css> 필요 (README 참고)
+   ───────────────────────────────────────────────────────────── */
+
+/* ══════════ 1) BASE LAYER ══════════ */
+:root {
+  --bg:#F5F0EA;--bg-w:#FFFFFF;--bg-card:#FFFFFF;--bg-alt:#F9F6F2;
+  --txt-900:#2C241D;--txt-700:#4A4037;--txt-500:#7A7068;--txt-300:#A89E94;
+  --accent:#B85C38;--accent-lt:#F5EBE5;--accent-md:#C97555;
+  --clay:#9A6A4A;--clay-lt:#F0E7DE;--gold:#A8803C;--gold-lt:#F6EFE2;
+  --teal:#9A6A4A;--teal-lt:#F0E7DE;
+  --navy:#9A6A4A;--navy-lt:#F0E7DE;
+  --burgundy:#9A6A4A;--burgundy-lt:#F0E7DE;
+  --amber:#A8803C;--amber-lt:#F6EFE2;
+  --border:#DDD7CF;--border-md:#C5BDB3;
+  --cover-bg:#2C241D;
+  --ff:'Pretendard',-apple-system,sans-serif;
+  --radius:14px;
+  --shadow:0 1px 4px rgba(44,36,29,.06),0 4px 16px rgba(44,36,29,.05);
+  --shadow-h:0 4px 16px rgba(44,36,29,.10),0 8px 32px rgba(44,36,29,.07);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--txt-900);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+h1{font-size:clamp(32px,5.5vw,64px);font-weight:800;letter-spacing:-.025em;line-height:1.1}
+h2{font-size:clamp(22px,3vw,38px);font-weight:700;letter-spacing:-.015em;line-height:1.2}
+h3{font-size:clamp(16px,1.8vw,20px);font-weight:700;letter-spacing:-.01em}
+h4{font-size:14px;font-weight:600}
+.label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-300);margin-bottom:6px;display:block}
+.big-num{font-size:clamp(28px,3.5vw,44px);font-weight:800;letter-spacing:-.02em;color:var(--txt-900);line-height:1}
+.unit-sm{font-size:.45em;font-weight:500;color:var(--txt-500);margin-left:3px}
+
+/* NAV */
+.side-nav{position:fixed;left:0;top:0;width:48px;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:500;background:var(--bg);backdrop-filter:blur(10px);border-right:1px solid var(--border)}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--border-md);cursor:pointer;transition:all .3s;position:relative}
+.nav-dot.active{background:var(--accent);width:9px;height:9px}
+.nav-dot:hover{background:var(--accent-md)}
+.nav-tooltip{position:absolute;left:20px;top:50%;transform:translateY(-50%);background:var(--cover-bg);color:#fff;font-size:11px;font-weight:500;padding:4px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+.nav-dot:hover .nav-tooltip{opacity:1}
+
+/* SECTIONS */
+section{padding:72px 64px 72px 76px;min-height:100vh;opacity:0;transform:translateY(40px)}
+section.visible{animation:fadeUp .6s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.section-eye{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.section-heading{margin-bottom:36px}
+.section-heading em{color:var(--accent);font-style:normal}
+
+/* COVER */
+#cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--cover-bg);color:#fff;padding:80px 40px;position:relative}
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.4);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:10px;letter-spacing:2px}
+
+/* BENTO */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.b-3{grid-column:span 3}.b-4{grid-column:span 4}.b-5{grid-column:span 5}.b-6{grid-column:span 6}
+.b-7{grid-column:span 7}.b-8{grid-column:span 8}.b-12{grid-column:span 12}
+
+/* CARD */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:box-shadow .25s,transform .25s;opacity:0;transform:translateY(20px)}
+section.visible .card{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
+section.visible .card:nth-child(1){animation-delay:.08s}
+section.visible .card:nth-child(2){animation-delay:.14s}
+section.visible .card:nth-child(3){animation-delay:.20s}
+section.visible .card:nth-child(4){animation-delay:.26s}
+section.visible .card:nth-child(5){animation-delay:.32s}
+section.visible .card:nth-child(6){animation-delay:.38s}
+section.visible .card:nth-child(7){animation-delay:.44s}
+section.visible .card:nth-child(8){animation-delay:.50s}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-2px)}
+
+/* KPI */
+.kpi-card{text-align:left}
+.kpi-delta{font-size:12px;font-weight:600;margin-top:4px}
+.kpi-delta.up{color:var(--teal)}.kpi-delta.down{color:var(--burgundy)}.kpi-delta.warn{color:var(--amber)}
+.kpi-sub{font-size:12px;color:var(--txt-500);margin-top:4px}
+
+/* QUOTE */
+.quote{border-left:1.5px solid var(--accent);padding:16px 20px;margin-bottom:28px;background:var(--accent-lt);border-radius:0 8px 8px 0}
+.quote p{font-size:clamp(14px,1.8vw,16px);color:var(--txt-700);line-height:1.8;font-weight:500}
+
+/* INSIGHT BOX */
+.insight{border-left:1.5px solid var(--navy);padding:16px 20px;margin:20px 0;background:var(--navy-lt);border-radius:0 8px 8px 0}
+.insight p{font-size:14px;color:var(--txt-700);line-height:1.8}
+.insight .tag{font-size:10px;font-weight:700;color:var(--navy);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+
+.warn-box{border-left:1.5px solid var(--amber);padding:16px 20px;margin:20px 0;background:var(--amber-lt);border-radius:0 8px 8px 0}
+.warn-box p{font-size:14px;color:var(--txt-700);line-height:1.8}
+.warn-box .tag{font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:var(--bg-alt);color:var(--txt-500);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;color:var(--txt-700);border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none;font-weight:700;color:var(--txt-900)}
+.tbl .hl{color:var(--accent);font-weight:700}
+.tbl .neg{color:var(--burgundy);font-weight:600}
+
+/* CHIPS */
+.chip{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.chip-o{background:var(--accent-lt);color:var(--accent)}
+.chip-b{background:var(--navy-lt);color:var(--navy)}
+.chip-g{background:var(--teal-lt);color:var(--teal)}
+.chip-r{background:var(--burgundy-lt);color:var(--burgundy)}
+.chip-a{background:var(--amber-lt);color:var(--amber)}
+
+/* PHASE CARD */
+.phase-card{position:relative;overflow:hidden}
+.phase-card .phase-tag{position:absolute;top:0;right:0;padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:0 14px 0 10px}
+.phase-tag.p1{background:var(--accent);color:#fff}
+.phase-tag.p2{background:var(--clay);color:#fff}
+.phase-tag.p3{background:var(--gold);color:#fff}
+
+/* GATE CARD */
+.gate-card{border-top:1.5px solid var(--accent);position:relative}
+.gate-card.g2{border-top-color:var(--navy)}
+.gate-card.g3{border-top-color:var(--teal)}
+.gate-card.g4{border-top-color:var(--amber)}
+.gate-no{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;display:block}
+.gate-card.g2 .gate-no{color:var(--navy)}
+.gate-card.g3 .gate-no{color:var(--teal)}
+.gate-card.g4 .gate-no{color:var(--amber)}
+
+/* TIMELINE */
+.timeline{padding-left:28px;position:relative}
+.timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:0;width:1px;background:linear-gradient(to bottom,var(--accent),var(--border))}
+.tl-item{position:relative;padding-bottom:24px}
+.tl-dot{position:absolute;left:-28px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--bg-card);border:1px solid var(--accent);transition:all .2s}
+.tl-item:hover .tl-dot{background:var(--accent)}
+.tl-mo{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.tl-title{font-size:14px;font-weight:700;color:var(--txt-900);margin-bottom:3px}
+.tl-desc{font-size:12px;color:var(--txt-500)}
+
+/* ACCORDION */
+.acc-item{border-bottom:1px solid var(--border)}
+.acc-head{display:flex;justify-content:space-between;align-items:center;padding:14px 0;cursor:pointer;font-weight:600;font-size:14px;color:var(--txt-700);transition:color .2s;gap:12px}
+.acc-head:hover{color:var(--accent)}
+.acc-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.acc-arrow{font-size:11px;color:var(--txt-300);transition:transform .3s;flex-shrink:0}
+.acc-item.open .acc-arrow{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.16,1,.3,1)}
+.acc-inner{padding:0 0 14px;font-size:13px;color:var(--txt-500);line-height:1.8}
+
+/* FLOW */
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-node{background:var(--bg-alt);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;text-align:center;flex-shrink:0}
+.flow-node.accent{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.flow-arr{color:var(--txt-300);font-size:14px}
+
+/* OWNER TAG */
+.owner{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--txt-500);background:var(--bg-alt);padding:2px 8px;border-radius:4px}
+
+/* SLIDER */
+.sl-group{margin:14px 0}
+.sl-label{display:flex;justify-content:space-between;font-size:12px;color:var(--txt-500);margin-bottom:6px;font-weight:500}
+.sl-label strong{color:var(--accent);font-size:14px}
+input[type="range"]{width:100%;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;cursor:pointer;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:1px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:20px 0}
+
+/* RISK GRID */
+.risk-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:13px;margin-top:12px}
+.risk-icon{font-size:16px;line-height:1.4}
+.risk-txt{color:var(--txt-700);line-height:1.6}
+
+/* GUARDRAIL */
+.guard-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:14px}
+.guard-item{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.6;border:1px solid var(--border)}
+.guard-item.ok{background:var(--teal-lt);border-color:var(--teal);color:var(--txt-700)}
+.guard-item.no{background:var(--burgundy-lt);border-color:var(--burgundy);color:var(--txt-700)}
+
+/* SCROLL PROGRESS */
+.scroll-progress{position:fixed;top:0;left:0;width:0;height:3px;background:var(--accent);z-index:600;transition:width .1s linear}
+
+/* HIGHLIGHT NUMBER GLOW */
+.big-num{transition:color .3s}
+.num-glow{animation:numPulse .8s cubic-bezier(.16,1,.3,1)}
+@keyframes numPulse{
+  0%{opacity:.5;transform:scale(.95)}
+  50%{text-shadow:0 0 20px rgba(184,92,56,.25)}
+  100%{opacity:1;transform:scale(1);text-shadow:none}
+}
+
+/* CARD 3D DEPTH */
+.card{transform-style:preserve-3d;perspective:800px}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-3px) rotateX(1deg)}
+
+/* SECTION TRANSITIONS — alternating tint */
+section:nth-child(odd){background:var(--bg)}
+section:nth-child(even){background:var(--bg-alt)}
+#cover{background:var(--cover-bg) !important}
+
+/* FLOW NODE entrance */
+section.visible .flow-node{animation:slideRight .5s cubic-bezier(.16,1,.3,1) both}
+section.visible .flow-node:nth-child(1){animation-delay:.1s}
+section.visible .flow-node:nth-child(3){animation-delay:.2s}
+section.visible .flow-node:nth-child(5){animation-delay:.3s}
+section.visible .flow-node:nth-child(7){animation-delay:.4s}
+section.visible .flow-node:nth-child(9){animation-delay:.5s}
+@keyframes slideRight{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
+
+/* TIMELINE DOT PULSE on visible */
+section.visible .tl-dot{animation:dotPop .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .tl-item:nth-child(1) .tl-dot{animation-delay:.1s}
+section.visible .tl-item:nth-child(2) .tl-dot{animation-delay:.2s}
+section.visible .tl-item:nth-child(3) .tl-dot{animation-delay:.3s}
+section.visible .tl-item:nth-child(4) .tl-dot{animation-delay:.4s}
+section.visible .tl-item:nth-child(5) .tl-dot{animation-delay:.5s}
+@keyframes dotPop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* QUOTE slide-in */
+section.visible .quote,section.visible .insight,section.visible .warn-box{animation:slideIn .6s cubic-bezier(.16,1,.3,1) both;animation-delay:.2s}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+/* PHASE TAG shimmer */
+.phase-tag{overflow:hidden;position:relative}
+.phase-tag::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shimmer 3s infinite}
+@keyframes shimmer{0%{left:-100%}50%{left:100%}100%{left:100%}}
+
+/* TABLE ROW fade-in */
+section.visible .tbl tbody tr{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .tbl tbody tr:nth-child(1){animation-delay:.1s}
+section.visible .tbl tbody tr:nth-child(2){animation-delay:.15s}
+section.visible .tbl tbody tr:nth-child(3){animation-delay:.2s}
+section.visible .tbl tbody tr:nth-child(4){animation-delay:.25s}
+section.visible .tbl tbody tr:nth-child(5){animation-delay:.3s}
+section.visible .tbl tbody tr:nth-child(6){animation-delay:.35s}
+section.visible .tbl tbody tr:nth-child(7){animation-delay:.4s}
+
+/* RISK GRID stagger */
+section.visible .risk-grid .risk-txt{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+section.visible .risk-grid .risk-txt:nth-child(2){animation-delay:.08s}
+section.visible .risk-grid .risk-txt:nth-child(4){animation-delay:.16s}
+section.visible .risk-grid .risk-txt:nth-child(6){animation-delay:.24s}
+section.visible .risk-grid .risk-txt:nth-child(8){animation-delay:.32s}
+section.visible .risk-grid .risk-txt:nth-child(10){animation-delay:.40s}
+section.visible .risk-grid .risk-txt:nth-child(12){animation-delay:.48s}
+
+/* REDUCE MOTION */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .scroll-progress{display:none}
+}
+
+@media(max-width:768px){
+  section{padding:48px 16px}
+  .side-nav{display:none}
+  .bento{grid-template-columns:1fr;gap:12px}
+  [class*="b-"]{grid-column:span 1}
+  .scroll-progress{height:2px}
+}
+
+/* ═══ TOP TAB BAR ═══ */
+.top-tab-bar{position:fixed;top:0;left:0;right:0;height:44px;background:var(--bg-w);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px 0 20px;gap:4px;z-index:700;box-shadow:0 1px 8px rgba(44,36,29,.06)}
+.tab-btn{padding:5px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--txt-500);transition:all .2s;font-family:var(--ff)}
+.tab-btn:hover{color:var(--accent)}
+.tab-btn.active{background:var(--accent);color:#fff}
+.side-nav{top:44px!important;height:calc(100vh - 44px)!important}
+#strategy-wrap section{scroll-margin-top:44px}
+#strategy-wrap #cover{padding-top:120px}
+
+/* ═══ TRACKER ═══ */
+#tracker-wrap{display:none;padding:56px 64px 80px 76px;min-height:100vh}
+#tracker-wrap.t-active{display:block}
+#weekly-wrap{display:none;padding:56px 64px 80px 76px;min-height:100vh}
+#weekly-wrap.w-active{display:block}
+#monthly-wrap{display:none;padding:56px 64px 80px 76px;min-height:100vh}
+#monthly-wrap.m-active{display:block}
+.tr-section{margin-bottom:48px}
+.tr-sec-title{font-size:18px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ts-eye{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-lt);padding:3px 8px;border-radius:4px}
+.ts-hint{font-size:11px;font-weight:400;color:var(--txt-300);margin-left:4px}
+.t-progress-track{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin:10px 0 6px}
+.t-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-md));border-radius:6px;transition:width .6s cubic-bezier(.16,1,.3,1);min-width:0}
+.t-gate-cell{cursor:pointer;padding:12px 10px;border-radius:10px;transition:all .2s;border:1px solid var(--border);text-align:center;user-select:none;margin-bottom:8px}
+.t-gate-cell:hover{transform:translateY(-2px);box-shadow:var(--shadow-h)}
+.t-gate-cell[data-state="pending"]{background:var(--bg-alt);border-color:var(--border-md)}
+.t-gate-cell[data-state="pass"]{background:var(--teal-lt);border-color:var(--teal)}
+.t-gate-cell[data-state="fail"]{background:var(--burgundy-lt);border-color:var(--burgundy)}
+td.t-editable,span.t-editable{cursor:pointer;color:var(--txt-300);font-style:italic;font-size:12px;transition:color .2s}
+td.t-editable:hover,span.t-editable:hover,td.t-has-val:hover,span.t-has-val:hover{color:var(--accent)}
+td.t-has-val,span.t-has-val{cursor:pointer;font-weight:700}
+.t-sc{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.t-sc-ok{background:var(--teal-lt);color:var(--teal)}
+.t-sc-warn{background:var(--amber-lt);color:var(--amber)}
+.t-sc-fail{background:var(--burgundy-lt);color:var(--burgundy)}
+.t-sc-none{background:var(--bg-alt);color:var(--txt-300)}
+.t-qend-chip{font-size:9px;color:var(--txt-300);display:block;margin-top:2px;font-style:italic}
+.t-part-tabs,.t-month-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.t-ptab,.t-mtab{padding:4px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--txt-500);font-family:var(--ff);transition:all .2s}
+.t-ptab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.t-mtab.active{background:var(--accent-lt);color:var(--accent);border-color:var(--accent)}
+.t-task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg-alt);font-size:13px;color:var(--txt-700);line-height:1.6;cursor:pointer;transition:all .2s;margin-bottom:6px;border:1px solid transparent}
+.t-task-item:hover{background:var(--accent-lt);border-color:var(--accent)}
+.t-task-item.done>span{text-decoration:line-through;color:var(--txt-300)}
+.t-task-cb{width:16px;height:16px;border-radius:4px;border:1px solid var(--border-md);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s}
+.t-task-item.done .t-task-cb{background:var(--teal);border-color:var(--teal);color:#fff}
+.t-issue-item{display:flex;gap:12px;padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.t-issue-del{margin-left:auto;font-size:12px;color:var(--txt-300);cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .2s;flex-shrink:0;background:transparent;border:none;font-family:var(--ff)}
+.t-issue-del:hover{color:var(--burgundy);background:var(--burgundy-lt)}
+.t-btn-add{padding:7px 14px;border-radius:8px;border:2px dashed var(--accent);background:var(--accent-lt);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--ff);transition:all .2s}
+.t-btn-add:hover{background:var(--accent);color:#fff}
+.t-btn-save{padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--ff);transition:opacity .2s}
+.t-btn-save:hover{opacity:.9}
+.t-btn-cancel{padding:8px 18px;border-radius:8px;border:1px solid var(--border-md);background:var(--bg-alt);color:var(--txt-500);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--ff)}
+#t-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:900;display:flex;align-items:center;justify-content:center}
+#t-modal{background:var(--bg-card);border-radius:var(--radius);padding:28px;width:min(480px,92vw);box-shadow:var(--shadow-h);border:1px solid var(--border)}
+.t-field{margin-bottom:14px}
+.t-field label{display:block;font-size:11px;font-weight:600;color:var(--txt-300);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.t-field input,.t-field select,.t-field textarea{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:8px;background:var(--bg);color:var(--txt-900);font-size:13px;font-family:var(--ff);outline:none;transition:border .2s}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus{border-color:var(--accent)}
+.t-field textarea{resize:vertical}
+#t-popover{position:fixed;background:var(--bg-card);border:1px solid var(--border-md);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-h);z-index:800;min-width:180px}
+#t-popover-input{width:100%;padding:8px 10px;border:1px solid var(--border-md);border-radius:6px;background:var(--bg);color:var(--txt-900);font-size:16px;font-weight:700;font-family:var(--ff);outline:none;transition:border .2s}
+#t-popover-input:focus{border-color:var(--accent)}
+.t-pop-label{font-size:10px;color:var(--txt-300);margin-bottom:6px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+/* 트래커 내 카드는 section.visible 조건 없이 바로 표시 */
+#tracker-wrap .card{opacity:1!important;transform:none!important;animation:none!important}
+#tracker-wrap .bento{opacity:1!important}
+#weekly-wrap .card{opacity:1!important;transform:none!important;animation:none!important}
+#weekly-wrap .bento{opacity:1!important}
+#monthly-wrap .card{opacity:1!important;transform:none!important;animation:none!important}
+#monthly-wrap .bento{opacity:1!important}
+/* TIMELINE */
+#tl-outer{overflow-x:auto;overflow-y:visible;padding-bottom:6px;cursor:grab;user-select:none;border:1px solid var(--card-border);border-radius:10px;background:var(--bg-card)}
+#tl-outer.dragging{cursor:grabbing}
+#tl-inner{position:relative;height:200px}
+
+/* WEEKLY FLOW */
+.w-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-bottom:18px}
+.w-eyebrow{font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.w-title{font-size:clamp(26px,4vw,46px);font-weight:850;letter-spacing:-.04em;line-height:1.04;margin:0;color:var(--txt-900)}
+.w-sub{font-size:14px;color:var(--txt-500);margin-top:10px;line-height:1.7}
+.w-week-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.w-btn{border:none;border-radius:12px;background:var(--bg);box-shadow:var(--shadow-sm);color:var(--txt-700);font-family:var(--ff);font-size:12px;font-weight:750;padding:9px 13px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1)}
+.w-btn:hover{transform:translateY(-1px);color:var(--accent);box-shadow:var(--shadow-h)}
+.w-btn:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.w-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:var(--shadow-in-sm)}
+.w-btn.primary{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+.w-btn.ghost{box-shadow:none;background:transparent;border:1px solid var(--border-md)}
+.w-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.w-stat{background:var(--bg);border-radius:16px;box-shadow:var(--shadow-sm);padding:16px;border:1px solid rgba(255,255,255,.18);min-height:132px;display:flex;flex-direction:column}
+.w-stat b{display:block;font-size:26px;letter-spacing:-.03em;color:var(--txt-900);margin-bottom:4px}
+.w-stat span{font-size:12px;color:var(--txt-400);font-weight:650}
+.w-stat-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;min-height:22px}
+.w-deadline{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);color:var(--accent);font-size:10px;font-weight:900}
+.w-missing{font-size:10.5px;color:var(--burgundy);font-weight:800;line-height:1.45;word-break:keep-all}
+.w-missing.is-clear{color:var(--teal)}
+.w-layout{display:grid;grid-template-columns:minmax(360px,440px) minmax(0,1fr);gap:18px;align-items:start}
+.w-panel{background:var(--bg);border-radius:20px;box-shadow:var(--shadow);padding:20px;border:1px solid rgba(255,255,255,.16)}
+.w-panel.needs-attention{border-color:rgba(154,74,58,.55);box-shadow:-6px -6px 14px var(--nu-light),7px 7px 18px rgba(154,74,58,.22)}
+.w-panel.needs-attention.level-2{border-color:rgba(154,74,58,.75);box-shadow:-6px -6px 14px var(--nu-light),8px 8px 22px rgba(154,74,58,.3)}
+.w-panel.needs-attention.level-3{border-color:rgba(154,74,58,.95);box-shadow:-6px -6px 14px var(--nu-light),10px 10px 26px rgba(154,74,58,.38)}
+.w-panel h3{font-size:18px;margin:0 0 12px;color:var(--txt-900);letter-spacing:-.02em}
+.w-section-title{font-size:18px;font-weight:850;color:var(--txt-900);letter-spacing:-.02em;margin:12px 0 14px}
+.w-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.w-toolbar select,.w-field input,.w-field select,.w-field textarea{width:100%;padding:10px 12px;border:1px solid var(--border-md);border-radius:10px;background:var(--bg);box-shadow:var(--shadow-in-sm);color:var(--txt-900);font-size:13px;font-family:var(--ff);outline:none;transition:border .2s,box-shadow .2s}
+.w-toolbar select{width:auto;min-width:150px;box-shadow:var(--shadow-sm)}
+.w-select-wrap{position:relative;display:inline-flex;align-items:center;min-width:176px}
+.w-field .w-select-wrap{width:100%;min-width:0}
+.w-select-wrap select{appearance:none;-webkit-appearance:none;width:100%;border:0;border-radius:14px;background:var(--bg);box-shadow:var(--shadow-sm);padding:11px 38px 11px 14px;color:var(--txt-900);font-family:var(--ff);font-size:13px;font-weight:850;outline:none;cursor:pointer}
+.w-select-wrap::after{content:"";position:absolute;right:14px;width:9px;height:9px;border-right:2px solid var(--txt-700);border-bottom:2px solid var(--txt-700);transform:rotate(45deg) translateY(-2px);pointer-events:none;transition:transform .2s}
+.w-select-wrap:focus-within select{box-shadow:var(--shadow-in-sm);color:var(--accent)}
+.w-select-wrap:focus-within::after{border-color:var(--accent);transform:rotate(45deg) translate(2px,0)}
+.w-member-pick{display:flex;align-items:center;gap:8px;justify-content:flex-start;margin-bottom:6px}
+.w-alert{border:1px solid rgba(154,74,58,.35);background:rgba(154,74,58,.08);border-radius:12px;padding:10px 12px;margin:0 0 14px;color:var(--burgundy);font-size:12px;line-height:1.55;font-weight:700}
+.w-field input:focus,.w-field select:focus,.w-field textarea:focus,.w-toolbar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(188,90,53,.12)}
+.w-field{margin-bottom:11px}
+.w-field label{display:block;font-size:11px;font-weight:800;color:var(--txt-400);letter-spacing:.04em;margin-bottom:6px}
+.w-field textarea{resize:vertical;min-height:72px;line-height:1.6}
+.w-field input:disabled,.w-field select:disabled,.w-field textarea:disabled{opacity:.86;color:var(--txt-700);background:var(--bg-alt);box-shadow:var(--shadow-in-sm);cursor:not-allowed}
+.w-field.is-hidden{display:none}
+.w-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.w-divider{height:1px;background:var(--border);margin:16px 0}
+.w-review-lock{opacity:.48;filter:saturate(.65);pointer-events:none}
+.w-lock-note{border-radius:12px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);padding:11px 12px;color:var(--txt-500);font-size:12px;line-height:1.55;margin-bottom:12px}
+.w-feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.w-card{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow-sm);transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s cubic-bezier(.16,1,.3,1)}
+.w-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-h)}
+.w-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.w-workmark{width:36px;height:36px;border-radius:13px;background:var(--bg);box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.w-workmark svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.w-name{font-weight:850;color:var(--txt-900);font-size:14px}
+.w-role{font-size:11px;color:var(--txt-400);margin-top:2px}
+.w-chips{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.w-chip{font-size:10px;font-weight:800;border-radius:999px;padding:4px 7px;background:var(--bg-alt);color:var(--txt-400);white-space:nowrap}
+.w-chip.ok{background:var(--teal-lt);color:var(--teal)}
+.w-chip.wait{background:var(--amber-lt);color:var(--amber)}
+.w-chip.risk{background:var(--burgundy-lt);color:var(--burgundy)}
+.w-card h4{font-size:12px;color:var(--accent);margin:12px 0 5px;letter-spacing:.02em}
+.w-card p{font-size:12.5px;line-height:1.65;color:var(--txt-700);margin:0;white-space:pre-wrap}
+.w-muted{color:var(--txt-300)!important;font-style:italic}
+.w-meter{height:8px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);border-radius:999px;overflow:hidden;margin-top:9px}
+.w-meter i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent-md));transition:width .5s cubic-bezier(.16,1,.3,1)}
+.w-brief{margin-top:18px}
+.w-brief pre{white-space:pre-wrap;background:var(--bg-alt);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:12px;line-height:1.7;color:var(--txt-700);max-height:360px;overflow:auto}
+.w-month-viz{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(260px,.95fr);gap:14px;margin-top:14px}
+.w-viz-card{border-radius:16px;background:var(--bg);box-shadow:var(--shadow-sm);border:1px solid rgba(255,255,255,.16);padding:14px}
+.w-viz-card h4{margin:0 0 10px;color:var(--txt-900);font-size:13px;letter-spacing:-.01em}
+.w-ring{--p:0;width:156px;height:156px;border-radius:50%;display:grid;place-items:center;margin:6px auto 10px;background:conic-gradient(var(--accent) calc(var(--p)*1%), var(--bg-alt) 0);box-shadow:var(--shadow-sm);position:relative}
+.w-ring::after{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.w-ring strong{position:relative;z-index:1;font-size:30px;color:var(--txt-900)}
+.w-bar-row{margin:10px 0}
+.w-bar-head{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--txt-500);font-weight:850;margin-bottom:6px}
+.w-bar{height:9px;border-radius:999px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);overflow:hidden}
+.w-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#E3835A)}
+.w-dist{display:grid;gap:8px}
+.w-dist-row{display:grid;grid-template-columns:minmax(80px,128px) minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:11px;color:var(--txt-700);font-weight:750}
+.w-week-matrix{display:grid;gap:8px}
+.w-week-row{border-radius:12px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);padding:9px 10px;font-size:11px;color:var(--txt-600);line-height:1.55}
+.w-week-row b{display:block;color:var(--txt-900);margin-bottom:2px}
+.w-compare{border-radius:14px;background:rgba(188,90,53,.08);border:1px solid rgba(188,90,53,.18);padding:11px 12px;color:var(--txt-700);font-size:12px;line-height:1.6;font-weight:700}
+.w-status{font-size:12px;color:var(--teal);font-weight:750;margin-left:auto;min-height:18px}
+.w-heart-row{display:flex;gap:6px;align-items:center;min-height:42px}
+.w-heart{position:relative;border:none;background:transparent;width:34px;height:34px;cursor:pointer;padding:2px;transform:translateY(0) scale(1);transition:transform .18s,filter .18s;filter:drop-shadow(0 5px 8px rgba(188,90,53,.12))}
+.w-heart svg{position:absolute;inset:2px;width:30px;height:30px;transition:opacity .18s,transform .2s}
+.w-heart .heart-full{opacity:0;transform:scale(.72)}
+.w-heart.active .heart-empty{opacity:0}
+.w-heart.active .heart-full{opacity:1;transform:scale(1)}
+.w-heart:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.4)}
+.w-heart.pop .heart-full{animation:wHeartFill .42s cubic-bezier(.16,1.55,.35,1)}
+.w-heart.pop::after{content:"";position:absolute;inset:3px;border-radius:999px;border:2px solid rgba(188,90,53,.45);opacity:0;animation:wHeartBurst .42s ease-out forwards;pointer-events:none}
+@keyframes wHeartFill{0%{transform:scale(.35);opacity:.2}48%{transform:translateY(-8px) scale(1.32);opacity:1}76%{transform:translateY(2px) scale(.92)}100%{transform:translateY(0) scale(1)}}
+@keyframes wHeartBurst{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(1.8)}}
+.m-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:end;margin-bottom:18px}
+.m-title{font-size:clamp(28px,4.2vw,48px);font-weight:900;letter-spacing:-.045em;color:var(--txt-900);margin:0;line-height:1.04}
+.m-sub{font-size:14px;color:var(--txt-500);line-height:1.7;margin:10px 0 0}
+.m-toolbar{display:flex;gap:9px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.m-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.m-card{background:var(--bg);border-radius:18px;box-shadow:var(--shadow-sm);border:1px solid rgba(255,255,255,.16);padding:16px}
+.m-card h3,.m-card h4{margin:0;color:var(--txt-900);letter-spacing:-.02em}
+.m-card h3{font-size:18px}
+.m-card h4{font-size:13px;margin-bottom:10px}
+.m-kpi b{display:block;font-size:24px;color:var(--txt-900);letter-spacing:-.03em;margin-bottom:4px}
+.m-kpi span{font-size:11px;color:var(--txt-400);font-weight:800;line-height:1.45}
+.m-layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);gap:18px;align-items:start}
+.m-section{margin-bottom:18px}
+.m-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.m-section-head p{margin:4px 0 0;color:var(--txt-500);font-size:12px;line-height:1.55}
+.m-ogk-flow{display:grid;gap:10px}
+.m-ogk{border-radius:16px;background:var(--bg);box-shadow:var(--shadow-sm);border:1px solid rgba(255,255,255,.16);overflow:hidden}
+.m-ogk-head{display:grid;grid-template-columns:minmax(160px,.8fr) minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 15px;background:var(--bg)}
+.m-ogk-title{font-weight:900;color:var(--txt-900);font-size:14px}
+.m-ogk-meta{font-size:11px;color:var(--txt-500);line-height:1.45}
+.m-progress{height:9px;border-radius:999px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);overflow:hidden}
+.m-progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#E38B62)}
+.m-flow-body{padding:0 15px 14px;display:grid;gap:8px}
+.m-flow-row{display:grid;grid-template-columns:88px minmax(0,1fr);gap:10px;align-items:start;border-radius:12px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);padding:9px 10px}
+.m-part{font-size:11px;font-weight:900;color:var(--accent)}
+.m-flow-items{font-size:12px;color:var(--txt-700);line-height:1.6}
+.m-flow-items div+div{margin-top:5px}
+.m-gates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.m-gate{border-radius:14px;background:var(--bg);box-shadow:var(--shadow-sm);padding:13px;border:1px solid rgba(255,255,255,.16)}
+.m-gate-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}
+.m-gate-state{font-size:10px;font-weight:900;border-radius:999px;padding:4px 7px;background:var(--bg-alt);color:var(--txt-500);white-space:nowrap}
+.m-gate-state.pass{background:var(--teal-lt);color:var(--teal)}
+.m-gate-state.fail{background:var(--burgundy-lt);color:var(--burgundy)}
+.m-gate-metric{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--txt-600);padding:5px 0;border-top:1px solid rgba(0,0,0,.04)}
+.m-action-list{display:grid;gap:10px}
+.m-action{display:grid;grid-template-columns:minmax(0,1.3fr) 110px 120px 92px;gap:8px;align-items:center;border-radius:14px;background:var(--bg-alt);box-shadow:var(--shadow-in-sm);padding:10px}
+.m-action input,.m-action select,.m-note textarea{width:100%;border:0;border-radius:10px;background:var(--bg);box-shadow:var(--shadow-in-sm);padding:9px 10px;font-family:var(--ff);font-size:12px;color:var(--txt-800);outline:none}
+.m-note{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-note textarea{min-height:100px;resize:vertical;line-height:1.6}
+.m-missing{border-radius:12px;background:rgba(154,74,58,.08);border:1px solid rgba(154,74,58,.16);padding:9px 10px;color:var(--burgundy);font-size:12px;line-height:1.55;font-weight:750}
+.m-empty{color:var(--txt-300);font-style:italic;font-size:12px;line-height:1.6}
+@media(max-width:1180px){.m-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.m-layout{grid-template-columns:1fr}.m-action{grid-template-columns:1fr 1fr}.m-gates{grid-template-columns:1fr}}
+@media(max-width:980px){.w-layout{grid-template-columns:1fr}.w-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.w-feed{grid-template-columns:1fr}.w-hero,.m-hero{grid-template-columns:1fr}.w-week-nav,.m-toolbar{justify-content:flex-start}.w-month-viz{grid-template-columns:1fr}}
+@media(max-width:768px){#tracker-wrap,#weekly-wrap,#monthly-wrap{padding:56px 16px 48px}.top-tab-bar{padding-left:12px}.tab-btn{padding:5px 12px}.w-grid{grid-template-columns:1fr}.w-two{grid-template-columns:1fr}}
+
+/* ══════════ 2) NEO ORGANIC LAYER (실사용 테마) ══════════ */
+:root{
+  /* 표면 — 카드 = 배경 동일색(뉴모피즘 핵심) */
+  --bg:#ECE8E2; --bg-w:#ECE8E2; --bg-card:#ECE8E2; --bg-alt:#E4DED5;
+  /* 텍스트 — 고대비(가독성) */
+  --txt-900:#2F2B26; --txt-700:#4C463E; --txt-500:#7C746A; --txt-400:#938A7E; --txt-300:#A89E92; --txt-200:#CFC8BD;
+  /* 브랜드 액센트 + 보조색(웜뉴트럴 틴트로 순화) */
+  --accent:#BC5A35; --accent-md:#D6794E; --accent-lt:#E4D8CC;
+  --clay:#9A6A4A; --clay-lt:#EBE2D8; --gold:#A8803C; --gold-lt:#EFE7D6;
+  --teal:#9A6A4A; --teal-lt:#EBE2D8;
+  --navy:#9A6A4A; --navy-lt:#EBE2D8;
+  --burgundy:#9A6A4A; --burgundy-lt:#EBE2D8;
+  --amber:#A8803C; --amber-lt:#EFE7D6;
+  --border:#DAD3C9; --border-md:#CDC5B9; --card-border:#DAD3C9;
+  --cover-bg:#262320;
+  --radius:22px;
+  /* 듀얼 섀도 토큰 (광원 = 좌상단) */
+  --nu-light:rgba(255,255,255,.92);
+  --nu-dark:rgba(70,58,44,.18);
+  --shadow:-6px -6px 14px var(--nu-light), 7px 7px 18px var(--nu-dark);
+  --shadow-h:-9px -9px 22px var(--nu-light), 12px 12px 28px var(--nu-dark);
+  --shadow-sm:-3px -3px 7px var(--nu-light), 4px 4px 10px var(--nu-dark);
+  --shadow-in:inset 4px 4px 9px var(--nu-dark), inset -4px -4px 9px var(--nu-light);
+  --shadow-in-sm:inset 2px 2px 5px var(--nu-dark), inset -2px -2px 5px var(--nu-light);
+}
+/* ── 타이포 (Apple: 크고 또렷, 타이트한 자간, 넉넉한 행간) ── */
+body{background:var(--bg);letter-spacing:-.003em}
+h1{letter-spacing:-.035em}
+h2{letter-spacing:-.025em}
+.section-eye{font-weight:700;letter-spacing:3.5px}
+.section-heading{margin-bottom:44px}
+/* 강조 헤딩 — Stripe식 그라데이션 텍스트 */
+.section-heading em{
+  background:linear-gradient(120deg,var(--accent-md),var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)
+}
+
+/* ── 표면 통일 (뉴모피즘: 섹션·카드 동일색) ── */
+section:nth-child(odd),section:nth-child(even){background:var(--bg)}
+#cover{background:var(--cover-bg)!important}
+
+/* ── 카드 — 같은 색에서 솟아오른 입체 ── */
+.card{
+  background:var(--bg);border:none;border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  transition:box-shadow .35s cubic-bezier(.16,1,.3,1), transform .35s cubic-bezier(.16,1,.3,1)
+}
+.card:hover{box-shadow:var(--shadow-h);transform:translateY(-4px)}
+
+/* ── 상단 탭바 / 좌측 네비 — 경계선 대신 부드러운 섀도 ── */
+.top-tab-bar{background:var(--bg);border-bottom:none;box-shadow:0 6px 18px var(--nu-dark)}
+.side-nav{background:var(--bg);border-right:none;box-shadow:6px 0 18px -8px var(--nu-dark)}
+
+/* 네비 점 — 작은 눌린 점, 활성 시 액센트 + 솟음 */
+.nav-dot{background:var(--bg);box-shadow:var(--shadow-in-sm);transition:all .3s cubic-bezier(.16,1,.3,1)}
+.nav-dot.active{background:var(--accent);box-shadow:var(--shadow-sm);width:11px;height:11px}
+.nav-dot:hover{background:var(--accent-md)}
+
+/* ── 탭 버튼 — 평소 솟음, 활성 시 안으로 눌림(택타일) ── */
+.tab-btn{background:var(--bg);box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.tab-btn:hover{color:var(--accent);transform:translateY(-1px)}
+.tab-btn.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.tab-btn:active{box-shadow:var(--shadow-in)}
+
+/* ── KPI 핵심 숫자 — 솔리드 유지(색 코딩·가독성 보존, Apple식) + 타이트한 자간 ── */
+.big-num{letter-spacing:-.03em}
+
+/* ── 강조/인용/경고 박스 — 표면에 박힌 패널(inset) ── */
+.quote,.insight,.warn-box{box-shadow:var(--shadow-in);border-radius:14px;border-left:none}
+.quote{background:var(--accent-lt)}
+.insight{background:var(--navy-lt)}
+.warn-box{background:var(--amber-lt)}
+
+/* ── 가드/플로우/오너 칩 — 살짝 솟은 타일 ── */
+.guard-item{border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.guard-item:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s}
+.flow-node:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.flow-node.accent{box-shadow:var(--shadow-sm),inset 0 0 0 1.5px var(--accent)}
+.owner{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.chip{box-shadow:var(--shadow-sm)}
+
+/* ── 칩/배지 컬러 틴트는 유지하되 경계선 제거 ── */
+.gate-card{border-top:1.5px solid var(--accent)}
+
+/* ── 표 — 경계선 최소화 ── */
+.tbl th{background:transparent;border-bottom:1px solid var(--border)}
+.tbl td{border-bottom:1px solid var(--border)}
+
+/* ── 슬라이더 — 눌린 트랙 + 솟은 thumb ── */
+input[type="range"]{background:var(--bg);box-shadow:var(--shadow-in-sm);height:8px;border-radius:8px}
+input[type="range"]::-webkit-slider-thumb{box-shadow:-2px -2px 5px var(--nu-light),3px 3px 7px var(--nu-dark)}
+
+/* ════════ 트래커 컨트롤 ════════ */
+/* 입력 필드 — 눌린 면 */
+.t-field input,.t-field select,.t-field textarea,#t-popover-input{
+  background:var(--bg);border:none;box-shadow:var(--shadow-in-sm)
+}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus,#t-popover-input:focus{
+  box-shadow:var(--shadow-in-sm),0 0 0 2px var(--accent)
+}
+/* 버튼류 — 솟음 → 클릭 시 눌림 */
+.t-btn-add,.t-btn-save,.t-btn-cancel{border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.t-btn-add:active,.t-btn-save:active,.t-btn-cancel:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-btn-save{background:var(--bg);color:var(--accent)}
+.t-btn-add{background:var(--bg)}
+/* 파트/월 탭 — 솟음, 활성 시 눌림 */
+.t-ptab,.t-mtab{background:var(--bg);border:none;box-shadow:var(--shadow-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-ptab:hover,.t-mtab:hover{transform:translateY(-1px)}
+.t-ptab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+.t-mtab.active{background:var(--bg);color:var(--accent);box-shadow:var(--shadow-in)}
+/* 게이트 셀 — 솟은 타일, 클릭 시 눌림, 상태색 유지 */
+.t-gate-cell{border:none;box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.16,1,.3,1)}
+.t-gate-cell:hover{transform:translateY(-3px);box-shadow:var(--shadow-h)}
+.t-gate-cell:active{box-shadow:var(--shadow-in);transform:translateY(0)}
+.t-gate-cell[data-state="pass"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--teal)}
+.t-gate-cell[data-state="fail"]{box-shadow:var(--shadow-sm),inset 0 0 0 2px var(--burgundy)}
+/* 태스크 항목 — 표면에 살짝 박힌 행, 호버 시 솟음 */
+.t-task-item{background:var(--bg);border:none;box-shadow:var(--shadow-in-sm);transition:all .2s cubic-bezier(.16,1,.3,1)}
+.t-task-item:hover{background:var(--bg);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.t-task-cb{border:none;box-shadow:var(--shadow-in-sm)}
+.t-issue-item{background:var(--bg);border:none;box-shadow:var(--shadow-sm)}
+/* 진행바 — 눌린 트랙 + 솟은 그라데이션 채움 */
+.t-progress-track{background:var(--bg);box-shadow:var(--shadow-in-sm)}
+.t-progress-fill{background:linear-gradient(90deg,var(--accent-md),var(--accent));box-shadow:1px 1px 3px var(--nu-dark)}
+/* 모달/팝오버 — 경계선 없이 깊게 솟음 */
+#t-modal,#t-task-modal,#t-tl-modal,#t-popover{border:none;box-shadow:var(--shadow-h)}
+.ts-eye{box-shadow:var(--shadow-in-sm)}
+.t-sc{box-shadow:var(--shadow-sm)}
+
+/* ── 스크롤 진행바 — 그라데이션 ── */
+.scroll-progress{background:linear-gradient(90deg,var(--accent-md),var(--accent))}
+
+/* ── 동작 줄이기 설정 존중 ── */
+@media(prefers-reduced-motion:reduce){
+  .card:hover,.t-gate-cell:hover,.guard-item:hover,.flow-node:hover,.t-task-item:hover,
+  .tab-btn:hover,.t-ptab:hover,.t-mtab:hover,.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover{transform:none}
+}
+@media(max-width:768px){
+  .card{border-radius:18px}
+  .card:hover{transform:none}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DR.FELIS NEO ORGANIC DASHBOARD
+   warm clinical trust · restrained premium · softly feline
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  color-scheme:light;
+  --bg:#F9F7F2;
+  --bg-w:rgba(252,252,250,.94);
+  --bg-card:#FFFFFF;
+  --bg-alt:#F3F0E8;
+  --surface-mint:#EDF7F2;
+  --surface-blue:#EEF5F8;
+  --surface-coral:#FFF1EC;
+  --txt-900:#17302F;
+  --txt-800:#243B3A;
+  --txt-700:#405655;
+  --txt-600:#5C6E6C;
+  --txt-500:#71817F;
+  --txt-400:#8B9996;
+  --txt-300:#A7B2AF;
+  --txt-200:#D9E0DD;
+  --accent:#2F8F72;
+  --accent-md:#58AC8E;
+  --accent-lt:#E5F4ED;
+  --clay:#6F8F87;
+  --clay-lt:#E9F0EE;
+  --gold:#B8893F;
+  --gold-lt:#FBF3E3;
+  --teal:#247F63;
+  --teal-lt:#E3F4EC;
+  --navy:#507A91;
+  --navy-lt:#E9F2F6;
+  --burgundy:#C86652;
+  --burgundy-lt:#FCEAE5;
+  --amber:#C28A37;
+  --amber-lt:#FCF3E1;
+  --border:rgba(20,30,40,.08);
+  --border-md:rgba(20,30,40,.14);
+  --card-border:rgba(20,30,40,.08);
+  --cover-bg:#183B38;
+  --radius:24px;
+  --radius-sm:16px;
+  --shadow:0 1px 2px rgba(24,59,56,.03),0 12px 34px rgba(24,59,56,.07);
+  --shadow-h:0 2px 4px rgba(24,59,56,.04),0 22px 48px rgba(24,59,56,.12);
+  --shadow-sm:0 1px 2px rgba(24,59,56,.03),0 7px 18px rgba(24,59,56,.07);
+  --shadow-in:inset 0 0 0 1px rgba(47,143,114,.18),inset 0 2px 6px rgba(24,59,56,.05);
+  --shadow-in-sm:inset 0 0 0 1px rgba(20,30,40,.09),inset 0 1px 3px rgba(24,59,56,.04);
+  --focus-ring:0 0 0 4px rgba(47,143,114,.14);
+}
+
+html{background:var(--bg);color-scheme:light}
+body{
+  background:
+    radial-gradient(circle at 86% 7%,rgba(88,172,142,.11),transparent 26rem),
+    radial-gradient(circle at 7% 42%,rgba(80,122,145,.06),transparent 22rem),
+    var(--bg);
+  color:var(--txt-900);
+  letter-spacing:-.006em
+}
+body::before{
+  content:"";position:fixed;z-index:-1;right:-140px;top:18vh;width:340px;height:420px;
+  border-radius:48% 52% 62% 38% / 42% 35% 65% 58%;
+  background:linear-gradient(145deg,rgba(88,172,142,.08),rgba(255,255,255,0));
+  filter:blur(2px);pointer-events:none
+}
+h1,h2,h3,h4{color:var(--txt-900)}
+.label{color:var(--txt-500);font-weight:750;letter-spacing:1.2px}
+.big-num{color:var(--txt-900);font-weight:850;letter-spacing:-.045em}
+.unit-sm{color:var(--txt-500);font-weight:650}
+.section-eye,.w-eyebrow{color:var(--accent);font-weight:850}
+.section-heading{margin-bottom:38px;max-width:920px}
+.section-heading em{
+  color:var(--accent);background:none;-webkit-text-fill-color:initial;
+  text-decoration:underline;text-decoration-color:rgba(47,143,114,.22);
+  text-decoration-thickness:.18em;text-underline-offset:-.08em;text-decoration-skip-ink:none
+}
+
+section:nth-child(odd),section:nth-child(even){background:transparent}
+section{padding-top:88px;padding-bottom:88px;transform:translateY(12px) scale(.99)}
+section.visible{animation:sectionReveal .72s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes sectionReveal{to{opacity:1;transform:translateY(0) scale(1)}}
+
+#cover{
+  min-height:100svh;overflow:hidden;background:
+    radial-gradient(circle at 78% 28%,rgba(133,211,179,.25),transparent 28%),
+    radial-gradient(circle at 18% 76%,rgba(110,157,180,.14),transparent 24%),
+    linear-gradient(145deg,#153633 0%,#1C4842 56%,#24564D 100%)!important
+}
+#cover::before,#cover::after{
+  content:"";position:absolute;pointer-events:none;filter:blur(.2px)
+}
+#cover::before{
+  width:420px;height:320px;right:-90px;bottom:-120px;border-radius:64% 36% 38% 62% / 50% 62% 38% 50%;
+  background:rgba(233,247,240,.08);border:1px solid rgba(255,255,255,.08)
+}
+#cover::after{
+  width:190px;height:150px;left:8%;top:18%;border-radius:43% 57% 66% 34% / 54% 44% 56% 46%;
+  background:rgba(255,255,255,.035)
+}
+#cover h1{color:#fff;font-weight:850;letter-spacing:-.05em}
+#cover h1 span{color:#8FD7B8!important}
+#cover>p:first-child{color:#8FD7B8!important}
+#cover p span{color:#A5E1C6!important}
+.scroll-hint{color:rgba(255,255,255,.55)}
+
+.top-tab-bar{
+  height:58px;padding:0 24px 0 68px;gap:7px;
+  background:rgba(252,252,250,.86);border-bottom:1px solid var(--border);
+  box-shadow:0 8px 28px rgba(24,59,56,.06);backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%)
+}
+.tab-btn{
+  min-height:36px;padding:8px 16px;border:1px solid transparent;border-radius:14px;
+  background:transparent;box-shadow:none;color:var(--txt-500);font-weight:750
+}
+.tab-btn:hover{color:var(--accent);background:var(--accent-lt);transform:translateY(-1px)}
+.tab-btn.active{
+  color:#fff;background:linear-gradient(135deg,var(--accent),#287A63);
+  border-color:rgba(30,103,81,.1);box-shadow:0 8px 18px rgba(47,143,114,.22)
+}
+.tab-btn:active{box-shadow:0 3px 8px rgba(47,143,114,.18);transform:translateY(0)}
+#t-sync-badge{padding:6px 10px;border-radius:999px;background:var(--bg-alt);color:var(--txt-500)!important}
+.side-nav{
+  top:58px!important;height:calc(100vh - 58px)!important;width:52px;
+  background:rgba(249,247,242,.82);border-right:1px solid var(--border);box-shadow:none;
+  backdrop-filter:blur(18px)
+}
+.nav-dot{width:8px;height:8px;background:#D4DED9;box-shadow:none;border:1px solid rgba(24,59,56,.04)}
+.nav-dot:hover{background:var(--accent-md);transform:scale(1.25)}
+.nav-dot.active{width:10px;height:18px;border-radius:999px;background:var(--accent);box-shadow:0 5px 12px rgba(47,143,114,.22)}
+.nav-tooltip{left:24px;padding:7px 10px;border-radius:10px;background:var(--txt-900);box-shadow:var(--shadow-sm)}
+.scroll-progress{height:3px;background:linear-gradient(90deg,#76C6A5,var(--accent),#4F8BA1)}
+
+.bento{gap:18px}
+.card,.w-panel,.w-stat,.w-card,.w-viz-card,.m-card,.m-ogk,.m-gate{
+  background:rgba(255,255,255,.94);border:1px solid var(--border);box-shadow:var(--shadow)
+}
+.card{
+  position:relative;isolation:isolate;overflow:hidden;border-radius:var(--radius);padding:26px;
+  transform:translateY(12px) scale(.98);transform-style:flat;perspective:none;
+  transition:transform .38s cubic-bezier(.16,1,.3,1),box-shadow .38s cubic-bezier(.16,1,.3,1),border-color .3s
+}
+.card::before{
+  content:"";position:absolute;z-index:-1;right:-70px;top:-85px;width:180px;height:160px;
+  border-radius:48% 52% 70% 30% / 54% 34% 66% 46%;
+  background:radial-gradient(circle at 40% 45%,rgba(88,172,142,.09),rgba(88,172,142,0) 70%);
+  opacity:0;transition:opacity .35s
+}
+.card:hover{transform:translateY(-4px) scale(1);box-shadow:var(--shadow-h);border-color:rgba(47,143,114,.15)}
+.card:hover::before{opacity:1}
+section.visible .card{animation:cardReveal .66s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--stagger,80ms)}
+section.visible .card:nth-child(1){--stagger:60ms}
+section.visible .card:nth-child(2){--stagger:110ms}
+section.visible .card:nth-child(3){--stagger:160ms}
+section.visible .card:nth-child(4){--stagger:210ms}
+section.visible .card:nth-child(5){--stagger:260ms}
+section.visible .card:nth-child(6){--stagger:310ms}
+section.visible .card:nth-child(7){--stagger:360ms}
+section.visible .card:nth-child(8){--stagger:410ms}
+@keyframes cardReveal{
+  from{opacity:0;transform:translateY(12px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.kpi-card{min-height:168px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi-card::after{
+  content:"";position:absolute;left:26px;right:26px;bottom:18px;height:3px;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent),rgba(47,143,114,.08))
+}
+.kpi-card .kpi-sub,.kpi-card .kpi-delta{padding-bottom:12px}
+.gate-card{border-top:3px solid var(--accent)}
+
+.quote,.insight,.warn-box{
+  position:relative;overflow:hidden;border:1px solid transparent;border-left:0;border-radius:18px;
+  box-shadow:none;padding:18px 20px
+}
+.quote{background:linear-gradient(135deg,var(--accent-lt),rgba(255,255,255,.82));border-color:rgba(47,143,114,.12)}
+.insight{
+  background:linear-gradient(135deg,rgba(233,246,239,.92),rgba(238,245,248,.78));
+  border-color:rgba(47,143,114,.15);backdrop-filter:blur(12px)
+}
+.warn-box{background:linear-gradient(135deg,var(--amber-lt),rgba(255,255,255,.85));border-color:rgba(194,138,55,.16)}
+.insight::after,.w-brief::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 22%,rgba(255,255,255,.65) 42%,transparent 62%);
+  transform:translateX(-130%);animation:organicShimmer 7s ease-in-out infinite
+}
+@keyframes organicShimmer{0%,68%{transform:translateX(-130%)}88%,100%{transform:translateX(130%)}}
+.insight .tag{color:var(--accent)}
+.quote p,.insight p,.warn-box p{color:var(--txt-700)}
+
+.tbl{border-collapse:separate;border-spacing:0}
+.tbl th{
+  background:var(--bg-alt);color:var(--txt-500);font-weight:800;border-bottom:1px solid var(--border);
+  padding:11px 13px
+}
+.tbl th:first-child{border-radius:12px 0 0 12px}.tbl th:last-child{border-radius:0 12px 12px 0}
+.tbl td{padding:12px 13px;border-bottom:1px solid rgba(20,30,40,.055)}
+.tbl tbody tr{transition:background .2s}
+.tbl tbody tr:hover{background:rgba(47,143,114,.035)}
+.tbl .hl{color:var(--accent)}
+.tbl .neg{color:var(--burgundy)}
+
+.chip,.owner,.ts-eye,.t-sc,.w-chip,.m-gate-state{
+  box-shadow:none;border:1px solid rgba(20,30,40,.05)
+}
+.flow-node,.guard-item{
+  border:1px solid var(--border);background:#fff;box-shadow:var(--shadow-sm);border-radius:14px
+}
+.flow-node:hover,.guard-item:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.flow-node.accent{background:var(--accent-lt);border-color:rgba(47,143,114,.22);box-shadow:none}
+.phase-tag::after{animation-duration:5s}
+
+#tracker-wrap,#weekly-wrap,#monthly-wrap{padding-top:84px;background:transparent}
+.tr-section{margin-bottom:42px}
+.tr-sec-title{border-bottom:0;padding-bottom:0;margin-bottom:18px;font-size:20px;letter-spacing:-.025em}
+.ts-eye{background:var(--accent-lt);color:var(--accent);border-radius:999px;padding:5px 9px}
+.t-progress-track,.w-meter,.w-bar,.m-progress{background:#E8EEEB;box-shadow:none}
+.t-progress-fill,.w-meter i,.w-bar i,.m-progress i{background:linear-gradient(90deg,#66B898,var(--accent))}
+.t-gate-cell{
+  background:#fff!important;border:1px solid var(--border)!important;border-radius:16px;box-shadow:var(--shadow-sm)
+}
+.t-gate-cell:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.t-gate-cell[data-state="pass"]{background:var(--teal-lt)!important;border-color:rgba(36,127,99,.22)!important}
+.t-gate-cell[data-state="fail"]{background:var(--burgundy-lt)!important;border-color:rgba(200,102,82,.22)!important}
+.t-ptab,.t-mtab{
+  background:#fff;border:1px solid var(--border);box-shadow:none;border-radius:999px;padding:7px 13px
+}
+.t-ptab:hover,.t-mtab:hover{color:var(--accent);border-color:rgba(47,143,114,.24);transform:translateY(-1px)}
+.t-ptab.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 7px 16px rgba(47,143,114,.18)}
+.t-mtab.active{background:var(--accent-lt);color:var(--accent);border-color:rgba(47,143,114,.22);box-shadow:none}
+.t-task-item{
+  background:#fff;border:1px solid var(--border);box-shadow:none;border-radius:14px
+}
+.t-task-item:hover{background:var(--accent-lt);border-color:rgba(47,143,114,.18);box-shadow:none;transform:translateY(-1px)}
+.t-task-cb{background:#fff;border:1px solid var(--border-md);box-shadow:none}
+.t-issue-item{background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm);border-radius:18px}
+#tl-outer{border-color:var(--border);border-radius:18px;box-shadow:var(--shadow-sm);background:#fff}
+
+.t-btn-add,.t-btn-save,.t-btn-cancel,.w-btn{
+  min-height:38px;border:1px solid var(--border);border-radius:12px;box-shadow:none;
+  transition:transform .25s cubic-bezier(.16,1,.3,1),background .25s,color .25s,box-shadow .25s
+}
+.t-btn-save,.w-btn.primary{
+  background:linear-gradient(135deg,var(--accent),#287A63);color:#fff;border-color:transparent;
+  box-shadow:0 8px 18px rgba(47,143,114,.18)
+}
+.t-btn-add{background:var(--accent-lt);color:var(--accent);border:1px dashed rgba(47,143,114,.4)}
+.t-btn-cancel,.w-btn{background:#fff;color:var(--txt-700)}
+.t-btn-add:hover,.t-btn-save:hover,.t-btn-cancel:hover,.w-btn:hover{
+  transform:translateY(-2px);box-shadow:0 10px 24px rgba(24,59,56,.1)
+}
+.t-btn-add:active,.t-btn-save:active,.t-btn-cancel:active,.w-btn:active{transform:translateY(0);box-shadow:none}
+.w-btn.ghost{background:rgba(255,255,255,.72);border-color:var(--border)}
+
+.t-field input,.t-field select,.t-field textarea,#t-popover-input,
+.w-toolbar select,.w-field input,.w-field select,.w-field textarea,.w-select-wrap select,
+.m-action input,.m-action select,.m-note textarea{
+  background:#fff;border:1px solid var(--border-md);box-shadow:none;border-radius:13px;color:var(--txt-900)
+}
+.t-field input:focus,.t-field select:focus,.t-field textarea:focus,#t-popover-input:focus,
+.w-field input:focus,.w-field select:focus,.w-field textarea:focus,.w-toolbar select:focus,
+.w-select-wrap:focus-within select,.m-action input:focus,.m-action select:focus,.m-note textarea:focus{
+  border-color:var(--accent);box-shadow:var(--focus-ring);outline:none
+}
+.w-field input:disabled,.w-field select:disabled,.w-field textarea:disabled{
+  background:var(--bg-alt);box-shadow:none
+}
+#t-modal,#t-task-modal,#t-tl-modal,#t-popover{
+  background:rgba(255,255,255,.98)!important;border:1px solid var(--border)!important;
+  box-shadow:0 28px 80px rgba(24,59,56,.2)!important;backdrop-filter:blur(18px)
+}
+#t-modal-overlay,#t-task-modal-overlay,#t-tl-modal-overlay{background:rgba(20,48,46,.35)!important;backdrop-filter:blur(8px)}
+
+.w-hero,.m-hero{padding:8px 0 4px}
+.w-title,.m-title{color:var(--txt-900);font-weight:900}
+.w-stat,.w-panel,.w-card,.w-viz-card,.m-card,.m-ogk,.m-gate{border-radius:22px}
+.w-stat{min-height:140px}
+.w-stat b,.m-kpi b{color:var(--txt-900);font-weight:900}
+.w-panel{padding:22px}
+.w-panel.needs-attention,.w-panel.needs-attention.level-2,.w-panel.needs-attention.level-3{
+  border-color:rgba(200,102,82,.32);box-shadow:var(--shadow)
+}
+.w-select-wrap select{font-weight:800}
+.w-workmark{background:var(--accent-lt);color:var(--accent);box-shadow:none;border:1px solid rgba(47,143,114,.1)}
+.w-ring{background:conic-gradient(var(--accent) calc(var(--p)*1%),#E8EEEB 0);box-shadow:none}
+.w-ring::after{background:#fff;box-shadow:none}
+.w-week-row,.m-flow-row,.m-action{background:var(--bg-alt);box-shadow:none;border:1px solid rgba(20,30,40,.04)}
+.w-compare,.w-alert,.m-missing{border-radius:15px}
+.m-ogk-head{background:#fff}
+
+/* MONTHLY REVIEW — meeting-first information flow */
+#monthly-wrap section{min-height:0;opacity:1;transform:none;animation:none}
+.m-preflight{margin:4px 0 20px;padding:20px;border-radius:22px;background:linear-gradient(135deg,#FFF8EC,#FFFDF8);border:1px solid rgba(194,138,55,.18)}
+#monthly-wrap .m-preflight{background:linear-gradient(135deg,#FFF8EC,#FFFDF8)}
+.m-preflight .m-section-head{margin-bottom:12px}
+.m-preflight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.m-missing{
+  display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px;width:100%;
+  padding:14px 15px;border:1px solid rgba(194,138,55,.18);background:#fff;color:var(--txt-700);
+  font-family:var(--ff);cursor:pointer;transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s,border-color .25s
+}
+.m-missing:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:rgba(47,143,114,.28)}
+.m-missing b{font-size:14px;color:var(--txt-900)}
+.m-missing span{font-size:10px;color:var(--txt-400)}
+.m-missing strong{font-size:11px;color:var(--txt-600)}
+.m-missing em{margin-top:5px;font-size:11px;color:var(--accent);font-style:normal;font-weight:850}
+
+.m-analysis-hero{
+  position:relative;overflow:hidden;margin:22px 0 28px;padding:28px;border-radius:28px;
+  background:
+    radial-gradient(circle at 92% 8%,rgba(123,196,165,.22),transparent 24rem),
+    linear-gradient(140deg,#173C38 0%,#23564D 58%,#2E6B5D 100%);
+  color:#fff;box-shadow:0 24px 54px rgba(24,59,56,.18)
+}
+#monthly-wrap .m-analysis-hero{
+  background:
+    radial-gradient(circle at 92% 8%,rgba(123,196,165,.22),transparent 24rem),
+    linear-gradient(140deg,#173C38 0%,#23564D 58%,#2E6B5D 100%)
+}
+.m-analysis-hero::after{
+  content:"";position:absolute;right:-70px;bottom:-100px;width:300px;height:250px;border-radius:60% 40% 52% 48% / 44% 62% 38% 56%;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);pointer-events:none
+}
+.m-analysis-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;position:relative;z-index:1}
+.m-analysis-head h3{font-size:clamp(24px,3vw,36px);color:#fff;margin:2px 0 5px}
+.m-analysis-head p{font-size:13px;color:rgba(255,255,255,.64)}
+.m-analysis-head small{font-size:10px;color:rgba(255,255,255,.45)}
+.m-analysis-hero .w-eyebrow{color:#9DDFC2}
+.m-analysis-summary{position:relative;z-index:1;max-width:920px;margin:28px 0 20px}
+.m-analysis-summary h4{font-size:clamp(21px,2.5vw,31px);line-height:1.3;color:#fff;margin-bottom:9px;letter-spacing:-.035em}
+.m-analysis-summary p{font-size:14px;line-height:1.75;color:rgba(255,255,255,.74)}
+.m-analysis-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.m-analysis-grid article{padding:18px;border-radius:18px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11);backdrop-filter:blur(10px)}
+.m-analysis-grid article>span{display:block;font-size:11px;font-weight:900;color:#A9E3C8;margin-bottom:10px}
+.m-analysis-grid article>strong{display:block;margin:13px 0 6px;font-size:11px;color:rgba(255,255,255,.58)}
+.m-analysis-grid ul{margin:0;padding-left:17px}
+.m-analysis-grid li,.m-analysis-grid p{font-size:12px;line-height:1.6;color:rgba(255,255,255,.82)}
+.m-analysis-grid li+li{margin-top:6px}
+.m-analysis-grid .is-warning>span{color:#FFD79A}
+.m-analysis-grid .is-decision>span{color:#B9DCEB}
+.m-analysis-grid .is-priority>span{color:#D8E9A8}
+.m-analysis-evidence{position:relative;z-index:1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:16px}
+.m-analysis-evidence b{font-size:11px;color:rgba(255,255,255,.55);margin-right:4px}
+.m-analysis-evidence span{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.78)}
+.m-kpi-status{display:inline-flex;margin-top:10px;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;background:#EEF4F1;color:#2F6F5C}
+.m-kpi-status.miss{background:#FFF1E8;color:#A8542E}
+.m-kpi-status.neutral{background:#F3F1ED;color:#746D64}
+.m-gate-gap{display:block;margin-top:2px;font-size:10px;font-weight:800;color:#9B5C37}
+.m-gate-gap.met{color:#2F765E}
+
+.m-detail-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:18px;align-items:start}
+.m-flow-body{overflow:hidden}
+.m-flow-chain{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:5px 3px 12px;scroll-snap-type:x proximity}
+.m-flow-node{
+  flex:0 0 210px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;
+  padding:14px;border:1px solid var(--border);border-radius:16px;background:#fff;color:var(--txt-700);
+  font-family:var(--ff);cursor:pointer;scroll-snap-align:start;transition:transform .22s,box-shadow .22s,border-color .22s
+}
+.m-flow-node:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:rgba(47,143,114,.24)}
+.m-flow-node b{font-size:12px;color:var(--accent)}
+.m-flow-node>span:not(.m-flow-week){font-size:12px;line-height:1.55}
+.m-flow-node small{font-size:10px;line-height:1.45;color:var(--txt-500)}
+.m-flow-week{font-size:10px;font-weight:850;color:var(--txt-400)}
+.m-flow-link{flex:0 0 auto;align-self:center;color:var(--accent);font-size:18px;font-weight:800}
+.m-flow-outcome{flex:0 0 170px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:15px;border-radius:17px;background:var(--accent-lt);border:1px solid rgba(47,143,114,.18)}
+.m-flow-outcome span,.m-flow-outcome small{font-size:10px;color:var(--txt-500)}
+.m-flow-outcome b{font-size:13px;color:var(--accent)}
+
+.m-campaign-list{display:grid;gap:9px;margin-top:12px}
+.m-campaign{display:grid;grid-template-columns:5px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-radius:14px;background:var(--bg-alt);border:1px solid rgba(20,30,40,.04)}
+.m-campaign i{width:5px;height:100%;min-height:42px;border-radius:99px;background:var(--campaign-color)}
+.m-campaign div{display:flex;flex-direction:column;gap:2px}
+.m-campaign span{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-400)}
+.m-campaign b{font-size:12px;color:var(--txt-900)}
+.m-campaign time{font-size:11px;font-weight:800;color:var(--accent);white-space:nowrap}
+
+.m-closing{margin:26px 0 4px;padding:34px 28px;border-radius:28px;text-align:center;background:linear-gradient(135deg,var(--accent-lt),#F8FBF9);border:1px solid rgba(47,143,114,.14)}
+#monthly-wrap .m-closing{background:linear-gradient(135deg,var(--accent-lt),#F8FBF9)}
+#monthly-wrap section.m-card{background:rgba(255,255,255,.94)}
+.m-closing h3{font-size:14px;margin:4px 0 14px;color:var(--txt-500)}
+.m-closing blockquote{max-width:920px;margin:0 auto;font-size:clamp(20px,3vw,34px);font-weight:880;letter-spacing:-.04em;line-height:1.38;color:var(--txt-900)}
+
+#auth-gate{
+  background:
+    radial-gradient(circle at 82% 18%,rgba(88,172,142,.22),transparent 25rem),
+    radial-gradient(circle at 12% 82%,rgba(80,122,145,.10),transparent 22rem),
+    #F9F7F2!important;
+  color:var(--txt-900)!important
+}
+#auth-gate::before{
+  content:"";position:absolute;width:min(640px,82vw);height:min(420px,62vh);
+  border:1px solid var(--border);border-radius:52% 48% 38% 62% / 42% 36% 64% 58%;
+  background:rgba(255,255,255,.52);box-shadow:var(--shadow);z-index:-1
+}
+#auth-gate>p:first-child{color:var(--accent)!important}
+#auth-gate h1{color:var(--txt-900)!important}
+#auth-gate h1+p{color:var(--txt-500)!important}
+#auth-gate h1+p strong{color:var(--accent)!important}
+#auth-gate h1+p span{color:var(--txt-400)!important}
+#auth-gate-btn{
+  background:linear-gradient(135deg,var(--accent),#287A63)!important;color:#fff!important;
+  border-radius:14px!important;padding:14px 24px!important;box-shadow:0 12px 28px rgba(47,143,114,.24)!important
+}
+#auth-gate-msg{color:var(--burgundy)!important}
+#auth-gate>p:last-child{color:var(--txt-300)!important}
+
+input[type="range"]{height:6px;background:#DDE7E2;box-shadow:none}
+input[type="range"]::-webkit-slider-thumb{
+  width:20px;height:20px;background:var(--accent);border:3px solid #fff;
+  box-shadow:0 4px 12px rgba(47,143,114,.28)
+}
+.num-glow{animation:numPulse .8s cubic-bezier(.16,1,.3,1)}
+@keyframes numPulse{
+  0%{opacity:.35;transform:translateY(5px) scale(.97)}
+  55%{color:var(--accent)}
+  100%{opacity:1;transform:translateY(0) scale(1);color:inherit}
+}
+
+@media(max-width:980px){
+  .top-tab-bar{padding-left:18px;overflow-x:auto;scrollbar-width:none}
+  .top-tab-bar::-webkit-scrollbar{display:none}
+  #t-sync-badge{position:sticky;right:8px;background:rgba(249,247,242,.95)}
+  .m-analysis-grid{grid-template-columns:1fr 1fr}
+  .m-detail-layout{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  section{padding:72px 16px 56px}
+  #strategy-wrap #cover{padding:104px 20px 72px}
+  #tracker-wrap,#weekly-wrap,#monthly-wrap{padding:78px 14px 48px}
+  .top-tab-bar{height:58px;gap:5px}
+  .tab-btn{flex:0 0 auto;padding:8px 12px;font-size:12px}
+  #t-sync-badge{display:none}
+  .bento{gap:14px}
+  .card{padding:21px;border-radius:20px}
+  .card:hover{transform:none}
+  .kpi-card{min-height:148px}
+  .tbl{min-width:620px}
+  .card:has(.tbl){overflow-x:auto}
+  .m-note{grid-template-columns:1fr}
+  .m-action{grid-template-columns:1fr}
+  .m-analysis-hero{padding:22px 18px;border-radius:22px}
+  .m-analysis-head{display:block}
+  .m-analysis-head small{display:block;margin-top:8px}
+  .m-analysis-grid{grid-template-columns:1fr}
+  .m-analysis-grid article{min-height:0}
+  .m-preflight{padding:16px}
+  .m-flow-node{flex-basis:78vw}
+  .m-closing{padding:28px 18px}
+  #auth-gate::before{width:92vw;height:60vh}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .insight::after,.w-brief::after{display:none}
+  .card,section{transform:none!important}
+}
+</style>
+<style id="brand-os-page">
+/* ===== BRAND-OS page layer — Neo Organic 토큰 위에 구축 ===== */
+
+/* 문서형 레이아웃: 섹션을 전체높이 대신 넉넉한 리듬으로 */
+#bos section{min-height:0;padding:80px 20px;transform:none;opacity:1;scroll-margin-top:60px}
+#bos section.reveal{opacity:0;transform:translateY(18px)}
+#bos section.reveal.visible{animation:sectionReveal .5s cubic-bezier(.16,1,.3,1) forwards}
+.bos-wrap{max-width:1040px;margin:0 auto}
+.bos-eye{font-size:11px;font-weight:850;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+
+/* 상단 스티키 네비 */
+.bos-nav{position:sticky;top:0;z-index:100;background:rgba(252,252,250,.86);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
+  border-bottom:1px solid var(--border);box-shadow:0 8px 28px rgba(24,59,56,.06)}
+.bos-nav-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:6px;
+  padding:10px 20px;overflow-x:auto;scrollbar-width:none}
+.bos-nav-inner::-webkit-scrollbar{display:none}
+.bos-brand{font-weight:900;font-size:14px;color:var(--txt-900);letter-spacing:-.02em;
+  margin-right:8px;white-space:nowrap}
+.bos-nav a{flex:0 0 auto;padding:7px 13px;border-radius:12px;font-size:12.5px;font-weight:750;
+  color:var(--txt-500);text-decoration:none;transition:all .2s;white-space:nowrap}
+.bos-nav a:hover{color:var(--accent);background:var(--accent-lt)}
+.bos-nav a.active{color:#fff;background:linear-gradient(135deg,var(--accent),#287A63);
+  box-shadow:0 6px 14px rgba(47,143,114,.22)}
+
+/* 히어로 — Neo Organic 커버(딥틸 + 유기체 블롭)
+   #bos section.bos-hero 로 스코핑: 디자인시스템의 section:nth-child(odd){background:transparent}
+   보다 특이도를 높여 딥틸 배경이 확실히 렌더되게 한다(흰 텍스트 가독성 보장). */
+#bos section.bos-hero{position:relative;overflow:hidden;text-align:center;color:#fff;
+  padding:120px 22px 96px!important;
+  background:
+    radial-gradient(circle at 78% 26%,rgba(133,211,179,.26),transparent 30%),
+    radial-gradient(circle at 16% 78%,rgba(110,157,180,.16),transparent 26%),
+    linear-gradient(145deg,#153633 0%,#1C4842 56%,#24564D 100%)!important}
+.bos-hero::before{content:"";position:absolute;pointer-events:none;width:420px;height:320px;
+  right:-90px;bottom:-120px;border-radius:64% 36% 38% 62%/50% 62% 38% 50%;
+  background:rgba(233,247,240,.08);border:1px solid rgba(255,255,255,.08)}
+.bos-hero::after{content:"";position:absolute;pointer-events:none;width:190px;height:150px;
+  left:8%;top:16%;border-radius:43% 57% 66% 34%/54% 44% 56% 46%;background:rgba(255,255,255,.035)}
+.bos-hero .bos-in{position:relative;z-index:1;max-width:820px;margin:0 auto}
+.bos-hero h1{color:#fff;font-size:clamp(30px,5.6vw,58px);font-weight:850;letter-spacing:-.045em;
+  line-height:1.18;margin-bottom:22px}
+.bos-hero h1 mark{background:linear-gradient(120deg,rgba(143,215,184,.28),rgba(143,215,184,.28));
+  background-repeat:no-repeat;background-position:0 82%;background-size:100% .4em;
+  color:#8FD7B8;padding:0 2px}
+.bos-hero .bos-sub{font-size:clamp(14px,2vw,18px);color:rgba(255,255,255,.85);line-height:1.8;
+  margin-bottom:8px}
+.bos-hero .bos-sub .src{display:block;margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)}
+.bos-hero .bos-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:26px 0 22px}
+.bos-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
+  font-size:12px;font-weight:800;background:rgba(255,255,255,.1);color:#CDEBDD;
+  border:1px solid rgba(255,255,255,.14)}
+.bos-hero .bos-foot{font-size:13px;color:rgba(255,255,255,.78);font-weight:700;letter-spacing:.2px;
+  margin-top:14px}
+
+/* 리드 문장 */
+.bos-lead{font-size:clamp(15px,1.9vw,18px);color:var(--txt-700);line-height:1.85;
+  max-width:820px;margin:0 0 28px}
+
+/* 강조 배너 */
+.bos-banner{position:relative;overflow:hidden;margin:26px 0 0;padding:20px 24px;border-radius:20px;
+  background:linear-gradient(135deg,var(--accent-lt),#F8FBF9);border:1px solid rgba(47,143,114,.16);
+  font-size:clamp(15px,2vw,19px);font-weight:850;color:var(--txt-900);letter-spacing:-.02em;line-height:1.5}
+.bos-banner.dark{background:
+    radial-gradient(circle at 92% 10%,rgba(123,196,165,.2),transparent 22rem),
+    linear-gradient(140deg,#173C38,#2E6B5D);color:#fff;border-color:transparent;
+  box-shadow:0 18px 44px rgba(24,59,56,.16)}
+.bos-banner .k{color:var(--accent)}
+.bos-banner.dark .k{color:#8FD7B8}
+
+/* 십자 다이어그램 (#axes) */
+.bos-cross{display:grid;place-items:center;margin:10px auto 6px;max-width:600px}
+.bos-cross svg{width:100%;height:auto;display:block}
+
+/* 전후 비교 */
+.bos-ba{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+.bos-ba .bos-arrow{display:flex;align-items:center;color:var(--accent);font-size:20px;font-weight:800}
+.bos-panel{border-radius:16px;padding:14px 16px;font-size:13px;line-height:1.65}
+.bos-before{background:#F4F3EF;border:1px solid var(--border);color:var(--txt-600)}
+.bos-after{background:var(--accent-lt);border:1px solid rgba(47,143,114,.2);color:var(--txt-800)}
+.bos-panel .bos-plabel{display:block;font-size:10px;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:6px}
+.bos-before .bos-plabel{color:var(--txt-400)}
+.bos-after .bos-plabel{color:var(--accent)}
+
+/* 계단형 스테퍼 (#vertical) */
+.bos-steps{display:grid;gap:14px;margin-top:8px}
+.bos-step{position:relative;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+  background:rgba(255,255,255,.94);border:1px solid var(--border);box-shadow:var(--shadow-sm);
+  border-radius:18px;padding:18px 20px;transition:transform .25s,box-shadow .25s}
+.bos-step:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.bos-step-no{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  font-weight:900;font-size:17px;color:#fff;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#287A63);box-shadow:0 8px 16px rgba(47,143,114,.24)}
+.bos-step h4{font-size:16px;color:var(--txt-900);margin-bottom:2px}
+.bos-step .bos-who{font-size:12.5px;color:var(--accent);font-weight:800;margin-bottom:8px}
+.bos-step .bos-cond{font-size:13px;color:var(--txt-600);line-height:1.7}
+
+/* 브랜드팀 예시 그리드 */
+.bos-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.bos-team-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.bos-team-head h4{font-size:15px;color:var(--txt-900);margin:0}
+.bos-team .bos-note{margin-top:0}
+
+/* 로드맵 가로 타임라인 */
+.bos-road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+.bos-road .bos-rno{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--accent);
+  text-transform:uppercase;margin-bottom:8px}
+
+/* 라이브 뱃지 */
+.bos-live{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:800;background:var(--teal-lt);color:var(--teal);
+  border:1px solid rgba(36,127,99,.2)}
+.bos-live .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bosPulse 1.8s infinite}
+@keyframes bosPulse{0%{box-shadow:0 0 0 0 rgba(47,143,114,.45)}70%{box-shadow:0 0 0 8px rgba(47,143,114,0)}100%{box-shadow:0 0 0 0 rgba(47,143,114,0)}}
+
+/* 아코디언 헤더 우측 뱃지 */
+.bos-acc-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* 격자 유틸 */
+.bos-g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bos-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.bos-mini-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:var(--accent-lt);color:var(--accent);margin-bottom:12px}
+.bos-mini-ico svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+
+.bos-note{font-size:12.5px;color:var(--txt-500);line-height:1.7;margin-top:10px}
+.bos-h-eff{margin-top:12px;padding:12px 14px;border-radius:13px;background:var(--surface-mint);
+  border:1px solid rgba(47,143,114,.14);font-size:12.5px;line-height:1.65;color:var(--txt-700)}
+.bos-h-eff b{color:var(--teal)}
+
+@media(max-width:768px){
+  #bos section{padding:60px 16px}
+  .bos-hero{padding:104px 18px 76px!important}
+  .bos-g2,.bos-g3,.bos-road{grid-template-columns:1fr}
+  .bos-ba{grid-template-columns:1fr}
+  .bos-ba .bos-arrow{justify-content:center;transform:rotate(90deg)}
+}
+
+/* 인쇄: 아코디언 전부 펼침 */
+@media print{
+  .bos-nav,.scroll-progress{display:none!important}
+  .acc-body{max-height:none!important}
+  #bos section{padding:24px 0;opacity:1!important;transform:none!important}
+  .bos-hero{color:#000;background:#fff!important}
+  .bos-hero h1,.bos-hero .bos-sub,.bos-hero .bos-foot{color:#000!important}
+}
+</style>
+</head>
+<body>
+<div id="bos">
+<div class="scroll-progress" id="scroll-prog"></div>
+
+<!-- ═══ 상단 네비 ═══ -->
+<nav class="bos-nav">
+  <div class="bos-nav-inner">
+    <span class="bos-brand">닥터펠리스 본부 운영체제</span>
+    <a href="#why">왜 지금</a>
+    <a href="#horizontal-principle">가로축</a>
+    <a href="#buffer">완충</a>
+    <a href="#vertical">세로축</a>
+    <a href="#reward">보상</a>
+    <a href="#roadmap">로드맵</a>
+  </div>
+</nav>
+
+<!-- ═══ 0 · HERO ═══ -->
+<section id="hero" class="bos-hero">
+  <div class="bos-in">
+    <div class="bos-tags">
+      <span class="bos-pill">방향 제안</span>
+      <span class="bos-pill">함께 다듬어 가는 문서</span>
+    </div>
+    <h1>명확한 프로세스는 규칙이 아니라<br><mark>성장의 토대</mark>입니다.</h1>
+    <p class="bos-sub">각자가 자기 영역을 확실히 책임질 수 있을 때, 그 위에서 안심하고 성장할 수 있습니다.
+      <span class="src">— 닥터펠리스 본부 운영체제 (방향 제안)</span></p>
+    <p class="bos-foot">100억 → 300억, 사람을 늘리지 않고 각자가 주인이 되는 길</p>
+  </div>
+</section>
+
+<!-- ═══ 1 · 한 장 요약 ═══ -->
+<section id="summary" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Summary</p>
+    <h2 class="section-heading">이 문서를 <em>한 장으로</em></h2>
+    <div class="bos-g2">
+      <div class="card">
+        <span class="chip chip-o">가로축 · 일의 흐름</span>
+        <table class="tbl" style="margin-top:14px">
+          <tbody>
+            <tr><th style="width:96px">원칙</th><td>결정하는 사람이 책임진다</td></tr>
+            <tr><th>무엇을 바꾸나</th><td>팀 사이 R&amp;R을 통제 가능한 팀에 재배치</td></tr>
+            <tr><th>지금 상태</th><td>SCM·프로덕트 이미 합의 진행 중</td></tr>
+            <tr><th>순서</th><td><span class="hl">먼저</span> 세운다</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <span class="chip chip-g">세로축 · 사람의 성장</span>
+        <table class="tbl" style="margin-top:14px">
+          <tbody>
+            <tr><th style="width:96px">원칙</th><td>통제하는 만큼 성장하고 보상받는다</td></tr>
+            <tr><th>무엇을 바꾸나</th><td>직무가 아니라 영역의 오너로 성장하는 궤도 신설</td></tr>
+            <tr><th>지금 상태</th><td>관문·권한·보상 가안 제시</td></tr>
+            <tr><th>순서</th><td>프로세스 안정 후 <span class="hl">그 위에</span> 얹는다</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bos-banner">먼저 바닥을 다지고, 그 위에서 함께 큰다.</div>
+  </div>
+</section>
+
+<!-- ═══ 2 · 왜 지금인가 ═══ -->
+<section id="why" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Why now</p>
+    <h2 class="section-heading">지금 우리가 함께 <em>겪는 것</em></h2>
+    <p class="bos-lead">우리는 100억 규모의 회사이고, 300억을 향해 갑니다. 그 과정에서 사람을 무작정 늘리지 않습니다. 소수 정예가 각자 명확한 권한과 책임을 가지고, 그만큼 성장하고 보상받는 조직을 지향합니다.</p>
+    <div class="bos-g3">
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 14h7v7h-7z"/><path d="M10 10l4 4" stroke-dasharray="2 2"/></svg></div>
+        <h3>경계의 부재</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">부서 사이에서 "이건 누가 정하지?"가 반복되고, 결정하지 않은 일의 결과를 누군가 대신 떠안습니다.</p>
+      </div>
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg></div>
+        <h3>사람 의존</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">같은 문제가 반복돼도, 재발을 막는 게 정해진 구조가 아니라 특정 담당자의 경험과 기억에 달려 있습니다.</p>
+      </div>
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><path d="M4 20V6M4 8h11M4 13h8"/><path d="M20 20V4"/></svg></div>
+        <h3>성장의 벽</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">자기 일이 직무명보다 훨씬 넓어졌는데, 그 넓어진 기여가 성장으로 이어지는 길은 잘 안 보입니다.</p>
+      </div>
+    </div>
+    <div class="bos-banner">한마디로 — 일이 구조가 아니라 사람에 의존하고 있습니다. 지금까지는 통했지만, 더 커지면 병목이 됩니다.</div>
+  </div>
+</section>
+
+<!-- ═══ 3 · 두 개의 축 ═══ -->
+<section id="axes" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Two axes</p>
+    <h2 class="section-heading">이 제안은 <em>두 축</em>으로 이뤄집니다</h2>
+    <div class="card" style="padding:30px 26px">
+      <div class="bos-cross">
+        <svg viewBox="0 0 600 420" role="img" aria-label="세로축 사람의 성장, 가로축 일의 흐름, 교차점 본부 운영체제">
+          <defs>
+            <marker id="ah-v" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#2F8F72" stroke-width="1.8"/>
+            </marker>
+            <marker id="ah-h" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#507A91" stroke-width="1.8"/>
+            </marker>
+          </defs>
+          <!-- 축 -->
+          <line x1="300" y1="380" x2="300" y2="66" stroke="#2F8F72" stroke-width="2.5" marker-end="url(#ah-v)"/>
+          <line x1="92" y1="214" x2="470" y2="214" stroke="#507A91" stroke-width="2.5" marker-end="url(#ah-h)"/>
+          <!-- 세로축 라벨 -->
+          <text x="300" y="46" text-anchor="middle" fill="#247F63" font-size="16" font-weight="800">사람의 성장</text>
+          <text x="300" y="406" text-anchor="middle" fill="#5C6E6C" font-size="12.5">각자 자기 영역의 주인으로 성장</text>
+          <!-- 가로축 라벨 (화살촉 위/아래로 분리해 겹침 방지) -->
+          <text x="466" y="194" text-anchor="end" fill="#3C6076" font-size="16" font-weight="800">일의 흐름</text>
+          <text x="466" y="250" text-anchor="end" fill="#5C6E6C" font-size="12.5">결정하는 사람이 책임진다</text>
+          <!-- 교차점 뱃지 (선 위에 덮어 그림) -->
+          <rect x="224" y="180" width="152" height="58" rx="16" fill="#183B38"/>
+          <text x="300" y="206" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">본부 운영체제</text>
+          <text x="300" y="225" text-anchor="middle" fill="#8FD7B8" font-size="11">가로축 × 세로축</text>
+        </svg>
+      </div>
+    </div>
+    <div class="bos-g2" style="margin-top:18px">
+      <div class="card">
+        <span class="chip chip-b">가로축</span>
+        <h3 style="margin-top:12px">결정하는 사람이 책임진다</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.8">팀 사이의 결정·책임 경계를 명확히. 모든 걸 규정으로 묶지 않고, 변하면 안 되는 최소한의 원칙만 고정하고 나머지는 자유롭게 둔다.</p>
+      </div>
+      <div class="card">
+        <span class="chip chip-g">세로축</span>
+        <h3 style="margin-top:12px">프로세스를 토대로 성장한다</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.8">명확해진 프로세스 위에서, 각자가 자기 영역을 소유하고 정해진 단계를 밟아 전문가로 성장한다.</p>
+      </div>
+    </div>
+    <div class="bos-banner">가로축(프로세스)이 먼저 서고, 그 위에 세로축(성장)이 얹힌다. 탄탄한 바닥이 있어야 그 위에서 안심하고 클 수 있다.</div>
+  </div>
+</section>
+
+<!-- ═══ 4 · 가로축 원칙 ═══ -->
+<section id="horizontal-principle" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Horizontal</p>
+    <h2 class="section-heading">가로축 — <em>결정하는 사람이 책임진다</em></h2>
+    <div class="quote">
+      <p>통제할 수 있는 팀이 결정하고, 결정한 팀이 책임진다.<br>
+      통제 못 하는 일의 결과를 대신 떠안지 않는다.<br>
+      책임이란 문제를 예방·해결·개선하는 주체를 뜻한다.</p>
+    </div>
+    <div class="bos-g3" style="margin-top:20px">
+      <div class="card">
+        <h3>결정한 팀이 책임진다</h3>
+        <p class="bos-note">결정 권한이 있는 팀이 그 결과도 책임진다.</p>
+      </div>
+      <div class="card">
+        <h3>통제 못 하는 일은 책임지지 않는다</h3>
+        <p class="bos-note">자기가 정하지 않은 결과를 떠안지 않는다.</p>
+      </div>
+      <div class="card">
+        <h3>책임은 원인이 된 결정에 따라</h3>
+        <p class="bos-note">사고·과잉·결품이 생기면 원인이 된 결정을 한 팀이 책임진다.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <span class="label">최소 경계 — 고정 vs 유연</span>
+      <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>고정 (변하면 안 됨)</th><th>유연 (계속 변해도 됨)</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">결정 주체 = 책임 주체</td><td>누가 무엇을 결정하는지의 구체 배분</td></tr>
+          <tr><td class="hl">필요한 정보(재고·납기 등)는 항상 공유</td><td>공유하는 방식·도구 (수기 → 자동화)</td></tr>
+          <tr><td class="hl">기준을 바꿀 때 누가·어떻게 바꾸는지</td><td>기준 내용 자체 / 채널·제품·목표</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight" style="margin-top:16px">
+      <span class="tag">메타 룰</span>
+      <p>변화는 그대로 허용하되, 변할 때 누가 책임지고 어떻게 바꾸는지의 메타 룰만 고정한다. 합의 문서는 1~2장이면 충분하다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5 · 팀별 R&R 전후 ═══ -->
+<section id="rnr" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">R&amp;R before / after</p>
+    <h2 class="section-heading">무엇이 어떻게 바뀌나 — <em>팀 사이 R&amp;R 전후 비교</em></h2>
+    <p class="bos-lead">각 관계는 "변경 전 → 변경 후" 대비입니다. 변경 전은 회색조, 변경 후는 브랜드 컬러로 강조합니다.</p>
+
+    <div class="card" style="padding:8px 22px">
+      <!-- 5-1 -->
+      <div class="acc-item open" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-1 · SCM ↔ 프로덕트</strong>
+            <span class="bos-acc-badges"><span class="chip chip-g">합의 진행 중 · 1차 완료</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>초도 발주</td><td class="neg">경계 모호, 그때그때 조율</td><td class="hl">계약·협상 = 프로덕트 / 수량 산정 = 공동 / 발주 실행 = SCM</td></tr>
+              <tr><td>재발주</td><td class="neg">불명확</td><td class="hl">SCM 단독</td></tr>
+              <tr><td>제조사·공급 이슈</td><td class="neg">대응 주체 불명확, 창구 분산</td><td class="hl">감지·알림·전산반영 = SCM / 결정·공지·외부협상 = 프로덕트 (창구 일원화)</td></tr>
+              <tr><td>원가 변동</td><td class="neg">통보 시점·주체 모호</td><td class="hl">감지·마진영향·ERP/WMS 반영 = SCM / 원가·판가 확정·공지 = 프로덕트</td></tr>
+              <tr><td>거래처발 단가 인상</td><td class="neg">SCM → 프로덕트 재전달</td><td class="hl">거래처가 프로덕트에 직접 전달</td></tr>
+              <tr><td>신제품 물류</td><td class="neg">출시 후 문제 사후 대응</td><td class="hl">개발 단계에서 SCM이 공급·물류 리스크 사전 검토 (사전점검 DB)</td></tr>
+              <tr><td>박스·입수량·팔렛트</td><td class="neg">담당 불명확</td><td class="hl">단품 규격 = 프로덕트 / 박스·적재 효율 기준 = SCM</td></tr>
+              <tr><td>마스터 시트</td><td class="neg">입력 주체 혼재</td><td class="hl">신규 품목·거래처·원가·수익률 = 프로덕트 / ERP 등록 = SCM</td></tr>
+              <tr><td>정기 회의</td><td class="neg">없음 (이슈 사후 처리)</td><td class="hl">월 1회 정기 운영지표 리뷰 (납기·원가·재고)</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 결품·과잉의 책임이 무조건 SCM으로 쏠리던 구조가, 원인이 된 결정을 한 팀에게 귀속되도록 바뀐다. 창구가 일원화되어 "누가 대응하지?"가 사라진다.</div>
+        </div></div>
+      </div>
+      <!-- 5-2 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-2 · SCM ↔ 매출부서</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>수요계획</td><td class="neg">세우지만 정확도 책임 기준 없음</td><td class="hl">수요계획 수립·정확도 책임 = 매출부서</td></tr>
+              <tr><td>발주 결정</td><td class="neg">가용재고 확인 수단 없이 발주</td><td class="hl">가용재고 확인 후 발주, 그 결정에서 비롯된 결품·과잉 책임 = 매출부서</td></tr>
+              <tr><td>재고 운영</td><td class="neg">결과가 SCM 책임으로만 드러남</td><td class="hl">안전재고 설정·재고 운영·정보 제공 = SCM</td></tr>
+              <tr><td>프로모션 기획</td><td class="neg">재고 확인 없이 기획 → 결품 클레임</td><td class="hl">재고 가용성 확인 위에서 기획 (자유도는 유지)</td></tr>
+              <tr><td>채널 수요 불균형</td><td class="neg">인정한 운영 기준 없음</td><td class="hl">채널별 운영 기준 도입, 수요단 정확도(MAPE) 측정</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 매출부서는 통제 가능한 것(수요계획·발주 결정)만 책임지고, 통제 못 하는 재고 운영은 SCM이 진다. 재고 책임을 통째로 넘기지 않는다 — 활동 단위로 나눈다.</div>
+        </div></div>
+      </div>
+      <!-- 5-3 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-3 · SCM ↔ 재무·회계</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>금액 산정</td><td class="neg">근거 없이 집행만 하게 됨</td><td class="hl">재고·매입 금액 산정·관리 = SCM</td></tr>
+              <tr><td>집행·증빙</td><td class="neg">산정과 집행 경계 모호</td><td class="hl">집행·증빙 = 재무 / 집행 SLA·일정 사전 합의</td></tr>
+              <tr><td>자금 집행 시점</td><td class="neg">시점·기준 미공유</td><td class="hl">SCM이 산정 근거·시점을 사전 공유</td></tr>
+              <tr><td>혼자 떠안는 부담</td><td class="neg">1인이 전체 실무 감당</td><td class="hl">경계 분리로 판단 근거를 SCM에서 받아 부담 완화</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 산정은 SCM, 집행·증빙은 재무로 경계가 명확해져 책임 공백이 사라진다.</div>
+        </div></div>
+      </div>
+      <!-- 5-4 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-4 · 프로덕트 ↔ 매출부서 (출시 게이트)</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>신제품 출시</td><td class="neg">준비 안 된 채 출시 → 환불·리뷰 손상</td><td class="hl">출시 전 재고·납기 정보 확인 게이트 통과</td></tr>
+              <tr><td>게이트 권한</td><td class="neg">—</td><td class="hl">SCM은 가부 결정 안 함, 판단 근거만 제공 / 출시 가부는 프로덕트·매출부서 결정</td></tr>
+              <tr><td>공급 계약</td><td class="neg">지연 페널티 없어 강제 수단 없음</td><td class="hl">공급 계약에 지연 페널티 명문화 = 프로덕트</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 게이트는 출시를 막는 장치가 아니라, 준비 안 된 출시의 손상을 막는 장치다.</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <span class="label">참고 · 신제품 점검 강도 차등 (시나리오 4종)</span>
+      <p class="bos-note">제조사·제품의 신규성에 따라 점검 범위를 차등한다. 검증된 부분은 다시 보지 않고 모르는 부분만 집중.</p>
+      <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>시나리오</th><th>제조사</th><th>제품</th><th>점검 강도</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>신규</td><td>신제품</td><td class="hl">최고 (전체)</td></tr>
+          <tr><td>B</td><td>기존</td><td>신제품</td><td>중 (제품 중심)</td></tr>
+          <tr><td>C</td><td>기존</td><td>리뉴얼</td><td>저 (변경분만)</td></tr>
+          <tr><td>D</td><td>신규</td><td>기존제품 이관</td><td>중 (제조사 중심)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · 충격 완충 ═══ -->
+<section id="buffer" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Buffer</p>
+    <h2 class="section-heading">책임이 느는 것이 <em>손해가 아니게</em></h2>
+    <p class="bos-lead">프로세스를 명확히 하면 일부 팀은 "책임이 늘었다"고 느낀다. 이 지점을 방치하지 않는 것이 이 제안의 핵심이다.</p>
+    <div class="bos-g2">
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"책임만 늘어난다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>통제 가능한 범위에만 책임진다. 오히려 떠안던 남의 책임에서 벗어난다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"권한 없이 책임진다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>책임이 느는 만큼 결정에 필요한 정보·권한이 함께 온다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"혼자 감당한다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>1인이 전체를 떠안는 영역은 경계·지원 구조를 우선 설계한다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"갑자기 바뀐다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>각 팀 충돌 지점을 미리 정리하고, 완충안을 합의한 뒤 적용한다</div>
+      </div>
+    </div>
+    <div class="bos-banner">명확한 프로세스가 누군가에게 부담이 아니라 <span class="k">보호막</span>이 되도록 하는 것 — 이게 가로축과 세로축을 잇는 다리다.</div>
+  </div>
+</section>
+
+<!-- ═══ 7 · 세로축 성장 궤도 ═══ -->
+<section id="vertical" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Vertical</p>
+    <h2 class="section-heading">세로축 — <em>프로세스를 토대로 성장한다</em></h2>
+    <p class="bos-lead">프로세스가 명확해지면, 그 위에서 각자가 자기 영역의 주인으로 성장한다. "연차가 차면 오르는" 방식이 아니라 정해진 관문을 통과해야 오르는 방식. 지금 내가 어디 있고 다음에 뭘 해야 하는지가 늘 보인다.</p>
+    <div class="bos-steps">
+      <div class="bos-step">
+        <div class="bos-step-no">1</div>
+        <div><h4>실행자</h4><div class="bos-who">맡은 일을 잘한다</div>
+          <div class="bos-cond">통과 조건 — 이 영역의 일을 안정적으로 완성한다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">2</div>
+        <div><h4>영역 오너</h4><div class="bos-who">영역을 지킨다</div>
+          <div class="bos-cond">통과 조건 — ① 기준을 문서로 남긴다 · ② 그 기준으로 남을 키운다 · ③ 영역 지표를 개선한다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">3</div>
+        <div><h4>영역 리드</h4><div class="bos-who">영역을 키운다</div>
+          <div class="bos-cond">통과 조건 — 영역을 지속 발전시키고, 다른 영역과의 협업을 이끈다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">4</div>
+        <div><h4>영역 총괄</h4><div class="bos-who">영역이 팀이 된다</div>
+          <div class="bos-cond">통과 조건 — 영역이 팀 규모로 성장, 관리자 또는 전문가로 선택</div></div>
+      </div>
+    </div>
+
+    <!-- 브랜드팀 적용 예시 -->
+    <div style="margin-top:34px">
+      <p class="bos-eye" style="margin-bottom:6px">브랜드팀 예시</p>
+      <h3 style="font-size:clamp(19px,2.4vw,26px);font-weight:850;letter-spacing:-.025em;color:var(--txt-900);margin:0 0 8px">각 담당자가 자기 <span style="color:var(--accent)">영역의 주인</span>으로 성장한다</h3>
+      <p class="bos-lead" style="margin-bottom:18px">위 4단계는 직무명이 아니라 <strong>영역</strong> 위에서 오른다. 브랜드팀을 예로 들면, 브랜드가 고객에게 닿는 결과를 기준으로 영역을 나누고 각 담당자가 그 영역의 오너로 궤도를 밟는다.</p>
+      <div class="bos-team">
+        <div class="card"><div class="bos-team-head"><h4>그로스 전략</h4><span class="chip chip-o">브라운</span></div><p class="bos-note">성장 구조·광고·채널 전략·수익성 실험을 연결해 "어떻게 더 크게 팔릴지"를 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>제품 전략</h4><span class="chip chip-o">마틸다</span></div><p class="bos-note">제품 정보를 고객이 이해하고 구매할 수 있는 언어와 구조로 번역한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 디자인</h4><span class="chip chip-o">니나</span></div><p class="bos-note">패키지·상세·굿즈·캠페인의 시각 자산과 닥터펠리스다운 감도를 책임진다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>고객 관계 설계</h4><span class="chip chip-o">유니</span></div><p class="bos-note">첫구매·재구매·구독·이탈 흐름을 하나의 고객 관계(CRM)로 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>CX·신뢰 설계</h4><span class="chip chip-o">로지</span></div><p class="bos-note">VOC·CX를 사후 처리에 두지 않고 신뢰 회복과 제품 개선으로 연결한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 내러티브</h4><span class="chip chip-o">노바</span></div><p class="bos-note">브랜드 언어·세계관·캠페인 메시지를 축적 가능한 자산으로 만든다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 운영 설계</h4><span class="chip chip-o">몰갱</span></div><p class="bos-note">데이터·자동화·체크리스트·R&amp;R 기준으로 운영의 반복 가능성을 확보한다.</p></div>
+      </div>
+    </div>
+
+    <!-- 조직명은 잠정 · 구조만 고정 -->
+    <div class="warn-box" style="margin-top:22px">
+      <span class="tag">이름은 잠정 · 구조만 고정</span>
+      <p>위의 <strong>영역 이름</strong>(그로스·제품·디자인·고객 관계·CX·내러티브·운영), <strong>단계 이름</strong>(실행자·영역 오너·리드·총괄), <strong>담당자 배치</strong>는 확정이 아니라 잠정 예시다. 조직이 100억에서 300억으로 커지는 동안 이름과 경계는 얼마든지 바뀔 수 있다 — 운영 방식을 먼저 검증하고, 실제로 나아진 것이 확인된 뒤에 조직명·역할명을 공식화한다. 고정하는 건 이름이 아니라 <strong>"통제하는 만큼 책임지고, 그만큼 성장·보상한다"</strong>는 구조 하나뿐이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8 · 핵심 관문 ═══ -->
+<section id="gate" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">The gate</p>
+    <h2 class="section-heading">가장 중요한 문턱 — <em>실행자에서 영역 오너로</em></h2>
+    <p class="bos-lead">일을 잘하는 것(실행자)과 영역을 소유하는 것(오너)의 차이는 아래 세 가지다. 이것이 AI가 대체 못 하는 사람의 가치다.</p>
+    <div class="bos-g3">
+      <div class="card gate-card">
+        <span class="gate-no">관문 ①</span>
+        <h3>기준 저작</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 내 노하우가 남이 따라 할 문서가 됐나</p>
+        <div class="bos-h-eff">통과 예시 — 그때그때 하던 발주 판단을 체크리스트·기준표로 남김</div>
+      </div>
+      <div class="card gate-card g2">
+        <span class="gate-no">관문 ②</span>
+        <h3>확산</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 그 기준으로 남이 성공했나</p>
+        <div class="bos-h-eff">통과 예시 — 신규 입사자가 그 문서로 온보딩해 실제로 해냄</div>
+      </div>
+      <div class="card gate-card g3">
+        <span class="gate-no">관문 ③</span>
+        <h3>영역 발전</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 내가 맡은 뒤 영역이 나아졌나</p>
+        <div class="bos-h-eff">통과 예시 — 담당 후 결품률·오류·리드타임 등이 개선됨</div>
+      </div>
+    </div>
+    <div class="bos-banner">이 세 관문을 통과하는 것이 곧 "이 조직에 대체 불가능한 사람"이 되는 길이고, 그 시점이 <span class="k">보상을 논의하는 출발점</span>이다.</div>
+  </div>
+</section>
+
+<!-- ═══ 9 · 권한·책임·보상 가안 ═══ -->
+<section id="reward" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Reward draft</p>
+    <h2 class="section-heading">권한·책임·<em>보상 가안</em></h2>
+    <div class="warn-box">
+      <span class="tag">주의</span>
+      <p>방향만 가리키지 않기 위한 구체 가안입니다. 확정이 아니라 논의의 출발점이며, 최종 확정은 경영진과 협의합니다.</p>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <table class="tbl">
+        <thead><tr><th>단계</th><th>권한</th><th>책임</th><th>보상 방향 (가안)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>실행자</strong></td><td>자기 업무 실행</td><td>맡은 일의 완성도</td><td>기존 급여 체계</td></tr>
+          <tr><td><strong>영역 오너</strong></td><td>해당 영역 최종 의견권 (반드시 청취, 무시하려면 근거 필요)</td><td>영역 기준의 품질, 영역 지표</td><td class="hl">오너 수당 또는 평가 가점 — 관문 통과가 보상 논의 개시점</td></tr>
+          <tr><td><strong>영역 리드</strong></td><td>영역별 결정권 (영역 내 판단 확정, 최종 사업판단은 본부장)</td><td>영역 전체 성과, 크로스팀 협업 결과</td><td class="hl">리드 직책급 + 영역 성과 연동</td></tr>
+          <tr><td><strong>영역 총괄</strong></td><td>팀 운영 권한</td><td>팀 성과</td><td class="hl">팀장급 처우 또는 전문가 트랙 별도 밴드</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bos-g3" style="margin-top:18px">
+      <div class="card"><h3>① 관문이 트리거다</h3><p class="bos-note">통과를 입증한 시점에 보상을 논의한다. "입증된 가치에 대한 대가"라 정당하다.</p></div>
+      <div class="card"><h3>② 의견권 ≠ 결정권</h3><p class="bos-note">오너는 반드시 청취되는 의견권, 리드는 확정하는 결정권. 권한 크기와 보상이 함께 오른다.</p></div>
+      <div class="card"><h3>③ 유지 조건이 있다</h3><p class="bos-note">오너십은 한 번 따면 끝이 아니라, 영역 발전을 매년 갱신해야 유지된다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10 · 각 팀이 얻는 것 ═══ -->
+<section id="teams" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">For each team</p>
+    <h2 class="section-heading">각 팀이 <em>얻는 것</em></h2>
+    <div class="bos-g2">
+      <div class="card"><span class="chip chip-o">SCM</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>남의 결정 결과가 재고 책임으로만 귀속됨</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>통제 범위만 책임지는 명확한 경계 + 운영 기준의 저작자 지위와 성장 궤도</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">프로덕트</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>개발에 집중하다 공급·원가 관리가 후순위</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>계약·원가·출시 기준의 명확한 주관권 + 제품 영역 오너 성장 경로</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">브랜드</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>넓어진 기여가 성장으로 안 이어짐</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>영역 오너십과 성장 궤도 + 기획 자유도를 지키는 재고 정보</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">매출부서</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>수요계획 정확도를 책임질 기준이 없음</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>통제 가능한 범위만 책임지고 그 안에서 자유롭게 계획</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">재무·회계</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>근거 없는 집행, 혼자 떠안는 부담</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>산정·집행 경계 분리 + 지원 구조 우선 설계</div></div>
+      </div>
+    </div>
+    <div class="bos-banner">모두가 "떠안던 남의 책임"에서 벗어나, 자기가 통제하는 만큼만 명확히 책임지고, 그만큼 성장한다.</div>
+  </div>
+</section>
+
+<!-- ═══ 11 · 진행 로드맵 ═══ -->
+<section id="roadmap" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Roadmap</p>
+    <h2 class="section-heading">어떻게 <em>진행되는가</em></h2>
+    <div class="bos-road">
+      <div class="card">
+        <div class="bos-rno">Step 1 · 가로축 착수</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">결정=책임 최소 경계 세우기. SCM·프로덕트 사례를 다른 팀 사이로 확장.</p>
+        <div style="margin-top:12px"><span class="bos-live"><span class="dot"></span>이미 시작됨</span></div>
+      </div>
+      <div class="card">
+        <div class="bos-rno">Step 2 · 충격 완충</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">각 팀 충돌 지점 정리, 완충안 합의.</p>
+        <div style="margin-top:12px"><span class="chip chip-a">각 팀 이견 반영</span></div>
+      </div>
+      <div class="card">
+        <div class="bos-rno">Step 3 · 세로축 얹기</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">영역 오너십·성장 궤도 공식화, 자격 통과자와 보상 논의.</p>
+        <div style="margin-top:12px"><span class="chip chip-b">프로세스 안정 확인 후</span></div>
+      </div>
+    </div>
+    <div class="bos-banner">실제로 나아지는 것이 확인된 것만 공식화한다. 이름이나 제도를 먼저 만들고 일하는 방식이 안 바뀌는 일을 방지한다.</div>
+  </div>
+</section>
+
+<!-- ═══ 12 · 원칙 & 클로징 ═══ -->
+<section id="principles" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Principles</p>
+    <h2 class="section-heading">우리가 지키는 <em>원칙</em></h2>
+    <div class="bos-g3">
+      <div class="card"><h3>소수 정예</h3><p class="bos-note">사람을 무작정 늘리지 않는다. 기민하게 움직이고 개인의 몫을 지킨다.</p></div>
+      <div class="card"><h3>권한·책임·보상의 일치</h3><p class="bos-note">결정하는 만큼 책임지고, 책임지는 만큼 권한·보상이 따른다.</p></div>
+      <div class="card"><h3>최소한만 고정</h3><p class="bos-note">성장하는 회사에 과한 규정은 독이다. 최소 경계만 고정한다.</p></div>
+    </div>
+    <div class="bos-banner dark" style="margin-top:26px;text-align:center;padding:40px 28px">
+      명확한 프로세스는 규칙이 아니라 <span class="k">성장의 토대</span>입니다.<br>
+      각자가 자기 영역을 확실히 책임질 수 있을 때, 그 위에서 안심하고 클 수 있습니다.<br>
+      <span style="font-size:.72em;font-weight:600;opacity:.8;display:block;margin-top:12px">큰 방향과 가안은 이렇게 잡되, 구체적인 내용은 각 팀과 함께 만들어 갑니다.</span>
+    </div>
+  </div>
+</section>
+
+</div><!-- /#bos -->
+
+<script>
+(function(){
+  // 스크롤 진행바
+  var prog=document.getElementById('scroll-prog');
+  function onScroll(){
+    var h=document.documentElement;
+    var p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    if(prog) prog.style.width=(p||0)+'%';
+  }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+  // 섹션 fade-up (1회성)
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+  },{threshold:0.12});
+  document.querySelectorAll('#bos section.reveal').forEach(function(s){ io.observe(s); });
+
+  // 아코디언
+  document.querySelectorAll('[data-acc] .acc-head').forEach(function(head){
+    head.setAttribute('role','button'); head.setAttribute('tabindex','0');
+    var item=head.closest('[data-acc]'); var body=item.querySelector('.acc-body');
+    function set(open){
+      item.classList.toggle('open',open);
+      head.setAttribute('aria-expanded',open?'true':'false');
+      body.style.maxHeight=open?(body.scrollHeight+'px'):'0px';
+    }
+    // 초기 상태
+    set(item.classList.contains('open'));
+    head.addEventListener('click',function(){ set(!item.classList.contains('open')); });
+    head.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); set(!item.classList.contains('open')); }});
+  });
+  // 열린 아코디언 높이 재계산(리사이즈/폰트로딩)
+  addEventListener('resize',function(){
+    document.querySelectorAll('[data-acc].open .acc-body').forEach(function(b){ b.style.maxHeight=b.scrollHeight+'px'; });
+  });
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){
+    document.querySelectorAll('[data-acc].open .acc-body').forEach(function(b){ b.style.maxHeight=b.scrollHeight+'px'; });
+  }); }
+
+  // 네비 스무스 스크롤 + 스크롤스파이
+  var navLinks=[].slice.call(document.querySelectorAll('.bos-nav a'));
+  navLinks.forEach(function(a){
+    a.addEventListener('click',function(e){
+      var t=document.querySelector(a.getAttribute('href'));
+      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
+    });
+  });
+  var spyIds=navLinks.map(function(a){return a.getAttribute('href').slice(1);});
+  var spy=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id); });
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  spyIds.forEach(function(id){ var el=document.getElementById(id); if(el) spy.observe(el); });
+})();
+</script>
+</body>
+</html>
