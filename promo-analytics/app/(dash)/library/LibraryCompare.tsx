@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
-const COLORS = ["#c66a48", "#3A4254", "#7C9885"];
+const COLORS = ["#c86652", "#17302f", "#6f8f87"];
 
 export type CompareCampaign = {
   id: string;
@@ -62,8 +62,8 @@ export default function LibraryCompare({ campaigns }: { campaigns: CompareCampai
 
   return (
     <section className="mt-6 rounded-2xl card-soft p-5">
-      <h2 className="text-sm font-semibold text-neutral-700">캠페인 비교 (기간 정규화)</h2>
-      <p className="mt-1 text-xs text-neutral-400">
+      <h2 className="text-sm font-semibold text-ink-2">캠페인 비교 (기간 정규화)</h2>
+      <p className="mt-1 text-xs text-ink-4">
         시기가 달라도 캠페인 1일차(D1) 기준으로 겹쳐 일매출 흐름을 비교합니다. 최대 3개.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -87,14 +87,14 @@ export default function LibraryCompare({ campaigns }: { campaigns: CompareCampai
         <div className="mt-4 h-60">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9CA4B4" }} tickLine={false} axisLine={{ stroke: "#E4E7EC" }} />
-              <YAxis tickFormatter={(v: number) => wonShort(v)} tick={{ fontSize: 11, fill: "#9CA4B4" }} tickLine={false} axisLine={false} width={56} />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#97a4a0" }} tickLine={false} axisLine={{ stroke: "#e4e1d8" }} />
+              <YAxis tickFormatter={(v: number) => wonShort(v)} tick={{ fontSize: 11, fill: "#97a4a0" }} tickLine={false} axisLine={false} width={56} />
               <Tooltip
                 formatter={(v, key) => {
                   const c = series.find((s) => s.id === key);
                   return [wonShort(Number(v)), c?.name ?? String(key)] as [string, string];
                 }}
-                contentStyle={{ borderRadius: 12, border: "1px solid #E4E7EC", boxShadow: "0 8px 24px -8px rgba(0,0,0,.15)", fontSize: 12 }}
+                contentStyle={{ borderRadius: 12, border: "1px solid #e4e1d8", boxShadow: "0 8px 24px -8px rgba(0,0,0,.15)", fontSize: 12 }}
               />
               <Legend
                 formatter={(key: string) => {

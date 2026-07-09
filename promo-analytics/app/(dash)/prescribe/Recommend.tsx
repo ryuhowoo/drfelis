@@ -91,7 +91,7 @@ export default function Recommend({ options }: { options: Options }) {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <h1 className="text-xl font-semibold tracking-tight">캠페인 추천</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         목적을 하나 또는 여러 개 선택하면, 과거 성과를 근거로 그에 맞는 혜택 구성을 추천해요.
         (예: <strong>브랜딩</strong> + <strong>세일즈</strong> 혼합)
       </p>
@@ -107,7 +107,7 @@ export default function Recommend({ options }: { options: Options }) {
               className={`rounded-2xl border p-4 text-left transition ${
                 active
                   ? "border-brand-500 bg-brand-50"
-                  : "border-neutral-200 bg-white hover:border-neutral-300"
+                  : "border-line bg-white hover:border-line-strong"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -117,9 +117,9 @@ export default function Recommend({ options }: { options: Options }) {
                   onChange={() => {}}
                   className="pointer-events-none accent-brand-500"
                 />
-                <div className={`text-base font-bold ${active ? "text-brand-600" : "text-neutral-800"}`}>{g.label}</div>
+                <div className={`text-base font-bold ${active ? "text-brand-600" : "text-ink"}`}>{g.label}</div>
               </div>
-              <div className="mt-0.5 text-xs text-neutral-500">{g.desc}</div>
+              <div className="mt-0.5 text-xs text-ink-3">{g.desc}</div>
             </button>
           );
         })}
@@ -158,9 +158,9 @@ export default function Recommend({ options }: { options: Options }) {
           className="mt-4 rounded-full bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50">
           {loading ? "분석 중…" : "추천 받기"}
         </button>
-        {error && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
         {selected.length > 1 && (
-          <p className="mt-3 text-xs text-neutral-400">
+          <p className="mt-3 text-xs text-ink-4">
             여러 목적을 함께 고르면, 종합 점수는 각 목적 점수의 평균으로 계산돼요.
             모든 목적의 목표를 만족하는 후보가 ‘목표 달성’으로 표시됩니다.
           </p>
@@ -170,7 +170,7 @@ export default function Recommend({ options }: { options: Options }) {
       {recs && (
         <div className="mt-6">
           {recs.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center text-sm text-neutral-400">
+            <p className="rounded-2xl border border-dashed border-line-strong bg-white px-6 py-10 text-center text-sm text-ink-4">
               추천할 사례가 부족합니다. 캠페인 데이터를 더 쌓아주세요.
             </p>
           ) : (
@@ -178,18 +178,18 @@ export default function Recommend({ options }: { options: Options }) {
             {/* 후보 비교 (N6 R2.2): 종합 점수·예측 증분을 한눈에 */}
             {recs.length > 1 && (
               <div className="mb-4 rounded-2xl p-5 card-soft">
-                <h2 className="text-sm font-semibold text-neutral-700">후보 비교</h2>
+                <h2 className="text-sm font-semibold text-ink-2">후보 비교</h2>
                 <div className="mt-3 space-y-2.5">
                   {recs.map((r, i) => {
                     const maxUplift = Math.max(...recs.map((x) => x.predicted_uplift), 1);
                     return (
                       <div key={i}>
                         <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                          <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+                          <span className="min-w-0 flex-1 truncate font-medium text-ink-2">
                             {i + 1}. {r.promo_type}
                             {r.discount_rate != null && ` · ${pct(r.discount_rate, 0)}`}
                           </span>
-                          <span className="shrink-0 text-neutral-500">
+                          <span className="shrink-0 text-ink-3">
                             점수 {Math.round(r.score)} · 예측 증분 {wonShort(r.predicted_uplift)}
                           </span>
                         </div>
@@ -202,7 +202,7 @@ export default function Recommend({ options }: { options: Options }) {
                           </div>
                           <div className="h-2 w-24 overflow-hidden rounded-full bg-soft" title="예측 증분 (상대)">
                             <div
-                              className="h-full rounded-full bg-neutral-400"
+                              className="h-full rounded-full bg-ink-4"
                               style={{ width: `${Math.max(2, (r.predicted_uplift / maxUplift) * 100)}%` }}
                             />
                           </div>
@@ -211,7 +211,7 @@ export default function Recommend({ options }: { options: Options }) {
                     );
                   })}
                 </div>
-                <p className="mt-2 text-[11px] text-neutral-400">
+                <p className="mt-2 text-[11px] text-ink-4">
                   코랄 = 종합 점수(0~100) · 회색 = 예측 증분(최대 대비)
                 </p>
               </div>
@@ -226,10 +226,10 @@ export default function Recommend({ options }: { options: Options }) {
                         <span className="text-base font-bold">
                           {r.promo_type}{r.discount_rate != null && ` · ${pct(r.discount_rate, 0)} 할인`}
                         </span>
-                        {r.meets_target && <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">목표 달성</span>}
-                        <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">신뢰도 {r.confidence}</span>
+                        {r.meets_target && <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">목표 달성</span>}
+                        <span className="rounded-full bg-soft px-2 py-0.5 text-xs text-ink-3">신뢰도 {r.confidence}</span>
                         <span
-                          className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500"
+                          className="rounded-full bg-soft px-2 py-0.5 text-xs text-ink-3"
                           title="유사 캠페인의 계획 달성 신뢰도를 랭킹·예측에 반영"
                         >
                           달성 {Math.round(r.reliability * 100)}%
@@ -251,24 +251,24 @@ export default function Recommend({ options }: { options: Options }) {
                             <div key={pg.goal}>
                               <div className="mb-0.5 flex items-center justify-between gap-2 text-xs">
                                 <span className="flex min-w-0 items-center gap-1.5">
-                                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600">
+                                  <span className="rounded-full bg-soft px-2 py-0.5 text-[11px] font-medium text-ink-2">
                                     {GOAL_LABEL[pg.goal]}
                                   </span>
-                                  <span className="truncate text-neutral-500">
-                                    예상 <strong className="text-neutral-800">{fmtMetric(unit, pg.predicted_metric)}</strong>
+                                  <span className="truncate text-ink-3">
+                                    예상 <strong className="text-ink">{fmtMetric(unit, pg.predicted_metric)}</strong>
                                     {pg.target > 0 && <> / 목표 {fmtMetric(unit, pg.target)}</>}
                                   </span>
                                 </span>
                                 {fulfill != null && (
-                                  <span className={`shrink-0 font-semibold ${pg.meets_target ? "text-green-600" : "text-amber-600"}`}>
+                                  <span className={`shrink-0 font-semibold ${pg.meets_target ? "text-success" : "text-warning"}`}>
                                     {Math.round(fulfill * 100)}%
                                   </span>
                                 )}
                               </div>
                               {fulfill != null && (
-                                <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
+                                <div className="h-2 overflow-hidden rounded-full bg-soft">
                                   <div
-                                    className={`h-full rounded-full ${pg.meets_target ? "bg-green-500" : "bg-amber-400"}`}
+                                    className={`h-full rounded-full ${pg.meets_target ? "bg-success" : "bg-warning"}`}
                                     style={{ width: `${Math.min(100, fulfill * 100)}%` }}
                                   />
                                 </div>
@@ -278,7 +278,7 @@ export default function Recommend({ options }: { options: Options }) {
                         })}
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-500">
+                      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink-3">
                         <span>예상 증분: {wonShort(r.predicted_uplift)}</span>
                         <span>
                           공헌이익(기여):{" "}
@@ -295,7 +295,7 @@ export default function Recommend({ options }: { options: Options }) {
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {r.examples.map((e) => (
                             <Link key={e.id} href={`/promotions/${e.id}`}
-                              className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 hover:text-brand-600">
+                              className="rounded-full bg-soft px-2 py-0.5 text-xs text-ink-2 hover:text-brand-600">
                               {e.name}
                             </Link>
                           ))}
@@ -303,7 +303,7 @@ export default function Recommend({ options }: { options: Options }) {
                       )}
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-xs text-neutral-400">종합 점수</div>
+                      <div className="text-xs text-ink-4">종합 점수</div>
                       <div className="text-2xl font-bold text-brand-600">{r.score}</div>
                     </div>
                   </div>
@@ -334,7 +334,7 @@ export default function Recommend({ options }: { options: Options }) {
 
 function ReasonList({ items, empty }: { items: Reason[]; empty: string }) {
   if (items.length === 0)
-    return <p className="text-xs text-neutral-400">{empty}</p>;
+    return <p className="text-xs text-ink-4">{empty}</p>;
   return (
     <ul className="space-y-1">
       {items.map((r, i) => (
@@ -342,16 +342,16 @@ function ReasonList({ items, empty }: { items: Reason[]; empty: string }) {
           <span
             className={
               r.tone === "good"
-                ? "text-emerald-500"
+                ? "text-success"
                 : r.tone === "warn"
-                  ? "text-amber-500"
-                  : "text-neutral-400"
+                  ? "text-warning"
+                  : "text-ink-4"
             }
             aria-hidden
           >
             {r.tone === "good" ? "✓" : r.tone === "warn" ? "⚠" : "•"}
           </span>
-          <span className="text-neutral-600">{r.text}</span>
+          <span className="text-ink-2">{r.text}</span>
         </li>
       ))}
     </ul>
@@ -372,28 +372,28 @@ function ExplainBlock({
   const [open, setOpen] = useState(rank === 0); // 1순위는 펼친 채로
   const ex = explainRecommendation(rec, rank, allRecs);
   return (
-    <div className="mt-4 border-t border-neutral-100 pt-3">
+    <div className="mt-4 border-t border-line pt-3">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2 text-left"
       >
-        <span className="text-xs font-semibold text-neutral-700">왜 이 추천인가?</span>
-        <span className="text-xs text-neutral-400">{open ? "접기 ▲" : "근거 보기 ▼"}</span>
+        <span className="text-xs font-semibold text-ink-2">왜 이 추천인가?</span>
+        <span className="text-xs text-ink-4">{open ? "접기 ▲" : "근거 보기 ▼"}</span>
       </button>
 
       {open && (
         <div className="mt-2 space-y-3">
-          <p className="rounded-xl bg-neutral-50 px-3 py-2 text-xs leading-snug text-neutral-700">
+          <p className="rounded-xl bg-soft px-3 py-2 text-xs leading-snug text-ink-2">
             {ex.headline}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="mb-1 text-[11px] font-semibold text-neutral-500">추천 근거</div>
+              <div className="mb-1 text-[11px] font-semibold text-ink-3">추천 근거</div>
               <ReasonList items={ex.reasons} empty="근거 정보가 부족합니다." />
             </div>
             <div>
-              <div className="mb-1 text-[11px] font-semibold text-neutral-500">주의·리스크</div>
+              <div className="mb-1 text-[11px] font-semibold text-ink-3">주의·리스크</div>
               <ReasonList items={ex.risks} empty="특별한 리스크 신호는 없습니다." />
             </div>
           </div>
@@ -418,12 +418,12 @@ function ExplainBlock({
   );
 }
 
-const inputCls = "w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm focus:border-brand-400 focus:outline-none";
+const inputCls = "w-full rounded-xl border border-line bg-white px-3 py-2 text-sm focus:border-brand-400 focus:outline-none";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-neutral-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-ink-2">{label}</label>
       {children}
     </div>
   );

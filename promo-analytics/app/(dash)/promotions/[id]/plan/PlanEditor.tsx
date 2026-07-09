@@ -334,7 +334,7 @@ export default function PlanEditor({
   if (!plan) {
     return (
       <div className="mt-6 rounded-2xl card-soft p-6">
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-ink-2">
           이 캠페인에 연결된 가격 가이드(플랜)가 없습니다. 플랜은 업로드 페이지의 ⑤ 캠페인
           플랜 가이드로 적재해요 — 빈 플랜을 자동으로 만들지 않습니다.
         </p>
@@ -775,17 +775,17 @@ export default function PlanEditor({
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            confirmed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+            confirmed ? "bg-success-soft text-success" : "bg-warning-soft text-warning"
           }`}
         >
           v{plan.version} · {confirmed ? "확정됨" : "draft"}
         </span>
         {plan.is_current && (
-          <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs text-neutral-500">
+          <span className="rounded-full bg-soft px-2.5 py-0.5 text-xs text-ink-3">
             현재 버전
           </span>
         )}
-        <span className="text-xs text-neutral-400">
+        <span className="text-xs text-ink-4">
           공헌이익 승수 mult = {mult.toFixed(3)}
           {confirmed && plan.confirmed_at ? " · 동결됨" : " · 라이브"}
         </span>
@@ -1067,7 +1067,7 @@ export default function PlanEditor({
             <button
               onClick={onSave}
               disabled={busy}
-              className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50"
+              className="rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-soft disabled:opacity-50"
             >
               draft 저장
             </button>
@@ -1154,7 +1154,7 @@ function Stat({
     <div
       className={`rounded-xl p-4 ${primary ? "bg-brand-50" : "card-soft"}`}
     >
-      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="text-xs text-ink-3">{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
       {sub && <div className="mt-0.5 text-[11px] text-ink-4">{sub}</div>}
     </div>
@@ -1261,13 +1261,13 @@ function OptionCard({
           </button>
         )}
         <input
-          className="min-w-[10rem] flex-1 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm font-medium disabled:bg-neutral-50"
+          className="min-w-[10rem] flex-1 rounded-lg border border-line px-2.5 py-1.5 text-sm font-medium disabled:bg-soft"
           value={opt.option_label}
           disabled={readOnly}
           onChange={(e) => onPatch({ option_label: e.target.value })}
           placeholder="옵션 라벨 (예: 모래 4묶음 세트)"
         />
-        <label className="flex items-center gap-1 text-xs text-neutral-500">
+        <label className="flex items-center gap-1 text-xs text-ink-3">
           <input
             type="checkbox"
             checked={opt.is_main}
@@ -1279,7 +1279,7 @@ function OptionCard({
         {!readOnly && (
           <button
             onClick={onRemove}
-            className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50"
+            className="rounded-lg px-2 py-1 text-xs text-danger hover:bg-danger-soft"
           >
             옵션 삭제
           </button>
@@ -1333,7 +1333,7 @@ function OptionCard({
             // 이 옵션 구성의 과거 평균(서브 추천에서 추가 시)이 있으면 우선, 없으면 메인/서브 전역 평균
             if (opt.qty_bench != null && opt.qty_bench > 0) {
               return (
-                <span className="mt-0.5 block text-[10px] text-neutral-400">
+                <span className="mt-0.5 block text-[10px] text-ink-4">
                   이 구성 평균 {num(opt.qty_bench)}개
                 </span>
               );
@@ -1341,7 +1341,7 @@ function OptionCard({
             const hv = opt.is_main ? qtyHint?.main : qtyHint?.sub;
             const hn = opt.is_main ? qtyHint?.mainN : qtyHint?.subN;
             return hv != null && hn ? (
-              <span className="mt-0.5 block text-[10px] text-neutral-400">
+              <span className="mt-0.5 block text-[10px] text-ink-4">
                 유사 평균 {num(hv)}개 ({hn}건)
               </span>
             ) : null;
@@ -1352,7 +1352,7 @@ function OptionCard({
           <div className="mt-0.5 py-1.5 text-sm font-semibold tabular-nums text-ink-2">
             {num(unitsPerSet * (opt.expected_option_qty || 0))}
           </div>
-          <span className="text-[10px] text-neutral-400">세트당 {num(unitsPerSet)}개</span>
+          <span className="text-[10px] text-ink-4">세트당 {num(unitsPerSet)}개</span>
         </div>
         <div>
           <span className="block text-[11px] font-medium text-ink-4">예상 매출</span>
@@ -1405,7 +1405,7 @@ function OptionCard({
       {/* 아이템(BOM) */}
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="text-neutral-400">
+          <thead className="text-ink-4">
             <tr>
               <th className="py-1 pr-3">SKU (구성)</th>
               <th className="py-1 pr-2 text-right">세트당 수량</th>
@@ -1425,7 +1425,7 @@ function OptionCard({
             ))}
             {opt.items.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-2 text-xs text-neutral-400">
+                <td colSpan={4} className="py-2 text-xs text-ink-4">
                   구성 SKU가 없습니다. 아래에서 추가하세요.
                 </td>
               </tr>
@@ -1435,7 +1435,7 @@ function OptionCard({
       </div>
 
       {!readOnly && <AddSku onAdd={onAddItem} />}
-      <p className="mt-1 text-[11px] text-neutral-400">
+      <p className="mt-1 text-[11px] text-ink-4">
         옵션 단가·할인율을 직접 입력하세요(매출 구동). SKU는 구성(수량)·원가만. 공헌이익 = 옵션단가 × {mult.toFixed(3)} − Σ(원가 × 수량).
       </p>
       {!readOnly && (
@@ -1495,7 +1495,7 @@ function CouponRow({
           />
         </div>
         {!readOnly && (
-          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">
+          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-danger hover:bg-danger-soft">
             삭제
           </button>
         )}
@@ -1652,7 +1652,7 @@ function FreebieRow({
           사은품 (동봉)
         </span>
         {!readOnly && (
-          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">
+          <button onClick={onRemove} className="rounded-lg px-2 py-1 text-xs text-danger hover:bg-danger-soft">
             삭제
           </button>
         )}
@@ -1666,7 +1666,7 @@ function FreebieRow({
               {!readOnly && (
                 <button
                   onClick={() => onPatch({ product_id: null, base_name: "", cost: 0 })}
-                  className="shrink-0 text-xs text-red-500 hover:underline"
+                  className="shrink-0 text-xs text-danger hover:underline"
                 >
                   변경
                 </button>
@@ -1683,15 +1683,15 @@ function FreebieRow({
                 onFocus={() => hits.length && setOpen(true)}
               />
               {open && hits.length > 0 && (
-                <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+                <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-line bg-white shadow-lg">
                   {hits.map((h) => (
                     <li key={h.id}>
                       <button
                         onClick={() => pick(h)}
-                        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-50"
+                        className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-soft"
                       >
                         <span className="truncate">{h.base_name}</span>
-                        <span className="shrink-0 text-xs text-neutral-400">원가 {won(h.cost)}</span>
+                        <span className="shrink-0 text-xs text-ink-4">원가 {won(h.cost)}</span>
                       </button>
                     </li>
                   ))}
@@ -1745,23 +1745,23 @@ function ItemRow({
 }) {
   // SKU 행 = 구성(수량) + 원가만. 개별 단가/할인율은 옵션 단가로 일원화(숨김).
   return (
-    <tr className="border-t border-neutral-100 align-top">
+    <tr className="border-t border-line align-top">
       <td className="py-1 pr-3">{it.base_name}</td>
       <td className="py-1 pr-2 text-right">
         <input
           type="number"
-          className="w-16 rounded border border-neutral-200 px-1.5 py-1 text-right disabled:bg-neutral-50"
+          className="w-16 rounded border border-line px-1.5 py-1 text-right disabled:bg-soft"
           value={it.sku_qty_per_option || 0}
           disabled={readOnly}
           onChange={(e) => onPatch({ sku_qty_per_option: Number(e.target.value) || 0 })}
         />
       </td>
-      <td className="py-1 pr-2 text-right tabular-nums text-neutral-500">{won(it.cost)}</td>
+      <td className="py-1 pr-2 text-right tabular-nums text-ink-3">{won(it.cost)}</td>
       <td className="py-1 text-right">
         {!readOnly && (
           <button
             onClick={onRemove}
-            className="rounded px-1.5 py-0.5 text-xs text-red-500 hover:bg-red-50"
+            className="rounded px-1.5 py-0.5 text-xs text-danger hover:bg-danger-soft"
           >
             ✕
           </button>
@@ -1848,22 +1848,22 @@ function AddSku({ onAdd }: { onAdd: (it: ItemState) => void }) {
   return (
     <div className="relative mt-2">
       <input
-        className="w-full rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm"
+        className="w-full rounded-lg border border-line px-2.5 py-1.5 text-sm"
         placeholder="+ SKU 추가 — 품목명/품목코드 검색"
         value={q}
         onChange={(e) => search(e.target.value)}
         onFocus={() => hits.length && setOpen(true)}
       />
       {open && hits.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+        <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-line bg-white shadow-lg">
           {hits.map((h) => (
             <li key={h.id}>
               <button
                 onClick={() => pick(h)}
-                className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-50"
+                className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-soft"
               >
                 <span>{h.base_name}</span>
-                <span className="text-xs text-neutral-400">
+                <span className="text-xs text-ink-4">
                   {h.dr_code ?? ""} · {won(h.consumer_price)}
                 </span>
               </button>

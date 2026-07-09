@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { won, wonShort, pct } from "@/lib/format";
+import { won, wonShort, pct, num } from "@/lib/format";
 import { useTableSort } from "@/lib/table-sort";
 
 // promo.plans_bundle() 반환 형태
@@ -17,6 +17,7 @@ export type PlanRow = {
   status: string; // draft | confirmed
   version: number;
   confirmed_at: string | null;
+  purposes: string[] | null; // 세일즈/브랜딩/재고소진 — [0]=주목적 (0081)
   target_revenue: number | null;
   target_contribution: number | null;
   target_contribution_rate: number | null;
@@ -25,12 +26,44 @@ export type PlanRow = {
   actual_promotion_id: string | null;
   actual_name: string | null;
   option_count: number;
+  has_perf?: boolean; // 성과(실판매) 업로드 여부 (0081)
+  expected_order_count?: number | null; // Σ 옵션 예상세트수 = 구매건수 목표 (0081)
+  expected_main_qty?: number | null; // 메인옵션 SKU 판매수량 목표 (0081)
   achievement: {
     has_confirmed_plan: boolean;
     ach_revenue: number | null;
     ach_contribution: number | null;
   } | null;
 };
+
+// 주목적별 목표1/목표2 — 세일즈: 매출/공헌이익 · 브랜딩: 구매건수/첫구매수 · 재고소진: (메인)판매수량/매출.
+// 라벨을 숫자 앞에 붙여 어떤 목표인지 바로 읽히게 한다. 값이 없으면 '—'.
+type Goal = { label: string; text: string; sort: number | null };
+function goalPair(p: PlanRow): [Goal, Goal] {
+  const primary = p.purposes?.[0] ?? "세일즈";
+  const rev: Goal = { label: "매출", text: wonShort(p.target_revenue), sort: p.target_revenue };
+  const contrib: Goal = {
+    label: "공헌이익",
+    text: wonShort(p.target_contribution),
+    sort: p.target_contribution,
+  };
+  if (primary === "브랜딩") {
+    const orders = p.expected_order_count ?? null;
+    return [
+      { label: "구매건수", text: orders != null && orders > 0 ? num(orders) : "—", sort: orders },
+      // 첫구매수는 플랜에 목표치가 없어 표시만 예약 — 성과(세그먼트) 쪽에서 확인
+      { label: "첫구매수", text: "—", sort: null },
+    ];
+  }
+  if (primary === "재고소진") {
+    const qty = p.expected_main_qty ?? null;
+    return [
+      { label: "판매수량", text: qty != null && qty > 0 ? num(qty) : "—", sort: qty },
+      rev,
+    ];
+  }
+  return [rev, contrib]; // 세일즈(기본)
+}
 
 export type PlanOption = {
   plan_id: string;
@@ -85,23 +118,36 @@ export default function PlansBoard({
 }
 
 // ── 플랜 목록 ─────────────────────────────────────────────────────────────
-// 정렬용 평탄화 행 — 중첩(achievement)·파생(달성률) 값을 키로 끌어올려 컬럼 클릭 정렬을 지원.
-type SortRow = PlanRow & { _ach: number | null };
+// 정렬용 평탄화 행 — 중첩(achievement)·파생(달성률·목표1/2) 값을 키로 끌어올려 컬럼 클릭 정렬을 지원.
+type SortRow = PlanRow & {
+  _ach: number | null;
+  _g1: number | null;
+  _g2: number | null;
+  _perf: number; // 성과 업로드 여부 (1/0) — 정렬용
+  goals: [Goal, Goal];
+};
 
 function PlanList({ plans }: { plans: PlanRow[] }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  // 표시 행에 정렬 키(_ach=매출 달성률) 부여
+  // 표시 행에 정렬 키(_ach=매출 달성률, _g1/_g2=목표값) 부여
   const rows: SortRow[] = useMemo(
     () =>
-      plans.map((p) => ({
-        ...p,
-        _ach:
-          p.achievement?.has_confirmed_plan && p.achievement.ach_revenue != null
-            ? p.achievement.ach_revenue
-            : null,
-      })),
+      plans.map((p) => {
+        const goals = goalPair(p);
+        return {
+          ...p,
+          _ach:
+            p.achievement?.has_confirmed_plan && p.achievement.ach_revenue != null
+              ? p.achievement.ach_revenue
+              : null,
+          _g1: goals[0].sort,
+          _g2: goals[1].sort,
+          _perf: p.has_perf ? 1 : 0,
+          goals,
+        };
+      }),
     [plans],
   );
   // 기본 정렬: 기간(시작일) 내림차순 — 최신 캠페인이 위로
@@ -129,21 +175,22 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
 
   if (plans.length === 0)
     return (
-      <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center text-sm text-neutral-400">
+      <p className="mt-6 rounded-2xl border border-dashed border-line-strong bg-white px-6 py-12 text-center text-sm text-ink-4">
         아직 플랜이 없습니다. 업로드 메뉴에서 ⑤ 캠페인 플랜 가이드를 올리면 여기에 쌓입니다.
       </p>
     );
   return (
     <div className="mt-4 overflow-x-auto rounded-2xl card-soft">
       <table className="w-full min-w-[920px] text-sm">
-        <thead className="bg-soft/60 text-left text-xs text-neutral-500">
+        <thead className="bg-soft/60 text-left text-xs text-ink-3">
           <tr>
             <Th label="캠페인명" k="name" toggle={toggle} arrow={arrow} />
-            <Th label="상태" k="status" toggle={toggle} arrow={arrow} />
+            <Th label="플랜" k="status" toggle={toggle} arrow={arrow} />
+            <Th label="성과" k="_perf" toggle={toggle} arrow={arrow} />
             <Th label="채널" k="channel" toggle={toggle} arrow={arrow} />
             <Th label="기간" k="start_date" toggle={toggle} arrow={arrow} />
-            <Th label="목표 매출" k="target_revenue" toggle={toggle} arrow={arrow} align="right" />
-            <Th label="목표 공헌이익" k="target_contribution" toggle={toggle} arrow={arrow} align="right" />
+            <Th label="목표 1" k="_g1" toggle={toggle} arrow={arrow} align="right" />
+            <Th label="목표 2" k="_g2" toggle={toggle} arrow={arrow} align="right" />
             <Th label="옵션" k="option_count" toggle={toggle} arrow={arrow} align="right" />
             <Th label="매출 달성률" k="_ach" toggle={toggle} arrow={arrow} align="right" />
             <th className="px-3 py-2.5 font-medium"></th>
@@ -169,41 +216,50 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     </span>
                   )}
                   {p.code && p.code !== p.name && (
-                    <span className="ml-1.5 text-[11px] text-neutral-400">{p.code}</span>
+                    <span className="ml-1.5 text-[11px] text-ink-4">{p.code}</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5">
                   {p.status === "confirmed" ? (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                    <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success">
                       확정 v{p.version}
                     </span>
                   ) : (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                    <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
                       draft v{p.version}
                     </span>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                <td className="whitespace-nowrap px-3 py-2.5">
+                  {p.has_perf ? (
+                    <span className="text-[12px] font-medium text-success">✓ 업로드됨</span>
+                  ) : (
+                    <span className="text-[12px] text-ink-4">✗ 없음</span>
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-ink-3">
                   {p.channel ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                <td className="whitespace-nowrap px-3 py-2.5 text-ink-3">
                   {p.start_date ?? "—"} ~ {p.end_date ?? "—"}
                 </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-neutral-700">
-                  {wonShort(p.target_revenue)}
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-ink-2">
+                  <span className="mr-1 text-[11px] text-ink-4">{p.goals[0].label}</span>
+                  {p.goals[0].text}
                 </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-neutral-500">
-                  {wonShort(p.target_contribution)}
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-ink-3">
+                  <span className="mr-1 text-[11px] text-ink-4">{p.goals[1].label}</span>
+                  {p.goals[1].text}
                 </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-neutral-500">
+                <td className="px-3 py-2.5 text-right tabular-nums text-ink-3">
                   {p.option_count}
                 </td>
                 <td
                   className={`px-3 py-2.5 text-right font-semibold tabular-nums ${
                     ach == null
-                      ? "text-neutral-300"
+                      ? "text-ink-4"
                       : ach >= 1
-                        ? "text-emerald-600"
+                        ? "text-success"
                         : ach < 0.7
                           ? "text-brand-700"
                           : "text-ink"
@@ -216,7 +272,7 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     onClick={() => del(p)}
                     disabled={deleting === p.id || !p.promotion_id}
                     title="캠페인 삭제"
-                    className="rounded-lg px-2 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                    className="rounded-lg px-2 py-1 text-xs text-ink-4 hover:bg-danger-soft hover:text-danger disabled:opacity-40"
                   >
                     {deleting === p.id ? "삭제 중…" : "삭제"}
                   </button>
@@ -332,7 +388,7 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
 
   if (plans.length === 0)
     return (
-      <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center text-sm text-neutral-400">
+      <p className="mt-6 rounded-2xl border border-dashed border-line-strong bg-white px-6 py-12 text-center text-sm text-ink-4">
         분석할 플랜이 없습니다. ⑤ 가이드 업로드로 플랜이 쌓이면 성향이 보입니다.
       </p>
     );
@@ -388,9 +444,9 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
           <div
             className={`mt-2 rounded-xl border px-4 py-3 text-sm ${
               verdict.tone === "warn"
-                ? "border-amber-200 bg-amber-50/60 text-amber-800"
+                ? "border-warning bg-warning-soft/60 text-warning"
                 : verdict.tone === "ok"
-                  ? "border-emerald-200 bg-emerald-50/50 text-emerald-800"
+                  ? "border-success bg-success-soft/50 text-success"
                   : "border-line bg-soft/50 text-ink-2"
             }`}
           >

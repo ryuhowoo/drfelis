@@ -8,33 +8,36 @@
 /* =========================================================================
    Dr.Felis — Neo Organic Dashboard
    컨셉: 70% 신뢰감 · 20% 프리미엄 · 10% 귀여움.
-   따뜻한 아이보리 라이트모드 + 민트/그린 프라이머리 + 소프트 블루 세컨더리.
+   따뜻한 아이보리 라이트모드 + teal-green 프라이머리(accent #2F8F72) + 딥그린 텍스트.
+   토큰 값은 design-system/felis-neo-organic.css(DR.FELIS NEO ORGANIC DASHBOARD)
+   정식 팔레트에 정렬 — 색·폰트·radius·그림자 일치. 폰트는 Pretendard 기본.
    Bento Grid · Organic Card · 은은한 glassmorphism(AI 카드 한정) · spring 모션.
    클래스명(card-soft 등)은 유지하고 의미만 재정의 — 전 화면 일괄 전환.
    ========================================================================= */
 
 @theme {
-  /* ── 프라이머리: Dr.Felis Green / Mint (신뢰감·프리미엄 단일 강조) ───────── */
-  --color-brand-50: #e9f6ef;
-  --color-brand-100: #ccebdd;
-  --color-brand-200: #9ddcc1;
-  --color-brand-300: #66c8a1;
-  --color-brand-400: #2fae82;
-  --color-brand-500: #14916a;
-  --color-brand-600: #0c7556;
-  --color-brand-700: #0a5c45;
+  /* ── 프라이머리: Neo Organic Accent (teal-green · felis-neo-organic.css 정식 팔레트)
+     accent #2F8F72 / md #58AC8E / lt #E5F4ED / teal(darker) #247F63 기준 스케일 */
+  --color-brand-50: #e5f4ed;
+  --color-brand-100: #cfeadf;
+  --color-brand-200: #a6d7c2;
+  --color-brand-300: #7cc3a6;
+  --color-brand-400: #58ac8e;
+  --color-brand-500: #2f8f72;
+  --color-brand-600: #24795f;
+  --color-brand-700: #1b6650;
 
-  /* ── 세컨더리: Soft Blue (보조 강조·정보) ─────────────────────────────── */
-  --color-secondary-50: #eef4fb;
-  --color-secondary-100: #d8e6f6;
-  --color-secondary-200: #b7d0ee;
-  --color-secondary-300: #9bc0ea;
-  --color-secondary-400: #6f9fd8;
-  --color-secondary-500: #5388c8;
-  --color-secondary-600: #3a6cab;
-  --color-secondary-700: #2c5388;
+  /* ── 세컨더리: Neo Organic Navy (차분한 teal-blue 보조 강조·정보) ────────── */
+  --color-secondary-50: #eef5f8;
+  --color-secondary-100: #dceaf0;
+  --color-secondary-200: #bdd4de;
+  --color-secondary-300: #9dbccb;
+  --color-secondary-400: #7aa0b3;
+  --color-secondary-500: #507a91;
+  --color-secondary-600: #416478;
+  --color-secondary-700: #34505f;
 
-  /* ── 캔버스/표면: 따뜻한 아이보리 · 오프화이트 ───────────────────────── */
+  /* ── 캔버스/표면: 따뜻한 아이보리 · 오프화이트 (DS bg/bg-alt 동일) ─────── */
   --color-canvas: #f9f7f2;
   --color-canvas-2: #fcfcfa;
   --color-card: #ffffff;
@@ -43,42 +46,42 @@
   --color-line: rgba(20, 30, 40, 0.08);
   --color-line-strong: rgba(20, 30, 40, 0.14);
 
-  /* ── 텍스트: Deep Navy / Charcoal 계열 ───────────────────────────────── */
-  --color-ink: #18222e;
-  --color-ink-2: #38424f;
-  --color-ink-3: #687486;
-  --color-ink-4: #9aa5b2;
+  /* ── 텍스트: Deep Green 계열 (DS txt-900…txt-400) ────────────────────── */
+  --color-ink: #17302f;
+  --color-ink-2: #34504d;
+  --color-ink-3: #6e7f7c;
+  --color-ink-4: #97a4a0;
 
-  /* ── 의미 기반 상태 토큰 (text=base, *-soft=배경) ────────────────────── */
-  --color-success: #119a68; /* Fresh Green */
-  --color-success-soft: #e6f6ee;
-  --color-warning: #c0751c; /* 따뜻한 Amber/Coral */
-  --color-warning-soft: #fbeede;
-  --color-danger: #d65a4e; /* 따뜻한 Coral */
-  --color-danger-soft: #fce9e6;
-  --color-info: #3a6cab; /* Soft Blue */
-  --color-info-soft: #eaf2fb;
-  --color-subscription: #2c8aa8; /* 보라 → 차분한 Teal-Blue (보라색 지양) */
-  --color-subscription-soft: #e4f2f6;
-  --color-matched: #119a68;
-  --color-matched-soft: #e6f6ee;
-  --color-unmatched: #687486;
+  /* ── 의미 기반 상태 토큰 (DS 팔레트 · text=base, *-soft=배경) ────────── */
+  --color-success: #247f63; /* DS teal */
+  --color-success-soft: #e3f4ec;
+  --color-warning: #b8893f; /* DS gold/amber */
+  --color-warning-soft: #fbf3e3;
+  --color-danger: #c86652; /* DS burgundy/coral */
+  --color-danger-soft: #fceae5;
+  --color-info: #507a91; /* DS navy */
+  --color-info-soft: #e9f2f6;
+  --color-subscription: #3f8b9e; /* 차분한 teal-blue (보라색 지양) */
+  --color-subscription-soft: #e4f1f4;
+  --color-matched: #247f63;
+  --color-matched-soft: #e3f4ec;
+  --color-unmatched: #6e7f7c;
   --color-unmatched-soft: #f3f0e8;
-  --color-draft: #c0751c;
-  --color-draft-soft: #fbeede;
-  --color-confirmed: #119a68;
-  --color-confirmed-soft: #e6f6ee;
+  --color-draft: #b8893f;
+  --color-draft-soft: #fbf3e3;
+  --color-confirmed: #247f63;
+  --color-confirmed-soft: #e3f4ec;
 
-  /* ── Organic radius: 18~28px 범위 (Tailwind rounded-* 토큰 재정의) ───── */
+  /* ── Organic radius: DS radius 24 / radius-sm 16 기준 ───────────────── */
   --radius-lg: 0.875rem; /* 14px */
-  --radius-xl: 1.125rem; /* 18px */
-  --radius-2xl: 1.375rem; /* 22px */
+  --radius-xl: 1rem; /* 16px (DS radius-sm) */
+  --radius-2xl: 1.5rem; /* 24px (DS card radius) */
   --radius-3xl: 1.75rem; /* 28px */
 
-  /* ── Soft / depth 그림자 (따뜻한 잉크 틴트) ─────────────────────────── */
-  --shadow-soft: 0 1px 2px rgba(24, 34, 46, 0.04), 0 12px 30px -20px rgba(24, 34, 46, 0.24);
-  --shadow-float: 0 2px 6px rgba(24, 34, 46, 0.06), 0 26px 50px -26px rgba(24, 34, 46, 0.3);
-  --shadow-glass: 0 1px 2px rgba(24, 34, 46, 0.04), 0 22px 48px -26px rgba(20, 145, 106, 0.34);
+  /* ── Soft / depth 그림자 (DS 그린 틴트 rgba(24,59,56)) ───────────────── */
+  --shadow-soft: 0 1px 2px rgba(24, 59, 56, 0.04), 0 12px 34px -18px rgba(24, 59, 56, 0.2);
+  --shadow-float: 0 2px 4px rgba(24, 59, 56, 0.05), 0 22px 48px -24px rgba(24, 59, 56, 0.26);
+  --shadow-glass: 0 1px 2px rgba(24, 59, 56, 0.04), 0 22px 48px -26px rgba(47, 143, 114, 0.3);
 
   /* ── 모션 토큰 — spring-like easing 기본값 ──────────────────────────── */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
@@ -86,8 +89,9 @@
   --ease-emphasized: cubic-bezier(0.2, 0, 0.2, 1.2);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
+  /* ── 폰트: Pretendard 우선 (Neo Organic 디자인 시스템 기본 서체) ──────── */
   --font-sans:
-    "Asta Sans Variable", "Pretendard Variable", "Pretendard",
+    "Pretendard Variable", "Pretendard", "Asta Sans Variable",
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
     ui-sans-serif, system-ui, sans-serif;
 }
@@ -108,8 +112,8 @@ body {
   /* 따뜻한 아이보리 + 은은한 유기적 라이트 글로우 (코너 hotspot) */
   background-color: var(--color-canvas);
   background-image:
-    radial-gradient(1100px 620px at 8% -8%, rgba(20, 145, 106, 0.06), transparent 60%),
-    radial-gradient(900px 560px at 100% 0%, rgba(83, 136, 200, 0.05), transparent 55%);
+    radial-gradient(1100px 620px at 8% -8%, rgba(47, 143, 114, 0.07), transparent 60%),
+    radial-gradient(900px 560px at 100% 0%, rgba(80, 122, 145, 0.05), transparent 55%);
   background-attachment: fixed;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;
@@ -163,7 +167,7 @@ body {
 /* ── Glassmorphism — AI Insight / 추천 액션 카드 한정 (과하지 않게) ──────── */
 @utility card-glass {
   background-image:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.86) 0%, rgba(233, 246, 239, 0.62) 100%);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.86) 0%, rgba(229, 244, 237, 0.62) 100%);
   background-color: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(14px) saturate(1.35);
   -webkit-backdrop-filter: blur(14px) saturate(1.35);
@@ -192,7 +196,7 @@ body {
   right: -12%;
   width: 58%;
   height: 150%;
-  background: radial-gradient(ellipse at center, rgba(20, 145, 106, 0.12), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(47, 143, 114, 0.12), transparent 68%);
   pointer-events: none;
 }
 .blob-soft::after {
@@ -203,7 +207,7 @@ body {
   left: -10%;
   width: 50%;
   height: 150%;
-  background: radial-gradient(ellipse at center, rgba(83, 136, 200, 0.1), transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(80, 122, 145, 0.1), transparent 70%);
   pointer-events: none;
 }
 /* 강조(그린 솔리드) 카드 위에서의 밝은 하이라이트 변형 */

@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
-const BRAND = "#14916a"; // Dr.Felis mint-green (brand-500)
+const BRAND = "#2f8f72"; // Dr.Felis mint-green (brand-500)
 
 // 목적별 비중 바 (가중 기여매출/공헌) — value 점유율
 export function PurposeShareBars({
@@ -25,7 +25,7 @@ export function PurposeShareBars({
   const total = sorted.reduce((s, d) => s + d.value, 0);
   const items = sorted.slice(0, 8);
   if (items.length === 0)
-    return <div className="py-6 text-sm text-neutral-300">데이터가 없습니다.</div>;
+    return <div className="py-6 text-sm text-ink-4">데이터가 없습니다.</div>;
   return (
     <div className="space-y-2.5">
       {items.map((d) => {
@@ -33,14 +33,14 @@ export function PurposeShareBars({
         return (
           <div key={d.purpose}>
             <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-              <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+              <span className="min-w-0 flex-1 truncate font-medium text-ink-2">
                 {d.purpose}
               </span>
-              <span className="shrink-0 text-neutral-500">
+              <span className="shrink-0 text-ink-3">
                 {wonShort(d.value)} · {Math.round(share * 100)}%
               </span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100">
+            <div className="h-2.5 overflow-hidden rounded-full bg-soft">
               <div className="h-full rounded-full bg-brand-500" style={{ width: `${share * 100}%` }} />
             </div>
           </div>
@@ -61,7 +61,7 @@ export function PurposeFitBars({
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 8);
   if (items.length === 0)
-    return <div className="py-6 text-sm text-neutral-300">적합도 데이터가 없습니다.</div>;
+    return <div className="py-6 text-sm text-ink-4">적합도 데이터가 없습니다.</div>;
   return (
     <div className="space-y-2.5">
       {items.map((d) => {
@@ -69,18 +69,18 @@ export function PurposeFitBars({
         return (
           <div key={d.purpose}>
             <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-              <span className="min-w-0 flex-1 truncate font-medium text-neutral-700">
+              <span className="min-w-0 flex-1 truncate font-medium text-ink-2">
                 {d.purpose}
                 {!d.reliable && (
-                  <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">
+                  <span className="ml-1 rounded bg-warning-soft px-1 text-[10px] text-warning">
                     데이터 부족
                   </span>
                 )}
               </span>
-              <span className="shrink-0 tabular-nums text-neutral-500">{Math.round(s)}</span>
+              <span className="shrink-0 tabular-nums text-ink-3">{Math.round(s)}</span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100">
-              <div className="h-full rounded-full bg-neutral-700" style={{ width: `${s}%` }} />
+            <div className="h-2.5 overflow-hidden rounded-full bg-soft">
+              <div className="h-full rounded-full bg-ink-2" style={{ width: `${s}%` }} />
             </div>
           </div>
         );
@@ -97,7 +97,7 @@ export function AchievementTrend({
 }) {
   if (data.length === 0)
     return (
-      <div className="flex h-[150px] items-center justify-center text-sm text-neutral-300">
+      <div className="flex h-[150px] items-center justify-center text-sm text-ink-4">
         확정 플랜 데이터가 쌓이면 달성률 추세가 표시됩니다.
       </div>
     );
@@ -120,7 +120,7 @@ export function AchievementTrend({
           width={38}
           tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
         />
-        <ReferenceLine y={1} stroke="#d4d4d4" strokeDasharray="3 3" />
+        <ReferenceLine y={1} stroke="#d9d3c8" strokeDasharray="3 3" />
         <Tooltip
           formatter={(v, n) =>
             [
@@ -131,7 +131,7 @@ export function AchievementTrend({
           contentStyle={{ borderRadius: 14, border: "none", boxShadow: "0 8px 24px -8px rgba(0,0,0,.2)", fontSize: 12 }}
         />
         <Line type="monotone" dataKey="revenue" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
-        <Line type="monotone" dataKey="contribution" stroke="#38424f" strokeWidth={2} dot={{ r: 2 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
+        <Line type="monotone" dataKey="contribution" stroke="#34504d" strokeWidth={2} dot={{ r: 2 }} connectNulls animationDuration={1100} animationEasing="ease-out" />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -145,7 +145,7 @@ export function MonthlyArea({
 }) {
   if (data.length === 0)
     return (
-      <div className="flex h-[120px] items-center justify-center text-sm text-neutral-300">
+      <div className="flex h-[120px] items-center justify-center text-sm text-ink-4">
         데이터가 쌓이면 추세가 표시됩니다.
       </div>
     );
@@ -196,9 +196,9 @@ export function Concentric({
 }) {
   const items = data.filter((d) => d.value > 0).slice(0, 4);
   if (items.length === 0)
-    return <div className="text-sm text-neutral-300">데이터가 없습니다.</div>;
+    return <div className="text-sm text-ink-4">데이터가 없습니다.</div>;
   const max = items[0].value;
-  const shades = ["#cdebdd", "#9ddcc1", "#4cbb93", BRAND];
+  const shades = ["#cfeadf", "#a6d7c2", "#58ac8e", BRAND];
   const baseShade = (i: number) => shades[Math.min(i, shades.length - 1)];
 
   return (
@@ -223,8 +223,8 @@ export function Concentric({
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ background: baseShade(items.length - 1 - i) }}
             />
-            <span className="min-w-0 flex-1 truncate text-neutral-700">{d.label}</span>
-            <span className="shrink-0 font-semibold tabular-nums text-neutral-900">
+            <span className="min-w-0 flex-1 truncate text-ink-2">{d.label}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-ink">
               {wonShort(d.value)}
             </span>
           </li>
@@ -241,7 +241,7 @@ export function BaselineVsPromo({
   data: { name: string; baseline: number; promo: number }[];
 }) {
   if (data.length === 0)
-    return <div className="text-sm text-neutral-300">데이터가 없습니다.</div>;
+    return <div className="text-sm text-ink-4">데이터가 없습니다.</div>;
   const max = Math.max(...data.flatMap((d) => [d.baseline, d.promo]), 1);
   return (
     <div className="space-y-4">
@@ -250,7 +250,7 @@ export function BaselineVsPromo({
         return (
           <div key={d.name}>
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="truncate font-medium text-neutral-700">{d.name}</span>
+              <span className="truncate font-medium text-ink-2">{d.name}</span>
               {ratio != null && (
                 <span className="ml-2 shrink-0 font-semibold text-brand-600">
                   평소 대비 {ratio.toFixed(1)}배
@@ -259,11 +259,11 @@ export function BaselineVsPromo({
             </div>
             {/* 상시 */}
             <div className="flex items-center gap-2">
-              <span className="w-8 shrink-0 text-[10px] text-neutral-400">상시</span>
-              <div className="h-3 flex-1 overflow-hidden rounded-full bg-neutral-100">
-                <div className="h-full rounded-full bg-neutral-300" style={{ width: `${(d.baseline / max) * 100}%` }} />
+              <span className="w-8 shrink-0 text-[10px] text-ink-4">상시</span>
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-soft">
+                <div className="h-full rounded-full bg-soft" style={{ width: `${(d.baseline / max) * 100}%` }} />
               </div>
-              <span className="w-16 shrink-0 text-right text-[10px] tabular-nums text-neutral-400">
+              <span className="w-16 shrink-0 text-right text-[10px] tabular-nums text-ink-4">
                 {wonShort(d.baseline)}
               </span>
             </div>
@@ -273,7 +273,7 @@ export function BaselineVsPromo({
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-brand-50">
                 <div className="h-full rounded-full bg-brand-500" style={{ width: `${(d.promo / max) * 100}%` }} />
               </div>
-              <span className="w-16 shrink-0 text-right text-[10px] font-semibold tabular-nums text-neutral-700">
+              <span className="w-16 shrink-0 text-right text-[10px] font-semibold tabular-nums text-ink-2">
                 {wonShort(d.promo)}
               </span>
             </div>
@@ -303,7 +303,7 @@ export function Donut({
           <span className="text-xl font-bold">{pct != null ? Math.round(pct * 100) : "—"}%</span>
         </div>
       </div>
-      <span className="mt-3 text-xs text-neutral-300">{label}</span>
+      <span className="mt-3 text-xs text-ink-4">{label}</span>
     </div>
   );
 }

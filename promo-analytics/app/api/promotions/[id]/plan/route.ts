@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   computeOptionTotals,
@@ -162,9 +162,10 @@ export async function PATCH(
       .eq("campaign_plan_id", plan_id);
     if (delErr) throw delErr;
 
+    // 옵션·아이템을 배치 insert — 옵션 N개당 2회씩 순차 왕복하던 것을 2회 왕복으로(저장 속도).
     let revTotal = 0;
     let contribTotal = 0;
-    for (const [idx, opt] of options.entries()) {
+    const optionRows = options.map((opt, idx) => {
       const itemInputs: PlanItemInput[] = opt.items.map((it) => {
         const pm = priceMap.get(it.product_id);
         return {
@@ -187,41 +188,44 @@ export async function PATCH(
           : opt.option_label
             ? [opt.option_label]
             : [];
-      const { data: newOpt, error: oErr } = await supabase
+      return {
+        campaign_plan_id: plan_id,
+        option_label: opt.option_label,
+        expected_option_qty: opt.expected_option_qty,
+        is_main: !!opt.is_main,
+        match_patterns: defaultPatterns,
+        sort: opt.sort ?? idx,
+        set_price: t.set_price,
+        consumer_total: t.consumer_total,
+        regular_total: t.regular_total,
+        discount_rate_consumer: t.discount_rate_consumer,
+        discount_rate_regular: t.discount_rate_regular,
+        expected_revenue: t.expected_revenue,
+        expected_contribution: t.expected_contribution,
+      };
+    });
+    if (optionRows.length > 0) {
+      const { data: newOpts, error: oErr } = await supabase
         .from("campaign_plan_options")
-        .insert({
-          campaign_plan_id: plan_id,
-          option_label: opt.option_label,
-          expected_option_qty: opt.expected_option_qty,
-          is_main: !!opt.is_main,
-          match_patterns: defaultPatterns,
-          sort: opt.sort ?? idx,
-          set_price: t.set_price,
-          consumer_total: t.consumer_total,
-          regular_total: t.regular_total,
-          discount_rate_consumer: t.discount_rate_consumer,
-          discount_rate_regular: t.discount_rate_regular,
-          expected_revenue: t.expected_revenue,
-          expected_contribution: t.expected_contribution,
-        })
-        .select("id")
-        .single();
+        .insert(optionRows)
+        .select("id");
       if (oErr) throw oErr;
-
-      if (opt.items.length > 0) {
+      // INSERT ... RETURNING 은 입력 순서를 보존 — i번째 id가 options[i]의 옵션
+      const itemRows = options.flatMap((opt, i) =>
+        opt.items.map((it, j) => ({
+          campaign_plan_option_id: (newOpts![i] as { id: string }).id,
+          product_id: it.product_id,
+          base_name: it.base_name,
+          sku_qty_per_option: it.sku_qty_per_option,
+          unit_sale_price: it.unit_sale_price,
+          source_config_id: it.source_config_id ?? null,
+          sort: j,
+        })),
+      );
+      if (itemRows.length > 0) {
         const { error: iErr } = await supabase
           .from("campaign_plan_option_items")
-          .insert(
-            opt.items.map((it, i) => ({
-              campaign_plan_option_id: newOpt.id,
-              product_id: it.product_id,
-              base_name: it.base_name,
-              sku_qty_per_option: it.sku_qty_per_option,
-              unit_sale_price: it.unit_sale_price,
-              source_config_id: it.source_config_id ?? null,
-              sort: i,
-            })),
-          );
+          .insert(itemRows);
         if (iErr) throw iErr;
       }
     }
@@ -261,8 +265,16 @@ export async function PATCH(
       /* extras 컬럼 미적용 무시 */
     }
 
-    // 메인 지정이 메인/함께구매 분해에 영향 → 사전계산 롤업 갱신
-    await supabase.rpc("refresh_rollups", { p_force: true });
+    // 메인 지정이 메인/함께구매 분해에 영향 → 사전계산 롤업 갱신.
+    // 응답을 막지 않도록 after()로 백그라운드 실행 — 저장 버튼 체감 지연 제거.
+    // (실패해도 트리거 dirty 플래그 + 읽기 시점 ensure가 안전망)
+    after(async () => {
+      try {
+        await supabase.rpc("refresh_rollups", { p_force: true });
+      } catch {
+        /* 프리웜 실패 무시 */
+      }
+    });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

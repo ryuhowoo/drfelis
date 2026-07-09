@@ -255,7 +255,7 @@ function TierRow({
           {dirty ? "저장" : "저장됨"}
         </button>
         {cfg && (
-          <button onClick={() => onDelete(cfg.id)} className="mb-1 rounded-lg px-2 py-1.5 text-xs text-red-500 hover:bg-red-50">
+          <button onClick={() => onDelete(cfg.id)} className="mb-1 rounded-lg px-2 py-1.5 text-xs text-danger hover:bg-danger-soft">
             지우기
           </button>
         )}
@@ -350,7 +350,7 @@ function SetItems({ setProduct }: { setProduct: DrawerProduct }) {
               onChange={(e) => setQty(it, Math.max(1, Number(e.target.value) || 1))}
               className="w-14 shrink-0 rounded border border-line px-1.5 py-1 text-right text-sm"
             />
-            <button onClick={() => remove(it.id)} className="shrink-0 text-xs text-red-500 hover:underline">✕</button>
+            <button onClick={() => remove(it.id)} className="shrink-0 text-xs text-danger hover:underline">✕</button>
           </div>
         ))}
         {items.length === 0 && <p className="text-xs text-ink-4">구성 SKU가 없습니다. 아래에서 추가하세요.</p>}
@@ -365,12 +365,12 @@ function SetItems({ setProduct }: { setProduct: DrawerProduct }) {
           className="w-full rounded-lg border border-line bg-card px-2.5 py-1.5 text-sm focus:border-brand-400 focus:outline-none"
         />
         {open && hits.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+          <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-line bg-white shadow-lg">
             {hits.map((h) => (
               <li key={h.id}>
-                <button onClick={() => add(h)} className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-50">
+                <button onClick={() => add(h)} className="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-soft">
                   <span className="truncate">{h.base_name}</span>
-                  <span className="shrink-0 text-xs text-neutral-400">원가 {won(h.cost)}</span>
+                  <span className="shrink-0 text-xs text-ink-4">원가 {won(h.cost)}</span>
                 </button>
               </li>
             ))}

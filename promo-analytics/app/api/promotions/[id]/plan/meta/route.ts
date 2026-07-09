@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -59,7 +59,14 @@ export async function PATCH(
 
     // 메인 지정이 바뀌면 메인/함께구매 분해가 달라짐 → 사전계산 갱신
     if (mainChanged) {
-      await supabase.rpc("refresh_rollups", { p_force: true });
+      // 응답을 막지 않도록 after()로 백그라운드 갱신 (dirty 플래그 + 읽기 시점 ensure가 안전망)
+      after(async () => {
+        try {
+          await supabase.rpc("refresh_rollups", { p_force: true });
+        } catch {
+          /* 프리웜 실패 무시 */
+        }
+      });
     }
 
     return NextResponse.json({ ok: true });

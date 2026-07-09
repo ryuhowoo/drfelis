@@ -15,7 +15,7 @@ type Item = { name: string; uplift: number; isMain: boolean };
 
 export default function UpliftChart({ data }: { data: Item[] }) {
   if (data.length === 0)
-    return <p className="text-sm text-neutral-400">표시할 데이터가 없습니다.</p>;
+    return <p className="text-sm text-ink-4">표시할 데이터가 없습니다.</p>;
 
   return (
     <ResponsiveContainer width="100%" height={Math.max(220, data.length * 34)}>
@@ -28,7 +28,7 @@ export default function UpliftChart({ data }: { data: Item[] }) {
           type="number"
           tickFormatter={(v) => wonShort(v)}
           fontSize={11}
-          stroke="#a3a3a3"
+          stroke="#97a4a0"
         />
         <YAxis
           type="category"
@@ -40,13 +40,13 @@ export default function UpliftChart({ data }: { data: Item[] }) {
         />
         <Tooltip
           formatter={(v) => [wonShort(Number(v)), "초과 달성"] as [string, string]}
-          cursor={{ fill: "#f5f5f5" }}
+          cursor={{ fill: "#f3f0e8" }}
         />
         <Bar dataKey="uplift" radius={[0, 4, 4, 0]}>
           {data.map((d, i) => (
             <Cell
               key={i}
-              fill={d.uplift < 0 ? "#f87171" : d.isMain ? "#16a34a" : "#9ca3af"}
+              fill={d.uplift < 0 ? "#c86652" : d.isMain ? "#247f63" : "#97a4a0"}
             />
           ))}
         </Bar>

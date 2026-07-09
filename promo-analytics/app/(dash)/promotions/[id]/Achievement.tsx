@@ -47,8 +47,8 @@ export default function Achievement({
   if (!hasConfirmed && !hasMatchData && options.length === 0) {
     return (
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성률 (계획 대비 성과)</h2>
-        <div className="rounded-2xl card-soft p-6 text-sm text-neutral-500">
+        <h2 className="mb-2 text-sm font-semibold text-ink-2">달성률 (계획 대비 성과)</h2>
+        <div className="rounded-2xl card-soft p-6 text-sm text-ink-3">
           확정된 가격 가이드(플랜)가 없습니다.{" "}
           <Link href={`/promotions/${promotionId}/plan`} className="text-brand-600 hover:underline">
             플랜을 확정
@@ -87,7 +87,7 @@ export default function Achievement({
 
   return (
     <section className="mt-6">
-      <h2 className="mb-2 text-sm font-semibold text-neutral-700">달성 & 매칭 (계획 대비 성과)</h2>
+      <h2 className="mb-2 text-sm font-semibold text-ink-2">달성 & 매칭 (계획 대비 성과)</h2>
 
       {/* 달성 카드 (N8 매출 중심): 매출은 전체 성과/목표, 수량은 메인 제품 */}
       {hasConfirmed ? (
@@ -157,7 +157,7 @@ export default function Achievement({
           )}
         </>
       ) : (
-        <p className="rounded-xl card-soft px-4 py-3 text-xs text-neutral-500">
+        <p className="rounded-xl card-soft px-4 py-3 text-xs text-ink-3">
           확정 플랜이 아니라 총 달성률은 미표시 — 아래에서 SKU 매칭만 정리할 수 있습니다.{" "}
           <Link href={`/promotions/${promotionId}/plan`} className="text-brand-600 hover:underline">
             플랜 확정 →
@@ -173,7 +173,7 @@ export default function Achievement({
         >
           SKU(품목)
           {unmatched > 0 && (
-            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700">
+            <span className="ml-1.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] text-warning">
               미매칭 {unmatched}
             </span>
           )}
@@ -188,7 +188,7 @@ export default function Achievement({
 
       {tab === "sku" ? (
         <div className="mt-3">
-          <p className="mb-2 text-[11px] text-neutral-400">
+          <p className="mb-2 text-[11px] text-ink-4">
             매출 달성은 위 카드의 <strong>캠페인 전체(함께 구매 포함)</strong> 기준입니다. 여기 SKU 표는 <strong>메인 제품이 예상수량만큼 팔렸는지</strong>를 봅니다 — 품목 코드·정규화 이름으로 자동 매칭, 빗나간 것만 아래에서 보정하세요.
           </p>
 
@@ -196,7 +196,7 @@ export default function Achievement({
           {hasConfirmed && (
             <div className="overflow-x-auto rounded-2xl card-soft">
               <table className="w-full min-w-[680px] text-sm">
-                <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
+                <thead className="bg-soft text-left text-xs text-ink-3">
                   <tr>
                     <th className="px-3 py-2.5 font-medium">메인 SKU</th>
                     <th className="px-3 py-2.5 text-right font-medium">기대 매출</th>
@@ -205,18 +205,18 @@ export default function Achievement({
                     <th className="px-3 py-2.5 font-medium">수량 (예상 → 실제)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100">
+                <tbody className="divide-y divide-line">
                   {planRows.map((r) => (
-                    <tr key={r.product_id} className={r.status === "unsold" ? "bg-red-50/40" : ""}>
+                    <tr key={r.product_id} className={r.status === "unsold" ? "bg-danger-soft/40" : ""}>
                       <td className="px-3 py-2.5">
                         {r.base_name}
                         {r.status === "unsold" && (
-                          <span className="ml-1.5 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                          <span className="ml-1.5 rounded bg-danger-soft px-1.5 py-0.5 text-[10px] font-medium text-danger">
                             미판매
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2.5 text-right text-neutral-500">{won(r.expected_revenue)}</td>
+                      <td className="px-3 py-2.5 text-right text-ink-3">{won(r.expected_revenue)}</td>
                       <td className="px-3 py-2.5 text-right">{won(r.actual_revenue)}</td>
                       <td className="px-3 py-2.5 text-right">
                         <AchPct v={r.ach_revenue} />
@@ -228,7 +228,7 @@ export default function Achievement({
                   ))}
                   {planRows.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-3 py-4 text-center text-xs text-neutral-400">
+                      <td colSpan={5} className="px-3 py-4 text-center text-xs text-ink-4">
                         계획된 SKU가 없습니다.
                       </td>
                     </tr>
@@ -258,17 +258,17 @@ export default function Achievement({
 
           {/* 계획 외 판매 */}
           {hasConfirmed && haloAll.length > 0 && (
-            <details className="mt-4 rounded-xl bg-amber-50/60 p-4">
-              <summary className="cursor-pointer text-sm font-medium text-amber-800">
+            <details className="mt-4 rounded-xl bg-warning-soft/60 p-4">
+              <summary className="cursor-pointer text-sm font-medium text-warning">
                 함께 구매 (메인 외) — {haloAll.length}개 SKU · 매출 {wonShort(haloRevTotal)} · 공헌{" "}
                 {wonShort(haloContribTotal)}
-                <span className="ml-1 text-xs font-normal text-amber-600">
+                <span className="ml-1 text-xs font-normal text-warning">
                   (정기구독 제외 · 매출 큰 순 · 달성률 분모에서 제외)
                 </span>
               </summary>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="text-amber-700/70">
+                  <thead className="text-warning/70">
                     <tr>
                       <th className="py-1 pr-3">SKU (함께 구매 Top)</th>
                       <th className="py-1 pr-3 text-right">실 매출</th>
@@ -277,14 +277,14 @@ export default function Achievement({
                   </thead>
                   <tbody>
                     {haloHead.map((r) => (
-                      <tr key={r.product_id} className="border-t border-amber-100">
+                      <tr key={r.product_id} className="border-t border-warning">
                         <td className="py-1 pr-3">{r.base_name}</td>
                         <td className="py-1 pr-3 text-right">{won(r.actual_revenue)}</td>
                         <td className="py-1 text-right">{num(r.actual_qty)}</td>
                       </tr>
                     ))}
                     {haloRest.length > 0 && (
-                      <tr className="border-t border-amber-100 text-amber-700/80">
+                      <tr className="border-t border-warning text-warning/80">
                         <td className="py-1 pr-3">외 {haloRest.length}개 SKU</td>
                         <td className="py-1 pr-3 text-right">{won(haloRestRev)}</td>
                         <td className="py-1 text-right">{num(haloRestQty)}</td>
@@ -298,7 +298,7 @@ export default function Achievement({
         </div>
       ) : (
         <div className="mt-3">
-          <p className="mb-2 text-[11px] text-neutral-400">
+          <p className="mb-2 text-[11px] text-ink-4">
             옵션(묶음) 달성은 <strong>best-effort</strong> 입니다 — 개입(묶음수)이 맞으면 정확 매칭, 안 맞으면(예: 8개입 계획인데 1·2·4개로 판매) <strong>SKU 성과로 폴백</strong>해 표시합니다. 신뢰 기준은 위 SKU 탭입니다.
           </p>
           <div className="space-y-2">
@@ -311,7 +311,7 @@ export default function Achievement({
               />
             ))}
             {options.length === 0 && (
-              <p className="text-xs text-neutral-400">옵션이 없습니다.</p>
+              <p className="text-xs text-ink-4">옵션이 없습니다.</p>
             )}
           </div>
         </div>
@@ -370,20 +370,20 @@ function AchCard({
   return (
     <div className={`rounded-xl p-4 ${primary ? "bg-brand-50" : "card-soft"}`}>
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-neutral-500">{label}</span>
+        <span className="text-xs text-ink-3">{label}</span>
         {lowData && (
-          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+          <span className="rounded bg-warning-soft px-1.5 py-0.5 text-[10px] font-medium text-warning">
             데이터 부족
           </span>
         )}
       </div>
       <div className="mt-1 text-2xl font-semibold">
-        {ach != null ? pct(ach, 0) : note ? <span className="text-base text-amber-600">계산 불가</span> : "—"}
+        {ach != null ? pct(ach, 0) : note ? <span className="text-base text-warning">계산 불가</span> : "—"}
       </div>
-      <div className="mt-0.5 text-xs text-neutral-400">
+      <div className="mt-0.5 text-xs text-ink-4">
         {fmt(actual)} / {fmt(expected)}
       </div>
-      {note && <div className="mt-1 text-[10px] leading-tight text-amber-600">{note}</div>}
+      {note && <div className="mt-1 text-[10px] leading-tight text-warning">{note}</div>}
     </div>
   );
 }
@@ -403,27 +403,27 @@ function QtyMini({ row }: { row: PlanVsActualRow }) {
           {num(exp)} <span className="text-ink-4">→</span> {num(act)}
         </span>
         {ratio != null && (
-          <span className={`font-semibold ${over ? "text-green-600" : "text-amber-600"}`}>
+          <span className={`font-semibold ${over ? "text-success" : "text-warning"}`}>
             {pct(ratio, 0)}
           </span>
         )}
       </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-soft">
         <div
-          className={`h-full rounded-full ${over ? "bg-green-500" : "bg-amber-400"}`}
+          className={`h-full rounded-full ${over ? "bg-success" : "bg-warning"}`}
           style={{ width: `${fill}%` }}
         />
       </div>
       {!over && exp > 0 && short > 0 && (
-        <div className="mt-0.5 text-[10px] font-medium text-amber-600">{num(short)}개 부족</div>
+        <div className="mt-0.5 text-[10px] font-medium text-warning">{num(short)}개 부족</div>
       )}
     </div>
   );
 }
 
 function AchPct({ v }: { v: number | null }) {
-  if (v == null) return <span className="text-neutral-300">—</span>;
-  const color = v >= 1 ? "text-green-600" : v <= 0 ? "text-red-500" : "text-neutral-700";
+  if (v == null) return <span className="text-ink-4">—</span>;
+  const color = v >= 1 ? "text-success" : v <= 0 ? "text-danger" : "text-ink-2";
   return <span className={color}>{pct(v, 0)}</span>;
 }
 
@@ -431,13 +431,13 @@ function AchPct({ v }: { v: number | null }) {
 function SourceBadge({ src }: { src: PlanVsActualOption["match_source"] }) {
   if (src === "routed")
     return (
-      <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+      <span className="rounded bg-success-soft px-1.5 py-0.5 text-[10px] font-medium text-success">
         자동 (구성·묶음)
       </span>
     );
   if (src === "sku")
     return (
-      <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+      <span className="rounded bg-info-soft px-1.5 py-0.5 text-[10px] font-medium text-info">
         SKU 성과 (개입 무관)
       </span>
     );
@@ -448,7 +448,7 @@ function SourceBadge({ src }: { src: PlanVsActualOption["match_source"] }) {
       </span>
     );
   return (
-    <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+    <span className="rounded bg-soft px-1.5 py-0.5 text-[10px] font-medium text-ink-3">
       미매칭
     </span>
   );
@@ -501,7 +501,7 @@ function OptionRow({
           </span>
           <SourceBadge src={opt.match_source} />
         </div>
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
+        <div className="flex items-center gap-3 text-xs text-ink-3">
           <span>
             예상 {wonShort(opt.expected_revenue)} → 성과 {wonShort(opt.actual_revenue)}
           </span>
@@ -510,7 +510,7 @@ function OptionRow({
           </span>
           <button
             onClick={() => setEditing((v) => !v)}
-            className="rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:bg-neutral-50"
+            className="rounded-lg border border-line px-2 py-1 text-xs hover:bg-soft"
           >
             {editing ? "닫기" : "수동 보정"}
           </button>
@@ -518,12 +518,12 @@ function OptionRow({
       </div>
 
       {editing && (
-        <div className="mt-3 border-t border-neutral-100 pt-3">
-          <p className="mb-2 text-xs text-neutral-500">
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-xs text-ink-3">
             자동(구성·묶음) 라우팅이 빗나갔다면, 이 옵션에 해당하는 성과 옵션정보를 직접 고르세요 (부분일치). 저장 시 수동 매핑이 우선합니다.
           </p>
           {optionInfos.length === 0 ? (
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-ink-4">
               성과 데이터에 옵션정보가 없습니다. (수량·옵션 컬럼 미보유)
             </p>
           ) : (
@@ -549,7 +549,7 @@ function OptionRow({
             >
               매핑 저장
             </button>
-            <span className="self-center text-[11px] text-neutral-400">
+            <span className="self-center text-[11px] text-ink-4">
               확정 플랜이어도 매핑은 수정 가능합니다.
             </span>
           </div>

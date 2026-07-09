@@ -67,23 +67,23 @@ export default function CampaignPerformanceList() {
     <div className="rounded-2xl card-soft p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="font-medium">④ 캠페인 성과 (회원·등급·카테고리)</h2>
-        <span className="text-[11px] text-neutral-400">{rows.length}개 캠페인</span>
+        <span className="text-[11px] text-ink-4">{rows.length}개 캠페인</span>
       </div>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         성과 업로드는 각 캠페인 상세의 <b>성과 업로드</b>에서 통합 포맷(달성률+세그먼트)으로 진행합니다.
         여기서는 적재된 캠페인의 플랜·성과를 확인하고 엑셀로 내려받습니다.
       </p>
 
-      {err && <p className="mt-3 text-xs text-rose-600">{err}</p>}
+      {err && <p className="mt-3 text-xs text-danger">{err}</p>}
 
       {loading ? (
-        <p className="mt-4 text-sm text-neutral-400">불러오는 중…</p>
+        <p className="mt-4 text-sm text-ink-4">불러오는 중…</p>
       ) : rows.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-400">아직 성과가 적재된 캠페인이 없습니다.</p>
+        <p className="mt-4 text-sm text-ink-4">아직 성과가 적재된 캠페인이 없습니다.</p>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="text-xs text-neutral-400">
+            <thead className="text-xs text-ink-4">
               <tr>
                 <th className="py-1.5 pr-3">최종 적재</th>
                 <th className="py-1.5 pr-3">채널</th>
@@ -95,22 +95,22 @@ export default function CampaignPerformanceList() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.promotion_id} className="border-t border-neutral-100 align-top">
-                  <td className="py-2 pr-3 whitespace-nowrap text-neutral-500">
+                <tr key={r.promotion_id} className="border-t border-line align-top">
+                  <td className="py-2 pr-3 whitespace-nowrap text-ink-3">
                     {r.last_at
                       ? new Date(r.last_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
                       : "—"}
                   </td>
                   <td className="py-2 pr-3 whitespace-nowrap">
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{r.channel ?? "—"}</span>
+                    <span className="rounded-full bg-soft px-2 py-0.5 text-xs text-ink-2">{r.channel ?? "—"}</span>
                   </td>
-                  <td className="py-2 pr-3 font-medium text-neutral-800">
+                  <td className="py-2 pr-3 font-medium text-ink">
                     <Link href={`/promotions/${r.promotion_id}?view=segment`} className="hover:underline">
                       {r.name}
                     </Link>
                   </td>
-                  <td className="py-2 pr-3 whitespace-nowrap text-neutral-500">{period(r)}</td>
-                  <td className="py-2 pr-3 text-neutral-500">
+                  <td className="py-2 pr-3 whitespace-nowrap text-ink-3">{period(r)}</td>
+                  <td className="py-2 pr-3 text-ink-3">
                     {won(r.revenue)} · {r.seg_rows.toLocaleString()}행 · 카테고리 {r.categories}종
                     {r.revenue > 0 && r.subscription_revenue > 0 && (
                       <> · 정기 {Math.round((r.subscription_revenue / r.revenue) * 100)}%</>
@@ -120,14 +120,14 @@ export default function CampaignPerformanceList() {
                     <button
                       onClick={() => dl("plan", r)}
                       disabled={busy != null}
-                      className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+                      className="rounded-lg border border-line px-2 py-1 text-xs text-ink-2 hover:bg-soft disabled:opacity-50"
                     >
                       {busy === `plan:${r.promotion_id}` ? "…" : "플랜"}
                     </button>
                     <button
                       onClick={() => dl("perf", r)}
                       disabled={busy != null}
-                      className="ml-1.5 rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+                      className="ml-1.5 rounded-lg border border-line px-2 py-1 text-xs text-ink-2 hover:bg-soft disabled:opacity-50"
                     >
                       {busy === `perf:${r.promotion_id}` ? "…" : "성과"}
                     </button>

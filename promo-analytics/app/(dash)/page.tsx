@@ -295,8 +295,8 @@ export default async function Dashboard() {
       </header>
 
       {stale && (
-        <div className="mb-5 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-2.5 text-xs text-amber-800">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+        <div className="mb-5 flex items-center gap-2 rounded-xl border border-warning bg-warning-soft/60 px-4 py-2.5 text-xs text-warning">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warning" />
           방금 업로드·연동한 데이터로 분석을 갱신하는 중입니다. 아래 수치는 직전 기준이며
           1~2분 내 자동 반영됩니다.
         </div>
@@ -334,18 +334,18 @@ export default async function Dashboard() {
                   href={it.href}
                   className={`flex h-full items-start gap-2.5 rounded-xl border p-3 transition hover:shadow-sm ${
                     it.severity === "warn"
-                      ? "border-amber-200 bg-amber-50/60"
+                      ? "border-warning bg-warning-soft/60"
                       : it.severity === "ok"
-                        ? "border-emerald-200 bg-emerald-50/50"
+                        ? "border-success bg-success-soft/50"
                         : "border-line bg-soft/50"
                   }`}
                 >
                   <span
                     className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
                       it.severity === "warn"
-                        ? "bg-amber-500"
+                        ? "bg-warning"
                         : it.severity === "ok"
-                          ? "bg-emerald-500"
+                          ? "bg-success"
                           : "bg-ink-4"
                     }`}
                   />
@@ -636,8 +636,8 @@ function Kpi({
               brand
                 ? "bg-white/15 text-white"
                 : delta >= 0
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-red-50 text-red-600"
+                  ? "bg-success-soft text-success"
+                  : "bg-danger-soft text-danger"
             }`}
             title={deltaLabel}
           >
@@ -652,7 +652,7 @@ function Kpi({
       {sub && <div className={`mt-0.5 text-[11px] ${brand ? "text-brand-100" : "text-ink-4"}`}>{sub}</div>}
       {spark && spark.length > 1 && (
         <div className="mt-auto pt-2">
-          <Spark data={spark} color={brand ? "#ffffff" : "#14916a"} />
+          <Spark data={spark} color={brand ? "#ffffff" : "#2f8f72"} />
         </div>
       )}
     </div>

@@ -14,8 +14,8 @@ import {
 } from "recharts";
 import { wonShort } from "@/lib/format";
 
-const BRAND = "#c66a48";
-const GRAY = "#C7CCD6";
+const BRAND = "#c86652";
+const GRAY = "#c6cec8";
 
 export type DailyPoint = { d: string; rev: number; in: boolean };
 
@@ -36,8 +36,8 @@ export default function CampaignTrend({
   return (
     <section className="mt-6 rounded-2xl card-soft p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-neutral-700">일별 매출 흐름</h2>
-        <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+        <h2 className="text-sm font-semibold text-ink-2">일별 매출 흐름</h2>
+        <div className="flex items-center gap-3 text-[11px] text-ink-4">
           <span><span className="mr-1 inline-block h-2 w-2 rounded-sm" style={{ background: GRAY }} />평시 (직전 8주)</span>
           <span><span className="mr-1 inline-block h-2 w-2 rounded-sm" style={{ background: BRAND }} />캠페인 기간</span>
           {baselineDaily != null && baselineDaily > 0 && (
@@ -51,14 +51,14 @@ export default function CampaignTrend({
             <XAxis
               dataKey="d"
               tickFormatter={(v: string) => v.slice(5)}
-              tick={{ fontSize: 11, fill: "#9CA4B4" }}
+              tick={{ fontSize: 11, fill: "#97a4a0" }}
               tickLine={false}
-              axisLine={{ stroke: "#E4E7EC" }}
+              axisLine={{ stroke: "#e4e1d8" }}
               minTickGap={28}
             />
             <YAxis
               tickFormatter={(v: number) => wonShort(v)}
-              tick={{ fontSize: 11, fill: "#9CA4B4" }}
+              tick={{ fontSize: 11, fill: "#97a4a0" }}
               tickLine={false}
               axisLine={false}
               width={56}
@@ -68,7 +68,7 @@ export default function CampaignTrend({
               labelFormatter={(l) => String(l)}
               contentStyle={{
                 borderRadius: 12,
-                border: "1px solid #E4E7EC",
+                border: "1px solid #e4e1d8",
                 boxShadow: "0 8px 24px -8px rgba(0,0,0,.15)",
                 fontSize: 12,
               }}
@@ -76,7 +76,7 @@ export default function CampaignTrend({
             {baselineDaily != null && baselineDaily > 0 && (
               <ReferenceLine
                 y={baselineDaily}
-                stroke="#9CA4B4"
+                stroke="#97a4a0"
                 strokeDasharray="5 4"
                 strokeWidth={1}
               />
@@ -98,14 +98,14 @@ export default function CampaignTrend({
               startIndex={defaultStart}
               height={22}
               travellerWidth={8}
-              stroke="#C7CCD6"
-              fill="#F6F7F9"
+              stroke="#c6cec8"
+              fill="#f5f2ec"
               tickFormatter={(v: string) => v.slice(5)}
             />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 text-[11px] text-neutral-400">
+      <p className="mt-2 text-[11px] text-ink-4">
         매장 전체 일매출 기준 · 드래그(브러시)로 구간을 좁혀 캠페인 전후 흐름을 비교하세요.
       </p>
     </section>

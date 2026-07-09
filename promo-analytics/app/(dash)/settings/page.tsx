@@ -9,7 +9,7 @@ export default function SettingsPage() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <h1 className="text-xl font-semibold tracking-tight">설정 — 분류 · 채널 관리</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         혜택·시즈널리티·목적 항목과 <strong>채널별 수수료</strong>를 관리합니다. 작성·시뮬레이터 화면에 바로 반영됩니다.
       </p>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -68,17 +68,17 @@ function ChannelFeesEditor() {
 
   return (
     <div className="rounded-2xl p-5 card-soft">
-      <h2 className="text-sm font-semibold text-neutral-700">채널별 수수료</h2>
-      <p className="mt-0.5 text-xs text-neutral-400">
+      <h2 className="text-sm font-semibold text-ink-2">채널별 수수료</h2>
+      <p className="mt-0.5 text-xs text-ink-4">
         판매 채널별 수수료(%) — 새 캠페인에서 채널을 고르면 공헌이익 계산에 반영됩니다.
       </p>
 
-      <ul className="mt-3 divide-y divide-neutral-100">
+      <ul className="mt-3 divide-y divide-line">
         {rows.map((r) => {
           const draft = drafts[r.channel] ?? String(+(r.fee_rate * 100).toFixed(2));
           return (
             <li key={r.channel} className="flex items-center gap-2 py-2">
-              <span className="flex-1 text-sm text-neutral-800">{r.channel}</span>
+              <span className="flex-1 text-sm text-ink">{r.channel}</span>
               <input
                 value={draft}
                 inputMode="decimal"
@@ -87,15 +87,15 @@ function ChannelFeesEditor() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 }}
-                className="w-20 rounded-lg border border-neutral-200 px-2 py-1 text-right text-sm tabular-nums focus:border-brand-400 focus:outline-none"
+                className="w-20 rounded-lg border border-line px-2 py-1 text-right text-sm tabular-nums focus:border-brand-400 focus:outline-none"
               />
-              <span className="w-4 text-xs text-neutral-400">%</span>
-              <span className="w-8 text-[11px] text-emerald-600">{savedAt === r.channel ? "저장" : ""}</span>
+              <span className="w-4 text-xs text-ink-4">%</span>
+              <span className="w-8 text-[11px] text-success">{savedAt === r.channel ? "저장" : ""}</span>
               <button
                 onClick={() => {
                   if (confirm(`'${r.channel}' 채널을 삭제할까요?`)) call("DELETE", { channel: r.channel });
                 }}
-                className="text-xs text-neutral-400 hover:text-red-600"
+                className="text-xs text-ink-4 hover:text-danger"
               >
                 삭제
               </button>
@@ -103,7 +103,7 @@ function ChannelFeesEditor() {
           );
         })}
         {rows.length === 0 && (
-          <li className="py-3 text-sm text-neutral-400">채널이 없습니다.</li>
+          <li className="py-3 text-sm text-ink-4">채널이 없습니다.</li>
         )}
       </ul>
 
@@ -112,14 +112,14 @@ function ChannelFeesEditor() {
           value={addName}
           onChange={(e) => setAddName(e.target.value)}
           placeholder="새 채널명"
-          className="flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-xl border border-line px-3 py-2 text-sm"
         />
         <input
           value={addRate}
           onChange={(e) => setAddRate(e.target.value)}
           placeholder="수수료%"
           inputMode="decimal"
-          className="w-24 rounded-xl border border-neutral-200 px-3 py-2 text-right text-sm"
+          className="w-24 rounded-xl border border-line px-3 py-2 text-right text-sm"
         />
         <button
           onClick={async () => {
@@ -133,7 +133,7 @@ function ChannelFeesEditor() {
           추가
         </button>
       </div>
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
 }
@@ -174,15 +174,15 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
 
   return (
     <div className="rounded-2xl p-5 card-soft">
-      <h2 className="text-sm font-semibold text-neutral-700">{title}</h2>
-      <p className="mt-0.5 text-xs text-neutral-400">{hint}</p>
+      <h2 className="text-sm font-semibold text-ink-2">{title}</h2>
+      <p className="mt-0.5 text-xs text-ink-4">{hint}</p>
 
       <div className="mt-3 flex gap-2">
         <input
           value={adding}
           onChange={(e) => setAdding(e.target.value)}
           placeholder="새 항목 추가"
-          className="flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-xl border border-line px-3 py-2 text-sm"
           onKeyDown={async (e) => {
             if (e.key === "Enter" && adding.trim()) {
               if (await call("POST", { name: adding })) setAdding("");
@@ -198,9 +198,9 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
           추가
         </button>
       </div>
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 
-      <ul className="mt-3 divide-y divide-neutral-100">
+      <ul className="mt-3 divide-y divide-line">
         {items.map((it) => (
           <li key={it.id} className="flex items-center gap-2 py-2">
             {editId === it.id ? (
@@ -208,7 +208,7 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
                 <input
                   value={editVal}
                   onChange={(e) => setEditVal(e.target.value)}
-                  className="flex-1 rounded-lg border border-neutral-200 px-2 py-1 text-sm"
+                  className="flex-1 rounded-lg border border-line px-2 py-1 text-sm"
                   autoFocus
                 />
                 <button
@@ -219,19 +219,19 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
                 >
                   저장
                 </button>
-                <button onClick={() => setEditId(null)} className="text-xs text-neutral-400">
+                <button onClick={() => setEditId(null)} className="text-xs text-ink-4">
                   취소
                 </button>
               </>
             ) : (
               <>
-                <span className="flex-1 text-sm text-neutral-800">{it.name}</span>
+                <span className="flex-1 text-sm text-ink">{it.name}</span>
                 <button
                   onClick={() => {
                     setEditId(it.id);
                     setEditVal(it.name);
                   }}
-                  className="text-xs text-neutral-400 hover:text-neutral-700"
+                  className="text-xs text-ink-4 hover:text-ink-2"
                 >
                   수정
                 </button>
@@ -239,7 +239,7 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
                   onClick={() => {
                     if (confirm(`'${it.name}' 삭제할까요?`)) call("DELETE", { id: it.id });
                   }}
-                  className="text-xs text-neutral-400 hover:text-red-600"
+                  className="text-xs text-ink-4 hover:text-danger"
                 >
                   삭제
                 </button>
@@ -248,7 +248,7 @@ function ListEditor({ kind, title, hint }: { kind: Kind; title: string; hint: st
           </li>
         ))}
         {items.length === 0 && (
-          <li className="py-3 text-sm text-neutral-400">
+          <li className="py-3 text-sm text-ink-4">
             항목이 없습니다. (Phase 2 SQL 적용 후 기본값이 채워집니다)
           </li>
         )}
