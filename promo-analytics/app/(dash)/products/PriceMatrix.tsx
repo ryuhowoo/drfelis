@@ -186,11 +186,11 @@ export default function PriceMatrix({
               >
                 기본
               </th>
-              <th className={`${th} sticky top-0 z-30 bg-neutral-50`} colSpan={4}>상시 단가</th>
-              <th className={`${th} sticky top-0 z-30 bg-green-50`} colSpan={SANGSI_BUNDLES.length}>묶음 (상시)</th>
-              <th className={`${th} sticky top-0 z-30 bg-purple-50`} colSpan={JEONGGI.length}>정기구독</th>
-              <th className={`${th} sticky top-0 z-30 bg-rose-50`} colSpan={2}>공헌(상시)</th>
-              <th className={`${th} sticky top-0 z-30 bg-rose-50`} colSpan={JEONGGI.length}>공헌(정기)</th>
+              <th className={`${th} sticky top-0 z-30 bg-soft`} colSpan={4}>상시 단가</th>
+              <th className={`${th} sticky top-0 z-30 bg-success-soft`} colSpan={SANGSI_BUNDLES.length}>묶음 (상시)</th>
+              <th className={`${th} sticky top-0 z-30 bg-subscription-soft`} colSpan={JEONGGI.length}>정기구독</th>
+              <th className={`${th} sticky top-0 z-30 bg-danger-soft`} colSpan={2}>공헌(상시)</th>
+              <th className={`${th} sticky top-0 z-30 bg-danger-soft`} colSpan={JEONGGI.length}>공헌(정기)</th>
             </tr>
             <tr className="bg-soft/70 text-ink-3">
               {sortableTh(stickyCols[0].key!, stickyCols[0].label, stickyCols[0].left, stickyCols[0].w)}
@@ -206,15 +206,15 @@ export default function PriceMatrix({
               <SortTh onClick={() => toggle("regular_price")} className={th} top={ROW1}>상시가{arrow("regular_price")}</SortTh>
               <SortTh onClick={() => toggle("_discount")} className={th} top={ROW1}>할인/마진/추가{arrow("_discount")}</SortTh>
               {SANGSI_BUNDLES.map((t) => (
-                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-green-50/50`}>{t}</th>
+                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-success-soft/50`}>{t}</th>
               ))}
               {JEONGGI.map((t) => (
-                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-purple-50/50`}>{t}</th>
+                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-subscription-soft/50`}>{t}</th>
               ))}
-              <th style={{ top: ROW1 }} className={`${th} sticky z-30 bg-rose-50/50`}>이익액</th>
-              <th style={{ top: ROW1 }} className={`${th} sticky z-30 bg-rose-50/50`}>이익률</th>
+              <th style={{ top: ROW1 }} className={`${th} sticky z-30 bg-danger-soft/50`}>이익액</th>
+              <th style={{ top: ROW1 }} className={`${th} sticky z-30 bg-danger-soft/50`}>이익률</th>
               {JEONGGI.map((t) => (
-                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-rose-50/50`}>{t}</th>
+                <th key={t} style={{ top: ROW1 }} className={`${th} sticky z-30 bg-danger-soft/50`}>{t}</th>
               ))}
             </tr>
           </thead>
@@ -233,7 +233,7 @@ export default function PriceMatrix({
                     style={{ left: stickyCols[3].left, minWidth: stickyCols[3].w, maxWidth: stickyCols[3].w }}
                   >
                     <EditText value={r.base_name} onSave={(v) => onPatchBase(r.id, "base_name", v)} />
-                    {r.status !== "판매중" && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">{r.status}</span>}
+                    {r.status !== "판매중" && <span className="ml-1 rounded bg-warning-soft px-1 text-[10px] text-warning">{r.status}</span>}
                   </td>
                   <td className="sticky z-20 border border-line/50 bg-card px-1 py-0.5 text-center" style={{ left: stickyCols[4].left, minWidth: stickyCols[4].w, maxWidth: stickyCols[4].w }}>
                     <button onClick={() => onOpen(r)} className="rounded px-1 text-[10px] text-brand-600 hover:bg-brand-50" title="가격 구성·세트 편집">구성</button>
@@ -245,23 +245,23 @@ export default function PriceMatrix({
                     {pctFloor(r._discount)} / {pctFloor(r._margin)} / {won(r._addon)}
                   </td>
                   {SANGSI_BUNDLES.map((t) => (
-                    <td key={t} className={`${td} bg-green-50/30`}>
+                    <td key={t} className={`${td} bg-success-soft/30`}>
                       <EditNum value={price(r.id, "상시", t)} onSave={(v) => onSaveConfig(r.id, "상시", t, v)} />
                       <span className="block text-[10px] text-ink-4">{pctFloor(discountVsConsumer(price(r.id, "상시", t), consumer, TIER_QTY[t]))}</span>
                     </td>
                   ))}
                   {JEONGGI.map((t) => (
-                    <td key={t} className={`${td} bg-purple-50/30`}>
+                    <td key={t} className={`${td} bg-subscription-soft/30`}>
                       <EditNum value={price(r.id, "정기", t)} onSave={(v) => onSaveConfig(r.id, "정기", t, v)} />
                       <span className="block text-[10px] text-ink-4">{pctFloor(discountVsConsumer(price(r.id, "정기", t), consumer, TIER_QTY[t]))}</span>
                     </td>
                   ))}
-                  <td className={`${td} bg-rose-50/30`}>{won(contribution(regular, cost, 1, mult))}</td>
-                  <td className={`${td} bg-rose-50/30`}>{pctFloor(contributionRate(regular, cost, 1, mult))}</td>
+                  <td className={`${td} bg-danger-soft/30`}>{won(contribution(regular, cost, 1, mult))}</td>
+                  <td className={`${td} bg-danger-soft/30`}>{pctFloor(contributionRate(regular, cost, 1, mult))}</td>
                   {JEONGGI.map((t) => {
                     const p = price(r.id, "정기", t);
                     return (
-                      <td key={t} className={`${td} bg-rose-50/30`}>{p != null ? won(contribution(p, cost, TIER_QTY[t], mult)) : "—"}</td>
+                      <td key={t} className={`${td} bg-danger-soft/30`}>{p != null ? won(contribution(p, cost, TIER_QTY[t], mult)) : "—"}</td>
                     );
                   })}
                 </tr>
@@ -377,7 +377,7 @@ function EditNum({ value, onSave }: { value: number | null; onSave: (v: string) 
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         if (e.key === "Escape") setDraft(null);
       }}
-      className="w-20 rounded border border-transparent bg-blue-50/40 px-1 py-0.5 text-right tabular-nums hover:border-line focus:border-brand-400 focus:bg-card focus:outline-none"
+      className="w-20 rounded border border-transparent bg-info-soft/40 px-1 py-0.5 text-right tabular-nums hover:border-line focus:border-brand-400 focus:bg-card focus:outline-none"
     />
   );
 }

@@ -85,7 +85,7 @@ export default async function LibraryPage() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">히스토리 비교/분석</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         과거 캠페인을 유형·시즈널리티·성과 기준으로 비교·분석하세요.
       </p>
       <LibraryCompare campaigns={compareCampaigns} />

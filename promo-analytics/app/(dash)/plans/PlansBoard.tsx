@@ -175,14 +175,14 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
 
   if (plans.length === 0)
     return (
-      <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center text-sm text-neutral-400">
+      <p className="mt-6 rounded-2xl border border-dashed border-line-strong bg-white px-6 py-12 text-center text-sm text-ink-4">
         아직 플랜이 없습니다. 업로드 메뉴에서 ⑤ 캠페인 플랜 가이드를 올리면 여기에 쌓입니다.
       </p>
     );
   return (
     <div className="mt-4 overflow-x-auto rounded-2xl card-soft">
       <table className="w-full min-w-[920px] text-sm">
-        <thead className="bg-soft/60 text-left text-xs text-neutral-500">
+        <thead className="bg-soft/60 text-left text-xs text-ink-3">
           <tr>
             <Th label="캠페인명" k="name" toggle={toggle} arrow={arrow} />
             <Th label="플랜" k="status" toggle={toggle} arrow={arrow} />
@@ -216,50 +216,50 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     </span>
                   )}
                   {p.code && p.code !== p.name && (
-                    <span className="ml-1.5 text-[11px] text-neutral-400">{p.code}</span>
+                    <span className="ml-1.5 text-[11px] text-ink-4">{p.code}</span>
                   )}
                 </td>
                 <td className="px-3 py-2.5">
                   {p.status === "confirmed" ? (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                    <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success">
                       확정 v{p.version}
                     </span>
                   ) : (
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                    <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
                       draft v{p.version}
                     </span>
                   )}
                 </td>
                 <td className="whitespace-nowrap px-3 py-2.5">
                   {p.has_perf ? (
-                    <span className="text-[12px] font-medium text-emerald-600">✓ 업로드됨</span>
+                    <span className="text-[12px] font-medium text-success">✓ 업로드됨</span>
                   ) : (
-                    <span className="text-[12px] text-neutral-400">✗ 없음</span>
+                    <span className="text-[12px] text-ink-4">✗ 없음</span>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                <td className="whitespace-nowrap px-3 py-2.5 text-ink-3">
                   {p.channel ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-neutral-500">
+                <td className="whitespace-nowrap px-3 py-2.5 text-ink-3">
                   {p.start_date ?? "—"} ~ {p.end_date ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-neutral-700">
-                  <span className="mr-1 text-[11px] text-neutral-400">{p.goals[0].label}</span>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-ink-2">
+                  <span className="mr-1 text-[11px] text-ink-4">{p.goals[0].label}</span>
                   {p.goals[0].text}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-neutral-500">
-                  <span className="mr-1 text-[11px] text-neutral-400">{p.goals[1].label}</span>
+                <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-ink-3">
+                  <span className="mr-1 text-[11px] text-ink-4">{p.goals[1].label}</span>
                   {p.goals[1].text}
                 </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-neutral-500">
+                <td className="px-3 py-2.5 text-right tabular-nums text-ink-3">
                   {p.option_count}
                 </td>
                 <td
                   className={`px-3 py-2.5 text-right font-semibold tabular-nums ${
                     ach == null
-                      ? "text-neutral-300"
+                      ? "text-ink-4"
                       : ach >= 1
-                        ? "text-emerald-600"
+                        ? "text-success"
                         : ach < 0.7
                           ? "text-brand-700"
                           : "text-ink"
@@ -272,7 +272,7 @@ function PlanList({ plans }: { plans: PlanRow[] }) {
                     onClick={() => del(p)}
                     disabled={deleting === p.id || !p.promotion_id}
                     title="캠페인 삭제"
-                    className="rounded-lg px-2 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                    className="rounded-lg px-2 py-1 text-xs text-ink-4 hover:bg-danger-soft hover:text-danger disabled:opacity-40"
                   >
                     {deleting === p.id ? "삭제 중…" : "삭제"}
                   </button>
@@ -388,7 +388,7 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
 
   if (plans.length === 0)
     return (
-      <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center text-sm text-neutral-400">
+      <p className="mt-6 rounded-2xl border border-dashed border-line-strong bg-white px-6 py-12 text-center text-sm text-ink-4">
         분석할 플랜이 없습니다. ⑤ 가이드 업로드로 플랜이 쌓이면 성향이 보입니다.
       </p>
     );
@@ -444,9 +444,9 @@ function Tendency({ plans, options }: { plans: PlanRow[]; options: PlanOption[] 
           <div
             className={`mt-2 rounded-xl border px-4 py-3 text-sm ${
               verdict.tone === "warn"
-                ? "border-amber-200 bg-amber-50/60 text-amber-800"
+                ? "border-warning bg-warning-soft/60 text-warning"
                 : verdict.tone === "ok"
-                  ? "border-emerald-200 bg-emerald-50/50 text-emerald-800"
+                  ? "border-success bg-success-soft/50 text-success"
                   : "border-line bg-soft/50 text-ink-2"
             }`}
           >

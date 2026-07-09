@@ -88,16 +88,16 @@ export default function PriceMasterSync() {
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-neutral-150 bg-neutral-50/60 p-3.5">
+    <div className="mt-4 rounded-xl border border-line bg-soft/60 p-3.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-neutral-700">스프레드시트에서 가져오기 (Google Sheets · 수동)</span>
+        <span className="text-sm font-medium text-ink-2">스프레드시트에서 가져오기 (Google Sheets · 수동)</span>
         {row?.last_synced_at && (
-          <span className="text-[11px] text-neutral-400">
+          <span className="text-[11px] text-ink-4">
             마지막 가져오기 {new Date(row.last_synced_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
       </div>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-xs text-ink-3">
         가격의 기준은 <strong>‘상품·가격’ 페이지(웹)</strong>입니다. 이 가져오기는 <strong>원할 때만 수동</strong>으로 시트 값을 일괄 적재합니다(자동 동기화 없음).
         같은 상품명은 시트 값으로 덮어쓰니, 웹에서 보정한 값이 바뀔 수 있어요. 시트 → 공유 → ‘웹에 게시’ → CSV 링크 등록 후 ‘지금 가져오기’.
       </p>
@@ -107,30 +107,30 @@ export default function PriceMasterSync() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?gid=0&single=true&output=csv"
-          className="min-w-0 flex-1 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-line px-3 py-1.5 text-sm"
         />
         <div className="flex gap-2">
           <button
             onClick={save}
             disabled={busy !== "idle"}
-            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+            className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-2 hover:bg-soft disabled:opacity-50"
           >
             {busy === "saving" ? "저장 중…" : "URL 저장"}
           </button>
           <button
             onClick={syncNow}
             disabled={busy !== "idle" || !url.trim()}
-            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-lg bg-success px-3 py-1.5 text-sm font-medium text-white hover:bg-success disabled:opacity-50"
           >
             {busy === "syncing" ? "가져오는 중…" : "지금 가져오기"}
           </button>
         </div>
       </div>
       {msg && (
-        <p className={`mt-2 text-xs ${msg.kind === "ok" ? "text-emerald-600" : "text-rose-600"}`}>{msg.text}</p>
+        <p className={`mt-2 text-xs ${msg.kind === "ok" ? "text-success" : "text-danger"}`}>{msg.text}</p>
       )}
       {!msg && row?.last_status && row.last_status !== "ok" && (
-        <p className="mt-2 text-xs text-rose-600">최근 상태: {row.last_status}</p>
+        <p className="mt-2 text-xs text-danger">최근 상태: {row.last_status}</p>
       )}
     </div>
   );

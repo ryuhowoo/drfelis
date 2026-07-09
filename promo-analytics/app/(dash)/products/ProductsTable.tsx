@@ -24,8 +24,8 @@ export type ProductRow = {
 const STATUSES = ["판매중", "품절", "단종"] as const;
 const STATUS_TONE: Record<string, string> = {
   판매중: "bg-success-soft text-success",
-  품절: "bg-amber-100 text-amber-700",
-  단종: "bg-neutral-200 text-neutral-600",
+  품절: "bg-warning-soft text-warning",
+  단종: "bg-soft text-ink-2",
 };
 export type ConfigLite = {
   sale_mode: string;
@@ -41,10 +41,10 @@ const KIND_TONE: Record<ProductKind, string> = {
   제품: "bg-brand-100 text-brand-700",
   세트: "bg-brand-100 text-brand-700",
   상품: "bg-brand-100 text-brand-700",
-  원재료: "bg-amber-100 text-amber-700",
-  부재료: "bg-amber-100 text-amber-700",
-  부자재: "bg-amber-100 text-amber-700",
-  기타: "bg-neutral-100 text-neutral-500",
+  원재료: "bg-warning-soft text-warning",
+  부재료: "bg-warning-soft text-warning",
+  부자재: "bg-warning-soft text-warning",
+  기타: "bg-soft text-ink-3",
 };
 
 type KindFilter = "전체" | "판매" | "구성품" | "기타";
@@ -434,7 +434,7 @@ export default function ProductsTable({
                       value={r.category ?? ""}
                       disabled={savingId === r.id}
                       onChange={(e) => patch(r.id, "category", e.target.value === "" ? null : e.target.value)}
-                      className={`w-32 rounded-lg border px-2 py-1 text-sm focus:border-brand-400 focus:outline-none ${r.category ? "border-line bg-card" : "border-amber-300 bg-amber-50 text-amber-700"}`}
+                      className={`w-32 rounded-lg border px-2 py-1 text-sm focus:border-brand-400 focus:outline-none ${r.category ? "border-line bg-card" : "border-warning bg-warning-soft text-warning"}`}
                     >
                       <option value="">미지정</option>
                       {r.category && !cats.includes(r.category) && <option value={r.category}>{r.category}</option>}
@@ -451,7 +451,7 @@ export default function ProductsTable({
                       value={r.status}
                       disabled={savingId === r.id}
                       onChange={(e) => patch(r.id, "status", e.target.value)}
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium focus:outline-none ${STATUS_TONE[r.status] ?? "bg-neutral-100 text-neutral-500"}`}
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium focus:outline-none ${STATUS_TONE[r.status] ?? "bg-soft text-ink-3"}`}
                     >
                       {STATUSES.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -471,7 +471,7 @@ export default function ProductsTable({
                   </td>
                   <td className="px-2 py-1.5 text-right whitespace-nowrap">
                     <button onClick={() => setConfigFor(r)} className="rounded px-1.5 py-0.5 text-xs text-brand-600 hover:bg-brand-50">구성</button>
-                    <button onClick={() => remove(r)} className="rounded px-1.5 py-0.5 text-xs text-red-500 hover:bg-red-50">삭제</button>
+                    <button onClick={() => remove(r)} className="rounded px-1.5 py-0.5 text-xs text-danger hover:bg-danger-soft">삭제</button>
                   </td>
                 </tr>
               );
@@ -579,7 +579,7 @@ function CategoryManager({
                 <span className="text-ink-2">{c}</span>
                 <span className="text-[11px] text-ink-4">{counts.get(c) ?? 0}</span>
                 <button onClick={() => rename(c)} disabled={busy} className="ml-1 text-[11px] text-brand-600 hover:underline">이름변경</button>
-                <button onClick={() => del(c)} disabled={busy} className="text-[11px] text-red-500 hover:underline">삭제</button>
+                <button onClick={() => del(c)} disabled={busy} className="text-[11px] text-danger hover:underline">삭제</button>
               </li>
             ))}
             {cats.length === 0 && <li className="text-xs text-ink-4">카테고리가 없습니다.</li>}

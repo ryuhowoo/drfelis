@@ -10,12 +10,12 @@ export default function SeedPage() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">초기 데이터 적재 (비활성)</h1>
-      <div className="mt-4 max-w-xl rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div className="mt-4 max-w-xl rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
         seed 라우트는 영구 비활성화됐어요. 과거 동일 데이터가 다른 source 이름으로
         중복 적재돼 매출이 약 2배로 부풀려진 사고가 있었기 때문에, 안전성을 위해
         seed 경로를 닫았습니다.
       </div>
-      <p className="mt-4 max-w-xl text-sm text-neutral-600">
+      <p className="mt-4 max-w-xl text-sm text-ink-2">
         초기 데이터는{" "}
         <Link href="/upload" className="font-medium text-brand-600 underline">
           데이터 업로드

@@ -60,7 +60,7 @@ export default function UploadPage() {
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
       <h1 className="text-xl font-semibold">데이터 관리</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         엑셀(.xlsx) 파일을 올리면 헤더 이름으로 자동 인식합니다.
         파싱·적재 모두 브라우저에서 진행하므로 큰 파일도 안정적으로 처리됩니다.
       </p>
@@ -427,10 +427,10 @@ function UploadCard({ def }: { def: CardDef }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-medium">{def.title}</h2>
-          <p className="mt-1 text-sm text-neutral-500">{def.desc}</p>
+          <p className="mt-1 text-sm text-ink-3">{def.desc}</p>
         </div>
         <label
-          className={`shrink-0 cursor-pointer rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium hover:bg-neutral-50 ${
+          className={`shrink-0 cursor-pointer rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-soft ${
             p.phase === "reading" || p.phase === "parsing" || p.phase === "uploading"
               ? "pointer-events-none opacity-50"
               : ""
@@ -453,10 +453,10 @@ function UploadCard({ def }: { def: CardDef }) {
         <div
           className={`mt-3 rounded-lg px-3 py-2 text-sm ${
             p.phase === "error"
-              ? "bg-red-50 text-red-700"
+              ? "bg-danger-soft text-danger"
               : p.phase === "ok"
-                ? "bg-green-50 text-green-700"
-                : "bg-neutral-100 text-neutral-600"
+                ? "bg-success-soft text-success"
+                : "bg-soft text-ink-2"
           }`}
         >
           <div>{p.message}</div>

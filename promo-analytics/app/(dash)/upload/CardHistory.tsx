@@ -41,20 +41,20 @@ export default function CardHistory({ kinds, limit = 50 }: { kinds: string[]; li
   if (!loaded || rows.length === 0) return null;
 
   return (
-    <div className="mt-3 border-t border-neutral-100 pt-2.5">
-      <div className="text-[11px] font-medium text-neutral-400">
+    <div className="mt-3 border-t border-line pt-2.5">
+      <div className="text-[11px] font-medium text-ink-4">
         최근 업로드{rows.length >= 6 ? ` · ${rows.length}건` : ""}
       </div>
       <ul className="mt-1 max-h-44 space-y-0.5 overflow-y-auto pr-1">
         {rows.map((r) => (
-          <li key={r.id} className="flex items-center gap-2 text-[11px] text-neutral-500">
-            <span className="whitespace-nowrap text-neutral-400">
+          <li key={r.id} className="flex items-center gap-2 text-[11px] text-ink-3">
+            <span className="whitespace-nowrap text-ink-4">
               {new Date(r.created_at).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
             </span>
-            <span className="truncate font-medium text-neutral-600">{r.source_file}</span>
-            {r.detail && <span className="truncate text-neutral-400">· {r.detail}</span>}
+            <span className="truncate font-medium text-ink-2">{r.source_file}</span>
+            {r.detail && <span className="truncate text-ink-4">· {r.detail}</span>}
             {r.row_count != null && (
-              <span className="ml-auto whitespace-nowrap tabular-nums text-neutral-400">{r.row_count.toLocaleString()}행</span>
+              <span className="ml-auto whitespace-nowrap tabular-nums text-ink-4">{r.row_count.toLocaleString()}행</span>
             )}
           </li>
         ))}

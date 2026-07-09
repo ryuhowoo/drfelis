@@ -29,7 +29,7 @@ import { CountUp, Button, InlineAlert } from "@/components/ui";
 
 type Options = { benefitTypes: string[]; seasonalities: string[]; purposes: string[] };
 
-const BRAND = "#e76f51";
+const BRAND = "#c86652";
 
 function toSpec(s: SimSpec): PredictionSpec {
   return {
@@ -156,10 +156,10 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
   const confColor =
     pred.confidence === "높음"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-success-soft text-success"
       : pred.confidence === "보통"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-neutral-100 text-neutral-500";
+        ? "bg-warning-soft text-warning"
+        : "bg-soft text-ink-3";
 
   const maxDaily = Math.max(pred.expected_baseline_daily, pred.expected_promo_daily, 1);
 
@@ -168,7 +168,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">성과 시뮬레이터</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-ink-3">
             조건을 움직이면 과거 사례 기반으로 <strong>상시 대비 예상 매출</strong>이 즉시 갱신됩니다.
           </p>
         </div>
@@ -193,14 +193,14 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
           </Field>
           <Field label="목적">
             <Chips options={options.purposes} value={purpose} onChange={(v) => setSpec({ purpose: v })} clearable />
-            <p className="mt-1 text-[11px] text-neutral-400">
+            <p className="mt-1 text-[11px] text-ink-4">
               목적을 고르면 같은 목적 캠페인 사례를 우선 가중해 예측합니다.
             </p>
           </Field>
 
           <div className="mt-5">
             <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="font-medium text-neutral-700">할인율</span>
+              <span className="font-medium text-ink-2">할인율</span>
               <span className="font-bold text-brand-600">{discount}%</span>
             </div>
             <input
@@ -213,7 +213,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
           <div className="mt-5">
             <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="font-medium text-neutral-700">기간</span>
+              <span className="font-medium text-ink-2">기간</span>
               <span className="font-bold text-brand-600">{days}일</span>
             </div>
             <input
@@ -226,7 +226,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 
           <button
             onClick={saveScenario}
-            className="mt-6 w-full rounded-full border border-neutral-200 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+            className="mt-6 w-full rounded-full border border-line py-2.5 text-sm font-medium text-ink-2 transition hover:bg-soft"
           >
             + 이 시나리오 저장하고 비교
           </button>
@@ -236,7 +236,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
         <section className="rounded-2xl p-6 card-soft lg:col-span-3">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-xs text-neutral-400">평소 대비 예상 매출</div>
+              <div className="text-xs text-ink-4">평소 대비 예상 매출</div>
               <div className="mt-0.5 text-4xl font-bold tracking-tight text-brand-500">
                 {pred.lift_ratio != null ? (
                   <CountUp value={pred.lift_ratio} format={(n) => `${n.toFixed(1)}배`} />
@@ -272,12 +272,12 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
               {pred.expected_uplift_contribution != null ? (
                 <CountUp value={pred.expected_uplift_contribution} format={wonShort} />
               ) : (
-                <span className="text-neutral-400">—</span>
+                <span className="text-ink-4">—</span>
               )}
             </Mini>
             <Mini label="예상 범위">{`${wonShort(pred.low)}~${wonShort(pred.high)}`}</Mini>
           </div>
-          <p className="mt-3 rounded-xl bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
+          <p className="mt-3 rounded-xl bg-soft px-3 py-2 text-xs text-ink-3">
             {pred.rationale}
           </p>
         </section>
@@ -289,7 +289,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
           <span className="text-xl">🎯</span>
           <h2 className="text-2xl font-bold tracking-tight">스윗스팟 찾기</h2>
         </div>
-        <p className="mt-1 text-xs text-neutral-400">
+        <p className="mt-1 text-xs text-ink-4">
           현재 조건({promoType || "전체"}·{days}일{seasonTag ? `·${seasonTag}` : ""})에서 할인율만 바꿨을 때의 곡선. 점이 현재 설정.
         </p>
 
@@ -302,24 +302,24 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
             <div className="text-xs font-semibold text-brand-600">최고 효과 (증분 최대)</div>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-2xl font-bold text-brand-600">{bestEffect.discount}% 할인</span>
-              <span className="text-sm text-neutral-500">→ 증분 {wonShort(bestEffect.uplift)}</span>
+              <span className="text-sm text-ink-3">→ 증분 {wonShort(bestEffect.uplift)}</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-neutral-400">클릭하면 이 조건으로 설정</div>
+            <div className="mt-0.5 text-[11px] text-ink-4">클릭하면 이 조건으로 설정</div>
           </button>
           <button
             onClick={() => setSpec({ discount: bestEfficiency.discount })}
-            className="rounded-2xl bg-neutral-900 p-4 text-left transition hover:bg-neutral-800"
+            className="rounded-2xl bg-ink p-4 text-left transition hover:bg-ink-2"
           >
             <div className="text-xs font-semibold text-brand-400">최고 효율 (공헌이익 최대)</div>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-2xl font-bold text-white">{bestEfficiency.discount}% 할인</span>
-              <span className="text-sm text-neutral-300">→ 이익 {wonShort(bestEfficiency.contribution)}</span>
+              <span className="text-sm text-ink-4">→ 이익 {wonShort(bestEfficiency.contribution)}</span>
             </div>
-            <div className="mt-0.5 text-[11px] text-neutral-500">클릭하면 이 조건으로 설정</div>
+            <div className="mt-0.5 text-[11px] text-ink-3">클릭하면 이 조건으로 설정</div>
           </button>
         </div>
 
-        <p className="mb-2 mt-5 text-xs font-medium text-neutral-500">할인율별 예상 증분</p>
+        <p className="mb-2 mt-5 text-xs font-medium text-ink-3">할인율별 예상 증분</p>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={curve} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
             <XAxis dataKey="discount" tickFormatter={(d) => `${d}%`} fontSize={11} stroke="#bcb8b3" tickLine={false} axisLine={false} />
@@ -335,9 +335,9 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
         </ResponsiveContainer>
 
         {/* 과거 캠페인 분포 (N6 R2.2): 내 조건이 과거 어디쯤인지 */}
-        <p className="mb-2 mt-5 text-xs font-medium text-neutral-500">
+        <p className="mb-2 mt-5 text-xs font-medium text-ink-3">
           과거 캠페인 분포 — 할인율 × 일평균 증분
-          <span className="ml-2 font-normal text-neutral-400">
+          <span className="ml-2 font-normal text-ink-4">
             (코랄 = 같은 혜택 유형 · 회색 = 기타 · ◎ = 현재 조건)
           </span>
         </p>
@@ -386,7 +386,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
               data={cases
                 .filter((c) => c.discount_rate != null && c.promo_type !== promoType)
                 .map((c) => ({ x: Math.round((c.discount_rate ?? 0) * 100), y: c.uplift_per_day, name: c.name }))}
-              fill="#C7CCD6"
+              fill="#c6cec8"
               isAnimationActive={false}
             />
             <Scatter
@@ -410,10 +410,10 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       {scenarioRows.length > 0 && (
         <section className="mt-3 rounded-2xl p-6 card-soft sm:mt-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-neutral-700">
-              시나리오 비교 <span className="font-normal text-neutral-400">· 기준 = 현재 조건</span>
+            <h2 className="text-sm font-semibold text-ink-2">
+              시나리오 비교 <span className="font-normal text-ink-4">· 기준 = 현재 조건</span>
             </h2>
-            <button onClick={clearScenarios} className="text-xs text-neutral-400 hover:text-brand-600">
+            <button onClick={clearScenarios} className="text-xs text-ink-4 hover:text-brand-600">
               전체 삭제
             </button>
           </div>
@@ -421,10 +421,10 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
           {/* 기준 요약 */}
           <div className="mb-3 rounded-2xl bg-brand-50 p-4">
             <div className="text-xs font-semibold text-brand-600">기준 · {scenarioLabel(liveSpec)}</div>
-            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs text-neutral-600">
-              <span>배수 <strong className="text-neutral-900">{pred.lift_ratio != null ? `${pred.lift_ratio.toFixed(1)}배` : "—"}</strong></span>
-              <span>증분 <strong className="text-neutral-900">{wonShort(pred.expected_uplift)}</strong></span>
-              <span>공헌이익(기여) <strong className="text-neutral-900">{wonShort(pred.expected_uplift_contribution ?? 0)}</strong></span>
+            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink-2">
+              <span>배수 <strong className="text-ink">{pred.lift_ratio != null ? `${pred.lift_ratio.toFixed(1)}배` : "—"}</strong></span>
+              <span>증분 <strong className="text-ink">{wonShort(pred.expected_uplift)}</strong></span>
+              <span>공헌이익(기여) <strong className="text-ink">{wonShort(pred.expected_uplift_contribution ?? 0)}</strong></span>
             </div>
           </div>
 
@@ -433,18 +433,18 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
               const dUplift = diffPct(pred.expected_uplift, p.expected_uplift);
               const dContrib = diffPct(pred.expected_uplift_contribution ?? 0, p.expected_uplift_contribution ?? 0);
               return (
-                <div key={s.id} className="rounded-2xl bg-neutral-50 p-4">
+                <div key={s.id} className="rounded-2xl bg-soft p-4">
                   <div className="flex items-start justify-between gap-1">
                     <button
                       onClick={() => renameScenario(s.id)}
-                      className="min-w-0 flex-1 truncate text-left text-xs font-medium text-neutral-600 hover:text-brand-600"
+                      className="min-w-0 flex-1 truncate text-left text-xs font-medium text-ink-2 hover:text-brand-600"
                       title="클릭하면 이름 변경"
                     >
                       {s.name}
                     </button>
                     <button
                       onClick={() => removeScenario(s.id)}
-                      className="shrink-0 text-neutral-300 hover:text-red-500"
+                      className="shrink-0 text-ink-4 hover:text-danger"
                       aria-label="시나리오 삭제"
                     >
                       ✕
@@ -453,13 +453,13 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
                   <div className="mt-1 text-lg font-bold text-brand-600">
                     {p.lift_ratio != null ? `${p.lift_ratio.toFixed(1)}배` : "—"}
                   </div>
-                  <div className="mt-2 space-y-1 text-xs text-neutral-500">
+                  <div className="mt-2 space-y-1 text-xs text-ink-3">
                     <CompareRow label="증분" value={wonShort(p.expected_uplift)} delta={dUplift} />
                     <CompareRow label="공헌이익(기여)" value={wonShort(p.expected_uplift_contribution ?? 0)} delta={dContrib} />
                   </div>
                   <button
                     onClick={() => applyScenario(s)}
-                    className="mt-3 w-full rounded-full border border-neutral-200 py-1.5 text-[11px] font-medium text-neutral-600 transition hover:bg-white"
+                    className="mt-3 w-full rounded-full border border-line py-1.5 text-[11px] font-medium text-ink-2 transition hover:bg-white"
                   >
                     이 조건 불러오기
                   </button>
@@ -476,14 +476,14 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
       {/* 근거 사례 */}
       {pred.comparables.length > 0 && (
         <section className="mt-3 rounded-2xl p-6 card-soft sm:mt-4">
-          <h2 className="mb-3 text-sm font-semibold text-neutral-700">근거가 된 유사 사례</h2>
+          <h2 className="mb-3 text-sm font-semibold text-ink-2">근거가 된 유사 사례</h2>
           <ul className="space-y-1.5">
             {pred.comparables.map((c) => (
               <li key={c.id} className="flex items-center justify-between text-sm">
-                <Link href={`/promotions/${c.id}`} className="truncate text-neutral-700 hover:text-brand-600">
+                <Link href={`/promotions/${c.id}`} className="truncate text-ink-2 hover:text-brand-600">
                   {c.name}
                 </Link>
-                <span className="ml-2 shrink-0 text-xs text-neutral-400">
+                <span className="ml-2 shrink-0 text-xs text-ink-4">
                   유사도 {pct(c.score, 0)} · 일증분 {wonShort(c.uplift_per_day)}
                 </span>
               </li>
@@ -498,7 +498,7 @@ export default function Simulator({ cases, options }: { cases: CaseFeature[]; op
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <label className="mb-1.5 block text-sm font-medium text-neutral-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-ink-2">{label}</label>
       {children}
     </div>
   );
@@ -518,7 +518,7 @@ function Chips({
         <button
           type="button"
           onClick={() => onChange("")}
-          className={`rounded-full border px-3 py-1 text-xs transition ${value === "" ? "border-brand-500 bg-brand-500 text-white" : "border-neutral-200 text-neutral-500 hover:bg-neutral-50"}`}
+          className={`rounded-full border px-3 py-1 text-xs transition ${value === "" ? "border-brand-500 bg-brand-500 text-white" : "border-line text-ink-3 hover:bg-soft"}`}
         >
           무관
         </button>
@@ -528,7 +528,7 @@ function Chips({
           key={o}
           type="button"
           onClick={() => onChange(value === o ? "" : o)}
-          className={`rounded-full border px-3 py-1 text-xs transition ${value === o ? "border-brand-500 bg-brand-500 text-white" : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"}`}
+          className={`rounded-full border px-3 py-1 text-xs transition ${value === o ? "border-brand-500 bg-brand-500 text-white" : "border-line text-ink-2 hover:bg-soft"}`}
         >
           {o}
         </button>
@@ -540,37 +540,37 @@ function Chips({
 function Bar({ label, value, max, tone }: { label: string; value: number; max: number; tone: "neutral" | "brand" }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`w-24 shrink-0 text-xs ${tone === "brand" ? "text-brand-600" : "text-neutral-400"}`}>{label}</span>
-      <div className={`h-4 flex-1 overflow-hidden rounded-full ${tone === "brand" ? "bg-brand-50" : "bg-neutral-100"}`}>
+      <span className={`w-24 shrink-0 text-xs ${tone === "brand" ? "text-brand-600" : "text-ink-4"}`}>{label}</span>
+      <div className={`h-4 flex-1 overflow-hidden rounded-full ${tone === "brand" ? "bg-brand-50" : "bg-soft"}`}>
         <div
-          className={`h-full rounded-full [transition:width_var(--duration-slow)_var(--ease-standard)] ${tone === "brand" ? "bg-brand-500" : "bg-neutral-300"}`}
+          className={`h-full rounded-full [transition:width_var(--duration-slow)_var(--ease-standard)] ${tone === "brand" ? "bg-brand-500" : "bg-soft"}`}
           style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
         />
       </div>
-      <span className="w-20 shrink-0 text-right text-xs font-semibold tabular-nums text-neutral-700">{wonShort(value)}</span>
+      <span className="w-20 shrink-0 text-right text-xs font-semibold tabular-nums text-ink-2">{wonShort(value)}</span>
     </div>
   );
 }
 
 function Mini({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-neutral-50 p-3">
-      <div className="text-[11px] text-neutral-400">{label}</div>
-      <div className="mt-0.5 text-sm font-bold tabular-nums text-neutral-900">{children}</div>
-      {sub && <div className="text-[11px] text-neutral-400">{sub}</div>}
+    <div className="rounded-2xl bg-soft p-3">
+      <div className="text-[11px] text-ink-4">{label}</div>
+      <div className="mt-0.5 text-sm font-bold tabular-nums text-ink">{children}</div>
+      {sub && <div className="text-[11px] text-ink-4">{sub}</div>}
     </div>
   );
 }
 
 function CompareRow({ label, value, delta }: { label: string; value: string; delta: number | null }) {
   const tone =
-    delta == null ? "text-neutral-400" : delta > 0.001 ? "text-emerald-600" : delta < -0.001 ? "text-red-500" : "text-neutral-400";
+    delta == null ? "text-ink-4" : delta > 0.001 ? "text-success" : delta < -0.001 ? "text-danger" : "text-ink-4";
   const arrow = delta == null ? "" : delta > 0.001 ? "▲" : delta < -0.001 ? "▼" : "–";
   return (
     <div className="flex items-center justify-between">
       <span>{label}</span>
       <span className="flex items-center gap-1.5">
-        <span className="tabular-nums text-neutral-700">{value}</span>
+        <span className="tabular-nums text-ink-2">{value}</span>
         <span className={`tabular-nums ${tone}`}>
           {arrow} {delta == null ? "" : `${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`}
         </span>

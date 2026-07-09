@@ -162,7 +162,7 @@ export default async function PlanPage({
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
-      <div className="mb-1 text-sm text-neutral-400">
+      <div className="mb-1 text-sm text-ink-4">
         <Link href="/" className="hover:underline">
           대시보드
         </Link>{" "}
@@ -173,7 +173,7 @@ export default async function PlanPage({
         / 가격 가이드(플랜)
       </div>
       <h1 className="text-xl font-semibold">{promo.name} — 가격 가이드(플랜)</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-ink-3">
         {promo.start_date} ~ {promo.end_date}
       </p>
 

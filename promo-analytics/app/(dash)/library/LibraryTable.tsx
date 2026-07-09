@@ -13,9 +13,9 @@ export const STAGE_META: Record<
   CampaignStage,
   { label: string; cls: string }
 > = {
-  linked: { label: "플랜+성과", cls: "bg-emerald-50 text-emerald-700" },
+  linked: { label: "플랜+성과", cls: "bg-success-soft text-success" },
   actual: { label: "성과만", cls: "bg-soft text-ink-3" },
-  plan: { label: "플랜만", cls: "bg-amber-50 text-amber-700" },
+  plan: { label: "플랜만", cls: "bg-warning-soft text-warning" },
   empty: { label: "빈 캠페인", cls: "bg-soft text-ink-4" },
 };
 
@@ -205,7 +205,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
             필터 초기화
           </button>
         )}
-        <div className="ml-auto flex items-center gap-1 text-xs text-neutral-500">
+        <div className="ml-auto flex items-center gap-1 text-xs text-ink-3">
           정렬:
           {SORTS.map((s) => (
             <button
@@ -213,7 +213,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               onClick={() => setF({ sort: s.key })}
               aria-pressed={sort === s.key}
               className={`rounded-full px-2.5 py-1 ${
-                sort === s.key ? "bg-brand-500 text-white" : "text-neutral-600 hover:bg-neutral-100"
+                sort === s.key ? "bg-brand-500 text-white" : "text-ink-2 hover:bg-soft"
               }`}
             >
               {s.label}
@@ -226,7 +226,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
       {purposes.length > 0 && (
         <div className="mb-4">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-neutral-500">목적:</span>
+            <span className="text-xs text-ink-3">목적:</span>
             {purposes.map((p) => (
               <button
                 key={p}
@@ -234,7 +234,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 className={`max-w-[14rem] truncate rounded-full border px-2.5 py-1 text-xs transition ${
                   purposeFilter.includes(p)
                     ? "border-brand-500 bg-brand-500 text-white"
-                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    : "border-line text-ink-2 hover:bg-soft"
                 }`}
               >
                 {p}
@@ -243,7 +243,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
             {purposeFilter.length > 0 && (
               <button
                 onClick={() => setF({ purpose: [] })}
-                className="text-xs text-neutral-400 hover:text-neutral-600"
+                className="text-xs text-ink-4 hover:text-ink-2"
               >
                 초기화
               </button>
@@ -266,7 +266,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                     ? "bg-brand-500 text-white"
                     : r.score >= 40
                       ? "bg-brand-50 text-brand-600"
-                      : "bg-neutral-100 text-neutral-400"
+                      : "bg-soft text-ink-4"
                 }`}
               >
                 {r.score}
@@ -275,13 +275,13 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
                 <div className="flex items-center gap-1.5">
                   <Link
                     href={`/promotions/${r.id}`}
-                    className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-900 hover:text-brand-600"
+                    className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink hover:text-brand-600"
                   >
                     {r.name}
                   </Link>
                   <StageBadge stage={r.stage} />
                 </div>
-                <div className="mt-0.5 text-xs text-neutral-400">
+                <div className="mt-0.5 text-xs text-ink-4">
                   {r.start_date} ~ {r.end_date}
                 </div>
                 {(r.promo_type || r.season_tag) && (
@@ -326,7 +326,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
           </li>
         ))}
         {rows.length === 0 && (
-          <li className="rounded-xl px-4 py-10 text-center text-sm text-neutral-400 card-soft">
+          <li className="rounded-xl px-4 py-10 text-center text-sm text-ink-4 card-soft">
             조건에 맞는 캠페인이 없습니다.
           </li>
         )}
@@ -335,7 +335,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
       {/* 데스크톱: 테이블 */}
       <div className="hidden overflow-x-auto rounded-2xl card-soft md:block">
         <table className="w-full min-w-[1000px] text-sm">
-          <thead className="bg-neutral-50 text-left text-xs text-neutral-500">
+          <thead className="bg-soft text-left text-xs text-ink-3">
             <tr>
               <th className="px-4 py-3 text-center font-medium">종합점수</th>
               <th className="px-4 py-3 font-medium">캠페인</th>
@@ -349,42 +349,42 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
               <th className="px-4 py-3 text-right font-medium">목적 적합도</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-line">
             {rows.map((r) => (
-              <tr key={r.id} className="hover:bg-neutral-50">
+              <tr key={r.id} className="hover:bg-soft">
                 <td className="px-4 py-3 text-center">
                   <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
-                    r.score >= 70 ? "bg-brand-500 text-white" : r.score >= 40 ? "bg-brand-50 text-brand-600" : "bg-neutral-100 text-neutral-400"
+                    r.score >= 70 ? "bg-brand-500 text-white" : r.score >= 40 ? "bg-brand-50 text-brand-600" : "bg-soft text-ink-4"
                   }`}>
                     {r.score}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5">
-                    <Link href={`/promotions/${r.id}`} className="font-medium text-neutral-900 hover:text-brand-600">
+                    <Link href={`/promotions/${r.id}`} className="font-medium text-ink hover:text-brand-600">
                       {r.name}
                     </Link>
                     <StageBadge stage={r.stage} />
                   </div>
-                  <div className="text-xs text-neutral-400">{r.start_date}~{r.end_date}</div>
-                  {r.purpose && <div className="text-xs text-neutral-400">목적: {r.purpose}</div>}
+                  <div className="text-xs text-ink-4">{r.start_date}~{r.end_date}</div>
+                  {r.purpose && <div className="text-xs text-ink-4">목적: {r.purpose}</div>}
                 </td>
-                <td className="px-4 py-3 text-xs text-neutral-500">
+                <td className="px-4 py-3 text-xs text-ink-3">
                   <div className="flex flex-wrap gap-1">
                     {r.promo_type && <Tag>{r.promo_type}</Tag>}
                     {r.season_tag && <Tag>{r.season_tag}</Tag>}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right text-neutral-600">
+                <td className="px-4 py-3 text-right text-ink-2">
                   {r.discount_rate != null ? pct(r.discount_rate, 0) : "—"}
                 </td>
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">{wonShort(r.total_uplift)}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{pct(r.halo_share)}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-neutral-600">{wonShort(r.contribution)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-ink-2">{pct(r.halo_share)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-ink-2">{wonShort(r.contribution)}</td>
                 <td className="px-4 py-3 text-right">
                   <AchCell v={r.ach_revenue} hasPlan={r.has_confirmed_plan} />
                   {r.has_confirmed_plan && r.quantity_reliable === false && (
-                    <div className="text-[10px] text-amber-600">수량 데이터부족</div>
+                    <div className="text-[10px] text-warning">수량 데이터부족</div>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -397,7 +397,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-neutral-400">
+                <td colSpan={10} className="px-4 py-10 text-center text-ink-4">
                   조건에 맞는 캠페인이 없습니다.
                 </td>
               </tr>
@@ -405,7 +405,7 @@ export default function LibraryTable({ data }: { data: LibraryRow[] }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 px-1 text-xs text-neutral-400">
+      <p className="mt-2 px-1 text-xs text-ink-4">
         종합점수 = 공헌이익 40% · 일평균 기여 30% · 효율(기여/할인깊이) 20% · 간접비중 10% (전체 대비 상대 점수)
       </p>
     </div>
@@ -434,10 +434,10 @@ function Stat({
   truncate?: boolean;
 }) {
   return (
-    <div className="rounded-lg bg-neutral-50 px-2 py-1.5">
-      <dt className="text-[10px] text-neutral-400">{label}</dt>
+    <div className="rounded-lg bg-soft px-2 py-1.5">
+      <dt className="text-[10px] text-ink-4">{label}</dt>
       <dd
-        className={`mt-0.5 tabular-nums ${bold ? "font-semibold text-neutral-900" : "text-neutral-700"} ${
+        className={`mt-0.5 tabular-nums ${bold ? "font-semibold text-ink" : "text-ink-2"} ${
           truncate ? "truncate" : ""
         }`}
       >
@@ -459,7 +459,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-700"
+      className="rounded-xl border border-line bg-white px-3 py-1.5 text-sm text-ink-2"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -469,18 +469,18 @@ function Select({
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{children}</span>
+    <span className="rounded-full bg-soft px-2 py-0.5 text-xs text-ink-2">{children}</span>
   );
 }
 
 function FitBadge({ score }: { score: number }) {
-  if (score < 0) return <span className="text-neutral-300">—</span>;
+  if (score < 0) return <span className="text-ink-4">—</span>;
   const c =
     score >= 70
       ? "bg-brand-50 text-brand-600"
       : score >= 40
-        ? "bg-neutral-100 text-neutral-600"
-        : "bg-neutral-100 text-neutral-400";
+        ? "bg-soft text-ink-2"
+        : "bg-soft text-ink-4";
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${c}`}>
       {Math.round(score)}
@@ -497,7 +497,7 @@ function PurposeDistribution({
   purposes: string[];
 }) {
   return (
-    <div className="mt-2 space-y-2 rounded-xl bg-neutral-50 p-3">
+    <div className="mt-2 space-y-2 rounded-xl bg-soft p-3">
       {purposes.map((p) => {
         const pts = rows
           .map((r) => r.fits.find((f) => f.purpose === p))
@@ -509,11 +509,11 @@ function PurposeDistribution({
         const anyUnreliable = pts.some((x) => !x.reliable);
         return (
           <div key={p}>
-            <div className="mb-1 flex items-center justify-between text-[11px] text-neutral-500">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-ink-3">
               <span className="truncate">
                 {p} · {scores.length}건
                 {anyUnreliable && (
-                  <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700">
+                  <span className="ml-1 rounded bg-warning-soft px-1 text-[10px] text-warning">
                     데이터 부족
                   </span>
                 )}
@@ -540,11 +540,11 @@ function PurposeDistribution({
 function AchCell({ v, hasPlan }: { v: number | null; hasPlan: boolean }) {
   if (!hasPlan)
     return (
-      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-400">
+      <span className="rounded-full bg-soft px-2 py-0.5 text-[11px] text-ink-4">
         플랜없음
       </span>
     );
-  if (v == null) return <span className="text-neutral-300">—</span>;
-  const c = v >= 1 ? "text-green-600" : v < 0.7 ? "text-red-500" : "text-neutral-700";
+  if (v == null) return <span className="text-ink-4">—</span>;
+  const c = v >= 1 ? "text-success" : v < 0.7 ? "text-danger" : "text-ink-2";
   return <span className={`font-medium tabular-nums ${c}`}>{pct(v, 0)}</span>;
 }
