@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Felis 디자인 시스템 — 스타터 템플릿</title>
+
+<!-- 1) 폰트 (필수) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+
+<!-- 2) 디자인 시스템 (이 한 줄이면 끝) -->
+<link rel="stylesheet" href="./felis-neo-organic.css">
+</head>
+<body>
+
+<!-- ── 스크롤 진행바 (선택) ── -->
+<div class="scroll-progress" id="scroll-prog"></div>
+
+<!-- ── 좌측 도트 네비 (선택) ── -->
+<nav class="side-nav">
+  <div class="nav-dot active" data-section="s1"><div class="nav-tooltip">개요</div></div>
+  <div class="nav-dot" data-section="s2"><div class="nav-tooltip">지표</div></div>
+</nav>
+
+<!-- ── 섹션 = 화면 한 폭. .visible 이 붙으면 등장 애니메이션 재생 ── -->
+<section id="s1" class="visible">
+  <p class="section-eye">Section 01</p>
+  <h2 class="section-heading">여기에 <em>강조어</em>를 넣으세요</h2>
+
+  <!-- 12컬럼 벤토 그리드: .b-3 / .b-4 / .b-6 / .b-12 로 폭 지정 -->
+  <div class="bento" style="margin-bottom:16px;">
+    <div class="card b-3 kpi-card">
+      <span class="label">누적 매출</span>
+      <div class="big-num">40.2<span class="unit-sm">억 원</span></div>
+      <div class="kpi-sub">월평균 8.0억</div>
+    </div>
+    <div class="card b-3 kpi-card">
+      <span class="label">평균 이익률</span>
+      <div class="big-num" style="color:var(--teal)">29.8<span class="unit-sm">%</span></div>
+      <div class="kpi-delta up">목표선 근접</div>
+    </div>
+    <div class="card b-6">
+      <span class="label">인사이트</span>
+      <div class="insight" style="margin-top:12px">
+        <span class="tag">핵심 메시지</span>
+        <p>인용/인사이트 박스는 <code>.quote</code> · <code>.insight</code> · <code>.warn-box</code> 세 가지가 있습니다.</p>
+      </div>
+      <p style="margin-top:10px">
+        <span class="chip chip-o">태그</span>
+        <span class="chip chip-g">성공</span>
+        <span class="chip chip-a">주의</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- 표 -->
+  <div class="bento">
+    <div class="card b-12">
+      <span class="label">월별 성과</span>
+      <table class="tbl" style="margin-top:12px;">
+        <thead><tr><th>월</th><th>매출</th><th>이익률</th><th>신호</th></tr></thead>
+        <tbody>
+          <tr><td>3월</td><td>7.65억</td><td class="hl">30.8%</td><td>교정 효과</td></tr>
+          <tr><td>4월</td><td>8.18억</td><td class="hl">32.3%</td><td>광고 효율 개선</td></tr>
+          <tr><td>합계</td><td>40.15억</td><td>29.8%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+// (선택) 스크롤 시 섹션 등장 + 진행바. 없어도 레이아웃은 정상 동작합니다.
+const io = new IntersectionObserver((es) => {
+  es.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('section').forEach(s => io.observe(s));
+
+const prog = document.getElementById('scroll-prog');
+addEventListener('scroll', () => {
+  const h = document.documentElement;
+  prog.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

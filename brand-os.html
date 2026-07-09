@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>닥터펠리스 본부 운영체제 (제안)</title>
+<meta name="description" content="명확한 프로세스는 규칙이 아니라 성장의 토대입니다. 닥터펠리스 본부 운영체제 방향 제안.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="design-system/felis-neo-organic.css">
+<style id="brand-os-page">
+/* ===== BRAND-OS page layer — Neo Organic 토큰 위에 구축 ===== */
+
+/* 문서형 레이아웃: 섹션을 전체높이 대신 넉넉한 리듬으로 */
+#bos section{min-height:0;padding:80px 20px;transform:none;opacity:1;scroll-margin-top:60px}
+#bos section.reveal{opacity:0;transform:translateY(18px)}
+#bos section.reveal.visible{animation:sectionReveal .5s cubic-bezier(.16,1,.3,1) forwards}
+.bos-wrap{max-width:1040px;margin:0 auto}
+.bos-eye{font-size:11px;font-weight:850;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+
+/* 상단 스티키 네비 */
+.bos-nav{position:sticky;top:0;z-index:100;background:rgba(252,252,250,.86);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
+  border-bottom:1px solid var(--border);box-shadow:0 8px 28px rgba(24,59,56,.06)}
+.bos-nav-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:6px;
+  padding:10px 20px;overflow-x:auto;scrollbar-width:none}
+.bos-nav-inner::-webkit-scrollbar{display:none}
+.bos-brand{font-weight:900;font-size:14px;color:var(--txt-900);letter-spacing:-.02em;
+  margin-right:8px;white-space:nowrap}
+.bos-nav a{flex:0 0 auto;padding:7px 13px;border-radius:12px;font-size:12.5px;font-weight:750;
+  color:var(--txt-500);text-decoration:none;transition:all .2s;white-space:nowrap}
+.bos-nav a:hover{color:var(--accent);background:var(--accent-lt)}
+.bos-nav a.active{color:#fff;background:linear-gradient(135deg,var(--accent),#287A63);
+  box-shadow:0 6px 14px rgba(47,143,114,.22)}
+
+/* 히어로 — Neo Organic 커버(딥틸 + 유기체 블롭)
+   #bos section.bos-hero 로 스코핑: 디자인시스템의 section:nth-child(odd){background:transparent}
+   보다 특이도를 높여 딥틸 배경이 확실히 렌더되게 한다(흰 텍스트 가독성 보장). */
+#bos section.bos-hero{position:relative;overflow:hidden;text-align:center;color:#fff;
+  padding:120px 22px 96px!important;
+  background:
+    radial-gradient(circle at 78% 26%,rgba(133,211,179,.26),transparent 30%),
+    radial-gradient(circle at 16% 78%,rgba(110,157,180,.16),transparent 26%),
+    linear-gradient(145deg,#153633 0%,#1C4842 56%,#24564D 100%)!important}
+.bos-hero::before{content:"";position:absolute;pointer-events:none;width:420px;height:320px;
+  right:-90px;bottom:-120px;border-radius:64% 36% 38% 62%/50% 62% 38% 50%;
+  background:rgba(233,247,240,.08);border:1px solid rgba(255,255,255,.08)}
+.bos-hero::after{content:"";position:absolute;pointer-events:none;width:190px;height:150px;
+  left:8%;top:16%;border-radius:43% 57% 66% 34%/54% 44% 56% 46%;background:rgba(255,255,255,.035)}
+.bos-hero .bos-in{position:relative;z-index:1;max-width:820px;margin:0 auto}
+.bos-hero h1{color:#fff;font-size:clamp(30px,5.6vw,58px);font-weight:850;letter-spacing:-.045em;
+  line-height:1.18;margin-bottom:22px}
+.bos-hero h1 mark{background:linear-gradient(120deg,rgba(143,215,184,.28),rgba(143,215,184,.28));
+  background-repeat:no-repeat;background-position:0 82%;background-size:100% .4em;
+  color:#8FD7B8;padding:0 2px}
+.bos-hero .bos-sub{font-size:clamp(14px,2vw,18px);color:rgba(255,255,255,.85);line-height:1.8;
+  margin-bottom:8px}
+.bos-hero .bos-sub .src{display:block;margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)}
+.bos-hero .bos-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:26px 0 22px}
+.bos-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
+  font-size:12px;font-weight:800;background:rgba(255,255,255,.1);color:#CDEBDD;
+  border:1px solid rgba(255,255,255,.14)}
+.bos-hero .bos-foot{font-size:13px;color:rgba(255,255,255,.78);font-weight:700;letter-spacing:.2px;
+  margin-top:14px}
+
+/* 리드 문장 */
+.bos-lead{font-size:clamp(15px,1.9vw,18px);color:var(--txt-700);line-height:1.85;
+  max-width:820px;margin:0 0 28px}
+
+/* 강조 배너 */
+.bos-banner{position:relative;overflow:hidden;margin:26px 0 0;padding:20px 24px;border-radius:20px;
+  background:linear-gradient(135deg,var(--accent-lt),#F8FBF9);border:1px solid rgba(47,143,114,.16);
+  font-size:clamp(15px,2vw,19px);font-weight:850;color:var(--txt-900);letter-spacing:-.02em;line-height:1.5}
+.bos-banner.dark{background:
+    radial-gradient(circle at 92% 10%,rgba(123,196,165,.2),transparent 22rem),
+    linear-gradient(140deg,#173C38,#2E6B5D);color:#fff;border-color:transparent;
+  box-shadow:0 18px 44px rgba(24,59,56,.16)}
+.bos-banner .k{color:var(--accent)}
+.bos-banner.dark .k{color:#8FD7B8}
+
+/* 십자 다이어그램 (#axes) */
+.bos-cross{display:grid;place-items:center;margin:10px auto 6px;max-width:600px}
+.bos-cross svg{width:100%;height:auto;display:block}
+
+/* 전후 비교 */
+.bos-ba{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+.bos-ba .bos-arrow{display:flex;align-items:center;color:var(--accent);font-size:20px;font-weight:800}
+.bos-panel{border-radius:16px;padding:14px 16px;font-size:13px;line-height:1.65}
+.bos-before{background:#F4F3EF;border:1px solid var(--border);color:var(--txt-600)}
+.bos-after{background:var(--accent-lt);border:1px solid rgba(47,143,114,.2);color:var(--txt-800)}
+.bos-panel .bos-plabel{display:block;font-size:10px;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:6px}
+.bos-before .bos-plabel{color:var(--txt-400)}
+.bos-after .bos-plabel{color:var(--accent)}
+
+/* 계단형 스테퍼 (#vertical) */
+.bos-steps{display:grid;gap:14px;margin-top:8px}
+.bos-step{position:relative;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+  background:rgba(255,255,255,.94);border:1px solid var(--border);box-shadow:var(--shadow-sm);
+  border-radius:18px;padding:18px 20px;transition:transform .25s,box-shadow .25s}
+.bos-step:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.bos-step-no{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  font-weight:900;font-size:17px;color:#fff;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#287A63);box-shadow:0 8px 16px rgba(47,143,114,.24)}
+.bos-step h4{font-size:16px;color:var(--txt-900);margin-bottom:2px}
+.bos-step .bos-who{font-size:12.5px;color:var(--accent);font-weight:800;margin-bottom:8px}
+.bos-step .bos-cond{font-size:13px;color:var(--txt-600);line-height:1.7}
+
+/* 브랜드팀 예시 그리드 */
+.bos-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.bos-team-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.bos-team-head h4{font-size:15px;color:var(--txt-900);margin:0}
+.bos-team .bos-note{margin-top:0}
+
+/* 로드맵 가로 타임라인 */
+.bos-road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+.bos-road .bos-rno{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--accent);
+  text-transform:uppercase;margin-bottom:8px}
+
+/* 라이브 뱃지 */
+.bos-live{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:800;background:var(--teal-lt);color:var(--teal);
+  border:1px solid rgba(36,127,99,.2)}
+.bos-live .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bosPulse 1.8s infinite}
+@keyframes bosPulse{0%{box-shadow:0 0 0 0 rgba(47,143,114,.45)}70%{box-shadow:0 0 0 8px rgba(47,143,114,0)}100%{box-shadow:0 0 0 0 rgba(47,143,114,0)}}
+
+/* 아코디언 헤더 우측 뱃지 */
+.bos-acc-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* 격자 유틸 */
+.bos-g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bos-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.bos-mini-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:var(--accent-lt);color:var(--accent);margin-bottom:12px}
+.bos-mini-ico svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+
+.bos-note{font-size:12.5px;color:var(--txt-500);line-height:1.7;margin-top:10px}
+.bos-h-eff{margin-top:12px;padding:12px 14px;border-radius:13px;background:var(--surface-mint);
+  border:1px solid rgba(47,143,114,.14);font-size:12.5px;line-height:1.65;color:var(--txt-700)}
+.bos-h-eff b{color:var(--teal)}
+
+@media(max-width:768px){
+  #bos section{padding:60px 16px}
+  .bos-hero{padding:104px 18px 76px!important}
+  .bos-g2,.bos-g3,.bos-road{grid-template-columns:1fr}
+  .bos-ba{grid-template-columns:1fr}
+  .bos-ba .bos-arrow{justify-content:center;transform:rotate(90deg)}
+}
+
+/* 인쇄: 아코디언 전부 펼침 */
+@media print{
+  .bos-nav,.scroll-progress{display:none!important}
+  .acc-body{max-height:none!important}
+  #bos section{padding:24px 0;opacity:1!important;transform:none!important}
+  .bos-hero{color:#000;background:#fff!important}
+  .bos-hero h1,.bos-hero .bos-sub,.bos-hero .bos-foot{color:#000!important}
+}
+</style>
+</head>
+<body>
+<div id="bos">
+<div class="scroll-progress" id="scroll-prog"></div>
+
+<!-- ═══ 상단 네비 ═══ -->
+<nav class="bos-nav">
+  <div class="bos-nav-inner">
+    <span class="bos-brand">닥터펠리스 본부 운영체제</span>
+    <a href="#why">왜 지금</a>
+    <a href="#horizontal-principle">가로축</a>
+    <a href="#buffer">완충</a>
+    <a href="#vertical">세로축</a>
+    <a href="#reward">보상</a>
+    <a href="#roadmap">로드맵</a>
+  </div>
+</nav>
+
+<!-- ═══ 0 · HERO ═══ -->
+<section id="hero" class="bos-hero">
+  <div class="bos-in">
+    <div class="bos-tags">
+      <span class="bos-pill">방향 제안</span>
+      <span class="bos-pill">함께 다듬어 가는 문서</span>
+    </div>
+    <h1>명확한 프로세스는 규칙이 아니라<br><mark>성장의 토대</mark>입니다.</h1>
+    <p class="bos-sub">각자가 자기 영역을 확실히 책임질 수 있을 때, 그 위에서 안심하고 성장할 수 있습니다.
+      <span class="src">— 닥터펠리스 본부 운영체제 (방향 제안)</span></p>
+    <p class="bos-foot">100억 → 300억, 사람을 늘리지 않고 각자가 주인이 되는 길</p>
+  </div>
+</section>
+
+<!-- ═══ 1 · 한 장 요약 ═══ -->
+<section id="summary" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Summary</p>
+    <h2 class="section-heading">이 문서를 <em>한 장으로</em></h2>
+    <div class="bos-g2">
+      <div class="card">
+        <span class="chip chip-o">가로축 · 일의 흐름</span>
+        <table class="tbl" style="margin-top:14px">
+          <tbody>
+            <tr><th style="width:96px">원칙</th><td>결정하는 사람이 책임진다</td></tr>
+            <tr><th>무엇을 바꾸나</th><td>팀 사이 R&amp;R을 통제 가능한 팀에 재배치</td></tr>
+            <tr><th>지금 상태</th><td>SCM·프로덕트 이미 합의 진행 중</td></tr>
+            <tr><th>순서</th><td><span class="hl">먼저</span> 세운다</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <span class="chip chip-g">세로축 · 사람의 성장</span>
+        <table class="tbl" style="margin-top:14px">
+          <tbody>
+            <tr><th style="width:96px">원칙</th><td>통제하는 만큼 성장하고 보상받는다</td></tr>
+            <tr><th>무엇을 바꾸나</th><td>직무가 아니라 영역의 오너로 성장하는 궤도 신설</td></tr>
+            <tr><th>지금 상태</th><td>관문·권한·보상 가안 제시</td></tr>
+            <tr><th>순서</th><td>프로세스 안정 후 <span class="hl">그 위에</span> 얹는다</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bos-banner">먼저 바닥을 다지고, 그 위에서 함께 큰다.</div>
+  </div>
+</section>
+
+<!-- ═══ 2 · 왜 지금인가 ═══ -->
+<section id="why" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Why now</p>
+    <h2 class="section-heading">지금 우리가 함께 <em>겪는 것</em></h2>
+    <p class="bos-lead">우리는 100억 규모의 회사이고, 300억을 향해 갑니다. 그 과정에서 사람을 무작정 늘리지 않습니다. 소수 정예가 각자 명확한 권한과 책임을 가지고, 그만큼 성장하고 보상받는 조직을 지향합니다.</p>
+    <div class="bos-g3">
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 14h7v7h-7z"/><path d="M10 10l4 4" stroke-dasharray="2 2"/></svg></div>
+        <h3>경계의 부재</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">부서 사이에서 "이건 누가 정하지?"가 반복되고, 결정하지 않은 일의 결과를 누군가 대신 떠안습니다.</p>
+      </div>
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg></div>
+        <h3>사람 의존</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">같은 문제가 반복돼도, 재발을 막는 게 정해진 구조가 아니라 특정 담당자의 경험과 기억에 달려 있습니다.</p>
+      </div>
+      <div class="card">
+        <div class="bos-mini-ico"><svg viewBox="0 0 24 24"><path d="M4 20V6M4 8h11M4 13h8"/><path d="M20 20V4"/></svg></div>
+        <h3>성장의 벽</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.75">자기 일이 직무명보다 훨씬 넓어졌는데, 그 넓어진 기여가 성장으로 이어지는 길은 잘 안 보입니다.</p>
+      </div>
+    </div>
+    <div class="bos-banner">한마디로 — 일이 구조가 아니라 사람에 의존하고 있습니다. 지금까지는 통했지만, 더 커지면 병목이 됩니다.</div>
+  </div>
+</section>
+
+<!-- ═══ 3 · 두 개의 축 ═══ -->
+<section id="axes" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Two axes</p>
+    <h2 class="section-heading">이 제안은 <em>두 축</em>으로 이뤄집니다</h2>
+    <div class="card" style="padding:30px 26px">
+      <div class="bos-cross">
+        <svg viewBox="0 0 600 420" role="img" aria-label="세로축 사람의 성장, 가로축 일의 흐름, 교차점 본부 운영체제">
+          <defs>
+            <marker id="ah-v" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#2F8F72" stroke-width="1.8"/>
+            </marker>
+            <marker id="ah-h" markerWidth="11" markerHeight="11" refX="7.5" refY="5.5" orient="auto">
+              <path d="M0 0l8 5.5-8 5.5" fill="none" stroke="#507A91" stroke-width="1.8"/>
+            </marker>
+          </defs>
+          <!-- 축 -->
+          <line x1="300" y1="380" x2="300" y2="66" stroke="#2F8F72" stroke-width="2.5" marker-end="url(#ah-v)"/>
+          <line x1="92" y1="214" x2="470" y2="214" stroke="#507A91" stroke-width="2.5" marker-end="url(#ah-h)"/>
+          <!-- 세로축 라벨 -->
+          <text x="300" y="46" text-anchor="middle" fill="#247F63" font-size="16" font-weight="800">사람의 성장</text>
+          <text x="300" y="406" text-anchor="middle" fill="#5C6E6C" font-size="12.5">각자 자기 영역의 주인으로 성장</text>
+          <!-- 가로축 라벨 (화살촉 위/아래로 분리해 겹침 방지) -->
+          <text x="466" y="194" text-anchor="end" fill="#3C6076" font-size="16" font-weight="800">일의 흐름</text>
+          <text x="466" y="250" text-anchor="end" fill="#5C6E6C" font-size="12.5">결정하는 사람이 책임진다</text>
+          <!-- 교차점 뱃지 (선 위에 덮어 그림) -->
+          <rect x="224" y="180" width="152" height="58" rx="16" fill="#183B38"/>
+          <text x="300" y="206" text-anchor="middle" fill="#fff" font-size="15" font-weight="800">본부 운영체제</text>
+          <text x="300" y="225" text-anchor="middle" fill="#8FD7B8" font-size="11">가로축 × 세로축</text>
+        </svg>
+      </div>
+    </div>
+    <div class="bos-g2" style="margin-top:18px">
+      <div class="card">
+        <span class="chip chip-b">가로축</span>
+        <h3 style="margin-top:12px">결정하는 사람이 책임진다</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.8">팀 사이의 결정·책임 경계를 명확히. 모든 걸 규정으로 묶지 않고, 변하면 안 되는 최소한의 원칙만 고정하고 나머지는 자유롭게 둔다.</p>
+      </div>
+      <div class="card">
+        <span class="chip chip-g">세로축</span>
+        <h3 style="margin-top:12px">프로세스를 토대로 성장한다</h3>
+        <p style="margin-top:8px;color:var(--txt-600);font-size:13.5px;line-height:1.8">명확해진 프로세스 위에서, 각자가 자기 영역을 소유하고 정해진 단계를 밟아 전문가로 성장한다.</p>
+      </div>
+    </div>
+    <div class="bos-banner">가로축(프로세스)이 먼저 서고, 그 위에 세로축(성장)이 얹힌다. 탄탄한 바닥이 있어야 그 위에서 안심하고 클 수 있다.</div>
+  </div>
+</section>
+
+<!-- ═══ 4 · 가로축 원칙 ═══ -->
+<section id="horizontal-principle" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Horizontal</p>
+    <h2 class="section-heading">가로축 — <em>결정하는 사람이 책임진다</em></h2>
+    <div class="quote">
+      <p>통제할 수 있는 팀이 결정하고, 결정한 팀이 책임진다.<br>
+      통제 못 하는 일의 결과를 대신 떠안지 않는다.<br>
+      책임이란 문제를 예방·해결·개선하는 주체를 뜻한다.</p>
+    </div>
+    <div class="bos-g3" style="margin-top:20px">
+      <div class="card">
+        <h3>결정한 팀이 책임진다</h3>
+        <p class="bos-note">결정 권한이 있는 팀이 그 결과도 책임진다.</p>
+      </div>
+      <div class="card">
+        <h3>통제 못 하는 일은 책임지지 않는다</h3>
+        <p class="bos-note">자기가 정하지 않은 결과를 떠안지 않는다.</p>
+      </div>
+      <div class="card">
+        <h3>책임은 원인이 된 결정에 따라</h3>
+        <p class="bos-note">사고·과잉·결품이 생기면 원인이 된 결정을 한 팀이 책임진다.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <span class="label">최소 경계 — 고정 vs 유연</span>
+      <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>고정 (변하면 안 됨)</th><th>유연 (계속 변해도 됨)</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">결정 주체 = 책임 주체</td><td>누가 무엇을 결정하는지의 구체 배분</td></tr>
+          <tr><td class="hl">필요한 정보(재고·납기 등)는 항상 공유</td><td>공유하는 방식·도구 (수기 → 자동화)</td></tr>
+          <tr><td class="hl">기준을 바꿀 때 누가·어떻게 바꾸는지</td><td>기준 내용 자체 / 채널·제품·목표</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight" style="margin-top:16px">
+      <span class="tag">메타 룰</span>
+      <p>변화는 그대로 허용하되, 변할 때 누가 책임지고 어떻게 바꾸는지의 메타 룰만 고정한다. 합의 문서는 1~2장이면 충분하다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5 · 팀별 R&R 전후 ═══ -->
+<section id="rnr" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">R&amp;R before / after</p>
+    <h2 class="section-heading">무엇이 어떻게 바뀌나 — <em>팀 사이 R&amp;R 전후 비교</em></h2>
+    <p class="bos-lead">각 관계는 "변경 전 → 변경 후" 대비입니다. 변경 전은 회색조, 변경 후는 브랜드 컬러로 강조합니다.</p>
+
+    <div class="card" style="padding:8px 22px">
+      <!-- 5-1 -->
+      <div class="acc-item open" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-1 · SCM ↔ 프로덕트</strong>
+            <span class="bos-acc-badges"><span class="chip chip-g">합의 진행 중 · 1차 완료</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>초도 발주</td><td class="neg">경계 모호, 그때그때 조율</td><td class="hl">계약·협상 = 프로덕트 / 수량 산정 = 공동 / 발주 실행 = SCM</td></tr>
+              <tr><td>재발주</td><td class="neg">불명확</td><td class="hl">SCM 단독</td></tr>
+              <tr><td>제조사·공급 이슈</td><td class="neg">대응 주체 불명확, 창구 분산</td><td class="hl">감지·알림·전산반영 = SCM / 결정·공지·외부협상 = 프로덕트 (창구 일원화)</td></tr>
+              <tr><td>원가 변동</td><td class="neg">통보 시점·주체 모호</td><td class="hl">감지·마진영향·ERP/WMS 반영 = SCM / 원가·판가 확정·공지 = 프로덕트</td></tr>
+              <tr><td>거래처발 단가 인상</td><td class="neg">SCM → 프로덕트 재전달</td><td class="hl">거래처가 프로덕트에 직접 전달</td></tr>
+              <tr><td>신제품 물류</td><td class="neg">출시 후 문제 사후 대응</td><td class="hl">개발 단계에서 SCM이 공급·물류 리스크 사전 검토 (사전점검 DB)</td></tr>
+              <tr><td>박스·입수량·팔렛트</td><td class="neg">담당 불명확</td><td class="hl">단품 규격 = 프로덕트 / 박스·적재 효율 기준 = SCM</td></tr>
+              <tr><td>마스터 시트</td><td class="neg">입력 주체 혼재</td><td class="hl">신규 품목·거래처·원가·수익률 = 프로덕트 / ERP 등록 = SCM</td></tr>
+              <tr><td>정기 회의</td><td class="neg">없음 (이슈 사후 처리)</td><td class="hl">월 1회 정기 운영지표 리뷰 (납기·원가·재고)</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 결품·과잉의 책임이 무조건 SCM으로 쏠리던 구조가, 원인이 된 결정을 한 팀에게 귀속되도록 바뀐다. 창구가 일원화되어 "누가 대응하지?"가 사라진다.</div>
+        </div></div>
+      </div>
+      <!-- 5-2 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-2 · SCM ↔ 매출부서</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>수요계획</td><td class="neg">세우지만 정확도 책임 기준 없음</td><td class="hl">수요계획 수립·정확도 책임 = 매출부서</td></tr>
+              <tr><td>발주 결정</td><td class="neg">가용재고 확인 수단 없이 발주</td><td class="hl">가용재고 확인 후 발주, 그 결정에서 비롯된 결품·과잉 책임 = 매출부서</td></tr>
+              <tr><td>재고 운영</td><td class="neg">결과가 SCM 책임으로만 드러남</td><td class="hl">안전재고 설정·재고 운영·정보 제공 = SCM</td></tr>
+              <tr><td>프로모션 기획</td><td class="neg">재고 확인 없이 기획 → 결품 클레임</td><td class="hl">재고 가용성 확인 위에서 기획 (자유도는 유지)</td></tr>
+              <tr><td>채널 수요 불균형</td><td class="neg">인정한 운영 기준 없음</td><td class="hl">채널별 운영 기준 도입, 수요단 정확도(MAPE) 측정</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 매출부서는 통제 가능한 것(수요계획·발주 결정)만 책임지고, 통제 못 하는 재고 운영은 SCM이 진다. 재고 책임을 통째로 넘기지 않는다 — 활동 단위로 나눈다.</div>
+        </div></div>
+      </div>
+      <!-- 5-3 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-3 · SCM ↔ 재무·회계</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>금액 산정</td><td class="neg">근거 없이 집행만 하게 됨</td><td class="hl">재고·매입 금액 산정·관리 = SCM</td></tr>
+              <tr><td>집행·증빙</td><td class="neg">산정과 집행 경계 모호</td><td class="hl">집행·증빙 = 재무 / 집행 SLA·일정 사전 합의</td></tr>
+              <tr><td>자금 집행 시점</td><td class="neg">시점·기준 미공유</td><td class="hl">SCM이 산정 근거·시점을 사전 공유</td></tr>
+              <tr><td>혼자 떠안는 부담</td><td class="neg">1인이 전체 실무 감당</td><td class="hl">경계 분리로 판단 근거를 SCM에서 받아 부담 완화</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 산정은 SCM, 집행·증빙은 재무로 경계가 명확해져 책임 공백이 사라진다.</div>
+        </div></div>
+      </div>
+      <!-- 5-4 -->
+      <div class="acc-item" data-acc>
+        <div class="acc-head">
+          <span class="acc-head-left"><strong>5-4 · 프로덕트 ↔ 매출부서 (출시 게이트)</strong>
+            <span class="bos-acc-badges"><span class="chip chip-a">초안</span></span></span>
+          <span class="acc-arrow">▾</span>
+        </div>
+        <div class="acc-body"><div class="acc-inner">
+          <table class="tbl">
+            <thead><tr><th>항목</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>신제품 출시</td><td class="neg">준비 안 된 채 출시 → 환불·리뷰 손상</td><td class="hl">출시 전 재고·납기 정보 확인 게이트 통과</td></tr>
+              <tr><td>게이트 권한</td><td class="neg">—</td><td class="hl">SCM은 가부 결정 안 함, 판단 근거만 제공 / 출시 가부는 프로덕트·매출부서 결정</td></tr>
+              <tr><td>공급 계약</td><td class="neg">지연 페널티 없어 강제 수단 없음</td><td class="hl">공급 계약에 지연 페널티 명문화 = 프로덕트</td></tr>
+            </tbody>
+          </table>
+          <div class="bos-h-eff"><b>핵심 효과</b> — 게이트는 출시를 막는 장치가 아니라, 준비 안 된 출시의 손상을 막는 장치다.</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <span class="label">참고 · 신제품 점검 강도 차등 (시나리오 4종)</span>
+      <p class="bos-note">제조사·제품의 신규성에 따라 점검 범위를 차등한다. 검증된 부분은 다시 보지 않고 모르는 부분만 집중.</p>
+      <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>시나리오</th><th>제조사</th><th>제품</th><th>점검 강도</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>신규</td><td>신제품</td><td class="hl">최고 (전체)</td></tr>
+          <tr><td>B</td><td>기존</td><td>신제품</td><td>중 (제품 중심)</td></tr>
+          <tr><td>C</td><td>기존</td><td>리뉴얼</td><td>저 (변경분만)</td></tr>
+          <tr><td>D</td><td>신규</td><td>기존제품 이관</td><td>중 (제조사 중심)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · 충격 완충 ═══ -->
+<section id="buffer" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Buffer</p>
+    <h2 class="section-heading">책임이 느는 것이 <em>손해가 아니게</em></h2>
+    <p class="bos-lead">프로세스를 명확히 하면 일부 팀은 "책임이 늘었다"고 느낀다. 이 지점을 방치하지 않는 것이 이 제안의 핵심이다.</p>
+    <div class="bos-g2">
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"책임만 늘어난다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>통제 가능한 범위에만 책임진다. 오히려 떠안던 남의 책임에서 벗어난다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"권한 없이 책임진다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>책임이 느는 만큼 결정에 필요한 정보·권한이 함께 온다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"혼자 감당한다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>1인이 전체를 떠안는 영역은 경계·지원 구조를 우선 설계한다</div>
+      </div>
+      <div class="bos-ba">
+        <div class="bos-panel bos-before"><span class="bos-plabel">우려</span>"갑자기 바뀐다"</div>
+        <div class="bos-arrow">→</div>
+        <div class="bos-panel bos-after"><span class="bos-plabel">완충</span>각 팀 충돌 지점을 미리 정리하고, 완충안을 합의한 뒤 적용한다</div>
+      </div>
+    </div>
+    <div class="bos-banner">명확한 프로세스가 누군가에게 부담이 아니라 <span class="k">보호막</span>이 되도록 하는 것 — 이게 가로축과 세로축을 잇는 다리다.</div>
+  </div>
+</section>
+
+<!-- ═══ 7 · 세로축 성장 궤도 ═══ -->
+<section id="vertical" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Vertical</p>
+    <h2 class="section-heading">세로축 — <em>프로세스를 토대로 성장한다</em></h2>
+    <p class="bos-lead">프로세스가 명확해지면, 그 위에서 각자가 자기 영역의 주인으로 성장한다. "연차가 차면 오르는" 방식이 아니라 정해진 관문을 통과해야 오르는 방식. 지금 내가 어디 있고 다음에 뭘 해야 하는지가 늘 보인다.</p>
+    <div class="bos-steps">
+      <div class="bos-step">
+        <div class="bos-step-no">1</div>
+        <div><h4>실행자</h4><div class="bos-who">맡은 일을 잘한다</div>
+          <div class="bos-cond">통과 조건 — 이 영역의 일을 안정적으로 완성한다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">2</div>
+        <div><h4>영역 오너</h4><div class="bos-who">영역을 지킨다</div>
+          <div class="bos-cond">통과 조건 — ① 기준을 문서로 남긴다 · ② 그 기준으로 남을 키운다 · ③ 영역 지표를 개선한다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">3</div>
+        <div><h4>영역 리드</h4><div class="bos-who">영역을 키운다</div>
+          <div class="bos-cond">통과 조건 — 영역을 지속 발전시키고, 다른 영역과의 협업을 이끈다</div></div>
+      </div>
+      <div class="bos-step">
+        <div class="bos-step-no">4</div>
+        <div><h4>영역 총괄</h4><div class="bos-who">영역이 팀이 된다</div>
+          <div class="bos-cond">통과 조건 — 영역이 팀 규모로 성장, 관리자 또는 전문가로 선택</div></div>
+      </div>
+    </div>
+
+    <!-- 브랜드팀 적용 예시 -->
+    <div style="margin-top:34px">
+      <p class="bos-eye" style="margin-bottom:6px">브랜드팀 예시</p>
+      <h3 style="font-size:clamp(19px,2.4vw,26px);font-weight:850;letter-spacing:-.025em;color:var(--txt-900);margin:0 0 8px">각 담당자가 자기 <span style="color:var(--accent)">영역의 주인</span>으로 성장한다</h3>
+      <p class="bos-lead" style="margin-bottom:18px">위 4단계는 직무명이 아니라 <strong>영역</strong> 위에서 오른다. 브랜드팀을 예로 들면, 브랜드가 고객에게 닿는 결과를 기준으로 영역을 나누고 각 담당자가 그 영역의 오너로 궤도를 밟는다.</p>
+      <div class="bos-team">
+        <div class="card"><div class="bos-team-head"><h4>그로스 전략</h4><span class="chip chip-o">브라운</span></div><p class="bos-note">성장 구조·광고·채널 전략·수익성 실험을 연결해 "어떻게 더 크게 팔릴지"를 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>제품 전략</h4><span class="chip chip-o">마틸다</span></div><p class="bos-note">제품 정보를 고객이 이해하고 구매할 수 있는 언어와 구조로 번역한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 디자인</h4><span class="chip chip-o">니나</span></div><p class="bos-note">패키지·상세·굿즈·캠페인의 시각 자산과 닥터펠리스다운 감도를 책임진다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>고객 관계 설계</h4><span class="chip chip-o">유니</span></div><p class="bos-note">첫구매·재구매·구독·이탈 흐름을 하나의 고객 관계(CRM)로 설계한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>CX·신뢰 설계</h4><span class="chip chip-o">로지</span></div><p class="bos-note">VOC·CX를 사후 처리에 두지 않고 신뢰 회복과 제품 개선으로 연결한다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 내러티브</h4><span class="chip chip-o">노바</span></div><p class="bos-note">브랜드 언어·세계관·캠페인 메시지를 축적 가능한 자산으로 만든다.</p></div>
+        <div class="card"><div class="bos-team-head"><h4>브랜드 운영 설계</h4><span class="chip chip-o">몰갱</span></div><p class="bos-note">데이터·자동화·체크리스트·R&amp;R 기준으로 운영의 반복 가능성을 확보한다.</p></div>
+      </div>
+    </div>
+
+    <!-- 조직명은 잠정 · 구조만 고정 -->
+    <div class="warn-box" style="margin-top:22px">
+      <span class="tag">이름은 잠정 · 구조만 고정</span>
+      <p>위의 <strong>영역 이름</strong>(그로스·제품·디자인·고객 관계·CX·내러티브·운영), <strong>단계 이름</strong>(실행자·영역 오너·리드·총괄), <strong>담당자 배치</strong>는 확정이 아니라 잠정 예시다. 조직이 100억에서 300억으로 커지는 동안 이름과 경계는 얼마든지 바뀔 수 있다 — 운영 방식을 먼저 검증하고, 실제로 나아진 것이 확인된 뒤에 조직명·역할명을 공식화한다. 고정하는 건 이름이 아니라 <strong>"통제하는 만큼 책임지고, 그만큼 성장·보상한다"</strong>는 구조 하나뿐이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8 · 핵심 관문 ═══ -->
+<section id="gate" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">The gate</p>
+    <h2 class="section-heading">가장 중요한 문턱 — <em>실행자에서 영역 오너로</em></h2>
+    <p class="bos-lead">일을 잘하는 것(실행자)과 영역을 소유하는 것(오너)의 차이는 아래 세 가지다. 이것이 AI가 대체 못 하는 사람의 가치다.</p>
+    <div class="bos-g3">
+      <div class="card gate-card">
+        <span class="gate-no">관문 ①</span>
+        <h3>기준 저작</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 내 노하우가 남이 따라 할 문서가 됐나</p>
+        <div class="bos-h-eff">통과 예시 — 그때그때 하던 발주 판단을 체크리스트·기준표로 남김</div>
+      </div>
+      <div class="card gate-card g2">
+        <span class="gate-no">관문 ②</span>
+        <h3>확산</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 그 기준으로 남이 성공했나</p>
+        <div class="bos-h-eff">통과 예시 — 신규 입사자가 그 문서로 온보딩해 실제로 해냄</div>
+      </div>
+      <div class="card gate-card g3">
+        <span class="gate-no">관문 ③</span>
+        <h3>영역 발전</h3>
+        <p class="bos-note"><strong>무엇을 보나</strong> — 내가 맡은 뒤 영역이 나아졌나</p>
+        <div class="bos-h-eff">통과 예시 — 담당 후 결품률·오류·리드타임 등이 개선됨</div>
+      </div>
+    </div>
+    <div class="bos-banner">이 세 관문을 통과하는 것이 곧 "이 조직에 대체 불가능한 사람"이 되는 길이고, 그 시점이 <span class="k">보상을 논의하는 출발점</span>이다.</div>
+  </div>
+</section>
+
+<!-- ═══ 9 · 권한·책임·보상 가안 ═══ -->
+<section id="reward" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Reward draft</p>
+    <h2 class="section-heading">권한·책임·<em>보상 가안</em></h2>
+    <div class="warn-box">
+      <span class="tag">주의</span>
+      <p>방향만 가리키지 않기 위한 구체 가안입니다. 확정이 아니라 논의의 출발점이며, 최종 확정은 경영진과 협의합니다.</p>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <table class="tbl">
+        <thead><tr><th>단계</th><th>권한</th><th>책임</th><th>보상 방향 (가안)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>실행자</strong></td><td>자기 업무 실행</td><td>맡은 일의 완성도</td><td>기존 급여 체계</td></tr>
+          <tr><td><strong>영역 오너</strong></td><td>해당 영역 최종 의견권 (반드시 청취, 무시하려면 근거 필요)</td><td>영역 기준의 품질, 영역 지표</td><td class="hl">오너 수당 또는 평가 가점 — 관문 통과가 보상 논의 개시점</td></tr>
+          <tr><td><strong>영역 리드</strong></td><td>영역별 결정권 (영역 내 판단 확정, 최종 사업판단은 본부장)</td><td>영역 전체 성과, 크로스팀 협업 결과</td><td class="hl">리드 직책급 + 영역 성과 연동</td></tr>
+          <tr><td><strong>영역 총괄</strong></td><td>팀 운영 권한</td><td>팀 성과</td><td class="hl">팀장급 처우 또는 전문가 트랙 별도 밴드</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bos-g3" style="margin-top:18px">
+      <div class="card"><h3>① 관문이 트리거다</h3><p class="bos-note">통과를 입증한 시점에 보상을 논의한다. "입증된 가치에 대한 대가"라 정당하다.</p></div>
+      <div class="card"><h3>② 의견권 ≠ 결정권</h3><p class="bos-note">오너는 반드시 청취되는 의견권, 리드는 확정하는 결정권. 권한 크기와 보상이 함께 오른다.</p></div>
+      <div class="card"><h3>③ 유지 조건이 있다</h3><p class="bos-note">오너십은 한 번 따면 끝이 아니라, 영역 발전을 매년 갱신해야 유지된다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10 · 각 팀이 얻는 것 ═══ -->
+<section id="teams" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">For each team</p>
+    <h2 class="section-heading">각 팀이 <em>얻는 것</em></h2>
+    <div class="bos-g2">
+      <div class="card"><span class="chip chip-o">SCM</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>남의 결정 결과가 재고 책임으로만 귀속됨</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>통제 범위만 책임지는 명확한 경계 + 운영 기준의 저작자 지위와 성장 궤도</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">프로덕트</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>개발에 집중하다 공급·원가 관리가 후순위</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>계약·원가·출시 기준의 명확한 주관권 + 제품 영역 오너 성장 경로</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">브랜드</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>넓어진 기여가 성장으로 안 이어짐</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>영역 오너십과 성장 궤도 + 기획 자유도를 지키는 재고 정보</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">매출부서</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>수요계획 정확도를 책임질 기준이 없음</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>통제 가능한 범위만 책임지고 그 안에서 자유롭게 계획</div></div>
+      </div>
+      <div class="card"><span class="chip chip-o">재무·회계</span>
+        <div class="bos-ba" style="margin-top:12px"><div class="bos-panel bos-before"><span class="bos-plabel">지금의 어려움</span>근거 없는 집행, 혼자 떠안는 부담</div><div class="bos-arrow">→</div><div class="bos-panel bos-after"><span class="bos-plabel">얻는 것</span>산정·집행 경계 분리 + 지원 구조 우선 설계</div></div>
+      </div>
+    </div>
+    <div class="bos-banner">모두가 "떠안던 남의 책임"에서 벗어나, 자기가 통제하는 만큼만 명확히 책임지고, 그만큼 성장한다.</div>
+  </div>
+</section>
+
+<!-- ═══ 11 · 진행 로드맵 ═══ -->
+<section id="roadmap" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Roadmap</p>
+    <h2 class="section-heading">어떻게 <em>진행되는가</em></h2>
+    <div class="bos-road">
+      <div class="card">
+        <div class="bos-rno">Step 1 · 가로축 착수</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">결정=책임 최소 경계 세우기. SCM·프로덕트 사례를 다른 팀 사이로 확장.</p>
+        <div style="margin-top:12px"><span class="bos-live"><span class="dot"></span>이미 시작됨</span></div>
+      </div>
+      <div class="card">
+        <div class="bos-rno">Step 2 · 충격 완충</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">각 팀 충돌 지점 정리, 완충안 합의.</p>
+        <div style="margin-top:12px"><span class="chip chip-a">각 팀 이견 반영</span></div>
+      </div>
+      <div class="card">
+        <div class="bos-rno">Step 3 · 세로축 얹기</div>
+        <p style="font-size:13.5px;color:var(--txt-700);line-height:1.75">영역 오너십·성장 궤도 공식화, 자격 통과자와 보상 논의.</p>
+        <div style="margin-top:12px"><span class="chip chip-b">프로세스 안정 확인 후</span></div>
+      </div>
+    </div>
+    <div class="bos-banner">실제로 나아지는 것이 확인된 것만 공식화한다. 이름이나 제도를 먼저 만들고 일하는 방식이 안 바뀌는 일을 방지한다.</div>
+  </div>
+</section>
+
+<!-- ═══ 12 · 원칙 & 클로징 ═══ -->
+<section id="principles" class="reveal">
+  <div class="bos-wrap">
+    <p class="bos-eye">Principles</p>
+    <h2 class="section-heading">우리가 지키는 <em>원칙</em></h2>
+    <div class="bos-g3">
+      <div class="card"><h3>소수 정예</h3><p class="bos-note">사람을 무작정 늘리지 않는다. 기민하게 움직이고 개인의 몫을 지킨다.</p></div>
+      <div class="card"><h3>권한·책임·보상의 일치</h3><p class="bos-note">결정하는 만큼 책임지고, 책임지는 만큼 권한·보상이 따른다.</p></div>
+      <div class="card"><h3>최소한만 고정</h3><p class="bos-note">성장하는 회사에 과한 규정은 독이다. 최소 경계만 고정한다.</p></div>
+    </div>
+    <div class="bos-banner dark" style="margin-top:26px;text-align:center;padding:40px 28px">
+      명확한 프로세스는 규칙이 아니라 <span class="k">성장의 토대</span>입니다.<br>
+      각자가 자기 영역을 확실히 책임질 수 있을 때, 그 위에서 안심하고 클 수 있습니다.<br>
+      <span style="font-size:.72em;font-weight:600;opacity:.8;display:block;margin-top:12px">큰 방향과 가안은 이렇게 잡되, 구체적인 내용은 각 팀과 함께 만들어 갑니다.</span>
+    </div>
+  </div>
+</section>
+
+</div><!-- /#bos -->
+
+<script>
+(function(){
+  // 스크롤 진행바
+  var prog=document.getElementById('scroll-prog');
+  function onScroll(){
+    var h=document.documentElement;
+    var p=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+    if(prog) prog.style.width=(p||0)+'%';
+  }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+  // 섹션 fade-up (1회성)
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+  },{threshold:0.12});
+  document.querySelectorAll('#bos section.reveal').forEach(function(s){ io.observe(s); });
+
+  // 아코디언
+  document.querySelectorAll('[data-acc] .acc-head').forEach(function(head){
+    head.setAttribute('role','button'); head.setAttribute('tabindex','0');
+    var item=head.closest('[data-acc]'); var body=item.querySelector('.acc-body');
+    function set(open){
+      item.classList.toggle('open',open);
+      head.setAttribute('aria-expanded',open?'true':'false');
+      body.style.maxHeight=open?(body.scrollHeight+'px'):'0px';
+    }
+    // 초기 상태
+    set(item.classList.contains('open'));
+    head.addEventListener('click',function(){ set(!item.classList.contains('open')); });
+    head.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); set(!item.classList.contains('open')); }});
+  });
+  // 열린 아코디언 높이 재계산(리사이즈/폰트로딩)
+  addEventListener('resize',function(){
+    document.querySelectorAll('[data-acc].open .acc-body').forEach(function(b){ b.style.maxHeight=b.scrollHeight+'px'; });
+  });
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){
+    document.querySelectorAll('[data-acc].open .acc-body').forEach(function(b){ b.style.maxHeight=b.scrollHeight+'px'; });
+  }); }
+
+  // 네비 스무스 스크롤 + 스크롤스파이
+  var navLinks=[].slice.call(document.querySelectorAll('.bos-nav a'));
+  navLinks.forEach(function(a){
+    a.addEventListener('click',function(e){
+      var t=document.querySelector(a.getAttribute('href'));
+      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
+    });
+  });
+  var spyIds=navLinks.map(function(a){return a.getAttribute('href').slice(1);});
+  var spy=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        navLinks.forEach(function(a){ a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id); });
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  spyIds.forEach(function(id){ var el=document.getElementById(id); if(el) spy.observe(el); });
+})();
+</script>
+</body>
+</html>
