@@ -6,7 +6,7 @@
 Dr. Felis **2026 하반기 OGK 재설계 전략 문서 + 2026 트래커**(단일 HTML). 매출 논리는 "잔여 매출 누적(=확정 40.15억 + 6~12월)", 트래커는 Firebase 실시간 공유. **톤: 음슴체(명사 종결) 기조 — 어려운 외래어 지양.**
 
 ## 1. 파일 / 저장소 / 워크플로
-- **딜리버러블**: `promo-analytics/public/ogk2026_v3.html` (단일 파일, 외부 CDN: Pretendard·Chart.js·Firebase compat)
+- **딜리버러블(최신)**: `promo-analytics/public/ogk2026_v4_weekly.html` — v3 기반 + **주간 플랜·회고 / 월간 회고 탭 추가**(사용자가 로컬에서 개발, 2026-07-13 백업 커밋). 이전본 `ogk2026_v3.html`도 저장소에 그대로 보존.
 - **저장소**: `ryuhowoo/drfelis` · **브랜치**: `claude/drfelis-2026-strategy-v4-Q00kA` · **PR**: #29 (draft)
 - **호스팅**: Vercel(`df-promo-dsbd`, Next.js 앱 `promo-analytics`가 `public/` 정적 서빙). 단, 사용자는 보통 **파일을 받아 직접 업로드**하는 흐름.
 - **작업 규칙**:
@@ -14,7 +14,12 @@ Dr. Felis **2026 하반기 OGK 재설계 전략 문서 + 2026 트래커**(단일
   - 대량/정밀 치환은 python `str.replace` + 건수 assert로 (이 파일에서 그렇게 작업해 옴).
   - 브랜치에 커밋·푸시 → PR 유지 → 파일 전달.
   - **사용자가 워딩을 직접 고쳐 재업로드**하기도 함 → 그때는 **diff부터 확인**. 업로드본이 옛 버전 기반일 수 있으니, 사용자의 워딩은 살리고 최신 데이터(예: 품절 4.08억)는 유지하는 **병합**으로 처리.
-- **버전 표기**: 현재 v3. 큰 패스 시 `ogk2026_v4.html`로.
+- **버전 표기**: 현재 v4(`ogk2026_v4_weekly.html`). 주간/월간 데이터도 같은 `D` 객체 → 같은 RTDB 경로(`drfelis-2026-tracker/state`)에 통째 저장.
+
+### 주간 플랜·회고 / 월간 회고 (v4 신규, 사용자 개발분)
+- 탭 4개: `strategy` / `tracker` / `weekly` / `monthly`. 데이터 키: `D.weekly`, `D.monthlyReview`, `D.weeklyMonthlySummaries`, `D.weeklyAnthropicEndpoint`.
+- 저장은 전부 `saveData()` → `fbRef.set(D)` 단일 경로(트래커와 동일). 별도 ref 없음.
+- 월간 요약 AI 호출: `DEFAULT_ANTHROPIC_ENDPOINT = https://drfelis-ogk-ai-analysis.felis-studio.workers.dev` (Cloudflare Worker). 엔드포인트 없으면 프롬프트 복사 폴백.
 
 ## 2. Firebase / 트래커 (현재 정상 작동)
 - **전용 프로젝트**: `drfelis-ogk-tracker` (asia-southeast1). 옛 공유 프로젝트 `drfelis-refreshteam`에서 분리함.
@@ -72,7 +77,22 @@ Dr. Felis **2026 하반기 OGK 재설계 전략 문서 + 2026 트래커**(단일
 - 채널별 주력 SKU 정리 — 후속 논의 항목(사용자 메모, 2026-06-09).
 - 워딩 최종본은 **호우 최종 문안** 수령 후 일괄 정리 예정(사용자가 HTML 직접 편집하기도 함).
 - (옵션) 트래커 "초기화 버튼" — 새 전용 DB라 현재 불필요.
-- (옵션) 보안 강화 시 @drfelis.com 구글 로그인 게이트 재부착 가능.
+
+### RTDB 규칙 이슈 해결 기록 (2026-07-13)
+- 증상: 트래커/주간/월간 저장 시 "저장 안 됨 — DB 규칙 확인" 배지 → 콘솔 `permission_denied at /drfelis-2026-tracker/state`.
+- 원인: RTDB 규칙이 기본 템플릿(`users/$uid`만 허용) 상태여서 트래커 경로에 매칭 규칙이 없어 기본 거부됨. 코드 문제 아님.
+- 해결: 규칙을 아래로 교체 → 정상화 확인.
+```json
+{
+  "rules": {
+    "drfelis-2026-tracker": {
+      ".read":  "auth != null && auth.token.email.matches(/^[^@]+@drfelis[.]com$/)",
+      ".write": "auth != null && auth.token.email.matches(/^[^@]+@drfelis[.]com$/)"
+    }
+  }
+}
+```
+- 교훈: RTDB는 매칭 규칙 없으면 기본 deny. 새 최상위 경로 추가 시 규칙도 같이 갱신할 것. Auth는 @drfelis.com 게이트(HTML `#auth-gate`)와 규칙 도메인 매칭이 짝을 이뤄야 함.
 
 ## 9. 톤 가이드 (이번 작업으로 확립)
 - **음슴체 명사 종결 기조**: "~한다/된다" → "~함/임" 또는 명사 종결. quote(.quote)는 예외(완성 문장 임팩트 유지).
