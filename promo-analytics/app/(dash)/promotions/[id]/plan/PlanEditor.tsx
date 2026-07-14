@@ -851,6 +851,9 @@ export default function PlanEditor({
         </div>
       </div>
 
+      {/* 메인 상품 요약 — 한눈에 보는 표(엑셀 대체). 쿠폰 전 옵션 단가 + 쿠폰 적용 시 최종값 */}
+      <MainSummaryTable options={options} results={optionResults} mult={mult} />
+
       {/* 사은품・추가 할인 쿠폰 (플랜 단위 · 쿠폰 다중 중첩 + 사은품 동봉) */}
       <div className="mt-3 rounded-2xl card-soft p-5">
         <div className="flex items-center justify-between">
@@ -1135,6 +1138,155 @@ export default function PlanEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// 메인 상품 요약 표 — 메인으로 지정된 옵션을 한눈에(엑셀 대체).
+// 쿠폰 전: 옵션 단가·할인율·예상 판매수/단품수/매출/공헌이익.
+// 쿠폰 적용 시: 최종 쿠폰가/할인율/예상매출/예상공헌이익을 별도 열로(‘쿠폰’ 배지), 옵션 단가는 쿠폰 전 그대로 노출.
+function MainSummaryTable({
+  options,
+  results,
+  mult,
+}: {
+  options: OptState[];
+  results: ReturnType<typeof computeOptionTotals>[];
+  mult: number;
+}) {
+  const [open, setOpen] = useState(true);
+  const mains = options.map((o, i) => ({ o, t: results[i] })).filter((x) => x.o.is_main);
+  const anyCoupon = mains.some((m) => m.t.coupon_discount > 0);
+
+  const thL = "px-2.5 py-2 text-left font-medium whitespace-nowrap";
+  const th = "px-2.5 py-2 text-right font-medium whitespace-nowrap";
+  const tdL = "px-2.5 py-1.5 text-left whitespace-nowrap";
+  const td = "px-2.5 py-1.5 text-right tabular-nums whitespace-nowrap";
+
+  const rows = mains.map(({ o, t }) => {
+    const qty = o.expected_option_qty || 0;
+    const unitsPerSet = o.items.reduce((s, it) => s + (it.sku_qty_per_option || 0), 0);
+    return {
+      key: o.key,
+      name: o.option_label || "옵션",
+      setPrice: t.set_price,
+      disc: t.discount_rate_consumer,
+      qty,
+      units: unitsPerSet * qty,
+      preRev: t.set_price * qty,
+      preContrib: (t.set_price * mult - t.cost_total) * qty,
+      hasCoupon: t.coupon_discount > 0,
+      finalPrice: t.net_price,
+      finalDisc: t.discount_rate_consumer_net,
+      finalRev: t.expected_revenue,
+      finalContrib: t.expected_contribution,
+    };
+  });
+  // 합계는 순수 reduce로 (렌더 중 변수 재할당 금지)
+  const sum = rows.reduce(
+    (a, r) => ({
+      qty: a.qty + r.qty,
+      units: a.units + r.units,
+      rev: a.rev + r.preRev,
+      contrib: a.contrib + r.preContrib,
+      finRev: a.finRev + r.finalRev,
+      finContrib: a.finContrib + r.finalContrib,
+    }),
+    { qty: 0, units: 0, rev: 0, contrib: 0, finRev: 0, finContrib: 0 },
+  );
+
+  return (
+    <div className="mt-3 rounded-2xl card-soft">
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between px-5 py-3">
+        <span className="text-sm font-semibold text-ink-2">
+          메인 상품 요약 <span className="font-normal text-ink-4">· {num(mains.length)}종 한눈에 보기</span>
+        </span>
+        <span className="text-ink-4">{open ? "▲" : "▼"}</span>
+      </button>
+      {open &&
+        (mains.length === 0 ? (
+          <p className="px-5 pb-4 text-xs text-ink-4">
+            메인으로 지정된 옵션이 없습니다. 아래 옵션 카드에서 ‘메인’을 체크하면 여기에 요약됩니다.
+          </p>
+        ) : (
+          <div className="overflow-x-auto px-3 pb-3">
+            <table className="w-full min-w-[820px] border-collapse text-xs">
+              <thead className="border-y border-line text-ink-3">
+                <tr>
+                  <th className={thL}>상품명</th>
+                  <th className={th}>옵션 단가</th>
+                  <th className={th}>할인율</th>
+                  <th className={th}>예상 판매수</th>
+                  <th className={th}>예상 단품수</th>
+                  <th className={th}>예상 매출</th>
+                  <th className={th}>예상 공헌이익</th>
+                  {anyCoupon && (
+                    <>
+                      <th className={`${th} bg-brand-50/60`}>최종 쿠폰가</th>
+                      <th className={`${th} bg-brand-50/60`}>최종 할인율</th>
+                      <th className={`${th} bg-brand-50/60`}>최종 예상매출</th>
+                      <th className={`${th} bg-brand-50/60`}>최종 예상공헌이익</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line/60">
+                {rows.map((r) => (
+                  <tr key={r.key} className="text-ink-2 hover:bg-soft/40">
+                    <td className={`${tdL} max-w-[220px] truncate font-medium text-ink`} title={r.name}>{r.name}</td>
+                    <td className={td}>{won(r.setPrice)}</td>
+                    <td className={td}>{pctFloor(r.disc)}</td>
+                    <td className={td}>{num(r.qty)}</td>
+                    <td className={td}>{num(r.units)}</td>
+                    <td className={td}>{won(r.preRev)}</td>
+                    <td className={td}>{won(r.preContrib)}</td>
+                    {anyCoupon &&
+                      (r.hasCoupon ? (
+                        <>
+                          <td className={`${td} bg-brand-50/40`}>
+                            <span className="mr-1 rounded bg-brand-100 px-1 text-[10px] font-medium text-brand-700">쿠폰</span>
+                            {won(r.finalPrice)}
+                          </td>
+                          <td className={`${td} bg-brand-50/40 font-semibold text-brand-700`}>{pctFloor(r.finalDisc)}</td>
+                          <td className={`${td} bg-brand-50/40`}>{won(r.finalRev)}</td>
+                          <td className={`${td} bg-brand-50/40 font-semibold text-ink`}>{won(r.finalContrib)}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className={`${td} bg-brand-50/20 text-ink-4`}>—</td>
+                          <td className={`${td} bg-brand-50/20 text-ink-4`}>—</td>
+                          <td className={`${td} bg-brand-50/20 text-ink-4`}>—</td>
+                          <td className={`${td} bg-brand-50/20 text-ink-4`}>—</td>
+                        </>
+                      ))}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t border-line">
+                <tr className="font-semibold text-ink">
+                  <td className={tdL}>메인 합계</td>
+                  <td className={td} />
+                  <td className={td} />
+                  <td className={td}>{num(sum.qty)}</td>
+                  <td className={td}>{num(sum.units)}</td>
+                  <td className={td}>{won(sum.rev)}</td>
+                  <td className={td}>{won(sum.contrib)}</td>
+                  {anyCoupon && (
+                    <>
+                      <td className={`${td} bg-brand-50/40`} />
+                      <td className={`${td} bg-brand-50/40`} />
+                      <td className={`${td} bg-brand-50/40`}>{won(sum.finRev)}</td>
+                      <td className={`${td} bg-brand-50/40`}>{won(sum.finContrib)}</td>
+                    </>
+                  )}
+                </tr>
+              </tfoot>
+            </table>
+            <p className="mt-2 px-1 text-[11px] text-ink-4">
+              쿠폰 전 옵션 단가·매출·공헌이익 기준. 쿠폰이 적용되는 옵션은 오른쪽 ‘최종’ 열에 쿠폰 반영 결과를 함께 표기합니다.
+            </p>
+          </div>
+        ))}
     </div>
   );
 }
