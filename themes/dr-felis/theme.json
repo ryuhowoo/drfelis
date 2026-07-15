@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "name": "Dr. Felis",
+  "version": "1.0.0",
+  "author": "ryuhowoo",
+  "description": "Dr. Felis, a tuxedo-cat desktop pet. Full feature set: eye tracking, sleep sequence, working tiers, juggling, click/drag reactions, idle animations, and mini mode. All-SVG with CSS animation.",
+  "license": "All rights reserved",
+
+  "viewBox": { "x": 0, "y": 0, "width": 45, "height": 45 },
+
+  "eyeTracking": {
+    "enabled": true,
+    "states": ["idle", "mini-idle"],
+    "ids": {
+      "eyes": "eyes-js",
+      "body": "body-js",
+      "shadow": "shadow-js"
+    }
+  },
+
+  "sleepSequence": {
+    "mode": "full"
+  },
+
+  "states": {
+    "idle":         ["idle.svg"],
+    "thinking":     ["thinking.svg"],
+    "working":      ["working.svg"],
+    "juggling":     ["juggling.svg"],
+    "error":        ["error.svg"],
+    "attention":    ["happy.svg"],
+    "notification": ["notification.svg"],
+    "sweeping":     ["sweeping.svg"],
+    "carrying":     ["carrying.svg"],
+    "yawning":      ["yawning.svg"],
+    "dozing":       ["dozing.svg"],
+    "collapsing":   ["collapsing.svg"],
+    "sleeping":     ["sleeping.svg"],
+    "waking":       ["waking.svg"]
+  },
+
+  "workingTiers": [
+    { "minSessions": 3, "file": "building.svg" },
+    { "minSessions": 2, "file": "juggling.svg" },
+    { "minSessions": 1, "file": "typing.svg" }
+  ],
+
+  "idleAnimations": [
+    { "file": "idle-look.svg", "duration": 6500 },
+    { "file": "idle-reading.svg", "duration": 14000 }
+  ],
+
+  "reactions": {
+    "drag":       { "file": "react-drag.svg", "fileLeft": "react-drag-left.svg", "fileRight": "react-drag-right.svg" },
+    "clickLeft":  { "file": "react-left.svg",  "duration": 2500 },
+    "clickRight": { "file": "react-right.svg", "duration": 2500 },
+    "annoyed":    { "file": "react-annoyed.svg", "duration": 3500 },
+    "double":     { "files": ["react-double.svg"], "duration": 3500 }
+  },
+
+  "miniMode": {
+    "supported": true,
+    "offsetRatio": 0.486,
+    "states": {
+      "mini-idle":        ["mini-idle.svg"],
+      "mini-enter":       ["mini-enter.svg"],
+      "mini-peek":        ["mini-peek.svg"],
+      "mini-alert":       ["mini-alert.svg"],
+      "mini-happy":       ["mini-happy.svg"],
+      "mini-sleep":       ["mini-sleep.svg"],
+      "mini-crabwalk":    ["mini-crabwalk.svg"],
+      "mini-enter-sleep": ["mini-enter-sleep.svg"],
+      "mini-working":     ["mini-working.svg"]
+    }
+  },
+
+  "hitBoxes": {
+    "default":  { "x": 11, "y": 7, "w": 23, "h": 35 },
+    "sleeping": { "x": 11, "y": 10, "w": 23, "h": 32 },
+    "wide":     { "x": 8,  "y": 3, "w": 30, "h": 39 }
+  },
+  "sleepingHitboxFiles": ["sleeping.svg", "collapsing.svg", "dozing.svg"],
+  "wideHitboxFiles": ["error.svg", "notification.svg", "building.svg", "sweeping.svg", "carrying.svg", "juggling.svg"],
+
+  "timings": {
+    "mouseIdleTimeout": 20000,
+    "mouseSleepTimeout": 60000,
+    "yawnDuration": 2400,
+    "wakeDuration": 1500,
+    "deepSleepTimeout": 600000,
+    "minDisplay": {
+      "attention": 4000,
+      "error": 5000,
+      "working": 1000
+    },
+    "autoReturn": {
+      "attention": 4000,
+      "error": 5000
+    }
+  }
+}
