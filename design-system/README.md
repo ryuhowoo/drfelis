@@ -91,6 +91,35 @@ design-system/
 - `.scroll-progress` — 상단 스크롤 진행바
 - `.top-tab-bar` + `.tab-btn`(`.active`) — 상단 탭바
 
+### 로그인 / 인증 페이지 (딥그린 키컬러)
+로그인·인증 화면은 본문(크림/민트)과 달리 **딥그린 히어로**를 키컬러로 씁니다.
+
+- `.login-hero` — 딥그린 풀스크린 컨테이너(최상위 `div`에 부여). 흰 텍스트,
+  강조어는 `<mark>` 또는 `.k`로 민트(`#8FD7B8`).
+- `.login-card` — 딥그린 위에 올리는 유리질 흰 카드(max 400px).
+- `.login-brand` · `.login-title` · `.login-sub` — 카드 상단 브랜드/제목/부제.
+- `.login-field`(label+input) — 입력 필드, 포커스 시 액센트 링.
+- `.login-btn` — CTA(액센트 그라데이션). `.login-alt`(보조 링크) · `.login-msg`(에러).
+
+```html
+<div class="login-hero">
+  <form class="login-card">
+    <span class="login-brand">닥터펠리스</span>
+    <h1 class="login-title">VOC 대시보드</h1>
+    <p class="login-sub">팀 계정으로 로그인하세요.</p>
+    <div class="login-field"><label>이메일</label><input type="email"></div>
+    <div class="login-field"><label>비밀번호</label><input type="password"></div>
+    <button class="login-btn" type="submit">로그인</button>
+    <p class="login-msg"></p>
+  </form>
+</div>
+```
+
+> ⚠️ 딥그린 배경은 `.login-hero`에 **직접** 지정돼 있습니다. 로그인 컨테이너를
+> `<section>`으로 만들면 `section:nth-child(){background:transparent}`에 덮여
+> 흰 글자가 안 보일 수 있으니, **`div`에 `.login-hero`를 주거나** 배경을
+> `!important`로 고정하세요. (지난 히어로 가독성 사고와 동일 원인)
+
 전체 클래스는 `felis-neo-organic.css`를 검색하면 다 나옵니다.
 
 ---
